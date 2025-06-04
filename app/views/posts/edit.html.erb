@@ -1,38 +1,119 @@
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h4 class="mb-0">記事を編集</h4>
+<div style="min-height: 100vh; background-color: #f9fafb; padding: 32px 0;">
+  <div style="max-width: 768px; margin: 0 auto; padding: 0 16px;">
+    <div style="background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; overflow: hidden;">
+      <!-- ヘッダー -->
+      <div style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 24px; color: white;">
+        <h1 style="font-size: 28px; font-weight: bold; margin: 0 0 8px 0;">投稿を編集</h1>
+        <p style="color: #a7f3d0; margin: 0; font-size: 16px;">記事の内容を更新しましょう</p>
       </div>
-      <div class="card-body">
-        <%= form_with model: @post, local: true do |form| %>
+
+      <!-- フォーム -->
+      <div style="padding: 32px;">
+        <%= form_with model: @post, local: true, html: { multipart: true, style: "display: block;" } do |form| %>
           <% if @post.errors.any? %>
-            <div class="alert alert-danger">
-              <h6><%= pluralize(@post.errors.count, "error") %> prohibited this post from being saved:</h6>
-              <ul class="mb-0">
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <svg style="width: 20px; height: 20px; color: #dc2626; margin-right: 8px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 style="color: #991b1b; font-weight: 500; margin: 0; font-size: 16px;">エラーが発生しました</h3>
+              </div>
+              <ul style="color: #991b1b; font-size: 14px; margin: 0; padding-left: 0; list-style: none;">
                 <% @post.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
+                  <li style="margin-bottom: 4px;">• <%= message %></li>
                 <% end %>
               </ul>
             </div>
           <% end %>
 
-          <div class="mb-3">
-            <%= form.label :title, "タイトル", class: "form-label" %>
-            <%= form.text_field :title, class: "form-control" %>
+          <!-- タイトル -->
+          <div style="margin-bottom: 24px;">
+            <%= form.label :title, "タイトル", style: "display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;" %>
+            <%= form.text_field :title,
+                                style: "width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; transition: border-color 0.2s; box-sizing: border-box;",
+                                placeholder: "投稿のタイトルを入力してください",
+                                onfocus: "this.style.borderColor='#059669'; this.style.outline='none';",
+                                onblur: "this.style.borderColor='#d1d5db';" %>
           </div>
 
-          <div class="mb-4">
-            <%= form.label :content, "本文", class: "form-label" %>
-            <%= form.text_area :content, class: "form-control", rows: 15 %>
+          <!-- 現在の画像表示 -->
+          <% if @post.image.attached? %>
+            <div style="margin-bottom: 24px;">
+              <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">現在の画像</label>
+              <div style="position: relative; display: inline-block;">
+                <%= image_tag @post.image, style: "width: 200px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;" %>
+                <div style="position: absolute; top: 8px; right: 8px;">
+                  <span style="background: rgba(0, 0, 0, 0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">現在の画像</span>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- 画像アップロード -->
+          <div style="margin-bottom: 24px;">
+            <%= form.label :image, "画像を変更", style: "display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;" %>
+            <div style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 32px; text-align: center; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#059669';" onmouseout="this.style.borderColor='#d1d5db';">
+              <%= form.file_field :image,
+                                  style: "display: none;",
+                                  id: "image_upload",
+                                  accept: "image/*",
+                                  onchange: "previewImage(this)" %>
+              <label for="image_upload" style="cursor: pointer; display: block;">
+                <svg style="width: 48px; height: 48px; color: #9ca3af; margin: 0 auto 12px; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <p style="color: #4b5563; font-weight: 500; margin: 0 0 4px 0; font-size: 16px;">新しい画像をアップロード</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">PNG, JPG, GIF (最大10MB)</p>
+                <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0;">※ 新しい画像を選択すると現在の画像と置き換わります</p>
+              </label>
+            </div>
+            <div id="image_preview" style="margin-top: 16px; display: none;">
+              <img id="preview_img" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" />
+            </div>
           </div>
 
-          <div class="d-flex justify-content-between">
-            <%= link_to "キャンセル", @post, class: "btn btn-secondary" %>
-            <%= form.submit "記事を更新", class: "btn btn-primary" %>
+          <!-- 内容 -->
+          <div style="margin-bottom: 24px;">
+            <%= form.label :content, "内容", style: "display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;" %>
+            <%= form.text_area :content,
+                               style: "width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; resize: vertical; min-height: 200px; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;",
+                               placeholder: "投稿の内容を入力してください...",
+                               onfocus: "this.style.borderColor='#059669'; this.style.outline='none';",
+                               onblur: "this.style.borderColor='#d1d5db';" %>
+          </div>
+
+          <!-- ボタン -->
+          <div style="padding-top: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <%= form.submit "投稿を更新",
+                              style: "width: 100%; background: linear-gradient(135deg, #059669 0%, #0d9488 100%); color: white; font-weight: 500; padding: 14px 24px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);",
+                              onmouseover: "this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(5, 150, 105, 0.4)';",
+                              onmouseout: "this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(5, 150, 105, 0.3)';" %>
+              <%= link_to "キャンセル", @post,
+                          style: "width: 100%; background-color: #f3f4f6; color: #374151; font-weight: 500; padding: 14px 24px; border-radius: 8px; text-decoration: none; text-align: center; display: block; transition: background-color 0.2s; box-sizing: border-box;",
+                          onmouseover: "this.style.backgroundColor='#e5e7eb';",
+                          onmouseout: "this.style.backgroundColor='#f3f4f6';" %>
+            </div>
           </div>
         <% end %>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            var preview = document.getElementById('image_preview');
+            var img = document.getElementById('preview_img');
+
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                preview.style.display = 'block';
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>

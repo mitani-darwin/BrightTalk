@@ -10,6 +10,10 @@ Rails.application.routes.draw do
   post   '/login',  to: 'sessions#create'
   delete '/logout', to: 'sessions#destroy'
 
+  get '/logout', to: 'sessions#destroy'
+  delete '/logout', to: 'sessions#destroy'
+
+
   # 投稿関連
   resources :posts do
     resources :comments, only: [:create, :destroy]

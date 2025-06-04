@@ -10,6 +10,7 @@
     <% if @posts.any? %>
       <% @posts.each do |post| %>
         <article class="card mb-4 shadow-sm">
+
           <div class="card-body">
             <div class="d-flex align-items-center mb-3">
               <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
@@ -38,11 +39,6 @@
           </div>
         </article>
       <% end %>
-
-      <!-- シンプルなページネーション -->
-      <div class="d-flex justify-content-center mt-4">
-        <%= paginate @posts %>
-      </div>
     <% else %>
       <div class="text-center py-5">
         <h4 class="text-muted">まだ記事がありません</h4>
@@ -64,9 +60,6 @@
       </div>
       <div class="card-body">
         <p class="card-text">このサイトは、誰でも自由に記事を投稿できるブログサイトです。</p>
-        <% if @posts.respond_to?(:total_count) %>
-          <p class="text-muted mb-0">現在 <strong><%= @posts.total_count %></strong> 件の記事が投稿されています。</p>
-        <% end %>
       </div>
     </div>
   </div>
