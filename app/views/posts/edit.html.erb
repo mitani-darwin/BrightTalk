@@ -1,0 +1,38 @@
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h4 class="mb-0">記事を編集</h4>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @post, local: true do |form| %>
+          <% if @post.errors.any? %>
+            <div class="alert alert-danger">
+              <h6><%= pluralize(@post.errors.count, "error") %> prohibited this post from being saved:</h6>
+              <ul class="mb-0">
+                <% @post.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-3">
+            <%= form.label :title, "タイトル", class: "form-label" %>
+            <%= form.text_field :title, class: "form-control" %>
+          </div>
+
+          <div class="mb-4">
+            <%= form.label :content, "本文", class: "form-label" %>
+            <%= form.text_area :content, class: "form-control", rows: 15 %>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <%= link_to "キャンセル", @post, class: "btn btn-secondary" %>
+            <%= form.submit "記事を更新", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

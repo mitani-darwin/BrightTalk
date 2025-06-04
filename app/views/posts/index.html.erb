@@ -1,0 +1,73 @@
+<div class="row">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h2">最新の記事</h1>
+      <% if logged_in? %>
+        <%= link_to "記事を書く", new_post_path, class: "btn btn-primary" %>
+      <% end %>
+    </div>
+
+    <% if @posts.any? %>
+      <% @posts.each do |post| %>
+        <article class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                <%= post.user.name.first.upcase %>
+              </div>
+              <div>
+                <h6 class="mb-0"><%= link_to post.user.name, user_path(post.user), class: "text-decoration-none" %></h6>
+                <small class="text-muted"><%= post.created_at.strftime("%Y年%m月%d日 %H:%M") %></small>
+              </div>
+            </div>
+
+            <h5 class="card-title">
+              <%= link_to post.title, post_path(post), class: "text-decoration-none text-dark" %>
+            </h5>
+
+            <p class="card-text text-muted">
+              <%= truncate(strip_tags(post.content), length: 150) %>
+            </p>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <%= link_to "続きを読む", post_path(post), class: "btn btn-outline-primary btn-sm" %>
+              <small class="text-muted">
+                <i class="bi bi-chat"></i> <%= post.comments.count %>件のコメント
+              </small>
+            </div>
+          </div>
+        </article>
+      <% end %>
+
+      <!-- シンプルなページネーション -->
+      <div class="d-flex justify-content-center mt-4">
+        <%= paginate @posts %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <h4 class="text-muted">まだ記事がありません</h4>
+        <p class="text-muted">最初の記事を投稿してみましょう！</p>
+        <% if logged_in? %>
+          <%= link_to "記事を書く", new_post_path, class: "btn btn-primary" %>
+        <% else %>
+          <%= link_to "ログインして記事を書く", login_path, class: "btn btn-primary" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- サイドバー -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">サイトについて</h6>
+      </div>
+      <div class="card-body">
+        <p class="card-text">このサイトは、誰でも自由に記事を投稿できるブログサイトです。</p>
+        <% if @posts.respond_to?(:total_count) %>
+          <p class="text-muted mb-0">現在 <strong><%= @posts.total_count %></strong> 件の記事が投稿されています。</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,51 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header text-center">
+        <h4 class="mb-0">新規登録</h4>
+      </div>
+      <div class="card-body">
+        <%= form_with model: @user, local: true do |form| %>
+          <% if @user&.errors&.any? %>
+            <div class="alert alert-danger">
+              <h6><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h6>
+              <ul class="mb-0">
+                <% @user.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-3">
+            <%= form.label :name, "ユーザー名", class: "form-label" %>
+            <%= form.text_field :name, class: "form-control", placeholder: "あなたの名前" %>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :email, "メールアドレス", class: "form-label" %>
+            <%= form.email_field :email, class: "form-control", placeholder: "your@example.com" %>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :password, "パスワード", class: "form-label" %>
+            <%= form.password_field :password, class: "form-control", placeholder: "6文字以上" %>
+          </div>
+
+          <div class="mb-4">
+            <%= form.label :password_confirmation, "パスワード確認", class: "form-label" %>
+            <%= form.password_field :password_confirmation, class: "form-control", placeholder: "パスワードを再入力" %>
+          </div>
+
+          <div class="d-grid">
+            <%= form.submit "アカウントを作成", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+
+        <div class="text-center mt-3">
+          <p class="mb-0">すでにアカウントをお持ちですか？ <%= link_to "ログイン", login_path %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
