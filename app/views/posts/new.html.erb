@@ -1,85 +1,155 @@
-<div style="min-height: 100vh; background-color: #f9fafb; padding: 32px 0;">
-  <div style="max-width: 768px; margin: 0 auto; padding: 0 16px;">
-    <div style="background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; overflow: hidden;">
-      <!-- ヘッダー -->
-      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 24px; color: white;">
-        <h1 style="font-size: 28px; font-weight: bold; margin: 0 0 8px 0;">新しい投稿を作成</h1>
-        <p style="color: #c7d2fe; margin: 0; font-size: 16px;">あなたの思いをみんなに共有しましょう</p>
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <!-- ページヘッダー -->
+    <div class="d-flex align-items-center mb-4">
+      <%= link_to posts_path, class: "btn btn-outline-secondary me-3" do %>
+        <i class="fas fa-arrow-left"></i> 戻る
+      <% end %>
+      <h1 class="h2 mb-0">
+        <i class="fas fa-pen"></i> 新規投稿作成
+      </h1>
+    </div>
+
+    <!-- メインフォームカード -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-edit"></i> 投稿内容を入力してください
+        </h5>
       </div>
 
-      <!-- フォーム -->
-      <div style="padding: 32px;">
-        <%= form_with model: @post, local: true, html: { multipart: true, style: "display: block;" } do |form| %>
+      <div class="card-body">
+        <%= form_with model: @post, local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
+
+          <!-- エラーメッセージ -->
           <% if @post.errors.any? %>
-            <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-              <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <svg style="width: 20px; height: 20px; color: #dc2626; margin-right: 8px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h3 style="color: #991b1b; font-weight: 500; margin: 0; font-size: 16px;">エラーが発生しました</h3>
-              </div>
-              <ul style="color: #991b1b; font-size: 14px; margin: 0; padding-left: 0; list-style: none;">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <h6 class="alert-heading">
+                <i class="fas fa-exclamation-triangle"></i> 入力エラーがあります
+              </h6>
+              <ul class="mb-0">
                 <% @post.errors.full_messages.each do |message| %>
-                  <li style="margin-bottom: 4px;">• <%= message %></li>
+                  <li><%= message %></li>
                 <% end %>
               </ul>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
           <% end %>
 
-          <!-- タイトル -->
-          <div style="margin-bottom: 24px;">
-            <%= form.label :title, "タイトル", style: "display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;" %>
+          <!-- タイトル入力 -->
+          <div class="mb-4">
+            <%= form.label :title, class: "form-label fw-bold" do %>
+              <i class="fas fa-heading"></i> タイトル <span class="text-danger">*</span>
+            <% end %>
             <%= form.text_field :title,
-                                style: "width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; transition: border-color 0.2s; box-sizing: border-box;",
-                                placeholder: "投稿のタイトルを入力してください",
-                                onfocus: "this.style.borderColor='#4f46e5'; this.style.outline='none';",
-                                onblur: "this.style.borderColor='#d1d5db';" %>
+                                class: "form-control form-control-lg #{'is-invalid' if @post.errors[:title].any?}",
+                                placeholder: "魅力的なタイトルを入力してください...",
+                                maxlength: 100,
+                                required: true %>
+            <div class="form-text">
+              <i class="fas fa-info-circle"></i> 100文字以内で入力してください
+            </div>
+            <% if @post.errors[:title].any? %>
+              <div class="invalid-feedback">
+                <%= @post.errors[:title].first %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- カテゴリー選択 -->
+          <div class="mb-4">
+            <%= form.label :category_id, class: "form-label fw-bold" do %>
+              <i class="fas fa-tag"></i> カテゴリー <span class="text-danger">*</span>
+            <% end %>
+            <%= form.collection_select :category_id, @categories, :id, :name,
+                                       { prompt: "カテゴリーを選択してください" },
+                                       { class: "form-select #{'is-invalid' if @post.errors[:category].any?}", required: true } %>
+            <% if @post.errors[:category].any? %>
+              <div class="invalid-feedback">
+                <%= @post.errors[:category].first %>
+              </div>
+            <% end %>
           </div>
 
           <!-- 画像アップロード -->
-          <div style="margin-bottom: 24px;">
-            <%= form.label :image, "画像", style: "display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;" %>
-            <div style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 32px; text-align: center; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#4f46e5';" onmouseout="this.style.borderColor='#d1d5db';">
-              <%= form.file_field :image,
-                                  style: "display: none;",
-                                  id: "image_upload",
-                                  accept: "image/*",
-                                  onchange: "previewImage(this)" %>
-              <label for="image_upload" style="cursor: pointer; display: block;">
-                <svg style="width: 48px; height: 48px; color: #9ca3af; margin: 0 auto 12px; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                </svg>
-                <p style="color: #4b5563; font-weight: 500; margin: 0 0 4px 0; font-size: 16px;">画像をアップロード</p>
-                <p style="color: #6b7280; font-size: 14px; margin: 0;">PNG, JPG, GIF (最大10MB)</p>
-              </label>
+          <div class="mb-4">
+            <%= form.label :image, class: "form-label fw-bold" do %>
+              <i class="fas fa-image"></i> 画像（オプション）
+            <% end %>
+            <%= form.file_field :image,
+                                class: "form-control #{'is-invalid' if @post.errors[:image].any?}",
+                                accept: "image/*",
+                                id: "imageInput" %>
+            <div class="form-text">
+              <i class="fas fa-info-circle"></i> JPEG、PNG、GIF形式、10MB以下のファイルをアップロード可能です
             </div>
-            <div id="image_preview" style="margin-top: 16px; display: none;">
-              <img id="preview_img" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" />
+            <% if @post.errors[:image].any? %>
+              <div class="invalid-feedback">
+                <%= @post.errors[:image].first %>
+              </div>
+            <% end %>
+
+            <!-- 画像プレビュー -->
+            <div id="imagePreview" class="mt-3" style="display: none;">
+              <div class="card">
+                <div class="card-body text-center">
+                  <img id="previewImg" src="" alt="プレビュー" class="img-fluid rounded" style="max-height: 200px;">
+                  <div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage()">
+                      <i class="fas fa-times"></i> 画像を削除
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 内容 -->
-          <div style="margin-bottom: 24px;">
-            <%= form.label :content, "内容", style: "display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;" %>
+          <!-- コンテンツ入力 -->
+          <div class="mb-4">
+            <%= form.label :content, class: "form-label fw-bold" do %>
+              <i class="fas fa-align-left"></i> 本文 <span class="text-danger">*</span>
+            <% end %>
             <%= form.text_area :content,
-                               style: "width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; resize: vertical; min-height: 200px; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit;",
-                               placeholder: "投稿の内容を入力してください...",
-                               onfocus: "this.style.borderColor='#4f46e5'; this.style.outline='none';",
-                               onblur: "this.style.borderColor='#d1d5db';" %>
+                               class: "form-control #{'is-invalid' if @post.errors[:content].any?}",
+                               rows: 12,
+                               placeholder: "投稿の内容を詳しく書いてください...",
+                               required: true %>
+            <div class="form-text">
+              <i class="fas fa-info-circle"></i> Markdownで記述することができます
+            </div>
+            <% if @post.errors[:content].any? %>
+              <div class="invalid-feedback">
+                <%= @post.errors[:content].first %>
+              </div>
+            <% end %>
           </div>
 
-          <!-- ボタン -->
-          <div style="padding-top: 16px;">
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <%= form.submit "投稿する",
-                              style: "width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; font-weight: 500; padding: 14px 24px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);",
-                              onmouseover: "this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(79, 70, 229, 0.4)';",
-                              onmouseout: "this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(79, 70, 229, 0.3)';" %>
-              <%= link_to "キャンセル", posts_path,
-                          style: "width: 100%; background-color: #f3f4f6; color: #374151; font-weight: 500; padding: 14px 24px; border-radius: 8px; text-decoration: none; text-align: center; display: block; transition: background-color 0.2s; box-sizing: border-box;",
-                          onmouseover: "this.style.backgroundColor='#e5e7eb';",
-                          onmouseout: "this.style.backgroundColor='#f3f4f6';" %>
-            </div>
+          <!-- 投稿ガイドライン -->
+          <div class="alert alert-info">
+            <h6 class="alert-heading">
+              <i class="fas fa-lightbulb"></i> 投稿のコツ
+            </h6>
+            <ul class="mb-0 small">
+              <li>読みやすいタイトルをつけましょう</li>
+              <li>適切なカテゴリーを選択してください</li>
+              <li>具体的で分かりやすい内容を心がけましょう</li>
+              <li>画像を追加すると、より魅力的な投稿になります</li>
+            </ul>
+          </div>
+
+          <!-- アクションボタン -->
+          <div class="d-flex gap-3 justify-content-end">
+            <%= link_to posts_path, class: "btn btn-outline-secondary" do %>
+              <i class="fas fa-times"></i> キャンセル
+            <% end %>
+
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#previewModal">
+              <i class="fas fa-eye"></i> プレビュー
+            </button>
+
+            <%= form.submit "投稿する", class: "btn btn-primary" do %>
+              <i class="fas fa-paper-plane"></i> 投稿する
+            <% end %>
           </div>
         <% end %>
       </div>
@@ -87,19 +157,125 @@
   </div>
 </div>
 
+<!-- プレビューモーダル -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-eye"></i> 投稿プレビュー
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="previewContent">
+          <!-- プレビュー内容がここに表示される -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times"></i> 閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
 <script>
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            var preview = document.getElementById('image_preview');
-            var img = document.getElementById('preview_img');
-
+    // 画像プレビュー機能
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
             reader.onload = function(e) {
-                img.src = e.target.result;
-                preview.style.display = 'block';
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
             }
-
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
         }
+    });
+
+    // 画像削除機能
+    function removeImage() {
+        document.getElementById('imageInput').value = '';
+        document.getElementById('imagePreview').style.display = 'none';
     }
+
+    // プレビュー機能
+    document.querySelector('[data-bs-target="#previewModal"]').addEventListener('click', function() {
+        const title = document.getElementById('post_title').value;
+        const content = document.getElementById('post_content').value;
+        const categorySelect = document.getElementById('post_category_id');
+        const categoryName = categorySelect.options[categorySelect.selectedIndex].text;
+        const imagePreview = document.getElementById('previewImg').src;
+
+        let previewHtml = `
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title">${title || 'タイトルなし'}</h2>
+        <div class="mb-3">
+          <span class="badge bg-primary">${categoryName !== 'カテゴリーを選択してください' ? categoryName : 'カテゴリーなし'}</span>
+        </div>
+  `;
+
+        if (imagePreview && imagePreview !== '') {
+            previewHtml += `<img src="${imagePreview}" class="img-fluid rounded mb-3" alt="投稿画像">`;
+        }
+
+        previewHtml += `
+        <div class="card-text">
+          ${content.replace(/\n/g, '<br>') || 'コンテンツなし'}
+        </div>
+      </div>
+    </div>
+  `;
+
+        document.getElementById('previewContent').innerHTML = previewHtml;
+    });
+
+    // フォームバリデーション
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
 </script>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+
+    .btn {
+        transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    #imagePreview {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

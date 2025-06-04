@@ -1,5 +1,7 @@
+
 class Post < ApplicationRecord
   belongs_to :user
+  belongs_to :category
   has_many :comments, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :liked_users, through: :likes, source: :user
@@ -9,9 +11,11 @@ class Post < ApplicationRecord
 
   validates :title, presence: true
   validates :content, presence: true
+  validates :category, presence: true
 
   # スコープの追加
   scope :recent, -> { order(created_at: :desc) }
+  scope :by_category, ->(category_id) { where(category_id: category_id) if category_id.present? }
 
   # 画像のバリデーション（カスタムバリデーション）
   validate :image_validation
@@ -20,7 +24,6 @@ class Post < ApplicationRecord
   def likes_count
     likes.count
   end
-
 
   private
 

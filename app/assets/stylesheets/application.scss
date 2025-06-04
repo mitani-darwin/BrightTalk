@@ -93,3 +93,105 @@
 .alert {
   margin-bottom: 0;
 }
+
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
+ * vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any other CSS
+ * files in this directory. Styles in this file should be added after the last require_* statement.
+ * It is generally better to create a new file per style scope.
+ *
+ *= require_tree .
+ *= require_self
+ */
+
+/* 既存のスタイルがここにある場合があります */
+
+// カスタムスタイル
+.card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+  }
+}
+
+.avatar {
+  .rounded-circle {
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+}
+
+.badge {
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// カテゴリーボタンのスタイル
+.btn-outline-primary {
+  &:not(.active):hover {
+    transform: translateX(5px);
+  }
+}
+
+// カードのレスポンシブ調整
+@media (max-width: 768px) {
+  .col-lg-3 {
+    order: 2;
+  }
+
+  .col-lg-9 {
+    order: 1;
+  }
+}
+
+// フォームのカスタムスタイル
+.form-control, .form-select {
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+
+  &:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    transform: translateY(-1px);
+  }
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+
+  .card-header {
+    border-radius: 12px 12px 0 0;
+  }
+}
+
+// アニメーション
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

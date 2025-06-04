@@ -1,252 +1,142 @@
-
 <div class="row">
-  <div class="col-lg-8">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1 class="h2">最新の記事</h1>
-      <% if logged_in? %>
-        <%= link_to "記事を書く", new_post_path, class: "btn btn-primary" %>
-      <% end %>
+  <!-- サイドバー：カテゴリーフィルター -->
+  <div class="col-lg-3 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-filter"></i> カテゴリーで絞り込み
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <%= link_to posts_path,
+                      class: "btn #{ params[:category_id].blank? ? 'btn-primary' : 'btn-outline-primary' }" do %>
+            <i class="fas fa-th"></i> すべて
+          <% end %>
+
+          <% @categories.each do |category| %>
+            <%= link_to posts_path(category_id: category.id),
+                        class: "btn #{ params[:category_id] == category.id.to_s ? 'btn-primary' : 'btn-outline-primary' }" do %>
+              <i class="fas fa-tag"></i> <%= category.name %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
     </div>
-
-    <% if @posts.any? %>
-      <% @posts.each do |post| %>
-        <article class="card mb-4 shadow-sm">
-          <div class="card-body">
-            <div class="d-flex align-items-center mb-3">
-              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                <%= post.user.name.first.upcase %>
-              </div>
-              <div>
-                <h6 class="mb-0"><%= link_to post.user.name, user_path(post.user), class: "text-decoration-none" %></h6>
-                <small class="text-muted"><%= post.created_at.strftime("%Y年%m月%d日 %H:%M") %></small>
-              </div>
-            </div>
-
-            <h5 class="card-title">
-              <%= link_to post.title, post_path(post), class: "text-decoration-none text-dark" %>
-            </h5>
-
-            <% if post.image.attached? %>
-              <div class="mb-3">
-                <%= image_tag post.image, class: "img-fluid rounded", style: "max-height: 200px; width: 100%; object-fit: cover;" %>
-              </div>
-            <% end %>
-
-            <p class="card-text text-muted">
-              <%= truncate(strip_tags(post.content), length: 150) %>
-            </p>
-
-            <!-- 既存のコードの中で、コメント数の表示部分を以下のように更新 -->
-            <div class="d-flex justify-content-between align-items-center">
-              <%= link_to "続きを読む", post_path(post), class: "btn btn-outline-primary btn-sm" %>
-              <div class="d-flex align-items-center gap-3">
-                <%= render 'likes/like_button', post: post %>
-                <small class="text-muted">
-                  <i class="bi bi-chat"></i> <%= post.comments.count %>件のコメント
-                </small>
-              </div>
-            </div>
-          </div>
-        </article>
-      <% end %>
-
-      <!-- ページネーション -->
-      <div class="d-flex justify-content-center mb-4">
-        <nav aria-label="ページネーション">
-          <ul class="pagination">
-            <!-- 前のページ -->
-            <% if @posts.prev_page %>
-              <li class="page-item">
-                <%= link_to "« 前", posts_path(page: @posts.prev_page), class: "page-link" %>
-              </li>
-            <% else %>
-              <li class="page-item disabled">
-                <span class="page-link">« 前</span>
-              </li>
-            <% end %>
-
-            <!-- ページ番号 -->
-            <% if @posts.total_pages <= 7 %>
-              <!-- 7ページ以下の場合は全て表示 -->
-              <% (1..@posts.total_pages).each do |page| %>
-                <% if page == @posts.current_page %>
-                  <li class="page-item active">
-                    <span class="page-link"><%= page %></span>
-                  </li>
-                <% else %>
-                  <li class="page-item">
-                    <%= link_to page, posts_path(page: page), class: "page-link" %>
-                  </li>
-                <% end %>
-              <% end %>
-            <% else %>
-              <!-- 7ページより多い場合は省略表示 -->
-              <% if @posts.current_page <= 4 %>
-                <!-- 最初の方のページ -->
-                <% (1..5).each do |page| %>
-                  <% if page == @posts.current_page %>
-                    <li class="page-item active">
-                      <span class="page-link"><%= page %></span>
-                    </li>
-                  <% else %>
-                    <li class="page-item">
-                      <%= link_to page, posts_path(page: page), class: "page-link" %>
-                    </li>
-                  <% end %>
-                <% end %>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-                <li class="page-item">
-                  <%= link_to @posts.total_pages, posts_path(page: @posts.total_pages), class: "page-link" %>
-                </li>
-              <% elsif @posts.current_page >= @posts.total_pages - 3 %>
-                <!-- 最後の方のページ -->
-                <li class="page-item">
-                  <%= link_to 1, posts_path(page: 1), class: "page-link" %>
-                </li>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-                <% ((@posts.total_pages - 4)..@posts.total_pages).each do |page| %>
-                  <% if page == @posts.current_page %>
-                    <li class="page-item active">
-                      <span class="page-link"><%= page %></span>
-                    </li>
-                  <% else %>
-                    <li class="page-item">
-                      <%= link_to page, posts_path(page: page), class: "page-link" %>
-                    </li>
-                  <% end %>
-                <% end %>
-              <% else %>
-                <!-- 中間のページ -->
-                <li class="page-item">
-                  <%= link_to 1, posts_path(page: 1), class: "page-link" %>
-                </li>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-                <% ((@posts.current_page - 1)..(@posts.current_page + 1)).each do |page| %>
-                  <% if page == @posts.current_page %>
-                    <li class="page-item active">
-                      <span class="page-link"><%= page %></span>
-                    </li>
-                  <% else %>
-                    <li class="page-item">
-                      <%= link_to page, posts_path(page: page), class: "page-link" %>
-                    </li>
-                  <% end %>
-                <% end %>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-                <li class="page-item">
-                  <%= link_to @posts.total_pages, posts_path(page: @posts.total_pages), class: "page-link" %>
-                </li>
-              <% end %>
-            <% end %>
-
-            <!-- 次のページ -->
-            <% if @posts.next_page %>
-              <li class="page-item">
-                <%= link_to "次 »", posts_path(page: @posts.next_page), class: "page-link" %>
-              </li>
-            <% else %>
-              <li class="page-item disabled">
-                <span class="page-link">次 »</span>
-              </li>
-            <% end %>
-          </ul>
-        </nav>
-      </div>
-
-    <% else %>
-      <div class="text-center py-5">
-        <h4 class="text-muted">まだ記事がありません</h4>
-        <p class="text-muted">最初の記事を投稿してみましょう！</p>
-        <% if logged_in? %>
-          <%= link_to "記事を書く", new_post_path, class: "btn btn-primary" %>
-        <% else %>
-          <%= link_to "ログインして記事を書く", login_path, class: "btn btn-primary" %>
-        <% end %>
-      </div>
-    <% end %>
   </div>
 
-  <!-- サイドバー -->
-  <div class="col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h6 class="mb-0">サイトについて</h6>
-      </div>
-      <div class="card-body">
-        <p class="card-text">このサイトは、誰でも自由に記事を投稿できるブログサイトです。</p>
-      </div>
+  <!-- メインコンテンツ：投稿一覧 -->
+  <div class="col-lg-9">
+    <!-- ヘッダー -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h2">
+        <i class="fas fa-list"></i> 投稿一覧
+        <% if params[:category_id].present? %>
+          <small class="text-muted">- <%= @categories.find(params[:category_id]).name %></small>
+        <% end %>
+      </h1>
+      <%= link_to new_post_path, class: "btn btn-success" do %>
+        <i class="fas fa-plus"></i> 新しい投稿
+      <% end %>
     </div>
 
-    <!-- 統計情報 -->
-    <div class="card shadow-sm mt-3">
-      <div class="card-header">
-        <h6 class="mb-0">サイト統計</h6>
+    <!-- 投稿がない場合 -->
+    <% if @posts.empty? %>
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <h4 class="text-muted">投稿がありません</h4>
+          <p class="text-muted">まだ投稿がありません。最初の投稿を作成しませんか？</p>
+          <%= link_to "投稿を作成", new_post_path, class: "btn btn-primary" %>
+        </div>
       </div>
-      <div class="card-body">
-        <ul class="list-unstyled mb-0">
-          <li class="mb-2">
-            <i class="bi bi-file-text me-2 text-primary"></i>
-            <strong>総記事数:</strong> <%= Post.count %>件
-          </li>
-          <li class="mb-2">
-            <i class="bi bi-people me-2 text-success"></i>
-            <strong>登録ユーザー:</strong> <%= User.count %>人
-          </li>
-          <li>
-            <i class="bi bi-chat me-2 text-info"></i>
-            <strong>総コメント数:</strong> <%= Comment.count %>件
-          </li>
-        </ul>
-      </div>
-    </div>
+    <% else %>
+      <!-- 投稿カード一覧 -->
+      <div class="row">
+        <% @posts.each do |post| %>
+          <div class="col-12 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <!-- ヘッダー情報 -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div class="d-flex align-items-center">
+                    <div class="avatar me-3">
+                      <% if post.user.present? %>
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                             style="width: 40px; height: 40px;">
+                          <%= post.user.name.first %>
+                        </div>
+                      <% end %>
+                    </div>
+                    <div>
+                      <h6 class="mb-0"><%= post.user.name if post.user %></h6>
+                      <small class="text-muted">
+                        <i class="fas fa-clock"></i> <%= time_ago_in_words(post.created_at) %>前
+                      </small>
+                    </div>
+                  </div>
 
-    <!-- 最近のコメント -->
-    <div class="card shadow-sm mt-3">
-      <div class="card-header">
-        <h6 class="mb-0">最近のコメント</h6>
-      </div>
-      <div class="card-body">
-        <% Comment.includes(:user, :post).order(created_at: :desc).limit(3).each do |comment| %>
-          <div class="mb-3 pb-2 <%= comment != Comment.includes(:user, :post).order(created_at: :desc).limit(3).last ? 'border-bottom' : '' %>">
-            <div class="d-flex align-items-start">
-              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 25px; height: 25px; flex-shrink: 0; font-size: 0.75rem;">
-                <%= comment.user.name.first.upcase %>
-              </div>
-              <div class="flex-grow-1">
-                <div class="mb-1">
-                  <small class="fw-bold"><%= comment.user.name %></small>
-                  <small class="text-muted">・<%= time_ago_in_words(comment.created_at) %>前</small>
+                  <!-- カテゴリーバッジ -->
+                  <%= link_to posts_path(category_id: post.category.id),
+                              class: "badge bg-primary text-decoration-none" do %>
+                    <i class="fas fa-tag"></i> <%= post.category.name %>
+                  <% end %>
                 </div>
-                <p class="mb-1 small text-muted">
-                  <%= truncate(comment.content, length: 50) %>
+
+                <!-- タイトル -->
+                <h5 class="card-title">
+                  <%= link_to post.title, post, class: "text-decoration-none" %>
+                </h5>
+
+                <!-- 画像（もしあれば） -->
+                <% if post.image.attached? %>
+                  <div class="mb-3">
+                    <%= image_tag post.image, class: "img-fluid rounded", style: "max-height: 200px; width: 100%; object-fit: cover;" %>
+                  </div>
+                <% end %>
+
+                <!-- コンテンツプレビュー -->
+                <p class="card-text text-muted">
+                  <%= truncate(strip_tags(post.content), length: 150) %>
                 </p>
-                <small>
-                  <%= link_to comment.post.title, post_path(comment.post), class: "text-decoration-none small" %>
-                </small>
+
+                <!-- フッター：いいねとコメント -->
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-3">
+                    <%= render 'likes/like_button', post: post %>
+                    <div class="d-flex align-items-center text-muted">
+                      <i class="bi bi-chat-left me-1" style="font-size: 1.1rem;"></i>
+                      <span class="small"><%= post.comments.count %></span>
+                    </div>
+                  </div>
+
+
+                  <!-- アクションボタン -->
+                  <div class="btn-group" role="group">
+                    <%= link_to post, class: "btn btn-outline-primary btn-sm" do %>
+                      <i class="fas fa-eye"></i> 表示
+                    <% end %>
+
+                    <% if current_user == post.user %>
+                      <%= link_to edit_post_path(post), class: "btn btn-outline-secondary btn-sm" do %>
+                        <i class="fas fa-edit"></i> 編集
+                      <% end %>
+
+                      <%= link_to post, method: :delete,
+                                  data: {
+                                    confirm: "本当に削除しますか？",
+                                    turbo_method: :delete
+                                  },
+                                  class: "btn btn-outline-danger btn-sm" do %>
+                        <i class="fas fa-trash"></i> 削除
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         <% end %>
-      </div>
-    </div>
-
-    <!-- ページ情報 -->
-    <% if @posts.respond_to?(:current_page) %>
-      <div class="card shadow-sm mt-3">
-        <div class="card-body text-center">
-          <small class="text-muted">
-            <%= @posts.total_pages %>ページ中 <%= @posts.current_page %>ページ目
-            (<%= @posts.total_count %>件中 <%= @posts.offset_value + 1 %>〜<%= [@posts.offset_value + @posts.limit_value, @posts.total_count].min %>件を表示)
-          </small>
-        </div>
       </div>
     <% end %>
   </div>
