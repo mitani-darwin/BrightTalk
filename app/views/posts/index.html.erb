@@ -1,3 +1,4 @@
+
 <div class="row">
   <div class="col-lg-8">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,7 +11,6 @@
     <% if @posts.any? %>
       <% @posts.each do |post| %>
         <article class="card mb-4 shadow-sm">
-
           <div class="card-body">
             <div class="d-flex align-items-center mb-3">
               <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
@@ -26,19 +26,141 @@
               <%= link_to post.title, post_path(post), class: "text-decoration-none text-dark" %>
             </h5>
 
+            <% if post.image.attached? %>
+              <div class="mb-3">
+                <%= image_tag post.image, class: "img-fluid rounded", style: "max-height: 200px; width: 100%; object-fit: cover;" %>
+              </div>
+            <% end %>
+
             <p class="card-text text-muted">
               <%= truncate(strip_tags(post.content), length: 150) %>
             </p>
 
+            <!-- 既存のコードの中で、コメント数の表示部分を以下のように更新 -->
             <div class="d-flex justify-content-between align-items-center">
               <%= link_to "続きを読む", post_path(post), class: "btn btn-outline-primary btn-sm" %>
-              <small class="text-muted">
-                <i class="bi bi-chat"></i> <%= post.comments.count %>件のコメント
-              </small>
+              <div class="d-flex align-items-center gap-3">
+                <%= render 'likes/like_button', post: post %>
+                <small class="text-muted">
+                  <i class="bi bi-chat"></i> <%= post.comments.count %>件のコメント
+                </small>
+              </div>
             </div>
           </div>
         </article>
       <% end %>
+
+      <!-- ページネーション -->
+      <div class="d-flex justify-content-center mb-4">
+        <nav aria-label="ページネーション">
+          <ul class="pagination">
+            <!-- 前のページ -->
+            <% if @posts.prev_page %>
+              <li class="page-item">
+                <%= link_to "« 前", posts_path(page: @posts.prev_page), class: "page-link" %>
+              </li>
+            <% else %>
+              <li class="page-item disabled">
+                <span class="page-link">« 前</span>
+              </li>
+            <% end %>
+
+            <!-- ページ番号 -->
+            <% if @posts.total_pages <= 7 %>
+              <!-- 7ページ以下の場合は全て表示 -->
+              <% (1..@posts.total_pages).each do |page| %>
+                <% if page == @posts.current_page %>
+                  <li class="page-item active">
+                    <span class="page-link"><%= page %></span>
+                  </li>
+                <% else %>
+                  <li class="page-item">
+                    <%= link_to page, posts_path(page: page), class: "page-link" %>
+                  </li>
+                <% end %>
+              <% end %>
+            <% else %>
+              <!-- 7ページより多い場合は省略表示 -->
+              <% if @posts.current_page <= 4 %>
+                <!-- 最初の方のページ -->
+                <% (1..5).each do |page| %>
+                  <% if page == @posts.current_page %>
+                    <li class="page-item active">
+                      <span class="page-link"><%= page %></span>
+                    </li>
+                  <% else %>
+                    <li class="page-item">
+                      <%= link_to page, posts_path(page: page), class: "page-link" %>
+                    </li>
+                  <% end %>
+                <% end %>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+                <li class="page-item">
+                  <%= link_to @posts.total_pages, posts_path(page: @posts.total_pages), class: "page-link" %>
+                </li>
+              <% elsif @posts.current_page >= @posts.total_pages - 3 %>
+                <!-- 最後の方のページ -->
+                <li class="page-item">
+                  <%= link_to 1, posts_path(page: 1), class: "page-link" %>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+                <% ((@posts.total_pages - 4)..@posts.total_pages).each do |page| %>
+                  <% if page == @posts.current_page %>
+                    <li class="page-item active">
+                      <span class="page-link"><%= page %></span>
+                    </li>
+                  <% else %>
+                    <li class="page-item">
+                      <%= link_to page, posts_path(page: page), class: "page-link" %>
+                    </li>
+                  <% end %>
+                <% end %>
+              <% else %>
+                <!-- 中間のページ -->
+                <li class="page-item">
+                  <%= link_to 1, posts_path(page: 1), class: "page-link" %>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+                <% ((@posts.current_page - 1)..(@posts.current_page + 1)).each do |page| %>
+                  <% if page == @posts.current_page %>
+                    <li class="page-item active">
+                      <span class="page-link"><%= page %></span>
+                    </li>
+                  <% else %>
+                    <li class="page-item">
+                      <%= link_to page, posts_path(page: page), class: "page-link" %>
+                    </li>
+                  <% end %>
+                <% end %>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+                <li class="page-item">
+                  <%= link_to @posts.total_pages, posts_path(page: @posts.total_pages), class: "page-link" %>
+                </li>
+              <% end %>
+            <% end %>
+
+            <!-- 次のページ -->
+            <% if @posts.next_page %>
+              <li class="page-item">
+                <%= link_to "次 »", posts_path(page: @posts.next_page), class: "page-link" %>
+              </li>
+            <% else %>
+              <li class="page-item disabled">
+                <span class="page-link">次 »</span>
+              </li>
+            <% end %>
+          </ul>
+        </nav>
+      </div>
+
     <% else %>
       <div class="text-center py-5">
         <h4 class="text-muted">まだ記事がありません</h4>
@@ -54,7 +176,7 @@
 
   <!-- サイドバー -->
   <div class="col-lg-4">
-    <div class="card">
+    <div class="card shadow-sm">
       <div class="card-header">
         <h6 class="mb-0">サイトについて</h6>
       </div>
@@ -62,5 +184,70 @@
         <p class="card-text">このサイトは、誰でも自由に記事を投稿できるブログサイトです。</p>
       </div>
     </div>
+
+    <!-- 統計情報 -->
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">
+        <h6 class="mb-0">サイト統計</h6>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2">
+            <i class="bi bi-file-text me-2 text-primary"></i>
+            <strong>総記事数:</strong> <%= Post.count %>件
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-people me-2 text-success"></i>
+            <strong>登録ユーザー:</strong> <%= User.count %>人
+          </li>
+          <li>
+            <i class="bi bi-chat me-2 text-info"></i>
+            <strong>総コメント数:</strong> <%= Comment.count %>件
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 最近のコメント -->
+    <div class="card shadow-sm mt-3">
+      <div class="card-header">
+        <h6 class="mb-0">最近のコメント</h6>
+      </div>
+      <div class="card-body">
+        <% Comment.includes(:user, :post).order(created_at: :desc).limit(3).each do |comment| %>
+          <div class="mb-3 pb-2 <%= comment != Comment.includes(:user, :post).order(created_at: :desc).limit(3).last ? 'border-bottom' : '' %>">
+            <div class="d-flex align-items-start">
+              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 25px; height: 25px; flex-shrink: 0; font-size: 0.75rem;">
+                <%= comment.user.name.first.upcase %>
+              </div>
+              <div class="flex-grow-1">
+                <div class="mb-1">
+                  <small class="fw-bold"><%= comment.user.name %></small>
+                  <small class="text-muted">・<%= time_ago_in_words(comment.created_at) %>前</small>
+                </div>
+                <p class="mb-1 small text-muted">
+                  <%= truncate(comment.content, length: 50) %>
+                </p>
+                <small>
+                  <%= link_to comment.post.title, post_path(comment.post), class: "text-decoration-none small" %>
+                </small>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- ページ情報 -->
+    <% if @posts.respond_to?(:current_page) %>
+      <div class="card shadow-sm mt-3">
+        <div class="card-body text-center">
+          <small class="text-muted">
+            <%= @posts.total_pages %>ページ中 <%= @posts.current_page %>ページ目
+            (<%= @posts.total_count %>件中 <%= @posts.offset_value + 1 %>〜<%= [@posts.offset_value + @posts.limit_value, @posts.total_count].min %>件を表示)
+          </small>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>

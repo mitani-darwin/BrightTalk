@@ -1,6 +1,8 @@
 class Post < ApplicationRecord
   belongs_to :user
   has_many :comments, dependent: :destroy
+  has_many :likes, dependent: :destroy
+  has_many :liked_users, through: :likes, source: :user
 
   # 画像添付機能
   has_one_attached :image
@@ -13,6 +15,12 @@ class Post < ApplicationRecord
 
   # 画像のバリデーション（カスタムバリデーション）
   validate :image_validation
+
+  # いいね数を取得
+  def likes_count
+    likes.count
+  end
+
 
   private
 

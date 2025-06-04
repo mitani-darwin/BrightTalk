@@ -15,4 +15,11 @@ module SessionsHelper
     session.delete(:user_id)
     @current_user = nil
   end
+
+  # この行を追加
+  def require_login
+    unless logged_in?
+      redirect_to login_path, alert: 'ログインしてください。'
+    end
+  end
 end

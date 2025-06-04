@@ -7,4 +7,10 @@ class ApplicationController < ActionController::Base
   # CSRF protection (Rails 8では自動的に有効になっています)
   protect_from_forgery with: :exception
 
+  def require_login
+    unless logged_in?
+      redirect_to login_path, alert: 'ログインが必要です。'
+    end
+  end
+
 end
