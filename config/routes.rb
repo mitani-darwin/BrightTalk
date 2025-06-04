@@ -16,6 +16,7 @@ Rails.application.routes.draw do
 
   # 投稿関連
   resources :posts do
+    resources :likes, only: [:create, :destroy]
     resources :comments, only: [:create, :destroy]
   end
 
