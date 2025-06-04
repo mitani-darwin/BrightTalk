@@ -1,0 +1,95 @@
+
+// Bootstrap CSSはCDNから読み込むため、ここではカスタムスタイルのみ
+
+// Kaminariページネーションのスタイル
+.pagination {
+  .page-item {
+    .page-link {
+      color: #007bff;
+      border: 1px solid #dee2e6;
+      padding: 0.5rem 0.75rem;
+      margin-left: -1px;
+      line-height: 1.25;
+      text-decoration: none;
+      background-color: #fff;
+
+      &:hover {
+        z-index: 2;
+        color: #0056b3;
+        text-decoration: none;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+      }
+
+      &:focus {
+        z-index: 3;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      }
+    }
+
+    &.active .page-link {
+      z-index: 3;
+      color: #fff;
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+
+    &.disabled .page-link {
+      color: #6c757d;
+      pointer-events: none;
+      cursor: auto;
+      background-color: #fff;
+      border-color: #dee2e6;
+    }
+
+    &:first-child .page-link {
+      margin-left: 0;
+      border-top-left-radius: 0.25rem;
+      border-bottom-left-radius: 0.25rem;
+    }
+
+    &:last-child .page-link {
+      border-top-right-radius: 0.25rem;
+      border-bottom-right-radius: 0.25rem;
+    }
+  }
+}
+
+// カードのホバーエフェクト
+.card {
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// 記事コンテンツ
+.post-content {
+  line-height: 1.6;
+}
+
+// カスタムボタンスタイル
+.btn-outline-primary {
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// フォームスタイル
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+// ナビゲーションバーのカスタマイズ
+.navbar-brand {
+  font-size: 1.5rem;
+  color: #007bff !important;
+}
+
+// アラートのマージン調整
+.alert {
+  margin-bottom: 0;
+}

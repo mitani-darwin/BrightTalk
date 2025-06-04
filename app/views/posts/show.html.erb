@@ -1,0 +1,108 @@
+<div class="row">
+  <div class="col-lg-8">
+    <article class="card shadow-sm">
+      <div class="card-body">
+        <!-- 記事ヘッダー -->
+        <div class="d-flex align-items-center mb-4">
+          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+            <%= @post.user.name.first.upcase %>
+          </div>
+          <div class="flex-grow-1">
+            <h6 class="mb-0"><%= link_to @post.user.name, user_path(@post.user), class: "text-decoration-none" %></h6>
+            <small class="text-muted"><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %></small>
+          </div>
+          <% if logged_in? && @post.user == current_user %>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                操作
+              </button>
+              <ul class="dropdown-menu">
+                <li><%= link_to "編集", edit_post_path(@post), class: "dropdown-item" %></li>
+                <li><%= link_to "削除", post_path(@post), method: :delete,
+                                confirm: "本当に削除しますか？", class: "dropdown-item text-danger" %></li>
+              </ul>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- 記事タイトル -->
+        <h1 class="h2 mb-4"><%= @post.title %></h1>
+
+        <!-- 記事本文 -->
+        <div class="post-content">
+          <%= simple_format(@post.content, class: "mb-4") %>
+        </div>
+      </div>
+    </article>
+
+    <!-- コメントセクション -->
+    <div class="mt-4">
+      <h4>コメント (<%= @post.comments.count %>)</h4>
+
+      <!-- コメント投稿フォーム -->
+      <% if logged_in? %>
+        <div class="card mt-3">
+          <div class="card-body">
+            <%= form_with model: [@post, @comment], local: true do |form| %>
+              <div class="mb-3">
+                <%= form.text_area :content, class: "form-control", rows: 3, placeholder: "コメントを書く..." %>
+              </div>
+              <div class="d-flex justify-content-end">
+                <%= form.submit "コメントする", class: "btn btn-primary" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="alert alert-info mt-3">
+          <%= link_to "ログイン", login_path %>してコメントを投稿しましょう
+        </div>
+      <% end %>
+
+      <!-- コメント一覧 -->
+      <div class="mt-4">
+        <% @post.comments.includes(:user).order(created_at: :desc).each do |comment| %>
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="d-flex align-items-start">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px; font-size: 0.8rem;">
+                  <%= comment.user.name.first.upcase %>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0"><%= comment.user.name %></h6>
+                    <div class="d-flex align-items-center">
+                      <small class="text-muted me-2"><%= comment.created_at.strftime("%Y/%m/%d %H:%M") %></small>
+                      <% if logged_in? && comment.user == current_user %>
+                        <%= link_to "削除", [@post, comment], method: :delete,
+                                    confirm: "コメントを削除しますか？",
+                                    class: "btn btn-outline-danger btn-sm" %>
+                      <% end %>
+                    </div>
+                  </div>
+                  <p class="mb-0"><%= simple_format(comment.content) %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- サイドバー -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">この記事を書いた人</h6>
+      </div>
+      <div class="card-body text-center">
+        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+          <%= @post.user.name.first.upcase %>
+        </div>
+        <h6><%= @post.user.name %></h6>
+        <%= link_to "プロフィールを見る", user_path(@post.user), class: "btn btn-outline-primary btn-sm" %>
+      </div>
+    </div>
+  </div>
+</div>

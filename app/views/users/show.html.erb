@@ -1,0 +1,80 @@
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- ユーザー情報 -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body text-center py-5">
+        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+          <%= @user.name.first.upcase %>
+        </div>
+        <h2><%= @user.name %></h2>
+        <p class="text-muted">登録日: <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
+      </div>
+    </div>
+
+    <!-- ユーザーの記事一覧 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4><%= @user.name %>さんの記事 (<%= @user.posts.count %>)</h4>
+    </div>
+
+    <% if @posts.any? %>
+      <% @posts.each do |post| %>
+        <article class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="card-title mb-0">
+                <%= link_to post.title, post_path(post), class: "text-decoration-none text-dark" %>
+              </h5>
+              <small class="text-muted"><%= post.created_at.strftime("%Y/%m/%d") %></small>
+            </div>
+
+            <p class="card-text text-muted">
+              <%= truncate(strip_tags(post.content), length: 150) %>
+            </p>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <%= link_to "続きを読む", post_path(post), class: "btn btn-outline-primary btn-sm" %>
+              <small class="text-muted">
+                <i class="bi bi-chat"></i> <%= post.comments.count %>件のコメント
+              </small>
+            </div>
+          </div>
+        </article>
+      <% end %>
+
+      <!-- シンプルなページネーション -->
+      <div class="d-flex justify-content-center mt-4">
+        <%= paginate @posts %>
+      </div>
+    <% else %>
+      <div class="text-center py-5">
+        <h5 class="text-muted">まだ記事がありません</h5>
+        <% if logged_in? && @user == current_user %>
+          <p class="text-muted">最初の記事を投稿してみましょう！</p>
+          <%= link_to "記事を書く", new_post_path, class: "btn btn-primary" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- サイドバー -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">統計情報</h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <h4 class="text-primary"><%= @user.posts.count %></h4>
+            <p class="text-muted mb-0">記事数</p>
+          </div>
+          <div class="col-6">
+            <h4 class="text-success"><%= @user.comments.count %></h4>
+            <p class="text-muted mb-0">コメント数</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
