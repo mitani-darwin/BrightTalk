@@ -1,30 +1,43 @@
 class PostsController < ApplicationController
   before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :require_login, except: [:index, :show]
+  before_action :correct_user, only: [:edit, :update, :destroy]
 
   def index
-    @posts = Post.includes(:category, :tags, :user)
-    @posts = @posts.by_category(params[:category_id]) if params[:category_id].present?
-    @posts = @posts.tagged_with(params[:tag]) if params[:tag].present?
-    @posts = @posts.order(created_at: :desc)
+    @posts = Post.includes(:user, :category, :tags, :likes)
 
+    # 検索クエリがある場合
+    if params[:search].present?
+      @posts = @posts.search(params[:search])
+    end
+
+    # カテゴリでフィルタ
+    if params[:category_id].present?
+      @posts = @posts.by_category(params[:category_id])
+    end
+
+    # タグでフィルタ
+    if params[:tag].present?
+      @posts = @posts.tagged_with(params[:tag])
+    end
+
+    @posts = @posts.recent.page(params[:page]).per(10)
     @categories = Category.all
-    @popular_tags = Tag.popular_for_posts.limit(20)
+    @popular_tags = Tag.joins(:posts).group(:id).order('COUNT(posts.id) DESC').limit(10)
   end
 
   def show
-    @related_posts = Post.where(category: @post.category)
-                         .where.not(id: @post.id)
-                         .limit(5)
+    @comment = Comment.new
+    @comments = @post.comments.includes(:user).order(created_at: :desc)
   end
 
   def new
-    @post = Post.new
+    @post = current_user.posts.build
     @categories = Category.all
   end
 
   def create
-    @post = Post.new(post_params)
-    @post.user = current_user # セッション管理がある場合
+    @post = current_user.posts.build(post_params)
 
     if @post.save
       redirect_to @post, notice: '投稿が作成されました。'
@@ -60,5 +73,9 @@ class PostsController < ApplicationController
 
   def post_params
     params.require(:post).permit(:title, :content, :category_id, :tag_list, :image)
+  end
+
+  def correct_user
+    redirect_to posts_path, alert: '権限がありません。' unless @post.user == current_user
   end
 end
