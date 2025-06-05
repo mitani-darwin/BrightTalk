@@ -5,6 +5,8 @@ class Post < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :liked_users, through: :likes, source: :user
+  has_many :post_tags, dependent: :destroy
+  has_many :tags, through: :post_tags
 
   # 画像添付機能
   has_one_attached :image
@@ -16,6 +18,7 @@ class Post < ApplicationRecord
   # スコープの追加
   scope :recent, -> { order(created_at: :desc) }
   scope :by_category, ->(category_id) { where(category_id: category_id) if category_id.present? }
+  scope :tagged_with, ->(tag_name) { joins(:tags).where(tags: { name: tag_name }) }
 
   # 画像のバリデーション（カスタムバリデーション）
   validate :image_validation
@@ -23,6 +26,15 @@ class Post < ApplicationRecord
   # いいね数を取得
   def likes_count
     likes.count
+  end
+
+  def tag_list
+    tags.map(&:name).join(', ')
+  end
+
+  def tag_list=(names)
+    tag_names = names.split(',').map(&:strip).reject(&:blank?)
+    self.tags = Tag.find_or_create_by_names(tag_names)
   end
 
   private

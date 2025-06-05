@@ -23,6 +23,27 @@
         </div>
       </div>
     </div>
+
+    <!-- サイドバーに人気タグを追加 -->
+    <% if @popular_tags&.any? %>
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-tags"></i> 人気のタグ
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <% @popular_tags.each do |tag| %>
+              <%= link_to posts_path(tag: tag.name),
+                          class: "badge bg-secondary text-decoration-none #{'bg-primary' if params[:tag] == tag.name}" do %>
+                #<%= tag.name %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <!-- メインコンテンツ：投稿一覧 -->
@@ -87,6 +108,18 @@
                 <h5 class="card-title">
                   <%= link_to post.title, post, class: "text-decoration-none" %>
                 </h5>
+
+                <!-- 投稿カードにタグ表示を追加 -->
+                <% if post.tags.any? %>
+                  <div class="mb-2">
+                    <% post.tags.each do |tag| %>
+                      <%= link_to posts_path(tag: tag.name),
+                                  class: "badge bg-secondary text-decoration-none me-1" do %>
+                        #<%= tag.name %>
+                      <% end %>
+                    <% end %>
+                  </div>
+                <% end %>
 
                 <!-- 画像（もしあれば） -->
                 <% if post.image.attached? %>

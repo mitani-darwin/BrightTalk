@@ -2,11 +2,13 @@ class PostsController < ApplicationController
   before_action :set_post, only: [:show, :edit, :update, :destroy]
 
   def index
-    @posts = Post.includes(:category, :user)
+    @posts = Post.includes(:category, :tags, :user)
     @posts = @posts.by_category(params[:category_id]) if params[:category_id].present?
+    @posts = @posts.tagged_with(params[:tag]) if params[:tag].present?
     @posts = @posts.order(created_at: :desc)
 
     @categories = Category.all
+    @popular_tags = Tag.popular_for_posts.limit(20)
   end
 
   def show
@@ -57,6 +59,6 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :category_id)
+    params.require(:post).permit(:title, :content, :category_id, :tag_list, :image)
   end
 end
