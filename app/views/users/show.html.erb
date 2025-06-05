@@ -1,79 +1,96 @@
 
-<div class="row">
-  <div class="col-lg-8">
-    <!-- ユーザー情報 -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-body text-center py-5">
-        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
-          <%= @user.name.first.upcase %>
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h1 class="h3 mb-0"><%= @user.name %>さんのプロフィール</h1>
         </div>
-        <h2><%= @user.name %></h2>
-        <p class="text-muted">登録日: <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
-      </div>
-    </div>
-
-    <!-- ユーザーの記事一覧 -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4><%= @user.name %>さんの記事 (<%= @user.posts.count %>)</h4>
-    </div>
-
-    <% if @posts.any? %>
-      <% @posts.each do |post| %>
-        <article class="card mb-4 shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-              <h5 class="card-title mb-0">
-                <%= link_to post.title, post_path(post), class: "text-decoration-none text-dark" %>
-              </h5>
-              <small class="text-muted"><%= post.created_at.strftime("%Y/%m/%d") %></small>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="user-info">
+                <p><strong>名前:</strong> <%= @user.name %></p>
+                <p><strong>メール:</strong> <%= @user.email if user_signed_in? && @user == current_user %></p>
+                <p><strong>登録日:</strong> <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
+              </div>
             </div>
+            <div class="col-md-8">
+              <div class="user-stats">
+                <div class="row text-center">
+                  <div class="col-4">
+                    <div class="stat">
+                      <h4 class="mb-0 text-primary"><%= @user.posts.count %></h4>
+                      <small class="text-muted">投稿数</small>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="stat">
+                      <h4 class="mb-0 text-success"><%= @user.comments.count %></h4>
+                      <small class="text-muted">コメント数</small>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="stat">
+                      <h4 class="mb-0 text-danger"><%= @user.likes.count %></h4>
+                      <small class="text-muted">いいね数</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <p class="card-text text-muted">
-              <%= truncate(strip_tags(post.content), length: 150) %>
+          <% if user_signed_in? && @user == current_user %>
+            <hr>
+            <div class="text-center">
+              <%= link_to "プロフィール編集", edit_user_registration_path, class: "btn btn-primary me-2" %>
+              <%= link_to "新規投稿", new_post_path, class: "btn btn-success" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- ユーザーの投稿一覧 -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0"><%= @user.name %>さんの投稿</h5>
+        </div>
+        <div class="card-body">
+          <% if @user.posts.any? %>
+            <% @user.posts.order(created_at: :desc).each do |post| %>
+              <div class="border-bottom py-3">
+                <h6 class="mb-2">
+                  <%= link_to post.title, post_path(post), class: "text-decoration-none" %>
+                </h6>
+                <div class="text-muted small mb-2">
+                  <i class="bi bi-calendar"></i> <%= post.created_at.strftime("%Y年%m月%d日") %>
+                  <% if post.category %>
+                    <span class="mx-2">|</span>
+                    <i class="bi bi-folder"></i> <%= post.category.name %>
+                  <% end %>
+                  <span class="mx-2">|</span>
+                  <i class="bi bi-heart"></i> <%= post.likes.count %>
+                  <span class="mx-2">|</span>
+                  <i class="bi bi-chat"></i> <%= post.comments.count %>
+                </div>
+                <p class="mb-0 text-muted">
+                  <%= truncate(strip_tags(post.content), length: 100) %>
+                </p>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center py-4">
+              <i class="bi bi-file-text"></i><br>
+              まだ投稿がありません。
             </p>
-
-            <div class="d-flex justify-content-between align-items-center">
-              <%= link_to "続きを読む", post_path(post), class: "btn btn-outline-primary btn-sm" %>
-              <small class="text-muted">
-                <i class="bi bi-chat"></i> <%= post.comments.count %>件のコメント
-              </small>
-            </div>
-          </div>
-        </article>
-      <% end %>
-
-      <!-- シンプルなページネーション -->
-      <div class="d-flex justify-content-center mt-4">
-        <%= paginate @posts %>
-      </div>
-    <% else %>
-      <div class="text-center py-5">
-        <h5 class="text-muted">まだ記事がありません</h5>
-        <% if logged_in? && @user == current_user %>
-          <p class="text-muted">最初の記事を投稿してみましょう！</p>
-          <%= link_to "記事を書く", new_post_path, class: "btn btn-primary" %>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- サイドバー -->
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-header">
-        <h6 class="mb-0">統計情報</h6>
-      </div>
-      <div class="card-body">
-        <div class="row text-center">
-          <div class="col-6">
-            <h4 class="text-primary"><%= @user.posts.count %></h4>
-            <p class="text-muted mb-0">記事数</p>
-          </div>
-          <div class="col-6">
-            <h4 class="text-success"><%= @user.comments.count %></h4>
-            <p class="text-muted mb-0">コメント数</p>
-          </div>
+          <% end %>
         </div>
+      </div>
+
+      <!-- 戻るボタン -->
+      <div class="mt-4 text-center">
+        <%= link_to "トップページに戻る", root_path, class: "btn btn-secondary" %>
       </div>
     </div>
   </div>

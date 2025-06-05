@@ -1,4 +1,3 @@
-
 class Post < ApplicationRecord
   belongs_to :user
   belongs_to :category
@@ -8,33 +7,43 @@ class Post < ApplicationRecord
   has_many :post_tags, dependent: :destroy
   has_many :tags, through: :post_tags
 
-  # 画像添付機能
+  # 複数から単数に変更
   has_one_attached :image
 
   validates :title, presence: true
   validates :content, presence: true
-  validates :category, presence: true
 
-  # スコープの追加
   scope :recent, -> { order(created_at: :desc) }
   scope :by_category, ->(category_id) { where(category_id: category_id) if category_id.present? }
-  scope :tagged_with, ->(tag_name) { joins(:tags).where(tags: { name: tag_name }) }
+  scope :tagged_with, ->(tag_name) { joins(:tags).where(tags: { name: tag_name }) if tag_name.present? }
 
-  # 画像のバリデーション（カスタムバリデーション）
-  validate :image_validation
+  # 検索機能のスコープを修正 - SQLite3では ILIKE の代わりに LIKE COLLATE NOCASE を使用
+  scope :search, ->(query) {
+    return all if query.blank?
 
-  # いいね数を取得
+    where(
+      "title LIKE :query COLLATE NOCASE OR content LIKE :query COLLATE NOCASE OR EXISTS (
+        SELECT 1 FROM post_tags pt
+        JOIN tags t ON pt.tag_id = t.id
+        WHERE pt.post_id = posts.id AND t.name LIKE :query COLLATE NOCASE
+      )",
+      query: "%#{query}%"
+    )
+  }
+
   def likes_count
     likes.count
   end
 
   def tag_list
-    tags.map(&:name).join(', ')
+    tags.pluck(:name).join(', ')
   end
 
   def tag_list=(names)
     tag_names = names.split(',').map(&:strip).reject(&:blank?)
-    self.tags = Tag.find_or_create_by_names(tag_names)
+    self.tags = tag_names.map do |name|
+      Tag.find_or_create_by(name: name.downcase)
+    end
   end
 
   private
@@ -42,15 +51,8 @@ class Post < ApplicationRecord
   def image_validation
     return unless image.attached?
 
-    # ファイル形式のチェック
-    acceptable_types = %w[image/jpeg image/jpg image/png image/gif]
-    unless acceptable_types.include?(image.blob.content_type)
-      errors.add(:image, "は JPEG、PNG、GIF ファイルのみアップロード可能です")
-    end
-
-    # ファイルサイズのチェック
-    if image.blob.byte_size > 10.megabytes
-      errors.add(:image, "は10MB以下にしてください")
+    if image.blob.byte_size > 5.megabytes
+      errors.add(:image, 'は5MB以下である必要があります')
     end
   end
 end

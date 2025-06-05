@@ -1,5 +1,6 @@
 class LikesController < ApplicationController
-  before_action :require_login
+  # いいねの作成・削除にはログインが必要
+  before_action :authenticate_user!
   before_action :set_post
 
   def create
