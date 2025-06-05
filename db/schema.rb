@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_04_120000) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_05_100302) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -101,8 +101,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_04_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "category_id", null: false
+    t.boolean "published", default: true, null: false
+    t.integer "likes_count", default: 0, null: false
     t.index ["category_id"], name: "index_posts_on_category_id"
+    t.index ["published"], name: "index_posts_on_published"
     t.index ["user_id"], name: "index_posts_on_user_id"
+  end
+
+  create_table "search_histories", force: :cascade do |t|
+    t.integer "user_id"
+    t.string "query", null: false
+    t.string "search_type", default: "posts"
+    t.text "filters"
+    t.integer "results_count", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_search_histories_on_created_at"
+    t.index ["query"], name: "index_search_histories_on_query"
+    t.index ["search_type"], name: "index_search_histories_on_search_type"
+    t.index ["user_id", "created_at"], name: "index_search_histories_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_search_histories_on_user_id"
   end
 
   create_table "tags", force: :cascade do |t|
@@ -114,9 +132,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_04_120000) do
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
-    t.string "password_digest"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -132,4 +155,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_04_120000) do
   add_foreign_key "post_tags", "tags"
   add_foreign_key "posts", "categories"
   add_foreign_key "posts", "users"
+  add_foreign_key "search_histories", "users"
 end
