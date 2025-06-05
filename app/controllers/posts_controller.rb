@@ -1,44 +1,55 @@
-
 class PostsController < ApplicationController
-  before_action :require_login, except: [:index, :show]
   before_action :set_post, only: [:show, :edit, :update, :destroy]
 
   def index
-    @posts = Post.includes(:user).recent.page(params[:page]).per(5)
+    @posts = Post.includes(:category, :tags, :user)
+    @posts = @posts.by_category(params[:category_id]) if params[:category_id].present?
+    @posts = @posts.tagged_with(params[:tag]) if params[:tag].present?
+    @posts = @posts.order(created_at: :desc)
+
+    @categories = Category.all
+    @popular_tags = Tag.popular_for_posts.limit(20)
   end
 
   def show
-    @comment = Comment.new
+    @related_posts = Post.where(category: @post.category)
+                         .where.not(id: @post.id)
+                         .limit(5)
   end
 
   def new
-    @post = current_user.posts.build
+    @post = Post.new
+    @categories = Category.all
   end
 
   def create
-    @post = current_user.posts.build(post_params)
+    @post = Post.new(post_params)
+    @post.user = current_user # セッション管理がある場合
+
     if @post.save
-      redirect_to @post, notice: '記事を投稿しました'
+      redirect_to @post, notice: '投稿が作成されました。'
     else
+      @categories = Category.all
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    redirect_to @post unless @post.user == current_user
+    @categories = Category.all
   end
 
   def update
     if @post.update(post_params)
-      redirect_to @post, notice: '記事を更新しました'
+      redirect_to @post, notice: '投稿が更新されました。'
     else
+      @categories = Category.all
       render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
-    @post.destroy if @post.user == current_user
-    redirect_to posts_path, notice: '記事を削除しました'
+    @post.destroy
+    redirect_to posts_path, notice: '投稿が削除されました。'
   end
 
   private
@@ -48,13 +59,6 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :image)
-  end
-
-  def require_login
-    unless logged_in?
-      flash[:alert] = 'ログインが必要です'
-      redirect_to login_path
-    end
+    params.require(:post).permit(:title, :content, :category_id, :tag_list, :image)
   end
 end

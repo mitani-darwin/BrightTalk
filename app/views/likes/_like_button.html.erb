@@ -1,5 +1,5 @@
 <div id="like-button-<%= post.id %>" class="d-inline-block">
-  <% if logged_in? %>
+  <% if current_user %>
     <% if current_user.liked?(post) %>
       <%= form_with url: post_like_path(post, current_user.likes.find_by(post: post)),
                     method: :delete,
@@ -7,7 +7,7 @@
                     class: "d-inline" do |form| %>
         <%= form.button type: "submit", class: "btn btn-sm p-1 border-0", style: "background: none;" do %>
           <span class="d-flex align-items-center">
-            <i class="bi bi-heart-fill me-1 text-danger"></i>
+            <i class="bi bi-heart-fill me-1 text-danger" style="font-size: 1.1rem;"></i>
             <span class="small"><%= post.likes_count %></span>
           </span>
         <% end %>
@@ -19,7 +19,7 @@
                     class: "d-inline" do |form| %>
         <%= form.button type: "submit", class: "btn btn-sm p-1 border-0", style: "background: none;" do %>
           <span class="d-flex align-items-center">
-            <i class="bi bi-heart me-1 text-muted"></i>
+            <i class="bi bi-heart me-1 text-muted" style="font-size: 1.1rem;"></i>
             <span class="small"><%= post.likes_count %></span>
           </span>
         <% end %>
@@ -27,7 +27,7 @@
     <% end %>
   <% else %>
     <div class="d-flex align-items-center text-muted">
-      <i class="bi bi-heart me-1"></i>
+      <i class="bi bi-heart-fill me-1" style="font-size: 1.1rem;"></i>
       <span class="small"><%= post.likes_count %></span>
     </div>
   <% end %>

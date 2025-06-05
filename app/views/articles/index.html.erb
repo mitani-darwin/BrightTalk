@@ -1,0 +1,41 @@
+<h1>記事一覧</h1>
+
+<div class="filters">
+  <h3>カテゴリで絞り込み</h3>
+  <%= link_to "すべて", articles_path, class: "filter-link #{'active' if params[:category_id].blank?}" %>
+  <% @categories.each do |category| %>
+    <%= link_to category.name, articles_path(category_id: category.id),
+                class: "filter-link #{'active' if params[:category_id] == category.id.to_s}" %>
+  <% end %>
+
+  <h3>人気のタグ</h3>
+  <div class="tag-cloud">
+    <% @popular_tags.each do |tag| %>
+      <%= link_to "##{tag.name}", articles_path(tag: tag.name),
+                  class: "tag #{'active' if params[:tag] == tag.name}" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="articles">
+  <% @articles.each do |article| %>
+    <article class="article-card">
+      <h2><%= link_to article.title, article %></h2>
+      <div class="meta">
+        <span class="category">
+          <%= link_to article.category.name, articles_path(category_id: article.category.id) %>
+        </span>
+        <div class="tags">
+          <% article.tags.each do |tag| %>
+            <%= link_to "##{tag.name}", articles_path(tag: tag.name), class: "tag" %>
+          <% end %>
+        </div>
+      </div>
+      <p><%= truncate(article.content, length: 200) %></p>
+    </article>
+  <% end %>
+</div>
+
+<%= paginate @articles %>
+
+<%= link_to "新しい記事を作成", new_article_path, class: "btn btn-primary" %>
