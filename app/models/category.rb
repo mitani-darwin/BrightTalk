@@ -1,10 +1,14 @@
+
 class Category < ApplicationRecord
-  has_many :articles, dependent: :destroy
+  # Article関連の不要な関連を削除
+  # has_many :articles, dependent: :destroy
+
   has_many :posts, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true
   validates :name, length: { maximum: 50 }
 
-  scope :with_articles, -> { joins(:articles).distinct }
+  # Article関連のスコープを削除し、Post関連のみ残す
+  # scope :with_articles, -> { joins(:articles).distinct }
   scope :with_posts, -> { joins(:posts).distinct }
 end

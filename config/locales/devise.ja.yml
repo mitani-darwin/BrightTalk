@@ -4,6 +4,12 @@ ja:
       user:
         one: "ユーザー"
         other: "ユーザー"
+      post:
+        one: "投稿"
+        other: "投稿"
+      category:
+        one: "カテゴリー"
+        other: "カテゴリー"
     attributes:
       user:
         name: 名前
@@ -12,6 +18,14 @@ ja:
         password_confirmation: パスワード確認
         current_password: 現在のパスワード
         remember_me: ログイン状態を保持する
+      post:
+        title: タイトル
+        content: 内容
+        category_id: カテゴリー
+        image: 画像
+        tag_list: タグ
+      category:
+        name: カテゴリー名
     errors:
       models:
         user:
@@ -27,6 +41,19 @@ ja:
               blank: "を入力してください"
             password_confirmation:
               confirmation: "とパスワードの入力が一致しません"
+        post:
+          attributes:
+            title:
+              blank: "を入力してください"
+              too_long: "は%{count}文字以内で入力してください"
+            content:
+              blank: "を入力してください"
+              too_long: "は%{count}文字以内で入力してください"
+            category_id:
+              blank: "を選択してください"
+            image:
+              content_type: "は有効な画像形式（JPEG、PNG、GIF）を選択してください"
+              size: "のファイルサイズは10MB以下にしてください"
 
   errors:
     messages:
@@ -59,6 +86,12 @@ ja:
       not_saved:
         one: "エラーが発生したため %{resource} は保存されませんでした:"
         other: "%{count} 件のエラーが発生したため %{resource} は保存されませんでした:"
+
+  active_storage_validations:
+    errors:
+      content_type: "は有効な画像形式（JPEG、PNG、GIF）を選択してください"
+      size: "のファイルサイズは10MB以下にしてください"
+      limit_out_of_range: "の添付ファイル数が制限を超えています"
 
   devise:
     confirmations:

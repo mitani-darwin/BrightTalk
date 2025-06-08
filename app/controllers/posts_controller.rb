@@ -1,39 +1,49 @@
 class PostsController < ApplicationController
   before_action :set_post, only: [:show, :edit, :update, :destroy]
-  before_action :require_login, except: [:index, :show]
-  before_action :correct_user, only: [:edit, :update, :destroy]
+  before_action :set_categories, only: [:index, :new, :edit, :create, :update]
 
   def index
-    @posts = Post.includes(:user, :category, :tags, :likes)
+    @posts = Post.includes(:user, :category, :likes, :comments)
 
-    # 検索クエリがある場合
-    if params[:search].present?
-      @posts = @posts.search(params[:search])
+    # 並び順の指定
+    case params[:sort]
+    when 'oldest'
+      @posts = @posts.order(created_at: :asc)
+    when 'popular'
+      @posts = @posts.left_joins(:likes)
+                     .group('posts.id')
+                     .order('COUNT(likes.id) DESC, posts.created_at DESC')
+    when 'comments'
+      @posts = @posts.left_joins(:comments)
+                     .group('posts.id')
+                     .order('COUNT(comments.id) DESC, posts.created_at DESC')
+    else # デフォルトは新しい順
+      @posts = @posts.order(created_at: :desc)
     end
 
-    # カテゴリでフィルタ
+    # カテゴリーフィルタリング
     if params[:category_id].present?
-      @posts = @posts.by_category(params[:category_id])
+      @posts = @posts.where(category_id: params[:category_id])
     end
 
-    # タグでフィルタ
+    # タグフィルタリング（もし実装している場合）
     if params[:tag].present?
-      @posts = @posts.tagged_with(params[:tag])
+      @posts = @posts.joins(:tags).where(tags: { name: params[:tag] })
     end
 
-    @posts = @posts.recent.page(params[:page]).per(10)
-    @categories = Category.all
-    @popular_tags = Tag.joins(:posts).group(:id).order('COUNT(posts.id) DESC').limit(10)
+    # ページネーション
+    @posts = @posts.page(params[:page]).per(10)
+
+    # 人気タグの取得
+    @popular_tags = Tag.joins(:posts).group('tags.id').order('COUNT(posts.id) DESC').limit(10)
   end
 
   def show
     @comment = Comment.new
-    @comments = @post.comments.includes(:user).order(created_at: :desc)
   end
 
   def new
-    @post = current_user.posts.build
-    @categories = Category.all
+    @post = Post.new
   end
 
   def create
@@ -42,20 +52,17 @@ class PostsController < ApplicationController
     if @post.save
       redirect_to @post, notice: '投稿が作成されました。'
     else
-      @categories = Category.all
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    @categories = Category.all
   end
 
   def update
     if @post.update(post_params)
       redirect_to @post, notice: '投稿が更新されました。'
     else
-      @categories = Category.all
       render :edit, status: :unprocessable_entity
     end
   end
@@ -71,11 +78,11 @@ class PostsController < ApplicationController
     @post = Post.find(params[:id])
   end
 
-  def post_params
-    params.require(:post).permit(:title, :content, :category_id, :tag_list, :image)
+  def set_categories
+    @categories = Category.all
   end
 
-  def correct_user
-    redirect_to posts_path, alert: '権限がありません。' unless @post.user == current_user
+  def post_params
+    params.require(:post).permit(:title, :content, :category_id, :image, :tag_list)
   end
 end

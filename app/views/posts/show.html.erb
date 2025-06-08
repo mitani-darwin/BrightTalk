@@ -1,198 +1,165 @@
-<% content_for :title, @post.title %>
 
-<div class="row">
-  <div class="col-lg-8">
-    <!-- 投稿詳細 -->
-    <article class="card shadow-sm mb-4">
-      <div class="card-body">
-        <!-- 投稿ヘッダー -->
-        <div class="d-flex align-items-center mb-4">
-          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-            <%= @post.user.name.first.upcase %>
+<div class="container my-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- 投稿カード -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <!-- ヘッダー情報 -->
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar me-3">
+                <% if @post.user.present? %>
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                       style="width: 50px; height: 50px;">
+                    <span class="fw-bold"><%= @post.user.name.first %></span>
+                  </div>
+                <% end %>
+              </div>
+              <div>
+                <h6 class="mb-0"><%= @post.user.name if @post.user %></h6>
+                <small class="text-muted">
+                  <i class="fas fa-clock"></i> <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+                </small>
+              </div>
+            </div>
+
+            <!-- カテゴリーバッジ -->
+            <%= link_to posts_path(category_id: @post.category.id),
+                        class: "badge bg-primary text-decoration-none" do %>
+              <i class="fas fa-tag"></i> <%= @post.category.name %>
+            <% end %>
           </div>
-          <div>
-            <h6 class="mb-0">
-              <%= link_to @post.user.name, user_path(@post.user), class: "text-decoration-none" %>
-            </h6>
-            <small class="text-muted"><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %></small>
+
+          <!-- タイトル -->
+          <h1 class="h3 mb-3"><%= @post.title %></h1>
+
+          <!-- タグ表示 -->
+          <% if @post.tags.any? %>
+            <div class="mb-3">
+              <% @post.tags.each do |tag| %>
+                <%= link_to posts_path(tag: tag.name),
+                            class: "badge bg-secondary text-decoration-none me-1" do %>
+                  #<%= tag.name %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+
+          <!-- 画像表示 -->
+          <% if @post.image.attached? %>
+            <div class="mb-4">
+              <%= image_tag @post.image,
+                            class: "img-fluid rounded shadow-sm",
+                            style: "width: 100%; max-height: 500px; object-fit: cover;" %>
+            </div>
+          <% end %>
+
+          <!-- コンテンツ -->
+          <div class="mb-4">
+            <div class="content-text">
+              <%= simple_format(@post.content) %>
+            </div>
+          </div>
+
+          <!-- いいねとコメント数 -->
+          <div class="d-flex justify-content-between align-items-center border-top pt-3">
+            <div class="d-flex align-items-center gap-3">
+              <%= render 'likes/like_button', post: @post %>
+              <div class="d-flex align-items-center text-muted">
+                <i class="bi bi-chat-left me-1" style="font-size: 1.1rem;"></i>
+                <span><%= @post.comments.count %> コメント</span>
+              </div>
+            </div>
+
+            <!-- アクションボタン -->
+            <% if current_user == @post.user %>
+              <div class="btn-group" role="group">
+                <%= link_to edit_post_path(@post), class: "btn btn-outline-secondary btn-sm" do %>
+                  <i class="fas fa-edit"></i> 編集
+                <% end %>
+
+                <%= link_to @post, method: :delete,
+                            data: {
+                              confirm: "本当に削除しますか？",
+                              turbo_method: :delete
+                            },
+                            class: "btn btn-outline-danger btn-sm" do %>
+                  <i class="fas fa-trash"></i> 削除
+                <% end %>
+              </div>
+            <% end %>
           </div>
         </div>
+      </div>
 
-        <!-- タイトル -->
-        <h1 class="h2 mb-4"><%= @post.title %></h1>
-
-        <!-- 画像表示 -->
-        <% if @post.image.attached? %>
-          <div class="mb-4 text-center">
-            <%= image_tag @post.image, class: "img-fluid rounded shadow-sm", style: "max-height: 500px;" %>
-          </div>
-        <% end %>
-
-        <!-- 投稿内容 -->
-        <div class="post-content mb-4">
-          <%= simple_format(@post.content, {}, { wrapper_tag: "div" }) %>
+      <!-- コメントセクション -->
+      <div class="card mt-4 shadow-sm">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-comments"></i> コメント (<%= @post.comments.count %>)
+          </h5>
         </div>
+        <div class="card-body">
+          <!-- コメント投稿フォーム -->
+          <% if user_signed_in? %>
+            <%= form_with model: [@post, @comment], local: true, class: "mb-4" do |form| %>
+              <div class="mb-3">
+                <%= form.text_area :content,
+                                   class: "form-control",
+                                   rows: 3,
+                                   placeholder: "コメントを入力してください..." %>
+              </div>
+              <div class="d-grid">
+                <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="alert alert-info">
+              コメントを投稿するには<%= link_to "ログイン", new_user_session_path %>が必要です。
+            </div>
+          <% end %>
 
-        <!-- 投稿統計とアクション -->
-        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-          <div class="d-flex align-items-center text-muted">
-            <i class="bi bi-chat me-2"></i>
-            <span><%= @post.comments.count %>件のコメント</span>
-          </div>
-
-          <% if current_user == @post.user %>
-            <div>
-              <%= link_to "編集", edit_post_path(@post), class: "btn btn-outline-secondary btn-sm me-2" %>
-              <%= link_to "削除", @post, method: :delete,
-                          data: { confirm: "本当に削除しますか？" },
-                          class: "btn btn-outline-danger btn-sm" %>
+          <!-- コメント一覧 -->
+          <% if @post.comments.any? %>
+            <div class="border-top pt-3">
+              <% @post.comments.includes(:user).order(created_at: :desc).each do |comment| %>
+                <div class="d-flex mb-3">
+                  <div class="avatar me-3">
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                         style="width: 40px; height: 40px;">
+                      <span><%= comment.user&.name&.first || "?" %></span>
+                    </div>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="bg-light rounded p-3">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong><%= comment.user&.name || "匿名ユーザー" %></strong>
+                        <small class="text-muted">
+                          <%= time_ago_in_words(comment.created_at) %>前
+                        </small>
+                      </div>
+                      <p class="mb-0"><%= simple_format(comment.content) %></p>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-comment-slash fa-2x mb-2"></i>
+              <p>まだコメントがありません。最初のコメントを投稿しませんか？</p>
             </div>
           <% end %>
         </div>
       </div>
-    </article>
 
-    <!-- コメントセクション -->
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h5 class="mb-0">コメント (<%= @post.comments.count %>)</h5>
-      </div>
-      <div class="card-body">
-        <!-- コメント投稿フォーム -->
-        <% if logged_in? %>
-          <div class="mb-4">
-            <h6 class="mb-3">コメントを投稿</h6>
-            <%= form_with model: [@post, Comment.new], local: true do |form| %>
-              <div class="mb-3">
-                <%= form.text_area :content,
-                                   placeholder: "コメントを入力してください...",
-                                   rows: 4,
-                                   class: "form-control" %>
-              </div>
-              <div>
-                <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
-              </div>
-            <% end %>
-          </div>
-          <hr>
+      <!-- 戻るボタン -->
+      <div class="mt-4">
+        <%= link_to posts_path, class: "btn btn-outline-secondary" do %>
+          <i class="fas fa-arrow-left"></i> 投稿一覧に戻る
         <% end %>
-
-        <!-- コメント一覧 -->
-        <% if @post.comments.any? %>
-          <div class="comments-list">
-            <% @post.comments.order(created_at: :desc).each_with_index do |comment, index| %>
-              <div class="comment-item <%= 'border-top pt-3' if index > 0 %> mb-3">
-                <div class="d-flex align-items-start">
-                  <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px; flex-shrink: 0;">
-                    <%= comment.user.name.first.upcase %>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                      <div>
-                        <h6 class="mb-0 small">
-                          <%= link_to comment.user.name, user_path(comment.user), class: "text-decoration-none" %>
-                        </h6>
-                        <small class="text-muted"><%= comment.created_at.strftime("%Y年%m月%d日 %H:%M") %></small>
-                      </div>
-                      <% if current_user == comment.user %>
-                        <%= link_to "削除", [@post, comment], method: :delete,
-                                    data: { confirm: "コメントを削除しますか？" },
-                                    class: "btn btn-link btn-sm text-danger p-0" %>
-                      <% end %>
-                    </div>
-                    <div class="comment-content">
-                      <%= simple_format(comment.content, {}, { wrapper_tag: "div" }) %>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        <% else %>
-          <div class="text-center py-4">
-            <p class="text-muted mb-0">まだコメントはありません。</p>
-            <% unless logged_in? %>
-              <small class="text-muted">
-                <%= link_to "ログイン", login_path, class: "text-decoration-none" %>してコメントを投稿しましょう。
-              </small>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-
-    <!-- ナビゲーション -->
-    <div class="mt-4 text-center">
-      <%= link_to posts_path, class: "btn btn-outline-secondary" do %>
-        <i class="bi bi-arrow-left"></i> 投稿一覧に戻る
-      <% end %>
-    </div>
-  </div>
-
-  <!-- サイドバー -->
-  <div class="col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-header">
-        <h6 class="mb-0">投稿者について</h6>
-      </div>
-      <div class="card-body">
-        <div class="d-flex align-items-center mb-3">
-          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-            <%= @post.user.name.first.upcase %>
-          </div>
-          <div>
-            <h6 class="mb-0">
-              <%= link_to @post.user.name, user_path(@post.user), class: "text-decoration-none" %>
-            </h6>
-            <small class="text-muted">投稿者</small>
-          </div>
-        </div>
-        <div class="border-top pt-3">
-          <small class="text-muted">
-            このユーザーの投稿数: <%= @post.user.posts.count %>件
-          </small>
-        </div>
-      </div>
-    </div>
-
-    <!-- 関連情報 -->
-    <div class="card shadow-sm mt-3">
-      <div class="card-header">
-        <h6 class="mb-0">投稿情報</h6>
-      </div>
-      <div class="card-body">
-        <ul class="list-unstyled mb-0">
-          <li class="mb-2">
-            <i class="bi bi-calendar3 me-2 text-muted"></i>
-            <small>投稿日: <%= @post.created_at.strftime("%Y年%m月%d日") %></small>
-          </li>
-          <li class="mb-2">
-            <i class="bi bi-chat me-2 text-muted"></i>
-            <small>コメント数: <%= @post.comments.count %>件</small>
-          </li>
-          <% if @post.updated_at != @post.created_at %>
-            <li>
-              <i class="bi bi-pencil me-2 text-muted"></i>
-              <small>最終更新: <%= @post.updated_at.strftime("%Y年%m月%d日") %></small>
-            </li>
-          <% end %>
-        </ul>
       </div>
     </div>
   </div>
 </div>
-
-<style>
-    .post-content {
-        line-height: 1.8;
-        font-size: 1.1rem;
-    }
-
-    .comment-content {
-        line-height: 1.6;
-    }
-
-    .comment-item:last-child {
-        margin-bottom: 0 !important;
-    }
-</style>
