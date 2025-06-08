@@ -1,34 +1,13 @@
-<div id="like-button-<%= post.id %>" class="d-inline-block">
-  <% if current_user %>
-    <% if current_user.liked?(post) %>
-      <%= form_with url: post_like_path(post, current_user.likes.find_by(post: post)),
-                    method: :delete,
-                    local: false,
-                    class: "d-inline" do |form| %>
-        <%= form.button type: "submit", class: "btn btn-sm p-1 border-0", style: "background: none;" do %>
-          <span class="d-flex align-items-center">
-            <i class="bi bi-heart-fill me-1 text-danger" style="font-size: 1.1rem;"></i>
-            <span class="small"><%= post.likes_count %></span>
-          </span>
-        <% end %>
-      <% end %>
-    <% else %>
-      <%= form_with url: post_likes_path(post),
-                    method: :post,
-                    local: false,
-                    class: "d-inline" do |form| %>
-        <%= form.button type: "submit", class: "btn btn-sm p-1 border-0", style: "background: none;" do %>
-          <span class="d-flex align-items-center">
-            <i class="bi bi-heart me-1 text-muted" style="font-size: 1.1rem;"></i>
-            <span class="small"><%= post.likes_count %></span>
-          </span>
-        <% end %>
-      <% end %>
-    <% end %>
-  <% else %>
-    <div class="d-flex align-items-center text-muted">
-      <i class="bi bi-heart-fill me-1" style="font-size: 1.1rem;"></i>
-      <span class="small"><%= post.likes_count %></span>
-    </div>
+<% if user_signed_in? %>
+  <%= link_to post_likes_path(post),
+              data: { turbo_method: :post },
+              class: "btn btn-sm btn-link text-decoration-none me-2 #{ current_user.liked?(post) ? 'text-danger' : 'text-muted' }",
+              style: "border: none; padding: 0.25rem 0.5rem;" do %>
+    <i class="bi bi-heart<%= '-fill' if current_user.liked?(post) %>"></i> <%= post.likes.count %>
   <% end %>
-</div>
+<% else %>
+  <!-- 未ログイン -->
+  <span class="text-muted me-2" style="padding: 0.25rem 0.5rem;">
+    <i class="bi bi-heart"></i> <%= post.likes.count %>
+  </span>
+<% end %>

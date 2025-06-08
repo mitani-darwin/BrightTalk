@@ -1,40 +1,36 @@
 class CommentsController < ApplicationController
-  before_action :require_login
+  before_action :authenticate_user!
+  before_action :set_post
 
   def create
-    @post = Post.find(params[:post_id])
     @comment = @post.comments.build(comment_params)
     @comment.user = current_user
 
     if @comment.save
-      redirect_to @post, notice: 'コメントを投稿しました'
+      redirect_to @post, notice: 'コメントが投稿されました。'
     else
-      redirect_to @post, alert: 'コメントの投稿に失敗しました'
+      redirect_to @post, alert: 'コメントの投稿に失敗しました。'
     end
   end
 
   def destroy
-    @post = Post.find(params[:post_id])
     @comment = @post.comments.find(params[:id])
 
     if @comment.user == current_user
       @comment.destroy
-      redirect_to @post, notice: 'コメントを削除しました'
+      redirect_to @post, notice: 'コメントが削除されました。'
     else
-      redirect_to @post, alert: 'コメントを削除する権限がありません'
+      redirect_to @post, alert: 'コメントの削除権限がありません。'
     end
   end
 
   private
 
-  def comment_params
-    params.require(:comment).permit(:content)
+  def set_post
+    @post = Post.find(params[:post_id])
   end
 
-  def require_login
-    unless logged_in?
-      flash[:alert] = 'ログインが必要です'
-      redirect_to login_path
-    end
+  def comment_params
+    params.require(:comment).permit(:content)
   end
 end

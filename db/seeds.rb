@@ -1,311 +1,354 @@
+require 'thread'
 
 # データベースをクリア
+puts "データベースをクリアしています..."
+PostTag.destroy_all
+Like.destroy_all
 Comment.destroy_all
 Post.destroy_all
+Tag.destroy_all
+Category.destroy_all
 User.destroy_all
 
-puts "データベースをクリアしました"
+puts "マルチスレッドでサンプルデータを作成します（総計5000件）..."
+puts "使用可能なCPUコア数: #{Etc.nprocessors}"
 
-# ユーザーを作成
-users = []
+# スレッド数の設定（小規模データなので4スレッドに制限）
+THREAD_COUNT = [Etc.nprocessors, 4].min
+puts "使用スレッド数: #{THREAD_COUNT}"
 
-users << User.create!(
-  name: "田中太郎",
-  email: "tanaka@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
+start_time = Time.current
 
-users << User.create!(
-  name: "佐藤花子",
-  email: "sato@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-users << User.create!(
-  name: "山田次郎",
-  email: "yamada@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-users << User.create!(
-  name: "鈴木美香",
-  email: "suzuki@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-users << User.create!(
-  name: "高橋健一",
-  email: "takahashi@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-users << User.create!(
-  name: "伊藤さくら",
-  email: "ito@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-users << User.create!(
-  name: "渡辺博",
-  email: "watanabe@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-users << User.create!(
-  name: "中村あやか",
-  email: "nakamura@example.com",
-  password: "password",
-  password_confirmation: "password"
-)
-
-puts "#{users.count}人のユーザーを作成しました"
-
-# 記事のテンプレートデータ
-article_templates = [
-  # プログラミング系
-  {
-    title: "Ruby on Railsの基礎を学ぼう",
-    content: "Ruby on Railsは、Webアプリケーションを効率的に開発するためのフレームワークです。\n\nMVCアーキテクチャを採用し、Convention over Configuration（設定より規約）の原則に基づいて設計されています。\n\n初心者にも優しく、プロダクティブな開発が可能です。",
-    category: "プログラミング"
-  },
-  {
-    title: "JavaScriptの非同期処理をマスターする",
-    content: "現代のWeb開発において、JavaScriptの非同期処理は必須のスキルです。\n\nPromise、async/awaitを使いこなすことで、より読みやすく保守しやすいコードが書けるようになります。\n\nFetch APIを使ったHTTPリクエストの例も含めて解説します。",
-    category: "プログラミング"
-  },
-  {
-    title: "Pythonで始めるデータ分析",
-    content: "Pythonは、データ分析の分野で最も人気のあるプログラミング言語の一つです。\n\nPandas、NumPy、Matplotlibなどのライブラリを使って、効率的にデータを処理・可視化できます。\n\n実際のデータセットを使った分析例も紹介します。",
-    category: "プログラミング"
-  },
-  {
-    title: "React Hooksの活用法",
-    content: "React Hooksは、関数コンポーネントでstate管理や副作用を扱うための強力な機能です。\n\nuseState、useEffect、useContextなどの基本的なHooksから、カスタムHooksの作成まで詳しく解説します。\n\nパフォーマンス最適化のテクニックも紹介します。",
-    category: "プログラミング"
-  },
-  {
-    title: "Dockerを使った開発環境構築",
-    content: "Dockerを使うことで、一貫性のある開発環境を簡単に構築できます。\n\nDockerfileの書き方から、docker-composeを使った複数コンテナの管理まで、実践的な内容をカバーします。\n\n本番環境へのデプロイ戦略についても触れます。",
-    category: "プログラミング"
-  },
-  # テクノロジー系
-  {
-    title: "AIと機械学習の最新動向",
-    content: "人工知能と機械学習の技術は急速に発展しています。\n\nChatGPTやStable Diffusionなどの生成AIから、自動運転技術まで、様々な分野での応用が進んでいます。\n\n今後の展望と課題について考察します。",
-    category: "テクノロジー"
-  },
-  {
-    title: "クラウドコンピューティングの基礎",
-    content: "AWS、Azure、Google Cloudなどのクラウドサービスが、現代のIT業界を支えています。\n\nIaaS、PaaS、SaaSの違いから、セキュリティ、コスト最適化まで幅広く解説します。\n\n実際の導入事例も紹介します。",
-    category: "テクノロジー"
-  },
-  {
-    title: "5Gがもたらす変革",
-    content: "5G通信技術の普及により、IoT、AR/VR、自動運転などの分野で革新的なサービスが可能になります。\n\n低遅延、高速通信、大容量接続の特徴を活かした新しいビジネスモデルが生まれています。\n\n今後の社会への影響を考えます。",
-    category: "テクノロジー"
-  },
-  # ライフスタイル系
-  {
-    title: "リモートワークを成功させるコツ",
-    content: "リモートワークが普及する中、効率的な働き方を身につけることが重要です。\n\n適切な環境作り、時間管理、コミュニケーション術など、実践的なアドバイスをまとめました。\n\nワークライフバランスの保ち方についても触れます。",
-    category: "ライフスタイル"
-  },
-  {
-    title: "健康的な食生活のすすめ",
-    content: "忙しい現代人にとって、バランスの取れた食事を心がけることは簡単ではありません。\n\n栄養素の基礎知識から、手軽にできる健康レシピまで紹介します。\n\n食事と運動の組み合わせで、より健康的な生活を目指しましょう。",
-    category: "ライフスタイル"
-  },
-  {
-    title: "ミニマリズムの実践方法",
-    content: "必要最小限のものだけで生活するミニマリズムが注目されています。\n\n物の整理方法から、心の整理まで、シンプルな生活の始め方を解説します。\n\n環境にも家計にも優しいライフスタイルを提案します。",
-    category: "ライフスタイル"
-  },
-  # ビジネス系
-  {
-    title: "スタートアップの成功法則",
-    content: "多くのスタートアップが失敗する中、成功する企業には共通の特徴があります。\n\n市場調査、プロダクト開発、資金調達、チーム作りなど、各段階でのポイントを解説します。\n\n実際の成功事例から学べる教訓も紹介します。",
-    category: "ビジネス"
-  },
-  {
-    title: "デジタルマーケティング戦略",
-    content: "デジタル時代のマーケティングは、従来の手法とは大きく異なります。\n\nSNS活用、SEO対策、コンテンツマーケティングなど、効果的な手法を体系的に説明します。\n\nデータ分析に基づいた改善サイクルの回し方も解説します。",
-    category: "ビジネス"
-  },
-  # 趣味・エンタメ系
-  {
-    title: "写真撮影のテクニック向上術",
-    content: "スマートフォンの普及により、誰でも手軽に写真を撮れるようになりました。\n\n構図の基本から、光の使い方、編集テクニックまで、より魅力的な写真を撮るコツを紹介します。\n\n風景、ポートレート、マクロなど、ジャンル別のアドバイスも含まれます。",
-    category: "趣味・エンタメ"
-  },
-  {
-    title: "読書習慣を身につける方法",
-    content: "読書は知識を深め、視野を広げる素晴らしい習慣です。\n\n忙しい日常の中で読書時間を確保する方法や、効率的な読書術を紹介します。\n\nジャンル別のおすすめ本リストも掲載しています。",
-    category: "趣味・エンタメ"
-  }
+# 共通データ
+japanese_names = [
+  "田中太郎", "佐藤花子", "鈴木一郎", "高橋美咲", "伊藤健太",
+  "渡辺里奈", "山本大輔", "中村優子", "小林翔太", "加藤恵美",
+  "吉田康雄", "山田真由美", "佐々木拓也", "松本彩香", "井上智也",
+  "木村綾乃", "林直樹", "清水美穂", "山口雅人", "森田千恵",
+  "池田良太", "橋本愛", "岡田修", "福田麻衣", "石井達也",
+  "村田沙織", "藤田健", "青木美智子", "野村浩", "大塚由香",
+  "西田亮", "前田真理", "竹内雄介", "三宅智美", "河野正一",
+  "坂本恵子", "小川学", "武田薫", "松井康夫", "金子千尋"
 ]
 
-# 追加のタイトルとコンテンツのパターン
-additional_titles = [
-  "効率的な学習方法とは", "時間管理術の極意", "コミュニケーション能力向上のコツ",
-  "創造性を高める習慣", "ストレス解消法", "投資の基礎知識",
-  "副業を始める前に知っておくべきこと", "環境問題と個人の取り組み", "旅行を安全に楽しむ方法",
-  "料理初心者向けレシピ", "ガーデニングの始め方", "ペットとの暮らし",
-  "音楽が人生に与える影響", "映画から学ぶ人生哲学", "スポーツとメンタルヘルス",
-  "アートの楽しみ方", "言語学習のコツ", "歴史から学ぶ教訓",
-  "科学の面白さ", "哲学入門", "心理学の応用",
-  "経済の基本原理", "政治への関心の持ち方", "社会問題への向き合い方",
-  "教育の未来", "医療技術の進歩", "宇宙探査の最前線",
-  "気候変動対策", "持続可能な社会作り", "文化の多様性",
-  "ファッションと自己表現", "美容と健康", "インテリアデザイン",
-  "家計管理のコツ", "キャリアプランニング", "転職成功の秘訣",
-  "起業家精神", "リーダーシップ論", "チームワークの重要性",
-  "イノベーションの創出", "問題解決思考", "批判的思考力",
-  "データサイエンス入門", "ブロックチェーン技術", "IoTの可能性",
-  "VR・ARの活用", "量子コンピューター", "バイオテクノロジー",
-  "再生可能エネルギー", "スマートシティ", "自動運転の未来",
-  "ゲーム産業の変化", "eスポーツの発展", "配信文化の影響",
-  "SNSとの付き合い方", "デジタルデトックス", "オンライン学習",
-  "テレワークツール", "サイバーセキュリティ", "プライバシー保護",
-  "アジャイル開発", "DevOps実践", "コードレビューの効果",
-  "オープンソース貢献", "技術コミュニティ", "メンターシップ",
-  "プレゼンテーション術", "ネゴシエーション", "クリエイティブ思考",
-  "マインドフルネス", "瞑想の効果", "ヨガと健康",
-  "アウトドア活動", "都市探索", "文化体験",
-  "グルメ探訪", "カフェ文化", "地域の魅力発見",
-  "季節の楽しみ方", "伝統文化継承", "現代アート鑑賞",
-  "パフォーマンス向上", "集中力アップ", "記憶力強化",
-  "情報収集術", "ネットワーキング", "メンタルヘルス"
+post_titles = [
+  "Rubyの基礎知識について", "Railsアプリケーション開発のコツ",
+  "データベース設計のベストプラクティス", "フロントエンド技術の最新動向",
+  "アジャイル開発の導入事例", "セキュリティ対策の重要性",
+  "クラウドサービス活用法", "機械学習入門ガイド",
+  "モバイルアプリ開発手法", "DevOpsの実践方法",
+  "レスポンシブデザインのテクニック", "APIの設計と実装",
+  "テスト駆動開発の実践", "コードレビューの効果的な方法",
+  "リファクタリングのベストプラクティス", "パフォーマンス最適化の手法",
+  "データベースチューニング技法", "サーバーサイド開発のポイント",
+  "フロントエンドフレームワーク比較", "CI/CD環境の構築方法"
 ]
 
-content_templates = [
-  "この分野について詳しく調べた結果、興味深い発見がありました。\n\n実際の経験を通して学んだことを、具体例とともに紹介します。\n\n皆さんの参考になれば幸いです。",
-  "最近注目されているこのトピックについて、専門家の意見と実際のデータを基に分析してみました。\n\n将来的な展望も含めて、分かりやすく解説します。\n\n実践的なアドバイスも盛り込んでいます。",
-  "多くの人が関心を持っているこの問題について、様々な角度から検討してみました。\n\n基礎知識から応用まで、段階的に説明していきます。\n\n実際に試してみた結果も報告します。",
-  "この分野の基本的な考え方から、最新の動向まで幅広くカバーしています。\n\n初心者の方にも分かりやすいように、図解や具体例を多用しました。\n\n専門家へのインタビューも含まれています。"
+post_contents = [
+  "今回は技術的な内容について詳しく解説していきます。実際の開発現場での経験を踏まえて、初心者の方にも分かりやすく説明いたします。",
+  "プロジェクトを進める上で重要なポイントをまとめました。効率的な開発手法や、チーム運営のコツについても触れています。",
+  "最新の技術トレンドと、それらを実際のプロジェクトに適用する方法について考察しています。具体的な実装例も含めて紹介します。",
+  "この分野での経験を活かして、実践的なアドバイスをお伝えします。失敗事例から学んだ教訓も含めて共有いたします。",
+  "実際のコード例を交えながら、段階的に説明していきます。初心者から上級者まで、幅広い層に役立つ内容を心がけています。"
 ]
 
-categories = ["プログラミング", "テクノロジー", "ライフスタイル", "ビジネス", "趣味・エンタメ", "学習・教育", "健康・美容", "旅行・グルメ"]
+categories_data = [
+  "プログラミング", "Web開発", "データベース", "デザイン", "マーケティング",
+  "セキュリティ", "AI・機械学習", "モバイル開発", "インフラ", "プロジェクト管理"
+]
 
-puts "記事を作成中..."
+tags_data = [
+  "Ruby", "Rails", "JavaScript", "React", "Vue.js", "Node.js", "Python",
+  "SQL", "PostgreSQL", "MySQL", "HTML", "CSS", "Bootstrap", "Git",
+  "Docker", "AWS", "セキュリティ", "API", "テスト", "アジャイル"
+]
 
-# 100件の記事を作成
-100.times do |i|
-  # 最初の15件は詳細なテンプレートを使用
-  if i < article_templates.length
-    template = article_templates[i]
-    title = template[:title]
-    content = template[:content]
-    category = template[:category]
-  else
-    # 残りは追加タイトルとランダムコンテンツを使用
-    title_index = (i - article_templates.length) % additional_titles.length
-    title = additional_titles[title_index]
-    content = content_templates.sample
-    category = categories.sample
+comment_texts = [
+  "とても参考になりました！", "詳しい解説をありがとうございます。",
+  "実際に試してみたいと思います。", "素晴らしい内容ですね。",
+  "もう少し詳しく教えていただけますか？", "これは有用な情報ですね。",
+  "経験豊富な方のアドバイスは貴重です。", "次回の記事も楽しみにしています。",
+  "質問があります。", "別の方法もあるのでしょうか？",
+  "実装してみました！", "続編を期待しています。",
+  "同じような経験があります。", "別の視点からの意見です。",
+  "実際に使ってみて良かったです。", "初心者にも分かりやすい説明でした。"
+]
+
+# プログレス管理用のミューテックス
+progress_mutex = Mutex.new
+total_progress = { completed: 0, total: 0 }
+
+# プログレス表示用メソッド
+def update_progress(progress_mutex, total_progress, completed_count, model_name, elapsed_time)
+  progress_mutex.synchronize do
+    total_progress[:completed] += completed_count
+    progress_percent = (total_progress[:completed].to_f / total_progress[:total] * 100).round(1)
+    puts "[#{Time.current.strftime('%H:%M:%S')}] #{model_name} +#{completed_count}件 " +
+         "(総計: #{total_progress[:completed]}件, #{progress_percent}%, 経過時間: #{elapsed_time.round(1)}秒)"
   end
+end
 
-  # ランダムにユーザーを選択
-  user = users.sample
+# バッチサイズ（小規模なので調整）
+BATCH_SIZE = 100
 
-  # 投稿を作成
-  post = Post.create!(
-    title: "#{title} - #{category}編",
-    content: content,
-    user: user
-  )
+# カテゴリーとタグを事前作成（シングルスレッド）
+puts "カテゴリーとタグを作成中..."
+categories = categories_data.map { |name| Category.create!(name: name) }
+tags = tags_data.map { |name| Tag.create!(name: name) }
 
-  # 60%の確率で画像を添付
-  if rand < 0.6
-    begin
-      require 'open-uri'
+# データ件数設定（総計5000件）
+user_count = 100        # ユーザー
+post_count = 3000       # 投稿（メイン）
+comment_count = 1000    # コメント
+like_count = 500        # いいね
+post_tag_count = 400    # 投稿タグ
 
-      # カテゴリに応じた画像を取得
-      image_seed = case category
-                   when "プログラミング", "テクノロジー"
-                     rand(1000..1999)
-                   when "ライフスタイル", "健康・美容"
-                     rand(2000..2999)
-                   when "ビジネス", "学習・教育"
-                     rand(3000..3999)
-                   when "趣味・エンタメ", "旅行・グルメ"
-                     rand(4000..4999)
-                   else
-                     rand(5000..5999)
-                   end
+total_progress[:total] = user_count + post_count + comment_count + like_count + post_tag_count
 
-      image_url = "https://picsum.photos/800/600?random=#{image_seed}"
-      downloaded_image = URI.open(image_url)
+puts "作成予定データ："
+puts "- ユーザー: #{user_count}件"
+puts "- カテゴリー: #{categories.length}件"
+puts "- タグ: #{tags.length}件"
+puts "- 投稿: #{post_count}件"
+puts "- コメント: #{comment_count}件"
+puts "- いいね: #{like_count}件"
+puts "- 投稿タグ: #{post_tag_count}件"
+puts "- 総計: #{total_progress[:total]}件\n"
 
-      post.image.attach(
-        io: downloaded_image,
-        filename: "article_image_#{i + 1}.jpg",
-        content_type: "image/jpeg"
-      )
+# マルチスレッドでユーザーを作成
+puts "マルチスレッドでユーザーを作成中（#{user_count}件）..."
+user_batches = (user_count.to_f / BATCH_SIZE).ceil
+batches_per_thread = (user_batches.to_f / THREAD_COUNT).ceil
 
-    rescue => e
-      puts "画像の添付に失敗しました (記事#{i + 1}): #{e.message}"
+threads = []
+THREAD_COUNT.times do |thread_id|
+  threads << Thread.new do
+    start_batch = thread_id * batches_per_thread
+    end_batch = [start_batch + batches_per_thread, user_batches].min
+
+    (start_batch...end_batch).each do |batch|
+      users_data = []
+      BATCH_SIZE.times do |i|
+        index = batch * BATCH_SIZE + i
+        break if index >= user_count
+
+        name = "#{japanese_names.sample}#{index + 1}"
+        email = "user#{index + 1}@example.com"
+
+        users_data << {
+          name: name,
+          email: email,
+          encrypted_password: BCrypt::Password.create("password123"),
+          created_at: Time.current,
+          updated_at: Time.current
+        }
+      end
+
+      next if users_data.empty?
+
+      User.insert_all(users_data)
+      update_progress(progress_mutex, total_progress, users_data.size, "ユーザー", Time.current - start_time)
     end
   end
-
-  # 投稿日時をランダムに設定（過去3ヶ月以内）
-  random_time = rand(3.months.ago..Time.current)
-  post.update_columns(created_at: random_time, updated_at: random_time)
-
-  print "." if (i + 1) % 10 == 0
 end
 
-puts "\n100件の記事を作成しました"
+threads.each(&:join)
+puts "ユーザー作成完了: #{User.count}件\n"
 
-# コメントを作成
-puts "コメントを作成中..."
+# ユーザーIDとカテゴリーIDを取得
+user_ids = User.pluck(:id)
+category_ids = Category.pluck(:id)
 
-comment_templates = [
-  "とても参考になりました！", "素晴らしい記事ですね", "勉強になります",
-  "実際に試してみます", "興味深い内容でした", "もっと詳しく知りたいです",
-  "同感です", "これは役立ちそう", "ありがとうございます",
-  "続編を期待しています", "シェアさせていただきます", "保存しました",
-  "具体例があって分かりやすい", "初心者にも優しい内容", "専門的で勉強になる",
-  "実体験に基づいていて信頼できる", "図解が分かりやすい", "データが豊富で参考になる"
-]
+# マルチスレッドで投稿を作成
+puts "マルチスレッドで投稿を作成中（#{post_count}件）..."
+post_batches = (post_count.to_f / BATCH_SIZE).ceil
+batches_per_thread = (post_batches.to_f / THREAD_COUNT).ceil
 
-# 各記事に0-5個のコメントをランダムに追加
-Post.all.each do |post|
-  comment_count = rand(0..5)
-  comment_count.times do
-    user = users.sample
-    content = comment_templates.sample
+threads = []
+THREAD_COUNT.times do |thread_id|
+  threads << Thread.new do
+    start_batch = thread_id * batches_per_thread
+    end_batch = [start_batch + batches_per_thread, post_batches].min
 
-    comment = Comment.create!(
-      content: content,
-      user: user,
-      post: post
-    )
+    (start_batch...end_batch).each do |batch|
+      posts_data = []
+      BATCH_SIZE.times do |i|
+        index = batch * BATCH_SIZE + i
+        break if index >= post_count
 
-    # コメント日時を投稿日時以降に設定
-    comment_time = rand(post.created_at..Time.current)
-    comment.update_columns(created_at: comment_time, updated_at: comment_time)
+        title = "#{post_titles.sample} #{index + 1}"
+        content = "#{post_contents.sample}\n\n"
+        content += "具体的な内容については、以下の点が重要です：\n\n"
+        content += "1. 基本的な概念の理解\n"
+        content += "2. 実践的なアプローチ\n"
+        content += "3. トラブルシューティング\n"
+        content += "4. パフォーマンスの最適化\n\n"
+        content += "実際の開発現場では、これらの要素を総合的に考慮する必要があります。"
+
+        posts_data << {
+          title: title,
+          content: content,
+          user_id: user_ids.sample,
+          category_id: category_ids.sample,
+          created_at: rand(30.days).seconds.ago,
+          updated_at: Time.current
+        }
+      end
+
+      next if posts_data.empty?
+
+      Post.insert_all(posts_data)
+      update_progress(progress_mutex, total_progress, posts_data.size, "投稿", Time.current - start_time)
+    end
   end
 end
 
-puts "コメントを作成しました"
+threads.each(&:join)
+puts "投稿作成完了: #{Post.count}件\n"
 
-puts "\n=== シードデータ作成完了 ==="
-puts "作成されたデータ:"
-puts "- ユーザー: #{User.count}人"
+# 投稿IDを取得
+post_ids = Post.pluck(:id)
+tag_ids = Tag.pluck(:id)
+
+# マルチスレッドでコメントを作成
+puts "マルチスレッドでコメントを作成中（#{comment_count}件）..."
+comment_batches = (comment_count.to_f / BATCH_SIZE).ceil
+batches_per_thread = (comment_batches.to_f / THREAD_COUNT).ceil
+
+threads = []
+THREAD_COUNT.times do |thread_id|
+  threads << Thread.new do
+    start_batch = thread_id * batches_per_thread
+    end_batch = [start_batch + batches_per_thread, comment_batches].min
+
+    (start_batch...end_batch).each do |batch|
+      comments_data = []
+      BATCH_SIZE.times do |i|
+        index = batch * BATCH_SIZE + i
+        break if index >= comment_count
+
+        comments_data << {
+          content: comment_texts.sample,
+          user_id: user_ids.sample,
+          post_id: post_ids.sample,
+          created_at: rand(15.days).seconds.ago,
+          updated_at: Time.current
+        }
+      end
+
+      next if comments_data.empty?
+
+      Comment.insert_all(comments_data)
+      update_progress(progress_mutex, total_progress, comments_data.size, "コメント", Time.current - start_time)
+    end
+  end
+end
+
+threads.each(&:join)
+puts "コメント作成完了: #{Comment.count}件\n"
+
+# マルチスレッドでいいねを作成
+puts "マルチスレッドでいいねを作成中（#{like_count}件）..."
+like_batches = (like_count.to_f / BATCH_SIZE).ceil
+batches_per_thread = (like_batches.to_f / THREAD_COUNT).ceil
+
+threads = []
+THREAD_COUNT.times do |thread_id|
+  threads << Thread.new do
+    start_batch = thread_id * batches_per_thread
+    end_batch = [start_batch + batches_per_thread, like_batches].min
+
+    (start_batch...end_batch).each do |batch|
+      likes_data = []
+      BATCH_SIZE.times do |i|
+        index = batch * BATCH_SIZE + i
+        break if index >= like_count
+
+        likes_data << {
+          user_id: user_ids.sample,
+          post_id: post_ids.sample,
+          created_at: rand(15.days).seconds.ago,
+          updated_at: Time.current
+        }
+      end
+
+      next if likes_data.empty?
+
+      begin
+        Like.insert_all(likes_data, unique_by: [:user_id, :post_id])
+        update_progress(progress_mutex, total_progress, likes_data.size, "いいね", Time.current - start_time)
+      rescue ActiveRecord::RecordNotUnique
+        update_progress(progress_mutex, total_progress, likes_data.size, "いいね(重複除外)", Time.current - start_time)
+      end
+    end
+  end
+end
+
+threads.each(&:join)
+puts "いいね作成完了: #{Like.count}件\n"
+
+# マルチスレッドで投稿タグを作成
+puts "マルチスレッドで投稿タグを作成中（#{post_tag_count}件）..."
+post_tag_batches = (post_tag_count.to_f / BATCH_SIZE).ceil
+batches_per_thread = (post_tag_batches.to_f / THREAD_COUNT).ceil
+
+threads = []
+THREAD_COUNT.times do |thread_id|
+  threads << Thread.new do
+    start_batch = thread_id * batches_per_thread
+    end_batch = [start_batch + batches_per_thread, post_tag_batches].min
+
+    (start_batch...end_batch).each do |batch|
+      post_tags_data = []
+      BATCH_SIZE.times do |i|
+        index = batch * BATCH_SIZE + i
+        break if index >= post_tag_count
+
+        post_tags_data << {
+          post_id: post_ids.sample,
+          tag_id: tag_ids.sample,
+          created_at: Time.current,
+          updated_at: Time.current
+        }
+      end
+
+      next if post_tags_data.empty?
+
+      begin
+        PostTag.insert_all(post_tags_data, unique_by: [:post_id, :tag_id])
+        update_progress(progress_mutex, total_progress, post_tags_data.size, "投稿タグ", Time.current - start_time)
+      rescue ActiveRecord::RecordNotUnique
+        update_progress(progress_mutex, total_progress, post_tags_data.size, "投稿タグ(重複除外)", Time.current - start_time)
+      end
+    end
+  end
+end
+
+threads.each(&:join)
+puts "投稿タグ作成完了: #{PostTag.count}件\n"
+
+end_time = Time.current
+total_time = end_time - start_time
+
+puts "\n" + "="*60
+puts "マルチスレッドサンプルデータ作成が完了しました！"
+puts "="*60
+puts "使用スレッド数: #{THREAD_COUNT}"
+puts "作成されたデータ："
+puts "- ユーザー: #{User.count}件"
+puts "- カテゴリー: #{Category.count}件"
+puts "- タグ: #{Tag.count}件"
 puts "- 投稿: #{Post.count}件"
 puts "- コメント: #{Comment.count}件"
-puts "- 画像付き投稿: #{Post.joins(:image_attachment).count}件"
+puts "- いいね: #{Like.count}件"
+puts "- 投稿タグ: #{PostTag.count}件"
 
-# カテゴリ別の投稿数を表示
-puts "\nカテゴリ別投稿数:"
-categories.each do |category|
-  count = Post.where("title LIKE ?", "%#{category}編%").count
-  puts "- #{category}: #{count}件"
-end
+total = User.count + Category.count + Tag.count + Post.count + Comment.count + Like.count + PostTag.count
+puts "-" * 60
+puts "総合計: #{total}件"
+puts "処理時間: #{total_time.round(2)}秒"
+
+# パフォーマンス統計
+records_per_second = (total / total_time).round(2)
+puts "処理速度: #{records_per_second}件/秒"
+puts "="*60

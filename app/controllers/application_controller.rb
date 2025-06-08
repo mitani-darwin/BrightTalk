@@ -1,16 +1,14 @@
 class ApplicationController < ActionController::Base
-  include SessionsHelper
+  # Deviseコントローラーでは認証をスキップ
+  before_action :authenticate_user!, unless: :devise_controller?
 
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  allow_browser versions: :modern
+  # Strong parametersを設定（必要に応じて）
+  before_action :configure_permitted_parameters, if: :devise_controller?
 
-  # CSRF protection (Rails 8では自動的に有効になっています)
-  protect_from_forgery with: :exception
+  private
 
-  def require_login
-    unless logged_in?
-      redirect_to login_path, alert: 'ログインが必要です。'
-    end
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:name])
   end
-
 end

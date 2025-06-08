@@ -1,21 +1,16 @@
+
 Rails.application.routes.draw do
+  devise_for :users
+
   # ホームページ
   root "posts#index"
 
-  # ユーザー関連
-  resources :users, only: [:new, :create, :show]
-
-  # セッション（ログイン/ログアウト）
-  get    '/login',  to: 'sessions#new'
-  post   '/login',  to: 'sessions#create'
-  delete '/logout', to: 'sessions#destroy'
-
-  get '/logout', to: 'sessions#destroy'
-  delete '/logout', to: 'sessions#destroy'
+  # ユーザー関連（showのみ残す）
+  resources :users, only: [:show]
 
   # 投稿関連
   resources :posts do
-    resources :likes, only: [:create, :destroy]
+    resources :likes, only: [:index, :create, :destroy]
     resources :comments, only: [:create, :destroy]
   end
 
