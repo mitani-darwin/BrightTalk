@@ -1,3 +1,4 @@
+
 source "https://rubygems.org"
 
 gem "rails", "~> 8.0.2"
@@ -27,9 +28,14 @@ gem "kaminari"
 gem "dartsass-rails"
 
 gem 'devise'
+# Deviseの日本語化
+gem 'devise-i18n'
 
 # 画像処理
 gem 'mini_magick'
+
+# Active Storage バリデーション
+gem 'active_storage_validations'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

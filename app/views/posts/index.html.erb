@@ -121,13 +121,6 @@
                   </div>
                 <% end %>
 
-                <!-- 画像（もしあれば） -->
-                <% if post.image.attached? %>
-                  <div class="mb-3">
-                    <%= image_tag post.image, class: "img-fluid rounded", style: "max-height: 200px; width: 100%; object-fit: cover;" %>
-                  </div>
-                <% end %>
-
                 <!-- コンテンツプレビュー -->
                 <p class="card-text text-muted">
                   <%= truncate(strip_tags(post.content), length: 150) %>

@@ -1,147 +1,164 @@
-<div class="container mt-4">
+
+<div class="container my-4">
   <div class="row">
     <div class="col-lg-8 mx-auto">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-start">
-          <div>
-            <h1 class="h3 mb-2"><%= @post.title %></h1>
-            <div class="text-muted small">
-              <i class="bi bi-person"></i> <%= @post.user.name %>
-              <span class="mx-2">|</span>
-              <i class="bi bi-calendar"></i> <%= @post.created_at.strftime("%Y年%m月%d日") %>
-              <% if @post.category %>
-                <span class="mx-2">|</span>
-                <i class="bi bi-folder"></i> <%= @post.category.name %>
-              <% end %>
-            </div>
-          </div>
-
-          <% if user_signed_in? && @post.user == current_user %>
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-three-dots"></i>
-              </button>
-              <ul class="dropdown-menu">
-                <li><%= link_to "編集", edit_post_path(@post), class: "dropdown-item" %></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <%= link_to "削除", post_path(@post), method: :delete,
-                              confirm: "本当に削除しますか？", class: "dropdown-item text-danger" %>
-                </li>
-              </ul>
-            </div>
-          <% end %>
-        </div>
-
+      <!-- 投稿カード -->
+      <div class="card shadow-sm">
         <div class="card-body">
-          <div class="post-content mb-4">
-            <%= simple_format(h(@post.content)) %>
+          <!-- ヘッダー情報 -->
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar me-3">
+                <% if @post.user.present? %>
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                       style="width: 50px; height: 50px;">
+                    <span class="fw-bold"><%= @post.user.name.first %></span>
+                  </div>
+                <% end %>
+              </div>
+              <div>
+                <h6 class="mb-0"><%= @post.user.name if @post.user %></h6>
+                <small class="text-muted">
+                  <i class="fas fa-clock"></i> <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+                </small>
+              </div>
+            </div>
+
+            <!-- カテゴリーバッジ -->
+            <%= link_to posts_path(category_id: @post.category.id),
+                        class: "badge bg-primary text-decoration-none" do %>
+              <i class="fas fa-tag"></i> <%= @post.category.name %>
+            <% end %>
           </div>
+
+          <!-- タイトル -->
+          <h1 class="h3 mb-3"><%= @post.title %></h1>
 
           <!-- タグ表示 -->
           <% if @post.tags.any? %>
             <div class="mb-3">
               <% @post.tags.each do |tag| %>
-                <span class="badge bg-secondary me-1"><%= tag.name %></span>
+                <%= link_to posts_path(tag: tag.name),
+                            class: "badge bg-secondary text-decoration-none me-1" do %>
+                  #<%= tag.name %>
+                <% end %>
               <% end %>
             </div>
           <% end %>
 
-          <!-- いいねボタン -->
-          <div class="d-flex align-items-center mb-4">
-            <% if user_signed_in? %>
-              <% if current_user.liked?(@post) %>
-                <%= link_to post_like_path(@post, current_user.likes.find_by(post: @post)),
-                            method: :delete, class: "btn btn-sm btn-danger me-2" do %>
-                  <i class="bi bi-heart-fill"></i> <%= @post.likes.count %>
-                <% end %>
-              <% else %>
-                <%= link_to post_likes_path(@post), method: :post, class: "btn btn-sm btn-outline-danger me-2" do %>
-                  <i class="bi bi-heart"></i> <%= @post.likes.count %>
-                <% end %>
-              <% end %>
-            <% else %>
-              <span class="btn btn-sm btn-outline-secondary me-2">
-                <i class="bi bi-heart"></i> <%= @post.likes.count %>
-              </span>
-            <% end %>
+          <!-- 画像表示 -->
+          <% if @post.image.attached? %>
+            <div class="mb-4">
+              <%= image_tag @post.image,
+                            class: "img-fluid rounded shadow-sm",
+                            style: "width: 100%; max-height: 500px; object-fit: cover;" %>
+            </div>
+          <% end %>
 
-            <span class="text-muted small">
-              <i class="bi bi-chat"></i> <%= @post.comments.count %>件のコメント
-            </span>
+          <!-- コンテンツ -->
+          <div class="mb-4">
+            <div class="content-text">
+              <%= simple_format(@post.content) %>
+            </div>
+          </div>
+
+          <!-- いいねとコメント数 -->
+          <div class="d-flex justify-content-between align-items-center border-top pt-3">
+            <div class="d-flex align-items-center gap-3">
+              <%= render 'likes/like_button', post: @post %>
+              <div class="d-flex align-items-center text-muted">
+                <i class="bi bi-chat-left me-1" style="font-size: 1.1rem;"></i>
+                <span><%= @post.comments.count %> コメント</span>
+              </div>
+            </div>
+
+            <!-- アクションボタン -->
+            <% if current_user == @post.user %>
+              <div class="btn-group" role="group">
+                <%= link_to edit_post_path(@post), class: "btn btn-outline-secondary btn-sm" do %>
+                  <i class="fas fa-edit"></i> 編集
+                <% end %>
+
+                <%= link_to @post, method: :delete,
+                            data: {
+                              confirm: "本当に削除しますか？",
+                              turbo_method: :delete
+                            },
+                            class: "btn btn-outline-danger btn-sm" do %>
+                  <i class="fas fa-trash"></i> 削除
+                <% end %>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
 
       <!-- コメントセクション -->
-      <div class="card mt-4">
+      <div class="card mt-4 shadow-sm">
         <div class="card-header">
-          <h5 class="mb-0">コメント</h5>
+          <h5 class="card-title mb-0">
+            <i class="fas fa-comments"></i> コメント (<%= @post.comments.count %>)
+          </h5>
         </div>
         <div class="card-body">
           <!-- コメント投稿フォーム -->
           <% if user_signed_in? %>
-            <div class="mb-4">
-              <h6 class="mb-3">コメントを投稿</h6>
-              <%= form_with model: [@post, Comment.new], local: true do |form| %>
-                <div class="mb-3">
-                  <%= form.text_area :content, class: "form-control", rows: 3,
-                                     placeholder: "コメントを入力してください..." %>
-                </div>
-                <div class="d-flex justify-content-end">
-                  <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
-                </div>
-              <% end %>
-            </div>
-            <hr>
+            <%= form_with model: [@post, @comment], local: true, class: "mb-4" do |form| %>
+              <div class="mb-3">
+                <%= form.text_area :content,
+                                   class: "form-control",
+                                   rows: 3,
+                                   placeholder: "コメントを入力してください..." %>
+              </div>
+              <div class="d-grid">
+                <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
+              </div>
+            <% end %>
           <% else %>
-            <div class="alert alert-info mb-4">
-              <i class="bi bi-info-circle"></i>
-              コメントを投稿するには<%= link_to "ログイン", new_user_session_path, class: "alert-link" %>してください。
+            <div class="alert alert-info">
+              コメントを投稿するには<%= link_to "ログイン", new_user_session_path %>が必要です。
             </div>
           <% end %>
 
           <!-- コメント一覧 -->
           <% if @post.comments.any? %>
-            <div class="comments-list">
-              <% @post.comments.order(created_at: :desc).each do |comment| %>
-                <div class="comment mb-3 p-3 bg-light rounded">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="comment-meta">
-                      <strong><%= comment.user.name %></strong>
-                      <small class="text-muted ms-2">
-                        <%= comment.created_at.strftime("%Y年%m月%d日 %H:%M") %>
-                      </small>
+            <div class="border-top pt-3">
+              <% @post.comments.includes(:user).order(created_at: :desc).each do |comment| %>
+                <div class="d-flex mb-3">
+                  <div class="avatar me-3">
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                         style="width: 40px; height: 40px;">
+                      <span><%= comment.user&.name&.first || "?" %></span>
                     </div>
-
-                    <% if user_signed_in? && comment.user == current_user %>
-                      <%= link_to post_comment_path(@post, comment), method: :delete,
-                                  confirm: "コメントを削除しますか？",
-                                  class: "btn btn-sm btn-outline-danger" do %>
-                        <i class="bi bi-trash"></i>
-                      <% end %>
-                    <% end %>
                   </div>
-
-                  <div class="comment-content">
-                    <%= simple_format(h(comment.content)) %>
+                  <div class="flex-grow-1">
+                    <div class="bg-light rounded p-3">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong><%= comment.user&.name || "匿名ユーザー" %></strong>
+                        <small class="text-muted">
+                          <%= time_ago_in_words(comment.created_at) %>前
+                        </small>
+                      </div>
+                      <p class="mb-0"><%= simple_format(comment.content) %></p>
+                    </div>
                   </div>
                 </div>
               <% end %>
             </div>
           <% else %>
-            <p class="text-muted text-center py-4">
-              <i class="bi bi-chat-dots"></i><br>
-              まだコメントがありません。<br>
-              最初のコメントを投稿してみませんか？
-            </p>
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-comment-slash fa-2x mb-2"></i>
+              <p>まだコメントがありません。最初のコメントを投稿しませんか？</p>
+            </div>
           <% end %>
         </div>
       </div>
 
       <!-- 戻るボタン -->
-      <div class="mt-4 text-center">
-        <%= link_to "投稿一覧に戻る", posts_path, class: "btn btn-secondary" %>
+      <div class="mt-4">
+        <%= link_to posts_path, class: "btn btn-outline-secondary" do %>
+          <i class="fas fa-arrow-left"></i> 投稿一覧に戻る
+        <% end %>
       </div>
     </div>
   </div>

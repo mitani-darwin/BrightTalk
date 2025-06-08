@@ -1,3 +1,8 @@
-<%= turbo_stream.replace "like-button-#{@post.id}" do %>
-  <%= render 'likes/like_button', post: @post %>
+
+<!-- DEBUG: Turbo Stream Create - <%= Time.current %> -->
+<%= turbo_stream.replace "like_button_#{@post.id}" do %>
+  <!-- DEBUG: Replacing like_button_<%= @post.id %> -->
+  <%= turbo_frame_tag "like_button_#{@post.id}" do %>
+    <%= render 'likes/like_button', post: @post %>
+  <% end %>
 <% end %>
