@@ -1,31 +1,32 @@
 ja:
   activerecord:
     models:
-      user:
-        one: "ユーザー"
-        other: "ユーザー"
-      post:
-        one: "投稿"
-        other: "投稿"
-      category:
-        one: "カテゴリー"
-        other: "カテゴリー"
+      post: "投稿"
+      user: "ユーザー"
+      comment: "コメント"
+      category: "カテゴリー"
+      tag: "タグ"
     attributes:
-      user:
-        name: 名前
-        email: メールアドレス
-        password: パスワード
-        password_confirmation: パスワード確認
-        current_password: 現在のパスワード
-        remember_me: ログイン状態を保持する
       post:
-        title: タイトル
-        content: 内容
-        category_id: カテゴリー
-        image: 画像
-        tag_list: タグ
+        title: "タイトル"
+        content: "内容"
+        category: "カテゴリー"
+        user: "投稿者"
+        created_at: "作成日時"
+        updated_at: "更新日時"
+      user:
+        name: "名前"
+        email: "メールアドレス"
+        password: "パスワード"
+        password_confirmation: "パスワード（確認）"
+      comment:
+        content: "コメント"
+        user: "投稿者"
+        post: "投稿"
       category:
-        name: カテゴリー名
+        name: "名前"
+      tag:
+        name: "名前"
     errors:
       models:
         user:
@@ -245,13 +246,6 @@ ja:
       day: 日
       month: 月
       year: 年
-  helpers:
-    select:
-      prompt: 選択してください
-    submit:
-      create: 登録する
-      submit: 保存する
-      update: 更新する
   number:
     currency:
       format:
@@ -312,3 +306,25 @@ ja:
       long: "%Y/%m/%d %H:%M"
       short: "%m/%d %H:%M"
     pm: 午後
+  views:
+    pagination:
+      first: "&laquo; 最初"
+      last: "最後 &raquo;"
+      previous: "&lsaquo; 前"
+      next: "次 &rsaquo;"
+      truncate: "&hellip;"
+  helpers:
+    page_entries_info:
+      one_page:
+        display_entries:
+          zero: "%{entry_name}はありません"
+          one: "1件の%{entry_name}を表示しています"
+          other: "%{count}件の%{entry_name}を表示しています"
+      more_pages:
+        display_entries: "%{total}件中 %{first} - %{last}件の%{entry_name}を表示しています"
+    select:
+      prompt: "選択してください"
+    submit:
+      create: "作成"
+      submit: "保存"
+      update: "更新"

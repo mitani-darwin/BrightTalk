@@ -1,0 +1,83 @@
+<!-- Bootstrap Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <%= link_to "BrightTalk", root_path, class: "navbar-brand" %>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <%= link_to "投稿一覧", posts_path, class: "nav-link" %>
+        </li>
+      </ul>
+
+      <!-- 検索フォーム -->
+      <div class="d-flex me-3">
+        <%= form_with url: posts_path, method: :get, local: true, class: "d-flex" do |f| %>
+          <%= f.text_field :search,
+                           value: params[:search],
+                           placeholder: "投稿を検索...",
+                           class: "form-control form-control-sm me-2",
+                           style: "width: 200px;" %>
+          <%= f.submit "検索", class: "btn btn-outline-light btn-sm" %>
+        <% end %>
+      </div>
+
+      <ul class="navbar-nav">
+        <% if user_signed_in? %>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               id="navbarDropdown"
+               role="button"
+               data-bs-toggle="dropdown"
+               aria-expanded="false"
+               data-turbo="false">
+              <i class="fas fa-user-circle me-1"></i>
+              <%= current_user.name || current_user.email %>
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li>
+                <%= link_to user_path(current_user), class: "dropdown-item" do %>
+                  <i class="fas fa-user me-2"></i>プロフィール
+                <% end %>
+              </li>
+              <li>
+                <%= link_to new_post_path, class: "dropdown-item" do %>
+                  <i class="fas fa-plus me-2"></i>新しい投稿
+                <% end %>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <%= link_to edit_user_registration_path, class: "dropdown-item" do %>
+                  <i class="fas fa-cog me-2"></i>アカウント設定
+                <% end %>
+              </li>
+              <li>
+                <%= link_to destroy_user_session_path,
+                            method: :delete,
+                            class: "dropdown-item",
+                            data: {
+                              turbo_method: :delete,
+                              turbo_confirm: "ログアウトしますか？"
+                            } do %>
+                  <i class="fas fa-sign-out-alt me-2"></i>ログアウト
+                <% end %>
+              </li>
+            </ul>
+          </li>
+        <% else %>
+          <li class="nav-item">
+            <%= link_to "ログイン", new_user_session_path, class: "nav-link" %>
+          </li>
+          <li class="nav-item">
+            <%= link_to "新規登録", new_user_registration_path, class: "nav-link" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</nav>

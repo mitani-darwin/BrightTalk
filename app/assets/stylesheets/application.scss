@@ -195,3 +195,21 @@
     transform: translateY(0);
   }
 }
+
+/* ドロップダウンメニューのスタイル修正 */
+.dropdown-menu {
+  z-index: 1050;
+}
+
+.dropdown-toggle::after {
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+
+/* ドロップダウンホバー効果（オプション） */
+.nav-item.dropdown:hover .dropdown-menu {
+  display: block;
+}
