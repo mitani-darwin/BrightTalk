@@ -209,7 +209,13 @@
   border-left: 0.3em solid transparent;
 }
 
-/* ドロップダウンホバー効果（オプション） */
-.nav-item.dropdown:hover .dropdown-menu {
-  display: block;
+// ホバー効果を削除（JavaScript制御のため）
+// .nav-item.dropdown:hover .dropdown-menu {
+//   display: block;
+// }
+
+// ドロップダウンボタンの状態管理
+.dropdown-toggle[aria-expanded="true"] {
+  background-color: rgba(255, 255, 255, 0.1);
 }
+

@@ -1,4 +1,4 @@
-<!-- Bootstrap Navigation -->
+<!-- Bootstrap 5 Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
     <%= link_to "BrightTalk", root_path, class: "navbar-brand" %>
@@ -29,17 +29,18 @@
       <ul class="navbar-nav">
         <% if user_signed_in? %>
           <li class="nav-item dropdown">
+            <!-- Bootstrap 5 Dropdown Toggle -->
             <a class="nav-link dropdown-toggle"
                href="#"
-               id="navbarDropdown"
                role="button"
                data-bs-toggle="dropdown"
                aria-expanded="false"
-               data-turbo="false">
+               id="navbarDropdown">
               <i class="fas fa-user-circle me-1"></i>
               <%= current_user.name || current_user.email %>
             </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <!-- Bootstrap 5 Dropdown Menu -->
+            <ul class="dropdown-menu">
               <li>
                 <%= link_to user_path(current_user), class: "dropdown-item" do %>
                   <i class="fas fa-user me-2"></i>プロフィール
@@ -58,12 +59,11 @@
               </li>
               <li>
                 <%= link_to destroy_user_session_path,
-                            method: :delete,
-                            class: "dropdown-item",
                             data: {
-                              turbo_method: :delete,
-                              turbo_confirm: "ログアウトしますか？"
-                            } do %>
+                              "turbo-method": "delete",
+                              "turbo-confirm": "ログアウトしますか？"
+                            },
+                            class: "dropdown-item" do %>
                   <i class="fas fa-sign-out-alt me-2"></i>ログアウト
                 <% end %>
               </li>
