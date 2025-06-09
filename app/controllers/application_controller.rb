@@ -1,8 +1,12 @@
+
 class ApplicationController < ActionController::Base
+  # CSRF保護
+  protect_from_forgery with: :exception
+
   # Deviseコントローラーでは認証をスキップ
   before_action :authenticate_user!, unless: :devise_controller?
 
-  # Strong parametersを設定（必要に応じて）
+  # Deviseのパラメータ許可
   before_action :configure_permitted_parameters, if: :devise_controller?
 
   private

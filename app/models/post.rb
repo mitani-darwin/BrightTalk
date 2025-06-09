@@ -7,6 +7,9 @@ class Post < ApplicationRecord
   has_many :tags, through: :post_tags
   has_one_attached :image
 
+  # recent スコープを定義
+  scope :recent, -> { order(created_at: :desc) }
+
   validates :title, presence: true, length: { maximum: 100 }
   validates :content, presence: true, length: { maximum: 5000 }
   validates :category_id, presence: true
