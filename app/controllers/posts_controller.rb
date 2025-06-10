@@ -1,5 +1,6 @@
+
 class PostsController < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show]
+  before_action :authenticate_user!, except: [:index, :show, :user_posts]
   before_action :set_post, only: [:show, :edit, :update, :destroy]
   before_action :set_categories, only: [:index, :new, :edit] # この行を追加
 
@@ -71,6 +72,32 @@ class PostsController < ApplicationController
   def destroy
     @post.destroy
     redirect_to posts_path, notice: '投稿が削除されました。'
+  end
+
+  def user_posts
+    @user = User.find(params[:id])
+    @posts = @user.posts.includes(:user, :category, :tags).order(created_at: :desc)
+
+    respond_to do |format|
+      format.html
+      format.pdf do
+        filename = "#{@user.name}_posts_#{Date.current.strftime('%Y%m%d')}.pdf"
+
+        pdf = render_to_string(
+          pdf: filename,
+          template: 'posts/user_posts_pdf',
+          layout: 'pdf',
+          page_size: 'A4',
+          margin: { top: 20, bottom: 20, left: 20, right: 20 },
+          encoding: 'UTF-8'
+        )
+
+        send_data pdf,
+                  filename: filename,
+                  type: 'application/pdf',
+                  disposition: 'attachment'
+      end
+    end
   end
 
   private

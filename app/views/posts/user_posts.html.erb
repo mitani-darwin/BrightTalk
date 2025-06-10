@@ -1,0 +1,62 @@
+<div class="user-posts-page">
+  <div class="user-info">
+    <h1><%= @user.name %>さんの投稿一覧</h1>
+    <p class="posts-count">投稿数: <%= @posts.count %>件</p>
+    <div class="mb-3">
+      <%= link_to user_posts_path(@user, format: :pdf),
+                  class: 'btn btn-primary',
+                  data: { turbo: false } do %>
+        <i class="fas fa-download"></i> PDFダウンロード
+      <% end %>
+    </div>
+  </div>
+
+  <div class="posts-grid">
+    <% if @posts.any? %>
+      <% @posts.each do |post| %>
+        <div class="post-card">
+          <%= link_to post_path(post), class: 'post-link' do %>
+            <% if post.image.attached? %>
+              <div class="post-image">
+                <%= image_tag(post.image, alt: post.title, class: 'post-thumbnail') %>
+              </div>
+            <% end %>
+            <div class="post-content">
+              <!-- タイトル -->
+              <div class="post-title-section">
+                <h3 class="post-title"><%= post.title %></h3>
+              </div>
+
+              <!-- 内容プレビュー（省略なし） -->
+              <div class="post-content-section">
+                <div class="post-excerpt"><%= simple_format(strip_tags(post.content)) %></div>
+              </div>
+
+              <!-- 日時とカテゴリー -->
+              <div class="post-meta">
+                <div class="post-date-section">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span><%= post.created_at.strftime('%Y年%m月%d日 %H:%M') %></span>
+                </div>
+                <% if post.category %>
+                  <div class="post-category-section">
+                    <i class="fas fa-tag"></i>
+                    <span class="post-category"><%= post.category.name %></span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="no-posts">
+        <p>まだ投稿がありません。</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="back-link">
+    <%= link_to '投稿一覧に戻る', posts_path, class: 'btn btn-secondary' %>
+  </div>
+</div>
