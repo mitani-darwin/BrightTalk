@@ -37,6 +37,10 @@ gem 'mini_magick'
 # Active Storage バリデーション
 gem 'active_storage_validations'
 
+# PDF生成
+gem 'wicked_pdf'
+gem 'wkhtmltopdf-binary'
+
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false

@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>投稿一覧</title>
+  <style>
+      body {
+          font-family: 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic', 'YuGothic', sans-serif;
+          margin: 0;
+          padding: 20px;
+          font-size: 12px;
+          line-height: 1.6;
+      }
+
+      .user-posts-page {
+          max-width: 100%;
+      }
+
+      .user-info {
+          text-align: center;
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 2px solid #333;
+      }
+
+      .user-info h1 {
+          font-size: 20px;
+          margin-bottom: 10px;
+          color: #333;
+      }
+
+      .posts-count {
+          font-size: 14px;
+          color: #666;
+          margin: 0;
+      }
+
+      .posts-grid {
+          display: block;
+      }
+
+      .post-card {
+          margin-bottom: 30px;
+          padding: 20px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background: #fff;
+          page-break-inside: avoid;
+      }
+
+      .post-title {
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 15px;
+          color: #333;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 10px;
+      }
+
+      .post-content-section {
+          margin-bottom: 15px;
+      }
+
+      .post-excerpt {
+          font-size: 12px;
+          line-height: 1.7;
+          color: #444;
+      }
+
+      .post-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+          color: #666;
+          border-top: 1px solid #eee;
+          padding-top: 10px;
+      }
+
+      .post-date-section,
+      .post-category-section {
+          display: flex;
+          align-items: center;
+      }
+
+      .post-category {
+          background: #f0f0f0;
+          padding: 2px 8px;
+          border-radius: 4px;
+          margin-left: 5px;
+      }
+
+      .no-posts {
+          text-align: center;
+          padding: 50px 20px;
+          color: #666;
+      }
+
+      /* 画像のスタイル */
+      .post-image {
+          margin-bottom: 15px;
+          text-align: center;
+      }
+
+      .post-thumbnail {
+          max-width: 100%;
+          max-height: 200px;
+          border-radius: 4px;
+      }
+
+      /* ページブレーク */
+      @page {
+          margin: 20mm;
+      }
+  </style>
+</head>
+<body>
+<%= yield %>
+</body>
+</html>
