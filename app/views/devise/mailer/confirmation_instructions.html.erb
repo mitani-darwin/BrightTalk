@@ -8,11 +8,11 @@
 
     <p>BrightTalkにご登録いただき、ありがとうございます。</p>
 
-    <p>アカウントを有効化するために、下記のリンクをクリックしてメールアドレスの確認を完了してください：</p>
+    <p>下記のリンクをクリックするだけで、メールアドレスの確認と会員登録が完了します：</p>
   </div>
 
   <div style="text-align: center; margin: 30px 0;">
-    <%= link_to "メールアドレスを確認してアカウントを有効化",
+    <%= link_to "今すぐログインしてBrightTalkを始める",
                 confirmation_url(@resource, confirmation_token: @token),
                 style: "background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;" %>
   </div>
@@ -21,6 +21,7 @@
     <p><strong>注意事項：</strong></p>
     <ul>
       <li>このリンクの有効期限は3日間です</li>
+      <li>リンクをクリックすると自動的にログインされます</li>
       <li>リンクが機能しない場合は、URLをコピーしてブラウザのアドレスバーに貼り付けてください</li>
       <li>このメールに心当たりがない場合は、このメールを無視してください</li>
     </ul>

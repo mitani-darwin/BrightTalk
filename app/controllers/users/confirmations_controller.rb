@@ -1,3 +1,4 @@
+
 # frozen_string_literal: true
 
 class Users::ConfirmationsController < Devise::ConfirmationsController
@@ -7,10 +8,13 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
     yield resource if block_given?
 
     if resource.errors.empty?
+      # マジックリンクとして自動ログイン
+      sign_in(resource)
       set_flash_message!(:notice, :confirmed)
-      flash[:notice] = "メールアドレスが確認できました。ログインしてください。"
+      flash[:notice] = "メールアドレスの確認が完了し、ログインしました！"
       respond_with_navigational(resource){ redirect_to after_confirmation_path_for(resource_name, resource) }
     else
+      flash[:alert] = "確認リンクが無効または期限切れです。再度登録をお試しください。"
       respond_with_navigational(resource.errors, status: :unprocessable_entity){ render :new }
     end
   end
@@ -18,8 +22,7 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
   protected
 
   def after_confirmation_path_for(resource_name, resource)
-    # 確認後はサインアウトしてログイン画面に遷移
-    sign_out(resource) if resource
-    new_user_session_path
+    # 確認後はログイン状態でホーム画面や適切なページに遷移
+    root_path # または posts_path など、適切なページに変更してください
   end
 end
