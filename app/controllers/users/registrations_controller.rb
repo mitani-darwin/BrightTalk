@@ -4,45 +4,44 @@
 class Users::RegistrationsController < Devise::RegistrationsController
   # GET /users/sign_up
   def new
-    if session[:registration_success_message]
-      flash.now[:notice] = session[:registration_success_message]
-      session.delete(:registration_success_message)
-    end
     super
   end
 
   # POST /users
   def create
+    # パスワードを自動生成
+    generated_password = SecureRandom.alphanumeric(12)
+    params[:user][:password] = generated_password
+    params[:user][:password_confirmation] = generated_password
+
     super do |resource|
       if resource.persisted? && !resource.active_for_authentication?
-        # Deviseのデフォルトメッセージはそのまま使用
-        # flash.clear を削除
-        # セッションにメッセージを保存して、リダイレクト後に表示
-        session[:registration_success_message] = flash[:notice]
-        flash.clear # リダイレクト前にクリア
+        # 仮登録成功時は専用ページにリダイレクト
+        sign_out(resource) if user_signed_in?
+        redirect_to success_users_registration_path and return
       end
     end
+  end
+
+  # GET /users/registration/success
+  def success
+    # 成功ページを表示
   end
 
   protected
 
   def after_sign_up_path_for(resource)
-    sign_out(resource)
-    new_user_registration_path
+    # この処理は上記のcreateメソッドで処理するため不要
+    root_path
   end
 
   def after_inactive_sign_up_path_for(resource)
-    new_user_registration_path
+    # この処理は上記のcreateメソッドで処理するため不要
+    root_path
   end
 
-  # これらのメソッドは不要なので削除
-  # def set_flash_message(key, kind, options = {})
-  #   return if kind == :signed_up_but_unconfirmed
-  #   super
-  # end
-
-  # def set_flash_message!(key, kind, options = {})
-  #   return if kind == :signed_up_but_unconfirmed
-  #   super
-  # end
+  # 自動生成されたパスワードも含めて許可
+  def sign_up_params
+    params.require(:user).permit(:name, :email, :password, :password_confirmation)
+  end
 end

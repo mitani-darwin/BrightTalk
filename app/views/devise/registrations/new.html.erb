@@ -1,13 +1,35 @@
-<% if flash[:notice].nil? %>
-  <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card shadow">
-        <div class="card-header bg-success text-white text-center">
-          <h4 class="mb-0">
-            <i class="bi bi-person-plus me-2"></i>新規登録
-          </h4>
-        </div>
-        <div class="card-body">
+
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white text-center">
+        <h4 class="mb-0">
+          <i class="bi bi-person-plus me-2"></i>新規登録
+        </h4>
+      </div>
+      <div class="card-body">
+
+        <!-- 仮登録完了メッセージの表示 -->
+        <% if flash[:notice].present? %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            <%= flash[:notice] %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+
+          <!-- 再送信リンクのみ表示 -->
+          <div class="text-center mt-3">
+            <p class="text-muted">確認メールが届かない場合：</p>
+            <%= link_to "確認メールを再送信", new_user_confirmation_path, class: "btn btn-outline-secondary" %>
+          </div>
+
+          <!-- ホームへ戻るリンクを追加 -->
+          <div class="text-center mt-3">
+            <%= link_to "ホームページへ戻る", root_path, class: "btn btn-primary" %>
+          </div>
+
+        <% else %>
+          <!-- 登録フォーム -->
           <%= form_for(resource, as: resource_name, url: registration_path(resource_name), local: true, html: { class: "needs-validation", novalidate: true, data: { turbo: false } }) do |f| %>
             <%= render "devise/shared/error_messages", resource: resource %>
 
@@ -27,53 +49,44 @@
               </div>
             </div>
 
-            <div class="mb-3">
-              <%= f.label :password, class: "form-label" %>
-              <%= f.password_field :password, autocomplete: "new-password", class: "form-control", required: true %>
-              <div class="form-text">
-                <% if @minimum_password_length %>
-                  <small>最低<%= @minimum_password_length %>文字以上で入力してください</small>
-                <% end %>
-              </div>
-              <div class="invalid-feedback">
-                パスワードを入力してください。
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <%= f.label :password_confirmation, class: "form-label" %>
-              <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "form-control", required: true %>
-              <div class="invalid-feedback">
-                パスワード確認を入力してください。
-              </div>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>仮登録について：</strong><br>
+              新規登録ボタンをクリックすると仮登録状態になり、確認メールが送信されます。<br>
+              メール内のリンクをクリックして本登録を完了してください。
             </div>
 
             <div class="d-grid">
-              <%= f.submit "新規登録", class: "btn btn-success btn-lg" %>
+              <%= f.submit "仮登録する", class: "btn btn-success btn-lg" %>
             </div>
           <% end %>
 
-        </div>
+          <!-- 通常の登録フォーム表示時のみDeviseリンクを表示 -->
+          <div class="text-center mt-3">
+            <%= render "devise/shared/links" %>
+          </div>
+
+        <% end %>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-      // Bootstrap form validation
-      (function() {
-          'use strict';
-          window.addEventListener('load', function() {
-              var forms = document.getElementsByClassName('needs-validation');
-              var validation = Array.prototype.filter.call(forms, function(form) {
-                  form.addEventListener('submit', function(event) {
-                      if (form.checkValidity() === false) {
-                          event.preventDefault();
-                          event.stopPropagation();
-                      }
-                      form.classList.add('was-validated');
-                  }, false);
-              });
-          }, false);
-      })();
-  </script>
-<% end %>
+<script>
+    // Bootstrap form validation
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>

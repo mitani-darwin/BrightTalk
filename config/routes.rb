@@ -5,6 +5,12 @@ Rails.application.routes.draw do
     confirmations: 'users/confirmations'
   }
 
+  # 新規登録成功ページのルートを追加
+  devise_scope :user do
+    get '/users/registration/success', to: 'users/registrations#success', as: :success_users_registration
+  end
+
+
   # ホームページ
   root "posts#index"
 
