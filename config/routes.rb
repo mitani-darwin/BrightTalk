@@ -2,7 +2,8 @@ Rails.application.routes.draw do
   # devise_for :users
   devise_for :users, controllers: {
     registrations: 'users/registrations',
-    confirmations: 'users/confirmations'
+    confirmations: 'users/confirmations',
+    sessions: 'users/sessions'
   }
 
   # 新規登録成功ページのルートを追加
