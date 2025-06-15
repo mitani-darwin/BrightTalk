@@ -1,7 +1,6 @@
-
 class User < ApplicationRecord
-  # パスワード認証を無効にし、WebAuthnのみを使用
-  devise :registerable, :recoverable, :rememberable, :validatable, :confirmable
+  # Deviseモジュール（データベース認証可能とする）
+  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable, :confirmable
 
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
@@ -17,19 +16,6 @@ class User < ApplicationRecord
   validates :avatar, content_type: { in: %w[image/jpeg image/png image/gif],
                                      message: 'JPEG、JPG、PNG、GIF形式のファイルを選択してください' },
             size: { less_than: 5.megabytes, message: '5MB以下のファイルを選択してください' }
-
-  # パスワード認証を無効化
-  def valid_password?(password)
-    false
-  end
-
-  def password_required?
-    false
-  end
-
-  def email_required?
-    true
-  end
 
   def webauthn_id
     # WebAuthn用のユーザーIDを生成（ユーザーIDをbase64エンコード）
@@ -57,5 +43,19 @@ class User < ApplicationRecord
     else
       nil
     end
+  end
+
+  # WebAuthn登録後にパスワードを無効化
+  def disable_password_after_webauthn
+    if has_webauthn_credentials?
+      self.encrypted_password = ""
+      save(validate: false)
+    end
+  end
+
+  # WebAuthn認証が設定されている場合、パスワード認証をスキップ
+  def valid_password?(password)
+    return false if has_webauthn_credentials?
+    super
   end
 end
