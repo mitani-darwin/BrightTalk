@@ -9,8 +9,8 @@ class ApplicationController < ActionController::Base
     devise_parameter_sanitizer.permit(:account_update, keys: [:name, :avatar])
   end
 
-  # Deviseのセッション認証をオーバーライドしてWebAuthnにリダイレクト
-  def authenticate_user!
+  # Deviseのauthenticate_user!をオーバーライド（引数を受け取れるように）
+  def authenticate_user!(opts = {})
     unless user_signed_in?
       redirect_to login_path
     end
