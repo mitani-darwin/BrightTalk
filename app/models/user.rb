@@ -1,9 +1,7 @@
 
 class User < ApplicationRecord
-  # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
-  devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
+  # パスワード認証を無効にし、WebAuthnのみを使用
+  devise :registerable, :recoverable, :rememberable, :validatable, :confirmable
 
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
@@ -20,14 +18,31 @@ class User < ApplicationRecord
                                      message: 'JPEG、JPG、PNG、GIF形式のファイルを選択してください' },
             size: { less_than: 5.megabytes, message: '5MB以下のファイルを選択してください' }
 
+  # パスワード認証を無効化
+  def valid_password?(password)
+    false
+  end
+
+  def password_required?
+    false
+  end
+
+  def email_required?
+    true
+  end
+
   def webauthn_id
     # WebAuthn用のユーザーIDを生成（ユーザーIDをbase64エンコード）
     WebAuthn.generate_user_id
   end
 
-
   def has_webauthn_credentials?
     webauthn_credentials.exists?
+  end
+
+  # WebAuthn認証が必須
+  def webauthn_required?
+    persisted? && !has_webauthn_credentials?
   end
 
   # 特定の投稿にいいねしているかどうかを判定

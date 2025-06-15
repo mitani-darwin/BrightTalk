@@ -1,80 +1,57 @@
+
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
         <div class="card-header bg-primary text-white text-center">
           <h4 class="mb-0">
-            <i class="bi bi-fingerprint me-2"></i>WebAuthn認証
+            <i class="bi bi-fingerprint me-2"></i>WebAuthn認証ログイン
           </h4>
         </div>
         <div class="card-body">
-          <% if @email.present? && @webauthn_options %>
-            <div class="text-center mb-4">
-              <p class="mb-3">
-                <strong><%= @email %></strong> でWebAuthn認証を行います
-              </p>
-              <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                登録済みの認証デバイス（指紋、顔認証、セキュリティキーなど）を使用してください
-              </div>
-            </div>
-
-            <div class="d-grid gap-2">
-              <button id="authenticate-webauthn" class="btn btn-primary btn-lg">
-                <i class="bi bi-shield-check me-2"></i>認証を開始
+          <div class="mb-4">
+            <label for="email" class="form-label">メールアドレス</label>
+            <div class="input-group">
+              <input type="email" id="email-input" class="form-control" placeholder="メールアドレスを入力" required>
+              <button id="webauthn-login-btn" class="btn btn-primary">
+                <i class="bi bi-shield-check me-2"></i>WebAuthn認証
               </button>
-              <%= link_to "パスワードでログイン", new_user_session_path, class: "btn btn-outline-secondary" %>
             </div>
+          </div>
 
-          <% else %>
-            <div class="mb-4">
-              <label for="email" class="form-label">メールアドレス</label>
-              <%= form_with url: new_webauthn_authentication_path, method: :get, local: true, class: "d-flex gap-2" do |form| %>
-                <%= form.email_field :email,
-                                     placeholder: "メールアドレスを入力",
-                                     class: "form-control",
-                                     required: true %>
-                <%= form.submit "WebAuthn認証", class: "btn btn-primary" %>
-              <% end %>
-            </div>
+          <!-- 認証状態の表示エリア -->
+          <div id="auth-status" class="d-none"></div>
 
-            <div class="text-center">
-              <small class="text-muted">
-                WebAuthn認証が設定されているアカウントのみ利用できます
-              </small>
-            </div>
+          <div class="text-center">
+            <small class="text-muted">
+              WebAuthn認証が設定されているアカウントのみ利用できます
+            </small>
+          </div>
 
-            <hr>
+          <hr>
 
-            <div class="text-center">
-              <%= link_to "通常のログイン", new_user_session_path, class: "btn btn-outline-secondary" %>
-            </div>
-          <% end %>
+          <div class="text-center">
+            <%= link_to "新規登録", new_user_registration_path, class: "btn btn-outline-primary" %>
+          </div>
         </div>
       </div>
 
-      <% if @email.blank? %>
-        <div class="card mt-4">
-          <div class="card-body">
-            <h6><i class="bi bi-question-circle me-2"></i>WebAuthn認証とは？</h6>
-            <ul class="small mb-0">
-              <li>パスワードを使わない安全な認証方式です</li>
-              <li>指紋認証、顔認証、セキュリティキーが利用できます</li>
-              <li>フィッシング攻撃に対して高い耐性があります</li>
-              <li>事前にデバイスの登録が必要です</li>
-            </ul>
-          </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <h6><i class="bi bi-info-circle me-2"></i>WebAuthn認証について</h6>
+          <ul class="small mb-0">
+            <li>パスワードなしでより安全にログインできます</li>
+            <li>指紋認証、顔認証、セキュリティキーが利用可能</li>
+            <li>フィッシング攻撃に対して高い耐性があります</li>
+            <li>新規登録後にWebAuthn認証の設定が必要です</li>
+          </ul>
         </div>
-      <% end %>
+      </div>
     </div>
   </div>
 </div>
 
-<% if @email.present? && @webauthn_options %>
-  <!-- JavaScriptで使用するデータを隠しエレメントに配置 -->
-  <script type="application/json" id="webauthn-options"><%= @webauthn_options.to_json.html_safe %></script>
-  <script type="text/plain" id="webauthn-auth-path"><%= webauthn_authentications_path %></script>
-  <script type="text/plain" id="root-path"><%= root_path %></script>
-
-  <%= javascript_include_tag "webauthn", defer: true %>
-<% end %>
+<!-- JavaScriptで使用するパスを隠しエレメントに配置 -->
+<script type="text/plain" id="webauthn-check-path"><%= new_webauthn_authentication_path %></script>
+<script type="text/plain" id="webauthn-auth-path"><%= webauthn_authentications_path %></script>
+<script type="text/plain" id="root-path"><%= root_path %></script>

@@ -3,4 +3,4 @@ import "@hotwired/turbo-rails"
 import "controllers"
 // Bootstrap（Popperを含むバンドル版を使用）
 import "bootstrap"
-
+import "webauthn"
