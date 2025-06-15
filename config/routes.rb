@@ -10,6 +10,9 @@ Rails.application.routes.draw do
     get '/users/registration/success', to: 'users/registrations#success', as: :success_users_registration
   end
 
+  # WebAuthn関連のルート
+  resources :webauthn_credentials, except: [:edit, :update]
+  resources :webauthn_authentications, only: [:new, :create]
 
   # ホームページ
   root "posts#index"

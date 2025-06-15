@@ -1,0 +1,163 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white text-center">
+          <h4 class="mb-0">
+            <i class="bi bi-fingerprint me-2"></i>WebAuthn認証
+          </h4>
+        </div>
+        <div class="card-body">
+          <% if @email.present? && @webauthn_options %>
+            <div class="text-center mb-4">
+              <p class="mb-3">
+                <strong><%= @email %></strong> でWebAuthn認証を行います
+              </p>
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                登録済みの認証デバイス（指紋、顔認証、セキュリティキーなど）を使用してください
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button id="authenticate-webauthn" class="btn btn-primary btn-lg">
+                <i class="bi bi-shield-check me-2"></i>認証を開始
+              </button>
+              <%= link_to "パスワードでログイン", new_user_session_path, class: "btn btn-outline-secondary" %>
+            </div>
+
+          <% else %>
+            <div class="mb-4">
+              <label for="email" class="form-label">メールアドレス</label>
+              <%= form_with url: new_webauthn_authentication_path, method: :get, local: true, class: "d-flex gap-2" do |form| %>
+                <%= form.email_field :email,
+                                     placeholder: "メールアドレスを入力",
+                                     class: "form-control",
+                                     required: true %>
+                <%= form.submit "WebAuthn認証", class: "btn btn-primary" %>
+              <% end %>
+            </div>
+
+            <div class="text-center">
+              <small class="text-muted">
+                WebAuthn認証が設定されているアカウントのみ利用できます
+              </small>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+              <%= link_to "通常のログイン", new_user_session_path, class: "btn btn-outline-secondary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @email.blank? %>
+        <div class="card mt-4">
+          <div class="card-body">
+            <h6><i class="bi bi-question-circle me-2"></i>WebAuthn認証とは？</h6>
+            <ul class="small mb-0">
+              <li>パスワードを使わない安全な認証方式です</li>
+              <li>指紋認証、顔認証、セキュリティキーが利用できます</li>
+              <li>フィッシング攻撃に対して高い耐性があります</li>
+              <li>事前にデバイスの登録が必要です</li>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% if @email.present? && @webauthn_options %>
+  <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const authenticateButton = document.getElementById('authenticate-webauthn');
+
+          authenticateButton.addEventListener('click', async function() {
+              try {
+                  authenticateButton.disabled = true;
+                  authenticateButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>認証中...';
+
+                  const options = <%= @webauthn_options.to_json.html_safe %>;
+
+                  // Base64URLエンコードされた値をArrayBufferに変換
+                  options.challenge = base64URLToArrayBuffer(options.challenge);
+
+                  if (options.allowCredentials) {
+                      options.allowCredentials = options.allowCredentials.map(cred => ({
+                          ...cred,
+                          id: base64URLToArrayBuffer(cred.id)
+                      }));
+                  }
+
+                  const credential = await navigator.credentials.get({
+                      publicKey: options
+                  });
+
+                  // レスポンスをサーバーに送信可能な形式に変換
+                  const credentialData = {
+                      id: credential.id,
+                      rawId: arrayBufferToBase64URL(credential.rawId),
+                      type: credential.type,
+                      response: {
+                          clientDataJSON: arrayBufferToBase64URL(credential.response.clientDataJSON),
+                          authenticatorData: arrayBufferToBase64URL(credential.response.authenticatorData),
+                          signature: arrayBufferToBase64URL(credential.response.signature),
+                          userHandle: credential.response.userHandle ? arrayBufferToBase64URL(credential.response.userHandle) : null
+                      }
+                  };
+
+                  // サーバーに送信
+                  const formData = new FormData();
+                  formData.append('credential[id]', credentialData.id);
+                  formData.append('credential[rawId]', credentialData.rawId);
+                  formData.append('credential[type]', credentialData.type);
+                  formData.append('credential[response][clientDataJSON]', credentialData.response.clientDataJSON);
+                  formData.append('credential[response][authenticatorData]', credentialData.response.authenticatorData);
+                  formData.append('credential[response][signature]', credentialData.response.signature);
+                  if (credentialData.response.userHandle) {
+                      formData.append('credential[response][userHandle]', credentialData.response.userHandle);
+                  }
+                  formData.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                  const response = await fetch('<%= webauthn_authentications_path %>', {
+                      method: 'POST',
+                      body: formData
+                  });
+
+                  if (response.ok) {
+                      window.location.href = '<%= root_path %>';
+                  } else {
+                      throw new Error('Authentication failed');
+                  }
+              } catch (error) {
+                  console.error('WebAuthn authentication failed:', error);
+                  alert('認証に失敗しました。もう一度お試しください。');
+                  authenticateButton.disabled = false;
+                  authenticateButton.innerHTML = '<i class="bi bi-shield-check me-2"></i>認証を開始';
+              }
+          });
+
+          function base64URLToArrayBuffer(base64URL) {
+              const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/');
+              const binaryString = atob(base64);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                  bytes[i] = binaryString.charCodeAt(i);
+              }
+              return bytes.buffer;
+          }
+
+          function arrayBufferToBase64URL(arrayBuffer) {
+              const bytes = new Uint8Array(arrayBuffer);
+              let binaryString = '';
+              for (let i = 0; i < bytes.length; i++) {
+                  binaryString += String.fromCharCode(bytes[i]);
+              }
+              return btoa(binaryString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+          }
+      });
+  </script>
+<% end %>

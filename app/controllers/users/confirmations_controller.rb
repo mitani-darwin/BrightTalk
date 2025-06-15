@@ -22,7 +22,9 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
   protected
 
   def after_confirmation_path_for(resource_name, resource)
-    # 確認後はログイン状態でホーム画面や適切なページに遷移
-    root_path # または posts_path など、適切なページに変更してください
+    # メール確認完了後、WebAuthn設定画面にリダイレクト
+    sign_in(resource)
+    new_webauthn_credential_path
   end
+
 end

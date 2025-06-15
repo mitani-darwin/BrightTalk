@@ -1,0 +1,168 @@
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-shield-check me-2"></i>WebAuthn認証の設定
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle me-2"></i>WebAuthn認証について</h5>
+            <p>WebAuthn認証を設定すると、パスワードの代わりに指紋認証、顔認証、またはセキュリティキーでログインできるようになります。</p>
+          </div>
+
+          <div class="mb-4">
+            <label for="nickname" class="form-label">デバイス名</label>
+            <input type="text" id="nickname" class="form-control" value="<%= @nickname %>" placeholder="例: iPhone、Macbook、セキュリティキー">
+          </div>
+
+          <div class="d-grid gap-2">
+            <button id="register-webauthn" class="btn btn-primary btn-lg">
+              <i class="bi bi-fingerprint me-2"></i>WebAuthn認証を設定する
+            </button>
+            <%= link_to "後で設定する", root_path, class: "btn btn-outline-secondary" %>
+          </div>
+
+          <!-- デバッグ情報（開発環境のみ） -->
+          <% if Rails.env.development? %>
+            <div class="mt-4">
+              <details>
+                <summary class="text-muted">デバッグ情報</summary>
+                <pre class="mt-2 p-2 bg-light"><%= JSON.pretty_generate(@webauthn_options) %></pre>
+              </details>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerButton = document.getElementById('register-webauthn');
+        const nicknameInput = document.getElementById('nickname');
+
+        // WebAuthn対応チェック
+        if (!window.PublicKeyCredential) {
+            registerButton.disabled = true;
+            registerButton.innerHTML = '<i class="bi bi-x-circle me-2"></i>WebAuthnに対応していません';
+            registerButton.classList.add('btn-danger');
+            return;
+        }
+
+        registerButton.addEventListener('click', async function() {
+            try {
+                registerButton.disabled = true;
+                registerButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>設定中...';
+
+                const options = <%= @webauthn_options.to_json.html_safe %>;
+                console.log('WebAuthn options:', options);
+
+                // Base64URLエンコードされた値をArrayBufferに変換
+                options.user.id = base64URLToArrayBuffer(options.user.id);
+                options.challenge = base64URLToArrayBuffer(options.challenge);
+
+                // rpオブジェクトの確認と修正
+                if (!options.rp || !options.rp.name) {
+                    options.rp = {
+                        name: "BrightTalk",
+                        id: "<%= Rails.env.development? ? 'localhost' : 'yourdomain.com' %>"
+                    };
+                }
+
+                if (options.excludeCredentials && options.excludeCredentials.length > 0) {
+                    options.excludeCredentials = options.excludeCredentials.map(cred => ({
+                        ...cred,
+                        id: base64URLToArrayBuffer(cred.id)
+                    }));
+                }
+
+                console.log('Processed options:', options);
+
+                const credential = await navigator.credentials.create({
+                    publicKey: options
+                });
+
+                console.log('Created credential:', credential);
+
+                // レスポンスをサーバーに送信可能な形式に変換
+                const credentialData = {
+                    id: credential.id,
+                    rawId: arrayBufferToBase64URL(credential.rawId),
+                    type: credential.type,
+                    response: {
+                        clientDataJSON: arrayBufferToBase64URL(credential.response.clientDataJSON),
+                        attestationObject: arrayBufferToBase64URL(credential.response.attestationObject)
+                    }
+                };
+
+                console.log('Credential data to send:', credentialData);
+
+                // サーバーに送信
+                const formData = new FormData();
+                formData.append('credential[id]', credentialData.id);
+                formData.append('credential[rawId]', credentialData.rawId);
+                formData.append('credential[type]', credentialData.type);
+                formData.append('credential[response][clientDataJSON]', credentialData.response.clientDataJSON);
+                formData.append('credential[response][attestationObject]', credentialData.response.attestationObject);
+                formData.append('nickname', nicknameInput.value);
+                formData.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content);
+
+                const response = await fetch('<%= webauthn_credentials_path %>', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    window.location.href = '<%= webauthn_credentials_path %>';
+                } else {
+                    const responseText = await response.text();
+                    console.error('Server response:', responseText);
+                    throw new Error('サーバーエラー: ' + response.status);
+                }
+            } catch (error) {
+                console.error('WebAuthn registration failed:', error);
+
+                let errorMessage = 'WebAuthn認証の設定に失敗しました。';
+                if (error.name === 'NotSupportedError') {
+                    errorMessage = 'このデバイスまたはブラウザはWebAuthnに対応していません。';
+                } else if (error.name === 'SecurityError') {
+                    errorMessage = 'セキュリティエラーが発生しました。HTTPSで接続していることを確認してください。';
+                } else if (error.name === 'AbortError') {
+                    errorMessage = '操作がキャンセルされました。';
+                } else if (error.name === 'NotAllowedError') {
+                    errorMessage = '認証が拒否されました。もう一度お試しください。';
+                }
+
+                alert(errorMessage);
+                registerButton.disabled = false;
+                registerButton.innerHTML = '<i class="bi bi-fingerprint me-2"></i>WebAuthn認証を設定する';
+            }
+        });
+
+        function base64URLToArrayBuffer(base64URL) {
+            const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/');
+            const padding = base64.length % 4;
+            const padded = padding ? base64 + '='.repeat(4 - padding) : base64;
+            const binaryString = atob(padded);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function arrayBufferToBase64URL(arrayBuffer) {
+            const bytes = new Uint8Array(arrayBuffer);
+            let binaryString = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binaryString += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binaryString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+    });
+</script>
