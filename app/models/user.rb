@@ -17,6 +17,9 @@ class User < ApplicationRecord
                                      message: 'JPEG、JPG、PNG、GIF形式のファイルを選択してください' },
             size: { less_than: 5.megabytes, message: '5MB以下のファイルを選択してください' }
 
+  # Postsにrecentスコープを追加するために必要
+  scope :recent, -> { order(created_at: :desc) }
+
   def webauthn_id
     # WebAuthn用のユーザーIDを生成（ユーザーIDをbase64エンコード）
     WebAuthn.generate_user_id

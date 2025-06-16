@@ -20,9 +20,21 @@ Rails.application.routes.draw do
   # 仮登録完了ページ
   get '/users/registration_pending', to: 'users#registration_pending', as: 'registration_pending_users'
 
-  # ログアウト
+  # ユーザー管理画面
+  get '/account', to: 'users#account', as: 'user_account'
+  get '/account/edit', to: 'users#edit_account', as: 'edit_user_account'
+  patch '/account', to: 'users#update_account'
+  put '/account', to: 'users#update_account'
+
+  # パスワード変更
+  get '/account/password', to: 'users#edit_password', as: 'edit_user_password'
+  patch '/account/password', to: 'users#update_password'
+  put '/account/password', to: 'users#update_password'
+
+  # ログアウト（GETとDELETEの両方に対応）
   devise_scope :user do
     delete '/logout', to: 'devise/sessions#destroy', as: :destroy_user_session
+    get '/logout', to: 'devise/sessions#destroy'
   end
 
   # ユーザー関連

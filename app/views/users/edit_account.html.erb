@@ -1,0 +1,112 @@
+<div class="container mt-4">
+  <div class="row">
+    <!-- サイドバー -->
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">アカウント設定</h5>
+        </div>
+        <div class="list-group list-group-flush">
+          <%= link_to user_account_path, class: "list-group-item list-group-item-action" do %>
+            <i class="fas fa-user me-2"></i>プロフィール
+          <% end %>
+          <%= link_to edit_user_account_path, class: "list-group-item list-group-item-action active" do %>
+            <i class="fas fa-edit me-2"></i>アカウント編集
+          <% end %>
+          <% unless current_user.has_webauthn_credentials? %>
+            <%= link_to edit_user_password_path, class: "list-group-item list-group-item-action" do %>
+              <i class="fas fa-key me-2"></i>パスワード変更
+            <% end %>
+          <% end %>
+          <%= link_to webauthn_credentials_path, class: "list-group-item list-group-item-action" do %>
+            <i class="fas fa-fingerprint me-2"></i>WebAuthn認証
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="col-md-9">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">アカウント情報の編集</h5>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @user, url: user_account_path, method: :patch, local: true, html: { multipart: true } do |f| %>
+            <% if @user.errors.any? %>
+              <div class="alert alert-danger" role="alert">
+                <h6><%= I18n.t("errors.messages.not_saved",
+                               count: @user.errors.count,
+                               resource: @user.class.model_name.human.downcase)
+                %></h6>
+                <ul class="mb-0">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-4 text-center">
+                <div class="mb-3">
+                  <label class="form-label">プロフィール画像</label>
+                  <div class="mb-3">
+                    <% if @user.avatar_or_default %>
+                      <%= image_tag @user.avatar_or_default, class: "rounded-circle", style: "width: 150px; height: 150px; object-fit: cover;", id: "avatar-preview" %>
+                    <% else %>
+                      <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 150px; height: 150px; margin: 0 auto;" id="avatar-preview">
+                        <i class="fas fa-user fa-4x text-white"></i>
+                      </div>
+                    <% end %>
+                  </div>
+                  <%= f.file_field :avatar, class: "form-control", accept: "image/*", onchange: "previewAvatar(this)" %>
+                  <div class="form-text">
+                    JPEG、PNG、GIF形式のファイル（5MB以下）
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <%= f.label :name, "名前", class: "form-label" %>
+                  <%= f.text_field :name,
+                                   class: "form-control",
+                                   required: true %>
+                </div>
+
+                <div class="mb-3">
+                  <%= f.label :email, "メールアドレス", class: "form-label" %>
+                  <%= f.email_field :email,
+                                    class: "form-control",
+                                    required: true %>
+                  <div class="form-text">
+                    メールアドレスを変更した場合、再度確認が必要になります
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <%= f.submit "変更を保存", class: "btn btn-primary" %>
+                  <%= link_to "キャンセル", user_account_path, class: "btn btn-secondary" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('avatar-preview');
+                preview.innerHTML = '<img src="' + e.target.result + '" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
