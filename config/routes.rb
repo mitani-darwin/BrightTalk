@@ -11,7 +11,11 @@ Rails.application.routes.draw do
   # WebAuthn認証
   get '/login', to: 'webauthn_authentications#new'
   resources :webauthn_credentials, except: [:edit, :update]
-  resources :webauthn_authentications, only: [:new, :create]
+  resources :webauthn_authentications, only: [:new, :create] do
+    collection do
+      post :password_login
+    end
+  end
 
   # 新規登録（名前付きルートを追加）
   get '/users/sign_up', to: 'users#new', as: 'new_user_registration'
