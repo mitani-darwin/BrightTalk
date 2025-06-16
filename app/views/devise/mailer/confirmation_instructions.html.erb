@@ -1,5 +1,151 @@
-<p>Welcome <%= @email %>!</p>
 
-<p>You can confirm your account email through the link below:</p>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrightTalk - メール確認</title>
+  <style>
+      body {
+          font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #f8f9fa;
+          margin: 0;
+          padding: 20px;
+      }
+      .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+      }
+      .header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          text-align: center;
+          padding: 30px 20px;
+      }
+      .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 300;
+      }
+      .content {
+          padding: 40px 30px;
+      }
+      .welcome-text {
+          font-size: 18px;
+          margin-bottom: 20px;
+          color: #2c3e50;
+      }
+      .confirm-button {
+          display: inline-block;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          text-decoration: none;
+          padding: 15px 30px;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 16px;
+          margin: 20px 0;
+          transition: transform 0.2s ease;
+      }
+      .confirm-button:hover {
+          transform: translateY(-2px);
+          text-decoration: none;
+          color: white;
+      }
+      .info-box {
+          background-color: #e3f2fd;
+          border-left: 4px solid #2196f3;
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 0 4px 4px 0;
+      }
+      .footer {
+          background-color: #f8f9fa;
+          padding: 20px 30px;
+          text-align: center;
+          font-size: 14px;
+          color: #6c757d;
+          border-top: 1px solid #e9ecef;
+      }
+      .features {
+          margin: 25px 0;
+      }
+      .features h3 {
+          color: #2c3e50;
+          margin-bottom: 15px;
+      }
+      .feature-item {
+          display: flex;
+          align-items: center;
+          margin: 10px 0;
+          padding: 8px 0;
+      }
+      .feature-icon {
+          margin-right: 10px;
+          font-size: 18px;
+      }
+      @media (max-width: 600px) {
+          .container {
+              margin: 10px;
+              border-radius: 4px;
+          }
+          .content {
+              padding: 30px 20px;
+          }
+          .confirm-button {
+              display: block;
+              text-align: center;
+              margin: 20px 0;
+          }
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🌟 BrightTalk</h1>
+    <p style="margin: 10px 0 0 0; opacity: 0.9;">Welcome to our community!</p>
+  </div>
 
-<p><%= link_to 'Confirm my account', confirmation_url(@resource, confirmation_token: @token) %></p>
+  <div class="content">
+    <p class="welcome-text">
+      <strong><%= @email %></strong> さん、こんにちは！
+    </p>
+
+    <p>BrightTalkへようこそ！アカウント登録ありがとうございます。</p>
+
+    <p>以下のボタンをクリックして、メールアドレスの確認を完了してください：</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <%= link_to 'メールアドレスを確認する', confirmation_url(@resource, confirmation_token: @token), class: 'confirm-button' %>
+    </div>
+
+    <div class="info-box">
+      <strong>💡 次のステップ:</strong><br>
+      メール確認後、セキュリティ向上のためWebAuthn認証（指紋認証・顔認証など）の設定をおすすめします。
+    </div>
+
+    <p style="margin-top: 30px; font-size: 14px; color: #6c757d;">
+      このメールに心当たりがない場合は、このメールを無視してください。<br>
+      確認を完了するまで、アカウントは作成されません。
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>
+      <strong>BrightTalk</strong><br>
+      みんなで作る、明るい話題のコミュニティ
+    </p>
+    <p style="margin-top: 15px; font-size: 12px;">
+      このメールは自動送信されています。返信はできません。
+    </p>
+  </div>
+</div>
+</body>
+</html>
