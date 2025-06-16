@@ -73,44 +73,67 @@ class UsersController < ApplicationController
   # パスワード更新
   def update_password
     @user = current_user
-    current_password = params[:user][:current_password]
 
-    # WebAuthn認証のみのユーザーの場合、現在のパスワード確認をスキップ
-    if @user.has_webauthn_credentials? && @user.encrypted_password.blank?
-      # WebAuthnユーザーで初回パスワード設定の場合
-      if @user.update(password_params_with_webauthn)
-        bypass_sign_in(@user)
-        redirect_to user_account_path, notice: 'パスワードを設定しました。'
-      else
-        render :edit_password, status: :unprocessable_entity
+    # パスワード変更パラメータとWebAuthn設定を分離
+    password_params = user_password_params
+    webauthn_enabled = params[:user][:webauthn_enabled] == '1'
+
+    # パスワードが入力されているかチェック
+    password_provided = password_params[:password].present?
+
+    begin
+      User.transaction do
+        # WebAuthn設定の更新（パスワード入力不要）
+        @user.update!(webauthn_enabled: webauthn_enabled)
+
+        # パスワード変更が要求されている場合のみパスワード更新
+        if password_provided
+          # 現在のパスワードチェック（初回設定以外）
+          unless @user.encrypted_password.blank?
+            unless @user.valid_password?(password_params[:current_password])
+              @user.errors.add(:current_password, '現在のパスワードが正しくありません')
+              raise ActiveRecord::RecordInvalid.new(@user)
+            end
+          end
+
+          # 新しいパスワードの設定
+          if password_params[:password] != password_params[:password_confirmation]
+            @user.errors.add(:password_confirmation, 'パスワードが一致しません')
+            raise ActiveRecord::RecordInvalid.new(@user)
+          end
+
+          # パスワードの長さチェック
+          if password_params[:password].length < 8
+            @user.errors.add(:password, 'は8文字以上で入力してください')
+            raise ActiveRecord::RecordInvalid.new(@user)
+          end
+
+          @user.update!(password: password_params[:password])
+        end
       end
-    elsif current_password.blank?
-      # 現在のパスワードが入力されていない場合
-      @user.errors.add(:current_password, 'を入力してください')
+
+      # 成功メッセージ
+      if password_provided
+        flash[:notice] = 'パスワードと認証設定を更新しました。'
+      else
+        flash[:notice] = '認証設定を更新しました。'
+      end
+
+      redirect_to user_account_path
+    rescue ActiveRecord::RecordInvalid => e
       render :edit_password, status: :unprocessable_entity
-    elsif @user.has_webauthn_credentials? && BCrypt::Password.new(@user.encrypted_password) == current_password
-      # WebAuthn認証ユーザーの場合、BCryptで直接確認
-      if @user.update(password_params_with_webauthn)
-        bypass_sign_in(@user)
-        redirect_to user_account_path, notice: 'パスワードを変更しました。'
-      else
-        render :edit_password, status: :unprocessable_entity
-      end
-    elsif !@user.has_webauthn_credentials? && @user.valid_password?(current_password)
-      # 通常のパスワード認証ユーザーの場合
-      if @user.update(password_params_with_webauthn)
-        bypass_sign_in(@user)
-        redirect_to user_account_path, notice: 'パスワードを変更しました。'
-      else
-        render :edit_password, status: :unprocessable_entity
-      end
-    else
-      # 現在のパスワードが間違っている場合
-      @user.errors.add(:current_password, 'が正しくありません')
+    rescue => e
+      Rails.logger.error "Password update failed: #{e.message}"
+      @user.errors.add(:base, '更新に失敗しました。')
       render :edit_password, status: :unprocessable_entity
     end
   end
 
+  private
+
+  def user_password_params
+    params.require(:user).permit(:current_password, :password, :password_confirmation)
+  end
 
   private
 
