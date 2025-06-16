@@ -1,12 +1,12 @@
-
 Rails.application.routes.draw do
   # ホームページ
   root "posts#index"
 
-  # devise_for :users（カスタムconfirmationsコントローラーを使用）
+  # devise_for :users（カスタムcontrollersを使用）
   devise_for :users, controllers: {
-    confirmations: 'users/confirmations'
-  }, skip: [:sessions, :passwords, :registrations]
+    confirmations: 'users/confirmations',
+    sessions: 'sessions'
+  }, skip: [:passwords, :registrations]
 
   # WebAuthn認証
   get '/login', to: 'webauthn_authentications#new'
@@ -26,19 +26,20 @@ Rails.application.routes.draw do
   patch '/account', to: 'users#update_account'
   put '/account', to: 'users#update_account'
 
-  # パスワード変更
+  # パスワード変更（正しい名前付きルート）
   get '/account/password', to: 'users#edit_password', as: 'edit_user_password'
-  patch '/account/password', to: 'users#update_password'
+  patch '/account/password', to: 'users#update_password', as: 'update_user_password'
   put '/account/password', to: 'users#update_password'
 
-  # ログアウト（GETとDELETEの両方に対応）
+  # ログアウト（GETとDELETEの両方をサポート）
   devise_scope :user do
-    delete '/logout', to: 'devise/sessions#destroy', as: :destroy_user_session
+    get '/users/sign_out', to: 'devise/sessions#destroy'
+    delete '/users/sign_out', to: 'devise/sessions#destroy'
     get '/logout', to: 'devise/sessions#destroy'
   end
 
-  # ユーザー関連
-  resources :users, only: [:show]
+  # ユーザー関連（sign_outをshowアクションから除外）
+  resources :users, only: [:show], constraints: { id: /\d+/ }
   get 'users/:id/posts', to:'posts#user_posts', as: 'user_posts'
 
   # 投稿関連

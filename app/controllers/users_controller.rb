@@ -1,5 +1,6 @@
 class UsersController < ApplicationController
-  before_action :authenticate_user!, only: [:account, :edit_account, :update_account, :edit_password, :update_password]
+  before_action :authenticate_user!, except: [:new, :create, :registration_pending]
+  before_action :set_user, only: [:show]
 
   def new
     @user = User.new
@@ -32,8 +33,7 @@ class UsersController < ApplicationController
   end
 
   def show
-    @user = User.find(params[:id])
-    @posts = @user.posts.recent.page(params[:page]).per(5)
+    @posts = @user.posts.includes(:user, :category, :tags).page(params[:page]).per(10)
   end
 
   # アカウント管理画面
@@ -68,33 +68,61 @@ class UsersController < ApplicationController
   # パスワード変更画面
   def edit_password
     @user = current_user
-
-    # WebAuthn認証が設定されている場合はパスワード変更を禁止
-    if @user.has_webauthn_credentials?
-      redirect_to user_account_path, alert: 'WebAuthn認証が設定されているため、パスワード変更はできません。'
-    end
   end
 
   # パスワード更新
   def update_password
     @user = current_user
+    current_password = params[:user][:current_password]
 
-    # WebAuthn認証が設定されている場合はパスワード変更を禁止
-    if @user.has_webauthn_credentials?
-      redirect_to user_account_path, alert: 'WebAuthn認証が設定されているため、パスワード変更はできません。'
-      return
-    end
-
-    if @user.update_with_password(password_params)
-      # パスワード更新後は再ログインが必要
-      bypass_sign_in(@user)
-      redirect_to user_account_path, notice: 'パスワードを変更しました。'
+    # WebAuthn認証のみのユーザーの場合、現在のパスワード確認をスキップ
+    if @user.has_webauthn_credentials? && @user.encrypted_password.blank?
+      # WebAuthnユーザーで初回パスワード設定の場合
+      if @user.update(password_params_with_webauthn)
+        bypass_sign_in(@user)
+        redirect_to user_account_path, notice: 'パスワードを設定しました。'
+      else
+        render :edit_password, status: :unprocessable_entity
+      end
+    elsif current_password.blank?
+      # 現在のパスワードが入力されていない場合
+      @user.errors.add(:current_password, 'を入力してください')
+      render :edit_password, status: :unprocessable_entity
+    elsif @user.has_webauthn_credentials? && BCrypt::Password.new(@user.encrypted_password) == current_password
+      # WebAuthn認証ユーザーの場合、BCryptで直接確認
+      if @user.update(password_params_with_webauthn)
+        bypass_sign_in(@user)
+        redirect_to user_account_path, notice: 'パスワードを変更しました。'
+      else
+        render :edit_password, status: :unprocessable_entity
+      end
+    elsif !@user.has_webauthn_credentials? && @user.valid_password?(current_password)
+      # 通常のパスワード認証ユーザーの場合
+      if @user.update(password_params_with_webauthn)
+        bypass_sign_in(@user)
+        redirect_to user_account_path, notice: 'パスワードを変更しました。'
+      else
+        render :edit_password, status: :unprocessable_entity
+      end
     else
+      # 現在のパスワードが間違っている場合
+      @user.errors.add(:current_password, 'が正しくありません')
       render :edit_password, status: :unprocessable_entity
     end
   end
 
+
   private
+
+  def set_user
+    # IDが数値の場合のみUserを検索、それ以外は current_user を使用
+    if params[:id] && params[:id].match?(/\A\d+\z/)
+      @user = User.find(params[:id])
+    else
+      @user = current_user
+    end
+  end
+
 
   def user_params
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
@@ -105,6 +133,10 @@ class UsersController < ApplicationController
   end
 
   def password_params
-    params.require(:user).permit(:current_password, :password, :password_confirmation)
+    params.require(:user).permit(:password, :password_confirmation)
+  end
+
+  def password_params_with_webauthn
+    params.require(:user).permit(:password, :password_confirmation, :webauthn_enabled)
   end
 end

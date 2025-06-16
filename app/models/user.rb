@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   # Deviseモジュール（データベース認証可能とする）
-  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable, :confirmable
+  devise :database_authenticatable, :registerable, :confirmable,
+         :recoverable, :rememberable, :validatable
 
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
@@ -29,10 +30,16 @@ class User < ApplicationRecord
     webauthn_credentials.exists?
   end
 
-  # WebAuthn認証が必須
+  # WebAuthn認証が有効で、かつ認証情報が登録されている場合のみWebAuthn認証を要求
   def webauthn_required?
-    persisted? && !has_webauthn_credentials?
+    webauthn_enabled? && webauthn_credentials.exists?
   end
+
+  # パスワード認証を許可するか
+  def password_authentication_allowed?
+    !webauthn_enabled? || !webauthn_credentials.exists?
+  end
+
 
   # 特定の投稿にいいねしているかどうかを判定
   def liked?(post)
@@ -58,7 +65,16 @@ class User < ApplicationRecord
 
   # WebAuthn認証が設定されている場合、パスワード認証をスキップ
   def valid_password?(password)
-    return false if has_webauthn_credentials?
+    # ログイン時のみWebAuthn認証を強制し、パスワード変更時は通常のバリデーションを使用
+    return false if has_webauthn_credentials? && caller.any? { |line| line.include?('sessions_controller') }
     super
+  end
+
+  # または、より明示的なメソッドを追加
+  def valid_password_for_change?(password)
+    # パスワード変更専用の検証メソッド（WebAuthn有効でも動作）
+    BCrypt::Password.new(encrypted_password) == password
+  rescue BCrypt::Errors::InvalidHash
+    false
   end
 end
