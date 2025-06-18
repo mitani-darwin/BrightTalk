@@ -102,9 +102,17 @@ class UsersController < ApplicationController
             raise ActiveRecord::RecordInvalid.new(@user)
           end
 
-          # パスワードの長さチェック
-          if password_params[:password].length < 8
-            @user.errors.add(:password, 'は8文字以上で入力してください')
+          # パスワードの長さチェック（Deviseの設定を使用）
+          min_length = Devise.password_length.first
+          max_length = Devise.password_length.last
+
+          if password_params[:password].length < min_length
+            @user.errors.add(:password, "は#{min_length}文字以上で入力してください")
+            raise ActiveRecord::RecordInvalid.new(@user)
+          end
+
+          if max_length != Float::INFINITY && password_params[:password].length > max_length
+            @user.errors.add(:password, "は#{max_length}文字以内で入力してください")
             raise ActiveRecord::RecordInvalid.new(@user)
           end
 

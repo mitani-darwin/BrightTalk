@@ -1,6 +1,6 @@
 <div class="container mt-5">
   <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-md-8">
       <div class="card">
         <div class="card-header">
           <h4 class="mb-0">新規登録</h4>
@@ -44,8 +44,10 @@
                                    autocomplete: "new-password",
                                    class: "form-control",
                                    required: true,
-                                   placeholder: "6文字以上（WebAuthn設定後は不要）" %>
+                                   minlength: devise_minimum_password_length,
+                                   placeholder: "安全なパスワードを入力" %>
               <div class="form-text">
+                <strong>要件:</strong> <%= password_requirement_text %><br>
                 WebAuthn認証設定後は、このパスワードは使用されません
               </div>
             </div>
@@ -56,6 +58,37 @@
                                    autocomplete: "new-password",
                                    class: "form-control",
                                    required: true %>
+            </div>
+
+            <!-- パスワード強度の詳細説明 -->
+            <div class="mb-3">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6 class="card-title"><i class="fas fa-shield-alt me-2"></i>パスワード強度要件</h6>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6 class="text-success">必要な条件:</h6>
+                      <ul class="small">
+                        <% password_strength_requirements.each do |req| %>
+                          <li><%= req %></li>
+                        <% end %>
+                      </ul>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-danger">避けるべきパターン:</h6>
+                      <ul class="small">
+                        <% weak_password_examples.each do |example| %>
+                          <li><%= example %></li>
+                        <% end %>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <strong>良い例:</strong> <code>MySecure123!</code> <code>Blue@Sky2024</code><br>
+                    <strong>悪い例:</strong> <code>password123</code> <code>12345678</code> <code>qwerty</code>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="d-grid">

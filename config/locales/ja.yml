@@ -23,6 +23,7 @@ ja:
             password:
               too_short: "は%{count}文字以上で入力してください"
               blank: "を入力してください"
+              too_weak: "は英字、数字、記号をそれぞれ1文字以上含み、推測されにくいものにしてください"
             name:
               blank: "を入力してください"
             password_confirmation:
