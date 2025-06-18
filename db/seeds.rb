@@ -97,7 +97,7 @@ categories = categories_data.map { |name| Category.create!(name: name) }
 tags = tags_data.map { |name| Tag.create!(name: name) }
 
 # データ件数設定（総計5000件）
-user_count = 100        # ユーザー
+user_count = 50        # ユーザー
 post_count = 3000       # 投稿（メイン）
 comment_count = 1000    # コメント
 like_count = 500        # いいね

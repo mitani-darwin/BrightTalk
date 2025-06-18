@@ -1,0 +1,27 @@
+# app/controllers/sessions_controller.rb
+class SessionsController < Devise::SessionsController
+  def new
+    super
+  end
+
+  def create
+    user = User.find_by(email: params[:user][:email])
+
+    if user&.confirmed?
+      if user.webauthn_required?
+        # WebAuthn認証が必要な場合はWebAuthn認証画面にリダイレクト
+        session[:email_for_webauthn] = user.email
+        redirect_to new_webauthn_authentication_path,
+                    alert: 'このアカウントはWebAuthn認証が必要です。'
+      elsif user.password_authentication_allowed?
+        # パスワード認証を許可する場合は通常のDevise認証
+        super
+      else
+        redirect_to new_user_session_path,
+                    alert: 'このアカウントはWebAuthn認証のみ有効です。'
+      end
+    else
+      super
+    end
+  end
+end

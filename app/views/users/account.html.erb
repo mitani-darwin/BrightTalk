@@ -1,0 +1,161 @@
+<div class="container mt-4">
+  <div class="row">
+    <!-- サイドバー -->
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">アカウント設定</h5>
+        </div>
+        <div class="list-group list-group-flush">
+          <%= link_to user_account_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'account'}" do %>
+            <i class="fas fa-user me-2"></i>プロフィール
+          <% end %>
+          <%= link_to edit_user_account_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_account'}" do %>
+            <i class="fas fa-edit me-2"></i>アカウント編集
+          <% end %>
+          <%= link_to edit_user_password_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_password'}" do %>
+            <i class="fas fa-key me-2"></i>パスワード変更
+          <% end %>
+          <%= link_to webauthn_credentials_path, class: "list-group-item list-group-item-action" do %>
+            <i class="fas fa-fingerprint me-2"></i>WebAuthn認証
+          <% end %>
+        </div>
+      </div>
+
+      <!-- 統計情報 -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h6 class="mb-0">アクティビティ統計</h6>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-6 mb-3">
+              <div class="h4 text-primary"><%= @stats[:posts_count] %></div>
+              <small class="text-muted">投稿数</small>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="h4 text-success"><%= @stats[:comments_count] %></div>
+              <small class="text-muted">コメント数</small>
+            </div>
+            <div class="col-6">
+              <div class="h4 text-warning"><%= @stats[:likes_given] %></div>
+              <small class="text-muted">いいね送信</small>
+            </div>
+            <div class="col-6">
+              <div class="h4 text-danger"><%= @stats[:likes_received] %></div>
+              <small class="text-muted">いいね受信</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="col-md-9">
+      <!-- プロフィール情報 -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">プロフィール情報</h5>
+          <%= link_to "編集", edit_user_account_path, class: "btn btn-outline-primary btn-sm" %>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 text-center">
+              <% if @user.avatar_or_default %>
+                <%= image_tag @user.avatar_or_default, class: "rounded-circle", style: "width: 120px; height: 120px; object-fit: cover;" %>
+              <% else %>
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; margin: 0 auto;">
+                  <i class="fas fa-user fa-3x text-white"></i>
+                </div>
+              <% end %>
+            </div>
+            <div class="col-md-9">
+              <h4><%= @user.name %></h4>
+              <p class="text-muted"><%= @user.email %></p>
+
+              <div class="mt-3">
+                <strong>アカウント作成日:</strong> <%= @user.created_at.strftime("%Y年%m月%d日") %><br>
+                <strong>最終更新:</strong> <%= @user.updated_at.strftime("%Y年%m月%d日") %><br>
+                <strong>メール確認:</strong>
+                <% if @user.confirmed? %>
+                  <span class="badge bg-success">確認済み</span>
+                <% else %>
+                  <span class="badge bg-warning">未確認</span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- セキュリティ情報 -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">セキュリティ設定</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>認証方法</h6>
+              <% if @user.has_webauthn_credentials? %>
+                <div class="alert alert-success">
+                  <i class="fas fa-fingerprint me-2"></i>
+                  WebAuthn認証が設定されています
+                </div>
+                <p class="small text-muted">
+                  WebAuthn認証が設定されているため、パスワードログインは無効化されています。
+                </p>
+              <% else %>
+                <div class="alert alert-warning">
+                  <i class="fas fa-key me-2"></i>
+                  パスワード認証のみ
+                </div>
+                <p class="small text-muted">
+                  セキュリティ向上のため、WebAuthn認証の設定をお勧めします。
+                </p>
+                <%= link_to "WebAuthn認証を設定", new_webauthn_credential_path, class: "btn btn-primary btn-sm" %>
+              <% end %>
+            </div>
+            <div class="col-md-6">
+              <h6>登録デバイス数</h6>
+              <div class="h4 text-info"><%= @webauthn_credentials.count %></div>
+              <% if @webauthn_credentials.any? %>
+                <%= link_to "デバイス管理", webauthn_credentials_path, class: "btn btn-outline-secondary btn-sm" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近の投稿 -->
+      <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">最近の投稿</h5>
+          <%= link_to "すべて見る", user_posts_path(@user), class: "btn btn-outline-primary btn-sm" %>
+        </div>
+        <div class="card-body">
+          <% if @recent_posts.any? %>
+            <% @recent_posts.each do |post| %>
+              <div class="border-bottom py-2">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <%= link_to post.title.presence || "無題", post_path(post), class: "text-decoration-none" %>
+                    <br>
+                    <small class="text-muted"><%= post.created_at.strftime("%Y/%m/%d %H:%M") %></small>
+                  </div>
+                  <div>
+                    <span class="badge bg-primary"><%= post.likes.count %> いいね</span>
+                    <span class="badge bg-secondary"><%= post.comments.count %> コメント</span>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center py-3">まだ投稿がありません</p>
+            <%= link_to "投稿を作成", new_post_path, class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

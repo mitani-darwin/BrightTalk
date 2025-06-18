@@ -1,4 +1,3 @@
-
 source "https://rubygems.org"
 
 gem "rails", "~> 8.0.2"
@@ -40,6 +39,9 @@ gem 'active_storage_validations'
 # PDF生成
 gem 'wicked_pdf'
 gem 'wkhtmltopdf-binary'
+
+# WebAuthn認証
+gem 'webauthn', '~> 3.0'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

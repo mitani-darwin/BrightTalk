@@ -23,6 +23,7 @@ ja:
             password:
               too_short: "は%{count}文字以上で入力してください"
               blank: "を入力してください"
+              too_weak: "は英字、数字、記号をそれぞれ1文字以上含み、推測されにくいものにしてください"
             name:
               blank: "を入力してください"
             password_confirmation:
@@ -100,7 +101,7 @@ ja:
       signed_up: "アカウント登録が完了しました。"
       signed_up_but_inactive: "ログインするためには、アカウントを有効化してください。"
       signed_up_but_locked: "アカウントがロックされているため、ログインできません。"
-      signed_up_but_unconfirmed: "本人確認用のメールを送信しました。メール内のリンクからアカウントを有効化させてください。"
+      # signed_up_but_unconfirmed: "本人確認用のメールを送信しました。メール内のリンクからアカウントを有効化させてください。"
       update_needs_confirmation: "アカウント情報を変更しました。変更されたメールアドレスの本人確認のため、本人確認用メールより確認処理をおこなってください。"
       updated: "アカウント情報を変更しました。"
       updated_but_not_signed_in: "あなたのアカウントは正常に更新されましたが、パスワードが変更されたため、再度ログインしてください。"

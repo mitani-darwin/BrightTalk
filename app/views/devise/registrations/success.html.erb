@@ -1,0 +1,32 @@
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white text-center">
+        <h4 class="mb-0">
+          <i class="bi bi-person-plus me-2"></i>新規登録
+        </h4>
+      </div>
+      <div class="card-body">
+
+        <!-- 仮登録完了メッセージの表示 -->
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle me-2"></i>
+          確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- 再送信リンクのみ表示 -->
+        <div class="text-center mt-3">
+          <p class="text-muted">確認メールが届かない場合：</p>
+          <a class="btn btn-outline-secondary" href="/users/confirmation/new">確認メールを再送信</a>
+        </div>
+
+        <!-- ホームへ戻るリンクを追加 -->
+        <div class="text-center mt-3">
+          <a class="btn btn-primary" href="/">ホームページへ戻る</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
