@@ -1,96 +1,75 @@
+
 <div class="container mt-4" data-turbo="false">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
         <div class="card-header">
-          <h4><i class="fas fa-sign-in-alt me-2"></i>ログイン</h4>
+          <h4>ログイン</h4>
         </div>
         <div class="card-body">
-          <!-- エラー・アラートメッセージの表示 -->
-          <% if resource.errors.any? %>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-              <% resource.errors.full_messages.each do |message| %>
-                <div><%= message %></div>
-              <% end %>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          <% end %>
-
-          <% if notice %>
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-              <%= notice %>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          <% end %>
-
-          <% if alert %>
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-              <%= alert %>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          <% end %>
-
-          <%= form_with(model: resource, as: resource_name, url: session_path(resource_name), method: :post, local: true, data: { turbo: false }) do |form| %>
+          <!-- メールアドレス入力フォーム -->
+          <div id="email-form">
             <div class="mb-3">
-              <%= form.label :email, "メールアドレス", class: "form-label" %>
-              <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "form-control", id: "user_email", value: resource.email %>
+              <label for="email" class="form-label">メールアドレス</label>
+              <input type="email" id="email" class="form-control" placeholder="メールアドレスを入力してください" autofocus>
             </div>
-
-            <!-- パスワード入力欄（初期状態では非表示） -->
-            <div id="password-section" class="mb-3" style="display: none;">
-              <%= form.label :password, "パスワード", class: "form-label" %>
-              <%= form.password_field :password, autocomplete: "current-password", class: "form-control", id: "user_password" %>
-            </div>
-
-            <!-- Remember me チェックボックス（パスワード認証時のみ表示） -->
-            <div id="remember-section" class="mb-3" style="display: none;">
-              <div class="form-check">
-                <%= form.check_box :remember_me, class: "form-check-input" %>
-                <%= form.label :remember_me, "ログイン状態を保持する", class: "form-check-label" %>
-              </div>
-            </div>
-
-            <!-- ログインボタン -->
             <div class="d-grid gap-2">
-              <button type="button" id="check-webauthn-btn" class="btn btn-primary">
-                <i class="fas fa-arrow-right me-2"></i>次へ
-              </button>
-
-              <button type="submit" id="password-login-btn" class="btn btn-success" style="display: none;">
-                <i class="fas fa-key me-2"></i>パスワードでログイン
-              </button>
+              <button type="button" id="check-email" class="btn btn-primary">認証方法を確認</button>
             </div>
+          </div>
 
-            <!-- WebAuthn認証リンク（メール確認後に表示） -->
-            <div id="webauthn-section" class="mt-3" style="display: none;">
+          <!-- ローディング表示 -->
+          <div id="loading" class="text-center" style="display: none;">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">確認中...</span>
+            </div>
+            <p class="mt-2">認証方法を確認中...</p>
+          </div>
+
+          <!-- パスワード認証フォーム -->
+          <div id="password-form" style="display: none;">
+            <%= form_with url: password_login_webauthn_authentications_path, method: :post, local: true, id: "password-login-form", data: { turbo: false } do |f| %>
+              <input type="hidden" id="email-hidden" name="email">
+
               <div class="alert alert-info">
-                <h6><i class="fas fa-shield-alt me-2"></i>WebAuthn認証が利用可能です</h6>
-                <p class="mb-2">このアカウントはWebAuthn認証が有効になっています。</p>
+                <i class="fas fa-key me-2"></i>
+                <span id="user-email"></span> でパスワード認証を行います
               </div>
+
+              <div class="mb-3">
+                <label for="password" class="form-label">パスワード</label>
+                <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password">
+              </div>
+
               <div class="d-grid gap-2">
-                <button type="button" id="webauthn-login-btn" class="btn btn-primary">
-                  <i class="fas fa-fingerprint me-2"></i>WebAuthn認証でログイン
-                </button>
-                <button type="button" id="use-password-btn" class="btn btn-outline-secondary">
-                  <i class="fas fa-key me-2"></i>パスワードを使用する
-                </button>
+                <button type="submit" class="btn btn-success">ログイン</button>
+                <button type="button" id="back-to-email" class="btn btn-outline-secondary">戻る</button>
               </div>
+            <% end %>
+          </div>
+
+          <!-- WebAuthn認証 -->
+          <div id="webauthn-form" style="display: none;">
+            <div class="alert alert-success">
+              <i class="fas fa-fingerprint me-2"></i>
+              <span id="webauthn-email"></span> でWebAuthn認証を行います
             </div>
 
-            <!-- エラーメッセージ -->
-            <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
-
-            <!-- 処理中表示 -->
-            <div id="processing" class="text-center mt-3" style="display: none;">
-              <div class="spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">確認中...</span>
-              </div>
-              <span class="ms-2">メールアドレスを確認中...</span>
+            <div class="d-grid gap-2">
+              <button type="button" id="webauthn-login" class="btn btn-primary">
+                <i class="fas fa-fingerprint me-2"></i>
+                WebAuthn認証を開始
+              </button>
+              <button type="button" id="back-to-email-webauthn" class="btn btn-outline-secondary">戻る</button>
             </div>
-          <% end %>
+          </div>
 
-          <!-- その他のリンク -->
-          <%= render "devise/shared/links" %>
+          <!-- エラーメッセージ -->
+          <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+
+          <div class="mt-3 text-center">
+            <p><%= link_to "アカウントをお持ちでない方はこちら", new_user_registration_path, class: "text-decoration-none" %></p>
+          </div>
         </div>
       </div>
     </div>
@@ -98,143 +77,157 @@
 </div>
 
 <script>
-    // グローバル変数でイベントリスナーの重複を防ぐ
-    let loginPageInitialized = false;
+    function initializeLoginForm() {
+        const emailInput = document.getElementById('email');
+        const checkEmailBtn = document.getElementById('check-email');
+        const emailForm = document.getElementById('email-form');
+        const passwordForm = document.getElementById('password-form');
+        const webauthnForm = document.getElementById('webauthn-form');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const backToEmailBtn = document.getElementById('back-to-email');
+        const backToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
 
-    // 改良されたBase64URL変換関数
-    function base64URLToArrayBuffer(base64url) {
-        if (!base64url || typeof base64url !== 'string') {
-            throw new Error('Invalid base64url input');
+        // 既存のイベントリスナーを削除
+        if (checkEmailBtn) {
+            checkEmailBtn.replaceWith(checkEmailBtn.cloneNode(true));
+        }
+        if (backToEmailBtn) {
+            backToEmailBtn.replaceWith(backToEmailBtn.cloneNode(true));
+        }
+        if (backToEmailWebauthnBtn) {
+            backToEmailWebauthnBtn.replaceWith(backToEmailWebauthnBtn.cloneNode(true));
         }
 
-        try {
-            // 不正な文字を除去（空白、改行など）
-            base64url = base64url.replace(/\s/g, '');
+        // 再取得
+        const newCheckEmailBtn = document.getElementById('check-email');
+        const newBackToEmailBtn = document.getElementById('back-to-email');
+        const newBackToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
 
-            // Base64URLからBase64に変換
-            let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-
-            // パディングを正しく追加
-            const padLength = (4 - base64.length % 4) % 4;
-            if (padLength > 0) {
-                base64 += '='.repeat(padLength);
-            }
-
-            // Base64形式の検証
-            if (!/^[A-Za-z0-9+/]*=*$/.test(base64)) {
-                throw new Error('Invalid base64 format');
-            }
-
-            // Base64をデコード
-            const binaryString = atob(base64);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        } catch (error) {
-            console.error('Base64URL decode error:', error);
-            console.error('Input:', base64url);
-            throw new Error(`Base64URL decode failed: ${error.message}`);
-        }
-    }
-
-    function arrayBufferToBase64URL(buffer) {
-        if (!buffer) {
-            return '';
+        // CSRFトークンを取得
+        function getCSRFToken() {
+            const token = document.querySelector('meta[name="csrf-token"]');
+            return token ? token.getAttribute('content') : '';
         }
 
-        try {
-            const bytes = new Uint8Array(buffer);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            const base64 = btoa(binary);
-            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        } catch (error) {
-            console.error('Base64URL encode error:', error);
-            throw new Error(`Base64URL encode failed: ${error.message}`);
-        }
-    }
+        // メールアドレス確認
+        if (newCheckEmailBtn) {
+            newCheckEmailBtn.addEventListener('click', async function() {
+                const email = emailInput.value.trim();
 
-    function startWebAuthnAuthentication(webauthnOptions) {
-        console.log('WebAuthn authentication options received:', webauthnOptions);
+                if (!email) {
+                    showError('メールアドレスを入力してください。');
+                    return;
+                }
 
-        if (!webauthnOptions || !webauthnOptions.challenge) {
-            throw new Error('Invalid WebAuthn options');
-        }
+                showLoading();
 
-        // WebAuthnオプションを変換
-        const convertedOptions = {
-            challenge: base64URLToArrayBuffer(webauthnOptions.challenge),
-            timeout: webauthnOptions.timeout || 60000,
-            userVerification: webauthnOptions.userVerification || 'preferred'
-        };
+                try {
+                    const response = await fetch('/check_webauthn', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': getCSRFToken(),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ email: email }),
+                        credentials: 'same-origin'
+                    });
 
-        // allowCredentialsの変換
-        if (webauthnOptions.allowCredentials && Array.isArray(webauthnOptions.allowCredentials)) {
-            convertedOptions.allowCredentials = webauthnOptions.allowCredentials.map(cred => {
-                const credId = typeof cred === 'object' ? cred.id : cred;
-                console.log('Converting credential ID:', credId);
+                    console.log('Response status:', response.status);
+                    const data = await response.json();
+                    console.log('Response data:', data);
 
-                return {
-                    type: 'public-key',
-                    id: base64URLToArrayBuffer(credId),
-                    transports: cred.transports || ['usb', 'nfc', 'ble', 'internal']
-                };
+                    hideLoading();
+
+                    if (response.ok) {
+                        if (data.webauthn_enabled) {
+                            showWebAuthnForm(email, data.webauthn_options);
+                        } else {
+                            showPasswordForm(email);
+                        }
+                    } else {
+                        showError(data.error || '認証方法の確認に失敗しました。');
+                    }
+                } catch (error) {
+                    hideLoading();
+                    console.error('Error:', error);
+                    showError('ネットワークエラーが発生しました。');
+                }
             });
         }
 
-        console.log('Converted WebAuthn authentication options:', convertedOptions);
-
-        return navigator.credentials.get({
-            publicKey: convertedOptions
-        });
-    }
-
-    function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-
-    // メイン初期化関数
-    function initializeLoginPage() {
-        if (loginPageInitialized) {
-            console.log('Login page already initialized, skipping...');
-            return;
+        // WebAuthn認証開始
+        const webauthnLoginBtn = document.getElementById('webauthn-login');
+        if (webauthnLoginBtn) {
+            webauthnLoginBtn.addEventListener('click', async function() {
+                if (window.webauthnOptions) {
+                    try {
+                        await window.startWebAuthnAuthentication(window.webauthnOptions);
+                    } catch (error) {
+                        console.error('WebAuthn authentication failed:', error);
+                        showError('WebAuthn認証に失敗しました: ' + error.message);
+                    }
+                }
+            });
         }
 
-        console.log('Initializing login page...');
-
-        const form = document.querySelector('form');
-        const emailInput = document.getElementById('user_email');
-        const passwordInput = document.getElementById('user_password');
-        const passwordSection = document.getElementById('password-section');
-        const rememberSection = document.getElementById('remember-section');
-        const webauthnSection = document.getElementById('webauthn-section');
-        const checkWebauthnBtn = document.getElementById('check-webauthn-btn');
-        const passwordLoginBtn = document.getElementById('password-login-btn');
-        const webauthnLoginBtn = document.getElementById('webauthn-login-btn');
-        const usePasswordBtn = document.getElementById('use-password-btn');
-        const errorMessage = document.getElementById('error-message');
-        const processing = document.getElementById('processing');
-
-        // 要素の存在確認
-        if (!form || !emailInput || !checkWebauthnBtn) {
-            console.error('Required elements not found');
-            return;
+        // 戻るボタン
+        if (newBackToEmailBtn) {
+            newBackToEmailBtn.addEventListener('click', resetToEmailForm);
+        }
+        if (newBackToEmailWebauthnBtn) {
+            newBackToEmailWebauthnBtn.addEventListener('click', resetToEmailForm);
         }
 
-        console.log('All required elements found');
+        // Enterキーでメール確認
+        if (emailInput) {
+            emailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    newCheckEmailBtn.click();
+                }
+            });
+        }
+
+        function showLoading() {
+            if (emailForm) emailForm.style.display = 'none';
+            if (passwordForm) passwordForm.style.display = 'none';
+            if (webauthnForm) webauthnForm.style.display = 'none';
+            if (loading) loading.style.display = 'block';
+            hideError();
+        }
+
+        function hideLoading() {
+            if (loading) loading.style.display = 'none';
+        }
+
+        function showPasswordForm(email) {
+            document.getElementById('email-hidden').value = email;
+            document.getElementById('user-email').textContent = email;
+            if (emailForm) emailForm.style.display = 'none';
+            if (passwordForm) passwordForm.style.display = 'block';
+            document.getElementById('password').focus();
+        }
+
+        function showWebAuthnForm(email, webauthnOptions) {
+            document.getElementById('webauthn-email').textContent = email;
+            window.webauthnOptions = webauthnOptions;
+            if (emailForm) emailForm.style.display = 'none';
+            if (webauthnForm) webauthnForm.style.display = 'block';
+        }
+
+        function resetToEmailForm() {
+            if (emailForm) emailForm.style.display = 'block';
+            if (passwordForm) passwordForm.style.display = 'none';
+            if (webauthnForm) webauthnForm.style.display = 'none';
+            hideError();
+            if (emailInput) emailInput.focus();
+        }
 
         function showError(message) {
             if (errorMessage) {
                 errorMessage.textContent = message;
                 errorMessage.style.display = 'block';
-            }
-            if (processing) {
-                processing.style.display = 'none';
             }
         }
 
@@ -243,328 +236,9 @@
                 errorMessage.style.display = 'none';
             }
         }
-
-        function getCSRFToken() {
-            const token = document.querySelector('meta[name="csrf-token"]');
-            return token ? token.getAttribute('content') : '';
-        }
-
-        function resetButtonState() {
-            if (checkWebauthnBtn) {
-                checkWebauthnBtn.disabled = false;
-                checkWebauthnBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>次へ';
-            }
-            if (processing) {
-                processing.style.display = 'none';
-            }
-        }
-
-        // フォームの属性を強制的に正しい値に設定する関数
-        function fixFormAttributes() {
-            if (form) {
-                console.log('Fixing form attributes...');
-                console.log('Before fix - action:', form.action, 'method:', form.method);
-
-                // 属性を強制設定
-                form.setAttribute('action', '/users/sign_in');
-                form.setAttribute('method', 'POST');
-
-                console.log('After fix - action:', form.action, 'method:', form.method);
-                return true;
-            }
-            return false;
-        }
-
-        // 初期化時にフォーム属性を修正
-        fixFormAttributes();
-
-        // 「次へ」ボタンのクリックイベント
-        checkWebauthnBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            console.log('Next button clicked');
-
-            const email = emailInput.value.trim();
-
-            if (!email) {
-                showError('メールアドレスを入力してください。');
-                return;
-            }
-
-            if (!isValidEmail(email)) {
-                showError('有効なメールアドレスを入力してください。');
-                return;
-            }
-
-            hideError();
-
-            // ボタンを無効化して処理中表示
-            checkWebauthnBtn.disabled = true;
-            checkWebauthnBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>確認中...';
-            if (processing) {
-                processing.style.display = 'block';
-            }
-
-            try {
-                console.log('Sending request to /check_webauthn with email:', email);
-
-                const response = await fetch('/check_webauthn', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': getCSRFToken()
-                    },
-                    body: JSON.stringify({ email: email })
-                });
-
-                console.log('Response status:', response.status);
-
-                if (!response.ok) {
-                    throw new Error('サーバーエラーが発生しました。');
-                }
-
-                const data = await response.json();
-                console.log('Response data:', data);
-
-                resetButtonState();
-
-                if (data.error) {
-                    showError(data.error);
-                    return;
-                }
-
-                if (data.webauthn_enabled) {
-                    console.log('WebAuthn enabled for user');
-                    if (webauthnSection) {
-                        webauthnSection.style.display = 'block';
-                    }
-                    checkWebauthnBtn.style.display = 'none';
-                } else {
-                    console.log('WebAuthn not enabled, showing password form');
-                    if (passwordSection) {
-                        passwordSection.style.display = 'block';
-                    }
-                    if (rememberSection) {
-                        rememberSection.style.display = 'block';
-                    }
-                    if (passwordLoginBtn) {
-                        passwordLoginBtn.style.display = 'block';
-                    }
-                    checkWebauthnBtn.style.display = 'none';
-
-                    // パスワード入力欄にフォーカス
-                    if (passwordInput) {
-                        passwordInput.focus();
-                    }
-                }
-
-            } catch (error) {
-                console.error('Error in checkWebauthn:', error);
-                showError('通信エラーが発生しました。もう一度お試しください。');
-                resetButtonState();
-            }
-        });
-
-        // パスワードログインボタンのイベント
-        if (passwordLoginBtn) {
-            passwordLoginBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                const email = emailInput.value.trim();
-                const password = passwordInput ? passwordInput.value : '';
-
-                console.log('Password login clicked');
-
-                if (!email || !password) {
-                    showError('メールアドレスとパスワードを入力してください。');
-                    return;
-                }
-
-                hideError();
-
-                // フォームの属性を再度強制的に正しい値に設定
-                if (!fixFormAttributes()) {
-                    showError('フォームが見つかりません。');
-                    return;
-                }
-
-                // FormDataを使用して手動でフォームデータを構築
-                const formData = new FormData();
-                formData.append('user[email]', email);
-                formData.append('user[password]', password);
-
-                // Remember meがチェックされている場合
-                const rememberCheckbox = document.getElementById('user_remember_me');
-                if (rememberCheckbox && rememberCheckbox.checked) {
-                    formData.append('user[remember_me]', '1');
-                }
-
-                // CSRFトークンを追加
-                const csrfToken = getCSRFToken();
-                if (csrfToken) {
-                    formData.append('authenticity_token', csrfToken);
-                }
-
-                // fetch APIを使用してフォームを送信
-                fetch('/users/sign_in', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-Token': csrfToken
-                    },
-                    credentials: 'same-origin'
-                })
-                  .then(response => {
-                      if (response.ok) {
-                          if (response.redirected) {
-                              window.location.href = response.url;
-                          } else {
-                              window.location.href = '/';
-                          }
-                      } else {
-                          window.location.reload();
-                      }
-                  })
-                  .catch(error => {
-                      console.error('Form submission error:', error);
-                      showError('ログイン処理中にエラーが発生しました。');
-                  });
-            });
-        }
-
-        // WebAuthnログインボタンのイベント
-        if (webauthnLoginBtn) {
-            webauthnLoginBtn.addEventListener('click', async function(e) {
-                e.preventDefault();
-
-                const email = emailInput.value.trim();
-
-                try {
-                    if (processing) {
-                        processing.style.display = 'block';
-                    }
-                    hideError();
-
-                    // WebAuthn認証オプションを取得
-                    const optionsResponse = await fetch('/webauthn_authentications/new', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': getCSRFToken()
-                        },
-                        body: JSON.stringify({
-                            email: email,
-                            webauthn_authentication: { email: email }
-                        })
-                    });
-
-                    if (!optionsResponse.ok) {
-                        const errorData = await optionsResponse.json();
-                        throw new Error(errorData.error || 'WebAuthn認証オプションの取得に失敗しました。');
-                    }
-
-                    const webauthnOptions = await optionsResponse.json();
-                    console.log('WebAuthn options received:', webauthnOptions);
-
-                    // WebAuthn認証を実行
-                    const credential = await startWebAuthnAuthentication(webauthnOptions);
-                    console.log('WebAuthn authentication successful:', credential);
-
-                    // 認証結果をサーバーに送信
-                    const authResponse = await fetch('/webauthn_authentications', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': getCSRFToken()
-                        },
-                        body: JSON.stringify({
-                            credential: {
-                                id: credential.id,
-                                type: credential.type,
-                                rawId: arrayBufferToBase64URL(credential.rawId),
-                                response: {
-                                    authenticatorData: arrayBufferToBase64URL(credential.response.authenticatorData),
-                                    clientDataJSON: arrayBufferToBase64URL(credential.response.clientDataJSON),
-                                    signature: arrayBufferToBase64URL(credential.response.signature),
-                                    userHandle: credential.response.userHandle ? arrayBufferToBase64URL(credential.response.userHandle) : null
-                                }
-                            }
-                        })
-                    });
-
-                    if (authResponse.ok) {
-                        const result = await authResponse.json();
-                        if (result.success) {
-                            window.location.href = result.redirect_url || '/';
-                        } else {
-                            throw new Error(result.error || 'WebAuthn認証に失敗しました。');
-                        }
-                    } else {
-                        const errorData = await authResponse.json();
-                        throw new Error(errorData.error || 'WebAuthn認証の処理に失敗しました。');
-                    }
-
-                } catch (error) {
-                    console.error('WebAuthn authentication failed:', error);
-
-                    if (processing) {
-                        processing.style.display = 'none';
-                    }
-
-                    if (error.name === 'NotAllowedError') {
-                        showError('WebAuthn認証がキャンセルされました。');
-                    } else if (error.name === 'InvalidStateError') {
-                        showError('この認証キーは既に登録されています。');
-                    } else if (error.name === 'NotSupportedError') {
-                        showError('お使いのブラウザはWebAuthnをサポートしていません。');
-                    } else {
-                        showError('WebAuthn認証に失敗しました: ' + error.message);
-                    }
-                }
-            });
-        }
-
-        // パスワード使用ボタンのイベント
-        if (usePasswordBtn) {
-            usePasswordBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                if (webauthnSection) {
-                    webauthnSection.style.display = 'none';
-                }
-                if (passwordSection) {
-                    passwordSection.style.display = 'block';
-                }
-                if (rememberSection) {
-                    rememberSection.style.display = 'block';
-                }
-                if (passwordLoginBtn) {
-                    passwordLoginBtn.style.display = 'block';
-                }
-
-                // パスワード入力欄にフォーカス
-                if (passwordInput) {
-                    passwordInput.focus();
-                }
-            });
-        }
-
-        loginPageInitialized = true;
-        console.log('Login page initialization completed');
     }
 
-    // DOM読み込み完了時に初期化
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeLoginPage);
-    } else {
-        // すでにDOMが読み込まれている場合は即座に実行
-        initializeLoginPage();
-    }
-
-    // Turbo対応: ページ表示時にも初期化
-    document.addEventListener('turbo:load', function() {
-        loginPageInitialized = false; // Turboページ遷移時はリセット
-        initializeLoginPage();
-    });
+    // ページ読み込み時とTurboナビゲーション時に初期化
+    document.addEventListener('DOMContentLoaded', initializeLoginForm);
+    document.addEventListener('turbo:load', initializeLoginForm);
 </script>

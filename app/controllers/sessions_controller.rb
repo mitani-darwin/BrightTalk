@@ -25,10 +25,40 @@ class SessionsController < Devise::SessionsController
 
     Rails.logger.info "check_webauthn: webauthn_enabled=#{user.webauthn_enabled}, has_credentials=#{has_credentials}, webauthn_required=#{webauthn_required}"
 
-    render json: {
-      webauthn_enabled: webauthn_required,
-      has_webauthn_credentials: has_credentials
-    }
+    if webauthn_required && has_credentials
+      # WebAuthn認証用のオプションを生成（修正版）
+      user_credentials = user.webauthn_credentials.pluck(:external_id)
+
+      # allowCredentialsの形式を正しく設定
+      allow_credentials = user_credentials.map { |cred_id|
+        {
+          id: cred_id,  # 文字列のまま渡す
+          type: "public-key"
+        }
+      }
+
+      webauthn_options = WebAuthn::Credential.options_for_get(
+        allow: allow_credentials
+      )
+
+      # セッションにチャレンジとメールアドレスを保存
+      session[:authentication_challenge] = webauthn_options.challenge
+      session[:webauthn_email] = email
+
+      Rails.logger.info "Generated WebAuthn options: #{webauthn_options.inspect}"
+      Rails.logger.info "Allow credentials: #{allow_credentials.inspect}"
+
+      render json: {
+        webauthn_enabled: true,
+        has_webauthn_credentials: true,
+        webauthn_options: webauthn_options
+      }
+    else
+      render json: {
+        webauthn_enabled: false,
+        has_webauthn_credentials: has_credentials
+      }
+    end
   end
 
   def new
