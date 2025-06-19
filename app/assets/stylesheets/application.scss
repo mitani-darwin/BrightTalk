@@ -1,6 +1,120 @@
-
-
 // Bootstrap CSSはCDNから読み込むため、ここではカスタムスタイルのみ
+
+// ナビゲーションバーのカスタマイズ
+.navbar {
+  width: 100vw !important; // ビューポート全体の幅
+  margin-left: calc(-50vw + 50%); // 中央揃えのための調整
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); // 影をつけて浮かせる
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #007bff !important;
+}
+
+.navbar-nav .nav-link {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #007bff !important;
+  }
+}
+
+.dropdown-menu {
+  z-index: 1050;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 8px;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
+  }
+}
+
+// フッターのスタイル
+footer {
+  width: 100vw !important; // ビューポート全体の幅
+  margin-left: calc(-50vw + 50%); // 中央揃えのための調整
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1); // 上方向の影
+
+  .container-fluid {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  h5 {
+    color: #007bff !important;
+    font-weight: bold;
+  }
+
+  p {
+    margin-bottom: 0.5rem;
+  }
+
+  small {
+    font-size: 0.8rem;
+
+    a {
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: #007bff !important;
+      }
+    }
+  }
+}
+
+// ボディの最小高さとフレックスレイアウト
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  overflow-y: auto; // スクロール可能にする
+}
+
+// 投稿フォームのテキストエリアをレスポンシブに調整
+.post-content-textarea {
+  width: 100% !important;
+  resize: vertical; // 縦方向のみリサイズ可能
+  min-height: 300px !important; // 最小高さを調整
+  max-height: calc(100vh - 500px) !important; // ビューポートの高さから他の要素の高さを差し引く
+
+  // 画面サイズに応じた調整
+  @media (max-height: 768px) {
+    min-height: 200px !important;
+    max-height: calc(100vh - 400px) !important;
+  }
+
+  @media (max-height: 600px) {
+    min-height: 150px !important;
+    max-height: calc(100vh - 350px) !important;
+  }
+
+  @media (min-height: 1200px) {
+    min-height: 400px !important;
+    max-height: calc(100vh - 600px) !important;
+  }
+}
+
+// 投稿フォームのスタイル調整
+.post-form-container {
+  max-height: calc(100vh - 200px); // ナビとフッターの高さを考慮
+  overflow-y: auto; // フォーム全体をスクロール可能に
+  padding-bottom: 2rem; // 下部にマージンを確保
+}
 
 // Kaminariページネーションのスタイル
 .pagination {
@@ -82,12 +196,6 @@
 .form-control:focus {
   border-color: #007bff;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-// ナビゲーションバーのカスタマイズ
-.navbar-brand {
-  font-size: 1.5rem;
-  color: #007bff !important;
 }
 
 // アラートのマージン調整

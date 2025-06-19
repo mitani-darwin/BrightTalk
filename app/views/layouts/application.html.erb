@@ -4,10 +4,10 @@
   <%= render 'shared/head' %>
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
 <%= render 'shared/navigation' %>
 
-<main class="container my-4">
+<main class="container-fluid my-4 flex-grow-1">
   <%= render 'shared/flash_messages' if flash.any? %>
   <%= yield %>
 </main>

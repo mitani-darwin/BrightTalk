@@ -1,121 +1,110 @@
-<%= form_with model: post, local: true, html: { class: "row g-3", multipart: true } do |form| %>
+<%= form_with model: post, local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
   <% if post.errors.any? %>
-    <div class="col-12">
-      <div class="alert alert-danger" role="alert">
-        <h5 class="alert-heading">
-          <i class="fas fa-exclamation-triangle"></i>
-          <%= pluralize(post.errors.count, "つのエラー") %>があります
-        </h5>
-        <ul class="mb-0">
-          <% post.errors.full_messages.each do |message| %>
-            <li><%= message %></li>
-          <% end %>
-        </ul>
+    <div class="alert alert-danger">
+      <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
+      <ul>
+        <% post.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :title, class: "form-label" %>
+    <%= form.text_field :title, class: "form-control", required: true %>
+    <div class="invalid-feedback">
+      タイトルを入力してください。
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :content, class: "form-label" %>
+    <%= form.text_area :content, class: "form-control", rows: 8, required: true %>
+    <div class="invalid-feedback">
+      内容を入力してください。
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :category_id, "カテゴリー", class: "form-label" %>
+    <%= form.collection_select :category_id, Category.all, :id, :name,
+                               { prompt: "カテゴリーを選択してください" },
+                               { class: "form-select" } %>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :tag_list, "タグ（カンマ区切り）", class: "form-label" %>
+    <%= form.text_field :tag_list, class: "form-control",
+                        placeholder: "例: Ruby, Rails, プログラミング" %>
+    <div class="form-text">タグをカンマで区切って入力してください。</div>
+  </div>
+
+  <!-- 画像アップロード（複数対応） -->
+  <div class="mb-3">
+    <%= form.label :images, "画像", class: "form-label" %>
+    <%= form.file_field :images, multiple: true, accept: "image/*",
+                        class: "form-control", id: "imageInput" %>
+    <div class="form-text">複数の画像を選択できます（PNG, JPG, GIF形式、各5MB以下）</div>
+  </div>
+
+  <!-- 画像プレビュー -->
+  <div id="imagePreview" class="mb-3"></div>
+
+  <!-- 既存画像の表示（編集時） -->
+  <% if post.images.attached? %>
+    <div class="mb-3">
+      <label class="form-label">現在の画像:</label>
+      <div class="row">
+        <% post.images.each_with_index do |image, index| %>
+          <div class="col-md-3 mb-2">
+            <%= image_tag image, class: "img-thumbnail", style: "width: 100%; height: 200px; object-fit: cover;" %>
+            <div class="mt-1">
+              <%= link_to "削除", "#", class: "btn btn-sm btn-outline-danger",
+                          onclick: "removeImage(#{index}); return false;" %>
+            </div>
+          </div>
+        <% end %>
       </div>
     </div>
   <% end %>
 
-  <!-- タイトル -->
-  <div class="col-12">
-    <%= form.label :title, class: "form-label fw-bold" do %>
-      <i class="fas fa-heading"></i> タイトル <span class="text-danger">*</span>
-    <% end %>
-    <%= form.text_field :title,
-                        class: "form-control #{'is-invalid' if post.errors[:title].any?}",
-                        placeholder: "投稿のタイトルを入力してください",
-                        maxlength: 100 %>
-    <% if post.errors[:title].any? %>
-      <div class="invalid-feedback">
-        <%= post.errors[:title].first %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- カテゴリー -->
-  <div class="col-md-6">
-    <%= form.label :category_id, class: "form-label fw-bold" do %>
-      <i class="fas fa-folder"></i> カテゴリー <span class="text-danger">*</span>
-    <% end %>
-    <%= form.collection_select :category_id, @categories, :id, :name,
-                               { prompt: "カテゴリーを選択してください" },
-                               { class: "form-select #{'is-invalid' if post.errors[:category].any?}" } %>
-    <% if post.errors[:category].any? %>
-      <div class="invalid-feedback">
-        <%= post.errors[:category].first %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- タグ -->
-  <div class="col-md-6">
-    <%= form.label :tag_list, class: "form-label fw-bold" do %>
-      <i class="fas fa-tags"></i> タグ（オプション）
-    <% end %>
-    <%= form.text_field :tag_list,
-                        class: "form-control #{'is-invalid' if post.errors[:tag_list].any?}",
-                        placeholder: "例: Ruby, Rails, プログラミング",
-                        maxlength: 200 %>
-    <div class="form-text">
-      <i class="fas fa-info-circle"></i> 複数のタグはカンマ（,）で区切って入力してください
-    </div>
-    <% if post.errors[:tag_list].any? %>
-      <div class="invalid-feedback">
-        <%= post.errors[:tag_list].first %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- 画像アップロード -->
-  <div class="col-12">
-    <%= form.label :image, class: "form-label fw-bold" do %>
-      <i class="fas fa-image"></i> 画像（オプション）
-    <% end %>
-    <%= form.file_field :image,
-                        class: "form-control #{'is-invalid' if post.errors[:image].any?}",
-                        accept: "image/*" %>
-    <div class="form-text">
-      <i class="fas fa-info-circle"></i> JPEG、PNG、GIFファイル（最大10MB）をアップロードできます
-    </div>
-    <% if post.errors[:image].any? %>
-      <div class="invalid-feedback">
-        <%= post.errors[:image].first %>
-      </div>
-    <% end %>
-
-    <!-- 既存画像の表示（編集時） -->
-    <% if post.image.attached? %>
-      <div class="mt-2">
-        <small class="text-muted">現在の画像:</small><br>
-        <%= image_tag post.image, class: "img-thumbnail", style: "max-width: 200px; max-height: 200px;" %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- コンテンツ -->
-  <div class="col-12">
-    <%= form.label :content, class: "form-label fw-bold" do %>
-      <i class="fas fa-edit"></i> 内容 <span class="text-danger">*</span>
-    <% end %>
-    <%= form.text_area :content,
-                       class: "form-control #{'is-invalid' if post.errors[:content].any?}",
-                       rows: 10,
-                       placeholder: "投稿の内容を入力してください" %>
-    <% if post.errors[:content].any? %>
-      <div class="invalid-feedback">
-        <%= post.errors[:content].first %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- 送信ボタン -->
-  <div class="col-12">
-    <div class="d-flex gap-2">
-      <%= form.submit class: "btn btn-primary" do %>
-        <i class="fas fa-save"></i> <%= post.persisted? ? '更新' : '作成' %>
-      <% end %>
-      <%= link_to posts_path, class: "btn btn-secondary" do %>
-        <i class="fas fa-times"></i> キャンセル
-      <% end %>
-    </div>
+  <div class="mb-3">
+    <%= form.submit post.persisted? ? "更新" : "投稿", class: "btn btn-primary" %>
+    <%= link_to "キャンセル", posts_path, class: "btn btn-secondary" %>
   </div>
 <% end %>
+
+<script>
+    // 画像プレビュー機能
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+
+        if (this.files) {
+            Array.from(this.files).forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'col-md-3 mb-2';
+                        div.innerHTML = `
+            <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 200px; object-fit: cover;">
+            <div class="mt-1">
+              <small class="text-muted">${file.name}</small>
+            </div>
+          `;
+                        preview.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+
+    // 既存画像削除機能（実装は後で行う）
+    function removeImage(index) {
+        // TODO: 既存画像の削除機能を実装
+        alert('画像削除機能は後で実装します');
+    }
+</script>
