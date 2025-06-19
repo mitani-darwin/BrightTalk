@@ -82,9 +82,16 @@ class PostsController < ApplicationController
   def create
     @post = current_user.posts.build(post_params)
 
+    # IPアドレスを記録（開発環境でも記録する）
+    @post.ip_address = request.remote_ip
+
+    Rails.logger.info "Creating post with IP address: #{@post.ip_address}"
+
     if @post.save
       redirect_to @post, notice: '投稿が作成されました。'
     else
+      Rails.logger.error "Post creation failed: #{@post.errors.full_messages}"
+      set_categories # エラー時にもカテゴリーを再設定
       render :new, status: :unprocessable_entity
     end
   end
@@ -96,6 +103,7 @@ class PostsController < ApplicationController
     if @post.update(post_params)
       redirect_to @post, notice: '投稿が更新されました。'
     else
+      set_categories # エラー時にもカテゴリーを再設定
       render :edit, status: :unprocessable_entity
     end
   end
