@@ -1,4 +1,3 @@
-
 class PostsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show, :user_posts]
   before_action :set_post, only: [:show, :edit, :update, :destroy]
@@ -38,6 +37,38 @@ class PostsController < ApplicationController
 
     # 人気タグの取得
     @popular_tags = Tag.joins(:posts).group('tags.id').order('COUNT(posts.id) DESC').limit(10)
+
+    # JSONフォーマットに対応
+    respond_to do |format|
+      format.html # 通常のHTMLレスポンス
+      format.json do
+        render json: {
+          posts: @posts.map do |post|
+            {
+              id: post.id,
+              title: post.title,
+              content: post.content,
+              created_at: post.created_at,
+              user: {
+                id: post.user.id,
+                name: post.user.name
+              },
+              category: post.category ? {
+                id: post.category.id,
+                name: post.category.name
+              } : nil,
+              likes_count: post.likes.count,
+              comments_count: post.comments.count
+            }
+          end,
+          meta: {
+            current_page: @posts.current_page,
+            total_pages: @posts.total_pages,
+            total_count: @posts.total_count
+          }
+        }
+      end
+    end
   end
 
   def show

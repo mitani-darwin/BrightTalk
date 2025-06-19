@@ -1,51 +1,41 @@
-<div class="container mt-5">
+
+<div class="container mt-4" data-turbo="false">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
         <div class="card-header">
-          <h4 class="mb-0">WebAuthn認証設定</h4>
+          <h4><i class="fas fa-fingerprint me-2"></i>WebAuthn認証</h4>
         </div>
         <div class="card-body">
+          <!-- ユーザー情報表示 -->
           <div class="alert alert-info">
-            <i class="fas fa-shield-alt me-2"></i>
-            WebAuthn認証を設定することで、パスワードなしでセキュアにログインできます。
+            <i class="fas fa-user me-2"></i>
+            <span id="user-email"><%= @user_email %></span> でWebAuthn認証を行います
           </div>
 
-          <form id="webauthn-form">
-            <div class="mb-3">
-              <label for="nickname" class="form-label">デバイス名</label>
-              <input type="text" class="form-control" id="nickname" name="nickname"
-                     value="<%= @nickname %>" placeholder="例: メインPC、iPhone">
-              <div class="form-text">
-                このデバイスの識別用の名前を入力してください
-              </div>
+          <!-- WebAuthn認証ボタン -->
+          <div class="d-grid gap-2 mb-3">
+            <button type="button" id="webauthn-authenticate-btn" class="btn btn-primary btn-lg">
+              <i class="fas fa-fingerprint me-2"></i>WebAuthn認証を開始
+            </button>
+          </div>
+
+          <!-- 戻るボタン -->
+          <div class="d-grid">
+            <a href="<%= new_user_session_path %>" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-2"></i>ログイン画面に戻る
+            </a>
+          </div>
+
+          <!-- エラーメッセージ -->
+          <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
+
+          <!-- 処理中表示 -->
+          <div id="processing" class="text-center mt-3" style="display: none;">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">認証中...</span>
             </div>
-
-            <div class="d-grid gap-2">
-              <button type="button" id="register-webauthn" class="btn btn-primary">
-                <i class="fas fa-fingerprint me-2"></i>WebAuthn認証を設定
-              </button>
-
-              <% if current_user.has_webauthn_credentials? %>
-                <%= link_to "スキップ", root_path, class: "btn btn-outline-secondary" %>
-              <% else %>
-                <%= link_to "後で設定する", root_path, class: "btn btn-outline-secondary" %>
-              <% end %>
-            </div>
-          </form>
-
-          <hr class="my-4">
-
-          <div class="card">
-            <div class="card-body">
-              <h6><i class="fas fa-info-circle me-2"></i>WebAuthn認証について</h6>
-              <ul class="small mb-0">
-                <li>指紋認証、顔認証、PIN、セキュリティキーが利用できます</li>
-                <li>フィッシング攻撃に対して高い耐性があります</li>
-                <li>設定後はパスワードが不要になります</li>
-                <li>複数のデバイスを登録することも可能です</li>
-              </ul>
-            </div>
+            <p class="mt-2">WebAuthn認証を実行中...</p>
           </div>
         </div>
       </div>
@@ -55,113 +45,114 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const registerButton = document.getElementById('register-webauthn');
-        const nicknameInput = document.getElementById('nickname');
+        console.log('WebAuthn authentication page loaded');
+        console.log('WebAuthn options:', <%= raw @webauthn_options.to_json %>);
 
-        registerButton.addEventListener('click', async function() {
+        const webauthnOptions = <%= raw @webauthn_options.to_json %>;
+        const userEmail = '<%= @user_email %>';
+        const authenticateBtn = document.getElementById('webauthn-authenticate-btn');
+        const errorMessage = document.getElementById('error-message');
+        const processing = document.getElementById('processing');
+
+        function showError(message) {
+            console.error('Error:', message);
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            processing.style.display = 'none';
+            authenticateBtn.disabled = false;
+            authenticateBtn.innerHTML = '<i class="fas fa-fingerprint me-2"></i>WebAuthn認証を開始';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function showProcessing() {
+            processing.style.display = 'block';
+            hideError();
+            authenticateBtn.disabled = true;
+            authenticateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>認証中...';
+        }
+
+        // CSRFトークンを取得
+        function getCSRFToken() {
+            const token = document.querySelector('meta[name="csrf-token"]');
+            return token ? token.getAttribute('content') : '';
+        }
+
+        // WebAuthn認証実行
+        authenticateBtn.addEventListener('click', async function() {
+            console.log('WebAuthn authenticate button clicked');
+
+            if (!webauthnOptions) {
+                showError('WebAuthn認証オプションが取得できませんでした。');
+                return;
+            }
+
+            showProcessing();
+
             try {
-                registerButton.disabled = true;
-                registerButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>認証デバイスをセットアップ中...';
+                console.log('Starting WebAuthn authentication with options:', webauthnOptions);
 
-                // WebAuthn認証デバイスの登録オプション
-                const options = <%= @webauthn_options.to_json.html_safe %>;
+                // WebAuthn認証を実行
+                const credential = await startWebAuthnAuthentication(webauthnOptions);
+                console.log('WebAuthn credential obtained:', credential);
 
-                // Base64URLエンコードされた値をArrayBufferに変換
-                options.challenge = base64URLToArrayBuffer(options.challenge);
-                options.user.id = base64URLToArrayBuffer(options.user.id);
+                // 認証データをサーバーに送信
+                const response = await fetch('/webauthn_authentications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        credential: {
+                            id: credential.id,
+                            rawId: arrayBufferToBase64URL(credential.rawId),
+                            type: credential.type,
+                            response: {
+                                clientDataJSON: arrayBufferToBase64URL(credential.response.clientDataJSON),
+                                authenticatorData: arrayBufferToBase64URL(credential.response.authenticatorData),
+                                signature: arrayBufferToBase64URL(credential.response.signature),
+                                userHandle: credential.response.userHandle ? arrayBufferToBase64URL(credential.response.userHandle) : null
+                            }
+                        }
+                    })
+                });
 
-                if (options.excludeCredentials) {
-                    options.excludeCredentials = options.excludeCredentials.map(cred => ({
-                        ...cred,
-                        id: base64URLToArrayBuffer(cred.id)
-                    }));
+                console.log('Authentication response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'WebAuthn認証に失敗しました');
                 }
 
-                console.log('WebAuthn registration options:', options);
+                const result = await response.json();
+                console.log('Authentication successful:', result);
 
-                // WebAuthn認証デバイスの登録
-                const credential = await navigator.credentials.create({
-                    publicKey: options
-                });
-
-                console.log('WebAuthn credential created:', credential);
-
-                // サーバーに送信する形式に変換
-                const credentialData = {
-                    id: credential.id,
-                    rawId: arrayBufferToBase64URL(credential.rawId),
-                    type: credential.type,
-                    response: {
-                        clientDataJSON: arrayBufferToBase64URL(credential.response.clientDataJSON),
-                        attestationObject: arrayBufferToBase64URL(credential.response.attestationObject)
-                    }
-                };
-
-                // サーバーに登録データを送信
-                const formData = new FormData();
-                formData.append('credential[id]', credentialData.id);
-                formData.append('credential[rawId]', credentialData.rawId);
-                formData.append('credential[type]', credentialData.type);
-                formData.append('credential[response][clientDataJSON]', credentialData.response.clientDataJSON);
-                formData.append('credential[response][attestationObject]', credentialData.response.attestationObject);
-                formData.append('nickname', nicknameInput.value || '<%= @nickname %>');
-                formData.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content);
-
-                const response = await fetch('<%= webauthn_credentials_path %>', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    // 成功時は一覧ページにリダイレクト
-                    window.location.href = '<%= webauthn_credentials_path %>';
+                // ログイン成功時の処理
+                if (result.redirect_url) {
+                    window.location.href = result.redirect_url;
                 } else {
-                    const errorText = await response.text();
-                    console.error('Server response error:', errorText);
-                    throw new Error('サーバーでの登録に失敗しました');
+                    window.location.href = '/';
                 }
 
             } catch (error) {
-                console.error('WebAuthn registration failed:', error);
+                console.error('WebAuthn authentication failed:', error);
 
-                let errorMessage = 'WebAuthn認証の設定に失敗しました。';
-
-                if (error.name === 'NotSupportedError') {
-                    errorMessage = 'このブラウザはWebAuthn認証をサポートしていません。';
-                } else if (error.name === 'NotAllowedError') {
-                    errorMessage = '認証がキャンセルされました。もう一度お試しください。';
+                if (error.name === 'NotAllowedError') {
+                    showError('WebAuthn認証がキャンセルされました。');
                 } else if (error.name === 'InvalidStateError') {
-                    errorMessage = 'この認証デバイスは既に登録されています。';
+                    showError('この認証キーは既に登録されています。');
+                } else if (error.name === 'NotSupportedError') {
+                    showError('お使いのブラウザはWebAuthnをサポートしていません。');
+                } else {
+                    showError('WebAuthn認証に失敗しました: ' + error.message);
                 }
-
-                alert(errorMessage);
-
-                registerButton.disabled = false;
-                registerButton.innerHTML = '<i class="fas fa-fingerprint me-2"></i>WebAuthn認証を設定';
             }
         });
 
-        // Base64URL文字列をArrayBufferに変換
-        function base64URLToArrayBuffer(base64URL) {
-            const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/');
-            const padding = base64.length % 4;
-            const padded = padding ? base64 + '='.repeat(4 - padding) : base64;
-            const binaryString = atob(padded);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
-        // ArrayBufferをBase64URL文字列に変換
-        function arrayBufferToBase64URL(arrayBuffer) {
-            const bytes = new Uint8Array(arrayBuffer);
-            let binaryString = '';
-            for (let i = 0; i < bytes.length; i++) {
-                binaryString += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binaryString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        }
+        // 初期状態でエラーメッセージを非表示
+        hideError();
     });
 </script>

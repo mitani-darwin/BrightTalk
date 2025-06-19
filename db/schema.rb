@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_16_072440) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_18_135219) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -103,6 +103,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_16_072440) do
     t.integer "category_id", null: false
     t.boolean "published", default: true, null: false
     t.integer "likes_count", default: 0, null: false
+    t.string "ip_address"
     t.index ["category_id"], name: "index_posts_on_category_id"
     t.index ["published"], name: "index_posts_on_published"
     t.index ["user_id"], name: "index_posts_on_user_id"
@@ -142,7 +143,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_16_072440) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.boolean "webauthn_enabled", default: false
+    t.boolean "webauthn_enabled", default: true
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
