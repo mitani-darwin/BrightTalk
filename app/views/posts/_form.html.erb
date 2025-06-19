@@ -1,81 +1,132 @@
-<%= form_with model: post, local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
-  <% if post.errors.any? %>
-    <div class="alert alert-danger">
-      <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
-      <ul>
-        <% post.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
 
-  <div class="mb-3">
-    <%= form.label :title, class: "form-label" %>
-    <%= form.text_field :title, class: "form-control", required: true %>
-    <div class="invalid-feedback">
-      タイトルを入力してください。
-    </div>
-  </div>
+<div class="row">
+  <div class="col-12">
+    <%= form_with model: post, local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
+      <% if post.errors.any? %>
+        <div class="alert alert-danger">
+          <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
+          <ul>
+            <% post.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
 
-  <div class="mb-3">
-    <%= form.label :content, class: "form-label" %>
-    <%= form.text_area :content, class: "form-control", rows: 8, required: true %>
-    <div class="invalid-feedback">
-      内容を入力してください。
-    </div>
-  </div>
+      <div class="row" id="formContainer">
+        <!-- サイドバー（左側） -->
+        <div class="col-md-4" style="height: 100%; overflow-y: auto;">
+          <div class="mb-3">
+            <%= form.label :category_id, "カテゴリー", class: "form-label" %>
+            <%= form.collection_select :category_id, Category.all, :id, :name,
+                                       { prompt: "カテゴリーを選択してください" },
+                                       { class: "form-select" } %>
+          </div>
 
-  <div class="mb-3">
-    <%= form.label :category_id, "カテゴリー", class: "form-label" %>
-    <%= form.collection_select :category_id, Category.all, :id, :name,
-                               { prompt: "カテゴリーを選択してください" },
-                               { class: "form-select" } %>
-  </div>
+          <div class="mb-3">
+            <%= form.label :tag_list, "タグ（カンマ区切り）", class: "form-label" %>
+            <%= form.text_field :tag_list, class: "form-control",
+                                placeholder: "例: Ruby, Rails, プログラミング" %>
+            <div class="form-text">タグをカンマで区切って入力してください。</div>
+          </div>
 
-  <div class="mb-3">
-    <%= form.label :tag_list, "タグ（カンマ区切り）", class: "form-label" %>
-    <%= form.text_field :tag_list, class: "form-control",
-                        placeholder: "例: Ruby, Rails, プログラミング" %>
-    <div class="form-text">タグをカンマで区切って入力してください。</div>
-  </div>
+          <!-- 画像アップロード（複数対応） -->
+          <div class="mb-3">
+            <%= form.label :images, "画像", class: "form-label" %>
+            <%= form.file_field :images, multiple: true, accept: "image/*",
+                                class: "form-control", id: "imageInput" %>
+            <div class="form-text">複数の画像を選択できます（PNG, JPG, GIF形式）</div>
+          </div>
 
-  <!-- 画像アップロード（複数対応） -->
-  <div class="mb-3">
-    <%= form.label :images, "画像", class: "form-label" %>
-    <%= form.file_field :images, multiple: true, accept: "image/*",
-                        class: "form-control", id: "imageInput" %>
-    <div class="form-text">複数の画像を選択できます（PNG, JPG, GIF形式）</div>
-  </div>
+          <!-- 画像プレビュー -->
+          <div id="imagePreview" class="mb-3"></div>
 
-  <!-- 画像プレビュー -->
-  <div id="imagePreview" class="mb-3"></div>
+          <!-- 既存画像の表示（編集時） -->
+          <% if post.images.attached? %>
+            <div class="mb-3">
+              <label class="form-label">現在の画像:</label>
+              <div class="row">
+                <% post.images.each_with_index do |image, index| %>
+                  <div class="col-12 mb-2">
+                    <%= image_tag image, class: "img-thumbnail", style: "width: 100%; height: 150px; object-fit: cover;" %>
+                    <div class="mt-1">
+                      <%= link_to "削除", "#", class: "btn btn-sm btn-outline-danger",
+                                  onclick: "removeImage(#{index}); return false;" %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
 
-  <!-- 既存画像の表示（編集時） -->
-  <% if post.images.attached? %>
-    <div class="mb-3">
-      <label class="form-label">現在の画像:</label>
-      <div class="row">
-        <% post.images.each_with_index do |image, index| %>
-          <div class="col-md-3 mb-2">
-            <%= image_tag image, class: "img-thumbnail", style: "width: 100%; height: 200px; object-fit: cover;" %>
-            <div class="mt-1">
-              <%= link_to "削除", "#", class: "btn btn-sm btn-outline-danger",
-                          onclick: "removeImage(#{index}); return false;" %>
+          <div class="mb-3">
+            <%= form.submit post.persisted? ? "更新" : "投稿", class: "btn btn-primary w-100" %>
+            <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100 mt-2" %>
+          </div>
+        </div>
+
+        <!-- メインコンテンツ（右側） -->
+        <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+          <div class="mb-3">
+            <%= form.label :title, class: "form-label" %>
+            <%= form.text_field :title, class: "form-control", required: true %>
+            <div class="invalid-feedback">
+              タイトルを入力してください。
             </div>
           </div>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
 
-  <div class="mb-3">
-    <%= form.submit post.persisted? ? "更新" : "投稿", class: "btn btn-primary" %>
-    <%= link_to "キャンセル", posts_path, class: "btn btn-secondary" %>
+          <div class="mb-3 flex-grow-1 d-flex flex-column">
+            <%= form.label :content, class: "form-label" %>
+            <%= form.text_area :content, class: "form-control flex-grow-1",
+                               id: "contentTextarea", required: true,
+                               style: "min-height: 400px; resize: none;" %>
+            <div class="invalid-feedback">
+              内容を入力してください。
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
   </div>
-<% end %>
+</div>
 
 <script>
+    // フォームとテキストエリアの高さを動的に調整
+    function adjustLayout() {
+        const formContainer = document.getElementById('formContainer');
+        const textarea = document.getElementById('contentTextarea');
+
+        if (formContainer && textarea) {
+            // 各要素の高さを計算
+            const windowHeight = window.innerHeight;
+            const navHeight = document.querySelector('nav') ? document.querySelector('nav').offsetHeight : 60;
+            const headerHeight = 100; // ページヘッダー部分
+            const footerHeight = document.querySelector('footer') ? document.querySelector('footer').offsetHeight : 60;
+            const mainPadding = 32; // main要素のmy-4パディング
+            const titleSectionHeight = 80; // タイトル欄の高さ
+            const labelHeight = 30; // contentラベルの高さ
+            const padding = 20; // 余白
+
+            // 利用可能な高さを計算（フッターが見えるように）
+            const availableHeight = windowHeight - navHeight - headerHeight - footerHeight - mainPadding;
+
+            // フォームコンテナの高さを設定
+            formContainer.style.height = Math.max(500, availableHeight) + 'px';
+
+            // テキストエリアの高さを計算
+            const textareaHeight = availableHeight - titleSectionHeight - labelHeight - padding;
+            textarea.style.height = Math.max(300, textareaHeight) + 'px';
+        }
+    }
+
+    // ページ読み込み時とリサイズ時に高さを調整
+    document.addEventListener('DOMContentLoaded', function() {
+        // 少し遅延させてDOM要素のサイズが確定してから実行
+        setTimeout(adjustLayout, 100);
+    });
+
+    window.addEventListener('resize', adjustLayout);
+
     // 画像プレビュー機能
     document.getElementById('imageInput').addEventListener('change', function(e) {
         const preview = document.getElementById('imagePreview');
@@ -87,9 +138,9 @@
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const div = document.createElement('div');
-                        div.className = 'col-md-3 mb-2';
+                        div.className = 'col-12 mb-2';
                         div.innerHTML = `
-            <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 200px; object-fit: cover;">
+            <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 150px; object-fit: cover;">
             <div class="mt-1">
               <small class="text-muted">${file.name}</small>
             </div>
