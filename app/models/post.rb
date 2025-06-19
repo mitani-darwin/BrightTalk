@@ -11,8 +11,7 @@ class Post < ApplicationRecord
   validates :title, presence: true, length: { maximum: 255 }
   validates :content, presence: true
   # 画像のバリデーション（複数画像対応）
-  validates :images, content_type: ['image/png', 'image/jpeg', 'image/gif'],
-            size: { less_than: 5.megabytes }
+  validates :images, content_type: ['image/png', 'image/jpeg', 'image/gif']
 
   # スコープの追加
   scope :recent, -> { order(created_at: :desc) }
