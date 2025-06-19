@@ -1,4 +1,3 @@
-
 class SessionsController < Devise::SessionsController
   # WebAuthn確認用のアクション
   def check_webauthn
@@ -51,7 +50,18 @@ class SessionsController < Devise::SessionsController
   end
 
   def create
-    Rails.logger.info "SessionsController#create called with params: #{params[:user]}"
+    Rails.logger.info "SessionsController#create called"
+    Rails.logger.info "Params: #{params.inspect}"
+    Rails.logger.info "User params: #{params[:user]}"
+
+    # パラメータの検証
+    if params[:user].blank?
+      Rails.logger.warn "User params are blank"
+      flash.now[:alert] = 'メールアドレスとパスワードを入力してください。'
+      self.resource = resource_class.new
+      render :new, status: :unprocessable_entity
+      return
+    end
 
     # 通常のパスワード認証処理
     self.resource = warden.authenticate!(auth_options)
@@ -65,10 +75,11 @@ class SessionsController < Devise::SessionsController
 
     # エラーの場合はログイン画面に戻る
     flash.now[:alert] = 'メールアドレスまたはパスワードが正しくありません。'
-    self.resource = resource_class.new(sign_in_params)
+    # sign_in_paramsを安全に呼び出し
+    safe_params = params[:user].present? ? sign_in_params : {}
+    self.resource = resource_class.new(safe_params)
     render :new, status: :unprocessable_entity
   end
-
 
   private
 
@@ -78,5 +89,14 @@ class SessionsController < Devise::SessionsController
 
   def after_sign_out_path_for(resource_or_scope)
     root_path  # ログアウト後はトップページに遷移
+  end
+
+  def sign_in_params
+    # パラメータが存在するかチェック
+    if params[:user].present?
+      params.require(:user).permit(:email, :password, :remember_me)
+    else
+      {}
+    end
   end
 end
