@@ -71,6 +71,7 @@ class UsersController < ApplicationController
   end
 
   # パスワード更新
+  # パスワード更新
   def update_password
     @user = current_user
 
@@ -90,7 +91,8 @@ class UsersController < ApplicationController
         if password_provided
           # 現在のパスワードチェック（初回設定以外）
           unless @user.encrypted_password.blank?
-            unless @user.valid_password?(password_params[:current_password])
+            # 専用メソッドを使用してパスワード確認
+            unless @user.valid_password_for_change?(password_params[:current_password])
               @user.errors.add(:current_password, '現在のパスワードが正しくありません')
               raise ActiveRecord::RecordInvalid.new(@user)
             end
@@ -136,7 +138,6 @@ class UsersController < ApplicationController
       render :edit_password, status: :unprocessable_entity
     end
   end
-
   private
 
   def user_password_params

@@ -1,19 +1,43 @@
-# app/controllers/users/confirmations_controller.rb
+
 class Users::ConfirmationsController < Devise::ConfirmationsController
-  protected
+  # GET /resource/confirmation?confirmation_token=abcdef
+  def show
+    self.resource = resource_class.confirm_by_token(params[:confirmation_token])
+    yield resource if block_given?
 
-  def after_confirmation_path_for(resource_name, resource)
-    # メール確認完了時にユーザーを自動的にログインさせる
-    sign_in(resource)
+    if resource.errors.empty?
+      set_flash_message!(:notice, :confirmed)
 
-    # ユーザーがメール確認を完了した時のリダイレクト先
-    # まずは成功メッセージを表示してWebAuthn設定に進む
-    flash[:notice] = 'メール確認が完了しました！アカウント登録が完了しました。セキュリティ向上のため、WebAuthn認証を設定してください。'
-    new_webauthn_credential_path
+      # ユーザーを自動的にログインさせる
+      sign_in(resource)
+
+      # WebAuthnが利用可能かチェック
+      if webauthn_available?
+        # WebAuthn登録にリダイレクト
+        redirect_to new_webauthn_credential_path(first_time: true)
+      else
+        # WebAuthnが利用できない場合はホームページへ
+        redirect_to root_path, notice: 'アカウントが確認されました。ログインしました。'
+      end
+    else
+      respond_with(resource)
+    end
   end
 
-  def after_resending_confirmation_instructions_path_for(resource_name)
-    # 確認メール再送信後のリダイレクト先
-    root_path
+  private
+
+  def after_confirmation_path_for(resource_name, resource)
+    # WebAuthnが利用可能な場合はWebAuthn登録画面へ
+    if webauthn_available?
+      new_webauthn_credential_path(first_time: true)
+    else
+      root_path
+    end
+  end
+
+  def webauthn_available?
+    # JavaScriptでWebAuthn APIの利用可能性をチェックするため、
+    # サーバーサイドでは常にtrueを返し、フロントエンドで判定する
+    true
   end
 end

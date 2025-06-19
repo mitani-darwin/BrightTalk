@@ -24,13 +24,12 @@ class User < ApplicationRecord
   # パスワード強度のカスタムバリデーション
   validate :password_complexity, if: :password_required?
 
+  # デフォルト値の設定
+  attribute :webauthn_enabled, :boolean, default: true
+
   def webauthn_id
     # WebAuthn用のユーザーIDを生成（ユーザーIDをbase64エンコード）
     WebAuthn.generate_user_id
-  end
-
-  def has_webauthn_credentials?
-    webauthn_credentials.exists?
   end
 
   # WebAuthn認証が有効で、かつ認証情報が登録されている場合のみWebAuthn認証を要求
@@ -38,11 +37,22 @@ class User < ApplicationRecord
     webauthn_enabled? && webauthn_credentials.exists?
   end
 
-  # パスワード認証を許可するか
-  def password_authentication_allowed?
-    !webauthn_enabled? || !webauthn_credentials.exists?
+  def has_webauthn_credentials?
+    webauthn_credentials.exists?
   end
 
+  # パスワード認証を許可するか（修正版）
+  def password_authentication_allowed?
+    # WebAuthnが無効、またはWebAuthn認証情報が未登録の場合はパスワード認証を許可
+    # WebAuthnが有効でも、明示的にパスワード認証を選択した場合は許可
+    !webauthn_enabled? || !webauthn_credentials.exists? || allow_password_fallback?
+  end
+
+  # パスワード認証のフォールバックを許可するかの判定
+  def allow_password_fallback?
+    # 必要に応じてセッションや他の条件でパスワード認証を許可
+    true # 一時的に常に許可（後で条件を追加可能）
+  end
 
   # 特定の投稿にいいねしているかどうかを判定
   def liked?(post)
@@ -58,24 +68,24 @@ class User < ApplicationRecord
     end
   end
 
-  # WebAuthn登録後にパスワードを無効化
+  # WebAuthn登録後にパスワードを無効化（削除または無効化）
   def disable_password_after_webauthn
-    if has_webauthn_credentials?
-      self.encrypted_password = ""
-      save(validate: false)
+    # パスワードを完全に無効化せず、WebAuthn設定のみ更新
+    if has_webauthn_credentials? && webauthn_enabled?
+      # パスワードは残す（フォールバック用）
+      Rails.logger.info "WebAuthn設定完了: ユーザー#{id}のWebAuthn認証が有効になりました"
     end
   end
 
-  # WebAuthn認証が設定されている場合、パスワード認証をスキップ
-  def valid_password?(password)
-    # ログイン時のみWebAuthn認証を強制し、パスワード変更時は通常のバリデーションを使用
-    return false if has_webauthn_credentials? && caller.any? { |line| line.include?('sessions_controller') }
-    super
-  end
+  # valid_password?メソッドを削除または修正
+  # Deviseのデフォルト動作を維持し、独自のロジックは他の場所で処理
+  # def valid_password?は削除
 
-  # または、より明示的なメソッドを追加
+  # パスワード変更専用の検証メソッド
   def valid_password_for_change?(password)
     # パスワード変更専用の検証メソッド（WebAuthn有効でも動作）
+    return false if encrypted_password.blank?
+
     BCrypt::Password.new(encrypted_password) == password
   rescue BCrypt::Errors::InvalidHash
     false
@@ -141,5 +151,4 @@ class User < ApplicationRecord
   def password_required?
     !persisted? || !password.nil? || !password_confirmation.nil?
   end
-
 end

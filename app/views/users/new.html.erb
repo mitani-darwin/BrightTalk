@@ -8,7 +8,7 @@
         <%= form_with model: @user, local: true do |form| %>
           <% if @user&.errors&.any? %>
             <div class="alert alert-danger">
-              <h6><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h6>
+              <h6><%= @user.errors.count %>件のエラーのため、ユーザーの保存ができませんでした:</h6>
               <ul class="mb-0">
                 <% @user.errors.full_messages.each do |message| %>
                   <li><%= message %></li>
@@ -29,7 +29,7 @@
 
           <div class="mb-3">
             <%= form.label :password, "パスワード", class: "form-label" %>
-            <%= form.password_field :password, class: "form-control", placeholder: "6文字以上" %>
+            <%= form.password_field :password, class: "form-control", placeholder: "#{Devise.password_length.min}文字以上" %>
           </div>
 
           <div class="mb-4">
@@ -43,7 +43,7 @@
         <% end %>
 
         <div class="text-center mt-3">
-          <p class="mb-0">すでにアカウントをお持ちですか？ <%= link_to "ログイン", login_path %></p>
+          <p class="mb-0">すでにアカウントをお持ちですか？ <%= link_to "ログイン", new_user_session_path %></p>
         </div>
       </div>
     </div>

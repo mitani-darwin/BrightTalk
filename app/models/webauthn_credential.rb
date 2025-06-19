@@ -1,3 +1,4 @@
+
 class WebauthnCredential < ApplicationRecord
   belongs_to :user
 
@@ -7,5 +8,15 @@ class WebauthnCredential < ApplicationRecord
 
   def update_sign_count!(new_count)
     update!(sign_count: new_count, last_used_at: Time.current)
+  end
+
+  # nameメソッドを追加（nicknameのエイリアス）
+  def name
+    nickname.presence || "WebAuthn認証"
+  end
+
+  # nameの設定用メソッド
+  def name=(value)
+    self.nickname = value
   end
 end

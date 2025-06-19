@@ -8,14 +8,31 @@ Rails.application.routes.draw do
     sessions: 'sessions'
   }, skip: [:passwords, :registrations]
 
+  # Deviseのスコープ内でカスタムルートを定義
+  devise_scope :user do
+    # ログインページ
+    get '/login', to: 'sessions#new', as: 'custom_login'
+    # ログイン処理を明示的に定義
+    post '/users/sign_in', to: 'sessions#create'
+    # WebAuthn確認用エンドポイント
+    post '/check_webauthn', to: 'sessions#check_webauthn'
+    # ログアウト（GETとDELETEの両方をサポート）
+    get '/users/sign_out', to: 'sessions#destroy'
+    delete '/users/sign_out', to: 'sessions#destroy'
+    get '/logout', to: 'sessions#destroy'
+  end
+
+  # 以下は変更なし...
   # WebAuthn認証
-  get '/login', to: 'webauthn_authentications#new'
   resources :webauthn_credentials, except: [:edit, :update]
   resources :webauthn_authentications, only: [:new, :create] do
     collection do
       post :password_login
     end
   end
+
+  # WebAuthn認証の特別なルート（POSTでnewアクションにアクセス）
+  post '/webauthn_authentications/new', to: 'webauthn_authentications#new'
 
   # 新規登録（名前付きルートを追加）
   get '/users/sign_up', to: 'users#new', as: 'new_user_registration'
@@ -34,13 +51,6 @@ Rails.application.routes.draw do
   get '/account/password', to: 'users#edit_password', as: 'edit_user_password'
   patch '/account/password', to: 'users#update_password', as: 'update_user_password'
   put '/account/password', to: 'users#update_password'
-
-  # ログアウト（GETとDELETEの両方をサポート）
-  devise_scope :user do
-    get '/users/sign_out', to: 'devise/sessions#destroy'
-    delete '/users/sign_out', to: 'devise/sessions#destroy'
-    get '/logout', to: 'devise/sessions#destroy'
-  end
 
   # ユーザー関連（sign_outをshowアクションから除外）
   resources :users, only: [:show], constraints: { id: /\d+/ }
