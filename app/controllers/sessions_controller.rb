@@ -6,7 +6,7 @@ class SessionsController < Devise::SessionsController
 
     if email.blank?
       Rails.logger.warn "check_webauthn: email is blank"
-      render json: { error: 'メールアドレスが必要です' }, status: :bad_request
+      render json: { error: "メールアドレスが必要です" }, status: :bad_request
       return
     end
 
@@ -15,7 +15,7 @@ class SessionsController < Devise::SessionsController
 
     if user.nil?
       Rails.logger.warn "check_webauthn: user not found for email: #{email}"
-      render json: { error: 'このメールアドレスのユーザーは存在しません' }, status: :not_found
+      render json: { error: "このメールアドレスのユーザーは存在しません" }, status: :not_found
       return
     end
 
@@ -63,7 +63,7 @@ class SessionsController < Devise::SessionsController
 
   def new
     # フラッシュメッセージをクリア（初期表示時のエラーを防ぐ）
-    if request.referer.nil? || !request.referer.include?('/webauthn_authentications')
+    if request.referer.nil? || !request.referer.include?("/webauthn_authentications")
       flash.clear
     end
 
@@ -73,7 +73,7 @@ class SessionsController < Devise::SessionsController
       format.json do
         Rails.logger.warn "JSON request to login page - this should use check_webauthn endpoint"
         render json: {
-          error: 'このエンドポイントはJSONリクエストに対応していません。/check_webauthnを使用してください。'
+          error: "このエンドポイントはJSONリクエストに対応していません。/check_webauthnを使用してください。"
         }, status: :unprocessable_entity
       end
     end
@@ -87,7 +87,7 @@ class SessionsController < Devise::SessionsController
     # パラメータの検証
     if params[:user].blank?
       Rails.logger.warn "User params are blank"
-      flash.now[:alert] = 'メールアドレスとパスワードを入力してください。'
+      flash.now[:alert] = "メールアドレスとパスワードを入力してください。"
       self.resource = resource_class.new
       render :new, status: :unprocessable_entity
       return
@@ -104,7 +104,7 @@ class SessionsController < Devise::SessionsController
     Rails.logger.error e.backtrace.join("\n")
 
     # エラーの場合はログイン画面に戻る
-    flash.now[:alert] = 'メールアドレスまたはパスワードが正しくありません。'
+    flash.now[:alert] = "メールアドレスまたはパスワードが正しくありません。"
     # sign_in_paramsを安全に呼び出し
     safe_params = params[:user].present? ? sign_in_params : {}
     self.resource = resource_class.new(safe_params)

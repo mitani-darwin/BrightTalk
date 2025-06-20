@@ -4,7 +4,7 @@ class ChangeWebauthnEnabledDefaultToTrue < ActiveRecord::Migration[8.0]
     change_column_default :users, :webauthn_enabled, from: false, to: true
 
     # 既存のレコードでwebauthn_enabledがfalseまたはnullのものをtrueに更新
-    User.where(webauthn_enabled: [false, nil]).update_all(webauthn_enabled: true)
+    User.where(webauthn_enabled: [ false, nil ]).update_all(webauthn_enabled: true)
   end
 
   def down

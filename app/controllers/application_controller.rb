@@ -14,19 +14,19 @@ class ApplicationController < ActionController::Base
   # 公開アクセスを許可するかどうかの判定
   def public_access_allowed?
     # ログインページ、新規登録ページ、WebAuthn関連ページ
-    controller_name.in?(['webauthn_authentications', 'webauthn_credentials']) ||
+    controller_name.in?([ "webauthn_authentications", "webauthn_credentials" ]) ||
       # ユーザー関連のnew, create, registration_pendingアクション
-      (controller_name == 'users' && action_name.in?(['new', 'create', 'registration_pending'])) ||
+      (controller_name == "users" && action_name.in?([ "new", "create", "registration_pending" ])) ||
       # 投稿の一覧・詳細は公開
-      (controller_name == 'posts' && action_name.in?(['index', 'show'])) ||
+      (controller_name == "posts" && action_name.in?([ "index", "show" ])) ||
       # ユーザーの詳細は公開
-      (controller_name == 'users' && action_name == 'show')
+      (controller_name == "users" && action_name == "show")
   end
 
   # Deviseのストロングパラメータ設定
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
-    devise_parameter_sanitizer.permit(:account_update, keys: [:name])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :name ])
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :name ])
   end
 
   # メール確認後のリダイレクト先をカスタマイズ

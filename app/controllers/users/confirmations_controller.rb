@@ -17,7 +17,7 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
         redirect_to new_webauthn_credential_path(first_time: true)
       else
         # WebAuthnが利用できない場合はホームページへ
-        redirect_to root_path, notice: 'アカウントが確認されました。ログインしました。'
+        redirect_to root_path, notice: "アカウントが確認されました。ログインしました。"
       end
     else
       respond_with(resource)

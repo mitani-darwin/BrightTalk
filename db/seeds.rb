@@ -14,7 +14,7 @@ puts "マルチスレッドでサンプルデータを作成します（総計50
 puts "使用可能なCPUコア数: #{Etc.nprocessors}"
 
 # スレッド数の設定（小規模データなので4スレッドに制限）
-THREAD_COUNT = [Etc.nprocessors, 4].min
+THREAD_COUNT = [ Etc.nprocessors, 4 ].min
 puts "使用スレッド数: #{THREAD_COUNT}"
 
 start_time = Time.current
@@ -124,7 +124,7 @@ threads = []
 THREAD_COUNT.times do |thread_id|
   threads << Thread.new do
     start_batch = thread_id * batches_per_thread
-    end_batch = [start_batch + batches_per_thread, user_batches].min
+    end_batch = [ start_batch + batches_per_thread, user_batches ].min
 
     (start_batch...end_batch).each do |batch|
       users_data = []
@@ -168,7 +168,7 @@ threads = []
 THREAD_COUNT.times do |thread_id|
   threads << Thread.new do
     start_batch = thread_id * batches_per_thread
-    end_batch = [start_batch + batches_per_thread, post_batches].min
+    end_batch = [ start_batch + batches_per_thread, post_batches ].min
 
     (start_batch...end_batch).each do |batch|
       posts_data = []
@@ -219,7 +219,7 @@ threads = []
 THREAD_COUNT.times do |thread_id|
   threads << Thread.new do
     start_batch = thread_id * batches_per_thread
-    end_batch = [start_batch + batches_per_thread, comment_batches].min
+    end_batch = [ start_batch + batches_per_thread, comment_batches ].min
 
     (start_batch...end_batch).each do |batch|
       comments_data = []
@@ -256,7 +256,7 @@ threads = []
 THREAD_COUNT.times do |thread_id|
   threads << Thread.new do
     start_batch = thread_id * batches_per_thread
-    end_batch = [start_batch + batches_per_thread, like_batches].min
+    end_batch = [ start_batch + batches_per_thread, like_batches ].min
 
     (start_batch...end_batch).each do |batch|
       likes_data = []
@@ -275,7 +275,7 @@ THREAD_COUNT.times do |thread_id|
       next if likes_data.empty?
 
       begin
-        Like.insert_all(likes_data, unique_by: [:user_id, :post_id])
+        Like.insert_all(likes_data, unique_by: [ :user_id, :post_id ])
         update_progress(progress_mutex, total_progress, likes_data.size, "いいね", Time.current - start_time)
       rescue ActiveRecord::RecordNotUnique
         update_progress(progress_mutex, total_progress, likes_data.size, "いいね(重複除外)", Time.current - start_time)
@@ -296,7 +296,7 @@ threads = []
 THREAD_COUNT.times do |thread_id|
   threads << Thread.new do
     start_batch = thread_id * batches_per_thread
-    end_batch = [start_batch + batches_per_thread, post_tag_batches].min
+    end_batch = [ start_batch + batches_per_thread, post_tag_batches ].min
 
     (start_batch...end_batch).each do |batch|
       post_tags_data = []
@@ -315,7 +315,7 @@ THREAD_COUNT.times do |thread_id|
       next if post_tags_data.empty?
 
       begin
-        PostTag.insert_all(post_tags_data, unique_by: [:post_id, :tag_id])
+        PostTag.insert_all(post_tags_data, unique_by: [ :post_id, :tag_id ])
         update_progress(progress_mutex, total_progress, post_tags_data.size, "投稿タグ", Time.current - start_time)
       rescue ActiveRecord::RecordNotUnique
         update_progress(progress_mutex, total_progress, post_tags_data.size, "投稿タグ(重複除外)", Time.current - start_time)

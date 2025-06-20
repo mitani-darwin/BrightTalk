@@ -7,9 +7,9 @@ class CommentsController < ApplicationController
     @comment.user = current_user
 
     if @comment.save
-      redirect_to @post, notice: 'コメントが投稿されました。'
+      redirect_to @post, notice: "コメントが投稿されました。"
     else
-      redirect_to @post, alert: 'コメントの投稿に失敗しました。'
+      redirect_to @post, alert: "コメントの投稿に失敗しました。"
     end
   end
 
@@ -18,9 +18,9 @@ class CommentsController < ApplicationController
 
     if @comment.user == current_user
       @comment.destroy
-      redirect_to @post, notice: 'コメントが削除されました。'
+      redirect_to @post, notice: "コメントが削除されました。"
     else
-      redirect_to @post, alert: 'コメントの削除権限がありません。'
+      redirect_to @post, alert: "コメントの削除権限がありません。"
     end
   end
 
