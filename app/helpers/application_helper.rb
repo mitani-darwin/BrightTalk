@@ -16,9 +16,9 @@ module ApplicationHelper
 
     length_text = if max_length == Float::INFINITY
                     "#{min_length}文字以上"
-                  else
+    else
                     "#{min_length}文字以上#{max_length}文字以内"
-                  end
+    end
 
     "#{length_text}、英字・数字・記号を各1文字以上"
   end

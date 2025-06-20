@@ -46,12 +46,17 @@
             </div>
           <% end %>
 
-          <!-- 画像表示 -->
-          <% if @post.image.attached? %>
+          <!-- 投稿の画像表示部分 -->
+          <% if @post.images.attached? %>
             <div class="mb-4">
-              <%= image_tag @post.image,
-                            class: "img-fluid rounded shadow-sm",
-                            style: "width: 100%; max-height: 500px; object-fit: cover;" %>
+              <div class="row">
+                <% @post.images.each do |image| %>
+                  <div class="col-md-6 mb-3">
+                    <%= image_tag image, class: "img-fluid rounded",
+                                  style: "width: 100%; height: 400px; object-fit: cover;" %>
+                  </div>
+                <% end %>
+              </div>
             </div>
           <% end %>
 

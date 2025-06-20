@@ -1,7 +1,7 @@
 
 class WebauthnCredentialsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_webauthn_credential, only: [:show, :destroy]
+  before_action :set_webauthn_credential, only: [ :show, :destroy ]
 
   def index
     @webauthn_credentials = current_user.webauthn_credentials.order(:created_at)
@@ -16,7 +16,7 @@ class WebauthnCredentialsController < ApplicationController
     @nickname = params[:nickname] || "メインデバイス"
 
     # セッションにuser_idを保存（webauthn_idの代わりに使用）
-    user_id = current_user.id.to_s.ljust(64, '0') # 64文字にパディング
+    user_id = current_user.id.to_s.ljust(64, "0") # 64文字にパディング
     user_id = user_id[0..63] if user_id.length > 64 # 最大64文字
 
     # WebAuthn用の設定
@@ -121,7 +121,7 @@ class WebauthnCredentialsController < ApplicationController
         Rails.logger.info "WebAuthn registration completed successfully for user: #{current_user.id}"
       end
 
-      success_message = 'WebAuthn認証が正常に設定されました。次回ログイン時から生体認証でログインできます。'
+      success_message = "WebAuthn認証が正常に設定されました。次回ログイン時から生体認証でログインできます。"
 
       respond_to do |format|
         format.html {
@@ -163,7 +163,7 @@ class WebauthnCredentialsController < ApplicationController
       Rails.logger.error "Unexpected error during WebAuthn registration: #{e.message}"
       Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
 
-      error_message = 'WebAuthn認証の設定中に予期しないエラーが発生しました。'
+      error_message = "WebAuthn認証の設定中に予期しないエラーが発生しました。"
 
       respond_to do |format|
         format.html { redirect_to new_webauthn_credential_path, alert: error_message }
@@ -182,9 +182,9 @@ class WebauthnCredentialsController < ApplicationController
     if current_user.webauthn_credentials.count == 0
       current_user.update!(webauthn_enabled: false)
       Rails.logger.info "User webauthn_enabled set to false (no credentials remaining)"
-      notice_message = 'WebAuthn認証を削除しました。すべての認証が削除されたため、WebAuthn機能を無効にしました。'
+      notice_message = "WebAuthn認証を削除しました。すべての認証が削除されたため、WebAuthn機能を無効にしました。"
     else
-      notice_message = 'WebAuthn認証を削除しました。'
+      notice_message = "WebAuthn認証を削除しました。"
     end
 
     redirect_to webauthn_credentials_path, notice: notice_message
@@ -197,6 +197,6 @@ class WebauthnCredentialsController < ApplicationController
   end
 
   def credential_params
-    params.require(:credential).permit(:id, :rawId, :type, :response => [:clientDataJSON, :attestationObject])
+    params.require(:credential).permit(:id, :rawId, :type, response: [ :clientDataJSON, :attestationObject ])
   end
 end

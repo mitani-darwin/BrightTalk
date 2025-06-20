@@ -1,6 +1,6 @@
 <!-- Bootstrap 5 Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container">
+  <div class="container-fluid">
     <%= link_to "BrightTalk", root_path, class: "navbar-brand" %>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -12,6 +12,18 @@
         <li class="nav-item">
           <%= link_to "投稿一覧", posts_path, class: "nav-link" %>
         </li>
+        <% if user_signed_in? %>
+          <li class="nav-item">
+            <%= link_to new_post_path, class: "nav-link" do %>
+              <i class="fas fa-plus me-1"></i>投稿作成
+            <% end %>
+          </li>
+          <li class="nav-item">
+            <%= link_to drafts_posts_path, class: "nav-link" do %>
+              <i class="fas fa-file-alt me-1"></i>下書き
+            <% end %>
+          </li>
+        <% end %>
       </ul>
 
       <!-- 検索フォーム -->

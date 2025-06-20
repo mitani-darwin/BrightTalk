@@ -11,14 +11,14 @@ class WebauthnAuthenticationsController < ApplicationController
 
     if email.blank?
       Rails.logger.error "WebAuthn authentication: email not provided"
-      redirect_to new_user_session_path, alert: 'メールアドレスが必要です'
+      redirect_to new_user_session_path, alert: "メールアドレスが必要です"
       return
     end
 
     user = User.find_by(email: email)
     if user.nil?
       Rails.logger.error "WebAuthn authentication: user not found for email: #{email}"
-      redirect_to new_user_session_path, alert: 'ユーザーが見つかりませんでした'
+      redirect_to new_user_session_path, alert: "ユーザーが見つかりませんでした"
       return
     end
 
@@ -30,7 +30,7 @@ class WebauthnAuthenticationsController < ApplicationController
 
     if user_credentials.empty?
       Rails.logger.error "WebAuthn authentication: no credentials found for user: #{user.id}"
-      redirect_to new_user_session_path, alert: 'WebAuthn認証情報が登録されていません'
+      redirect_to new_user_session_path, alert: "WebAuthn認証情報が登録されていません"
       return
     end
 
@@ -163,8 +163,8 @@ class WebauthnAuthenticationsController < ApplicationController
 
       # Safariでのリダイレクト対応
       respond_to do |format|
-        format.html { redirect_to root_path, notice: 'WebAuthn認証でログインしました' }
-        format.json { render json: { success: true, redirect_url: root_path, message: 'WebAuthn認証でログインしました' } }
+        format.html { redirect_to root_path, notice: "WebAuthn認証でログインしました" }
+        format.json { render json: { success: true, redirect_url: root_path, message: "WebAuthn認証でログインしました" } }
       end
 
     rescue WebAuthn::Error => e
@@ -181,7 +181,7 @@ class WebauthnAuthenticationsController < ApplicationController
       Rails.logger.error "Unexpected error during WebAuthn authentication: #{e.message}"
       Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
 
-      error_message = 'WebAuthn認証中に予期しないエラーが発生しました。'
+      error_message = "WebAuthn認証中に予期しないエラーが発生しました。"
 
       respond_to do |format|
         format.html { redirect_to new_user_session_path, alert: error_message }
@@ -198,8 +198,8 @@ class WebauthnAuthenticationsController < ApplicationController
     password = params[:password]
 
     if email.blank? || password.blank?
-      flash.now[:alert] = 'メールアドレスとパスワードを入力してください。'
-      redirect_to new_user_session_path, alert: 'メールアドレスとパスワードを入力してください。'
+      flash.now[:alert] = "メールアドレスとパスワードを入力してください。"
+      redirect_to new_user_session_path, alert: "メールアドレスとパスワードを入力してください。"
       return
     end
 
@@ -209,11 +209,11 @@ class WebauthnAuthenticationsController < ApplicationController
       # パスワード認証成功
       sign_in(user)
       Rails.logger.info "Password login successful for user: #{user.id}"
-      redirect_to root_path, notice: 'ログインしました'
+      redirect_to root_path, notice: "ログインしました"
     else
       # パスワード認証失敗
       Rails.logger.warn "Password login failed for email: #{email}"
-      redirect_to new_user_session_path, alert: 'メールアドレスまたはパスワードが正しくありません。'
+      redirect_to new_user_session_path, alert: "メールアドレスまたはパスワードが正しくありません。"
     end
   end
 end

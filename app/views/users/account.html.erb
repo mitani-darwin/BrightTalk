@@ -13,8 +13,10 @@
           <%= link_to edit_user_account_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_account'}" do %>
             <i class="fas fa-edit me-2"></i>アカウント編集
           <% end %>
-          <%= link_to edit_user_password_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_password'}" do %>
-            <i class="fas fa-key me-2"></i>パスワード変更
+          <% unless current_user.has_webauthn_credentials? %>
+            <%= link_to edit_account_password_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_password'}" do %>
+              <i class="fas fa-key me-2"></i>パスワード変更
+            <% end %>
           <% end %>
           <%= link_to webauthn_credentials_path, class: "list-group-item list-group-item-action" do %>
             <i class="fas fa-fingerprint me-2"></i>WebAuthn認証

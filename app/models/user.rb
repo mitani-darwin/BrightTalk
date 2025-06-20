@@ -15,8 +15,8 @@ class User < ApplicationRecord
   # バリデーション
   validates :name, presence: true
   validates :avatar, content_type: { in: %w[image/jpeg image/png image/gif],
-                                     message: 'JPEG、JPG、PNG、GIF形式のファイルを選択してください' },
-            size: { less_than: 5.megabytes, message: '5MB以下のファイルを選択してください' }
+                                     message: "JPEG、JPG、PNG、GIF形式のファイルを選択してください" },
+            size: { less_than: 5.megabytes, message: "5MB以下のファイルを選択してください" }
 
   # Postsにrecentスコープを追加するために必要
   scope :recent, -> { order(created_at: :desc) }
@@ -137,12 +137,12 @@ class User < ApplicationRecord
 
       # 単純な組み合わせ
       /^[a-z]+[0-9]+$/i,        # 文字 + 数字のみ
-      /^[0-9]+[a-z]+$/i,        # 数字 + 文字のみ
+      /^[0-9]+[a-z]+$/i        # 数字 + 文字のみ
     ]
 
     # ユーザー名やメールアドレスの一部が含まれているかチェック
     return true if name.present? && password.downcase.include?(name.downcase)
-    return true if email.present? && password.downcase.include?(email.split('@').first.downcase)
+    return true if email.present? && password.downcase.include?(email.split("@").first.downcase)
 
     # 弱いパターンのいずれかにマッチするかチェック
     weak_patterns.any? { |pattern| password.match?(pattern) }

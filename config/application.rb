@@ -25,8 +25,8 @@ module BrightTalk
     # config.eager_load_paths << Rails.root.join("extras")
 
     # 日本語設定
-    config.time_zone = 'Tokyo'
+    config.time_zone = "Tokyo"
     config.i18n.default_locale = :ja
-    config.i18n.available_locales = [:ja, :en]
+    config.i18n.available_locales = [ :ja, :en ]
   end
 end

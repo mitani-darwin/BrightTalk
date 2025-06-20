@@ -1,6 +1,6 @@
 class UsersController < ApplicationController
-  before_action :authenticate_user!, except: [:new, :create, :registration_pending]
-  before_action :set_user, only: [:show]
+  before_action :authenticate_user!, except: [ :new, :create, :registration_pending ]
+  before_action :set_user, only: [ :show ]
 
   def new
     @user = User.new
@@ -59,7 +59,7 @@ class UsersController < ApplicationController
     @user = current_user
 
     if @user.update(account_params)
-      redirect_to user_account_path, notice: 'アカウント情報を更新しました。'
+      redirect_to user_account_path, notice: "アカウント情報を更新しました。"
     else
       render :edit_account, status: :unprocessable_entity
     end
@@ -77,7 +77,7 @@ class UsersController < ApplicationController
 
     # パスワード変更パラメータとWebAuthn設定を分離
     password_params = user_password_params
-    webauthn_enabled = params[:user][:webauthn_enabled] == '1'
+    webauthn_enabled = params[:user][:webauthn_enabled] == "1"
 
     # パスワードが入力されているかチェック
     password_provided = password_params[:password].present?
@@ -93,14 +93,14 @@ class UsersController < ApplicationController
           unless @user.encrypted_password.blank?
             # 専用メソッドを使用してパスワード確認
             unless @user.valid_password_for_change?(password_params[:current_password])
-              @user.errors.add(:current_password, '現在のパスワードが正しくありません')
+              @user.errors.add(:current_password, "現在のパスワードが正しくありません")
               raise ActiveRecord::RecordInvalid.new(@user)
             end
           end
 
           # 新しいパスワードの設定
           if password_params[:password] != password_params[:password_confirmation]
-            @user.errors.add(:password_confirmation, 'パスワードが一致しません')
+            @user.errors.add(:password_confirmation, "パスワードが一致しません")
             raise ActiveRecord::RecordInvalid.new(@user)
           end
 
@@ -124,9 +124,9 @@ class UsersController < ApplicationController
 
       # 成功メッセージ
       if password_provided
-        flash[:notice] = 'パスワードと認証設定を更新しました。'
+        flash[:notice] = "パスワードと認証設定を更新しました。"
       else
-        flash[:notice] = '認証設定を更新しました。'
+        flash[:notice] = "認証設定を更新しました。"
       end
 
       redirect_to user_account_path
@@ -134,7 +134,7 @@ class UsersController < ApplicationController
       render :edit_password, status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Password update failed: #{e.message}"
-      @user.errors.add(:base, '更新に失敗しました。')
+      @user.errors.add(:base, "更新に失敗しました。")
       render :edit_password, status: :unprocessable_entity
     end
   end

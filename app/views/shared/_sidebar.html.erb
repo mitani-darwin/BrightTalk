@@ -1,0 +1,37 @@
+
+<!-- 左側サイドバー - カテゴリーとタグ -->
+<div class="col-md-3">
+  <!-- カテゴリー一覧 -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">カテゴリー</h5>
+    </div>
+    <div class="card-body">
+      <%= form_with url: posts_path, method: :get, local: true, class: "mb-0" do |form| %>
+        <%= form.collection_select :category_id, Category.all, :id, :name,
+                                   { prompt: "すべてのカテゴリー", selected: params[:category_id] },
+                                   { class: "form-select", onchange: "this.form.submit();" } %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- 人気タグ -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">人気タグ</h5>
+    </div>
+    <div class="card-body">
+      <% popular_tags = Tag.joins(:posts).where(posts: { draft: false }).group('tags.id').order('COUNT(posts.id) DESC').limit(20) %>
+      <% if popular_tags.any? %>
+        <% popular_tags.each do |tag| %>
+          <%= link_to posts_path(tag: tag.name),
+                      class: "badge bg-light text-dark text-decoration-none me-1 mb-1 #{'bg-primary text-white' if params[:tag] == tag.name}" do %>
+            #<%= tag.name %>
+          <% end %>
+        <% end %>
+      <% else %>
+        <p class="text-muted mb-0">タグがありません</p>
+      <% end %>
+    </div>
+  </div>
+</div>

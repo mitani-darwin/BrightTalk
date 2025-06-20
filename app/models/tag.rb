@@ -12,7 +12,7 @@ class Tag < ApplicationRecord
 
   # Article関連のスコープを削除し、Post関連のみ残す
   # scope :popular, -> { joins(:articles).group('tags.id').order('COUNT(articles.id) DESC') }
-  scope :popular_for_posts, -> { joins(:posts).group('tags.id').order('COUNT(posts.id) DESC') }
+  scope :popular_for_posts, -> { joins(:posts).group("tags.id").order("COUNT(posts.id) DESC") }
 
   def self.find_or_create_by_names(tag_names)
     tag_names.map do |name|

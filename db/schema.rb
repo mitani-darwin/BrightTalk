@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_18_135219) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_19_125852) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -104,7 +104,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_18_135219) do
     t.boolean "published", default: true, null: false
     t.integer "likes_count", default: 0, null: false
     t.string "ip_address"
+    t.boolean "draft", default: false
     t.index ["category_id"], name: "index_posts_on_category_id"
+    t.index ["draft"], name: "index_posts_on_draft"
     t.index ["published"], name: "index_posts_on_published"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
