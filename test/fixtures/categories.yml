@@ -1,0 +1,17 @@
+general:
+  name: "その他"
+  description: "一般的な投稿"
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+tech:
+  name: "技術"
+  description: "技術関連の投稿"
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+life:
+  name: "ライフスタイル"
+  description: "ライフスタイル関連の投稿"
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

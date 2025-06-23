@@ -1,3 +1,4 @@
+
 Rails.application.routes.draw do
   devise_for :users, controllers: {
     registrations: "users/registrations",
@@ -6,6 +7,9 @@ Rails.application.routes.draw do
   }
 
   root "posts#index"
+
+  # check_webauthnルートを追加
+  post "check_webauthn", to: "sessions#check_webauthn"
 
   resources :posts do
     member do

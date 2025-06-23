@@ -1,0 +1,15 @@
+test_user:
+  name: "Test User"
+  email: "test@example.com"
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'Secure#P@ssw0rd9') %>
+  confirmed_at: <%= Time.current %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+another_user:
+  name: "Another User"
+  email: "another@example.com"
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'MyStr0ng#Pass!') %>
+  confirmed_at: <%= Time.current %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
