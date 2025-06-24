@@ -1,0 +1,6 @@
+# test/fixtures/likes.yml
+like_one:
+  user: test_user
+  post: first_post
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

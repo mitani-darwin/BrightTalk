@@ -1,0 +1,26 @@
+first_post:
+  title: "First Post"
+  content: "This is the first test post content."
+  user: test_user
+  category: general
+  draft: false
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+draft_post:
+  title: "Draft Post"
+  content: "This is a draft post content."
+  user: test_user
+  category: tech
+  draft: true
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+another_post:
+  title: "Another Post"
+  content: "This is another test post content."
+  user: another_user
+  category: life
+  draft: false
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
