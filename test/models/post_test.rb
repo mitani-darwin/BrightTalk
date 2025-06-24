@@ -1,3 +1,4 @@
+
 require "test_helper"
 
 class PostTest < ActiveSupport::TestCase
@@ -6,7 +7,7 @@ class PostTest < ActiveSupport::TestCase
     @category = categories(:general)
   end
 
-  test "should be valid with valid attributes" do
+  test "有効な属性で投稿が有効であること" do
     post = Post.new(
       title: "Test Post",
       content: "This is a test post content.",
@@ -16,7 +17,7 @@ class PostTest < ActiveSupport::TestCase
     assert post.valid?, "Post should be valid but got errors: #{post.errors.full_messages}"
   end
 
-  test "should require title" do
+  test "タイトルが必須であること" do
     post = Post.new(
       content: "This is a test post content.",
       user: @user,
@@ -26,7 +27,7 @@ class PostTest < ActiveSupport::TestCase
     assert_includes post.errors[:title], "を入力してください"
   end
 
-  test "should require content" do
+  test "内容が必須であること" do
     post = Post.new(
       title: "Test Post",
       user: @user,
@@ -36,7 +37,7 @@ class PostTest < ActiveSupport::TestCase
     assert_includes post.errors[:content], "を入力してください"
   end
 
-  test "should require user" do
+  test "ユーザーが必須であること" do
     post = Post.new(
       title: "Test Post",
       content: "This is a test post content.",
@@ -48,13 +49,12 @@ class PostTest < ActiveSupport::TestCase
     assert user_errors.any? { |error| error.include?("Translation missing") || error.include?("must exist") || error.include?("を入力してください") }
   end
 
-  # カテゴリーがoptionalなので、このテストをスキップするか修正
-  test "should not require category when optional" do
+  test "カテゴリーがオプションの場合は必須でないこと" do
     post = Post.new(
       title: "Test Post",
       content: "This is a test post content.",
       user: @user
-    # categoryは設定しない
+      # categoryは設定しない
     )
     # カテゴリーがoptionalなので、バリデーションエラーにはならない
     assert post.valid?, "Post should be valid without category but got errors: #{post.errors.full_messages}"

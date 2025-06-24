@@ -6,12 +6,12 @@ class PostsTest < ApplicationSystemTestCase
     @category = categories(:general)
   end
 
-  test "visiting the index" do
+  test "投稿一覧ページを表示できること" do
     visit posts_url
     assert_selector "h1", text: "投稿一覧"
   end
 
-  test "should create post when signed in" do
+  test "ログイン時に投稿を作成できること" do
     # ログイン
     visit new_user_session_url
     fill_in "Email", with: @user.email

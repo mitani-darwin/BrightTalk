@@ -1,4 +1,3 @@
-# test/controllers/comments_controller_test.rb
 require "test_helper"
 
 class CommentsControllerTest < ActionDispatch::IntegrationTest
@@ -9,7 +8,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     @post = posts(:first_post)
   end
 
-  test "should create comment when signed in" do
+  test "ログイン時にコメントを作成できること" do
     sign_in @user
     assert_difference('Comment.count') do
       post post_comments_url(@post), params: {
@@ -19,7 +18,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to @post
   end
 
-  test "should redirect when not signed in" do
+  test "ログインしていない場合にリダイレクトされること" do
     post post_comments_url(@post), params: {
       comment: { content: "Test comment" }
     }
