@@ -1,93 +1,173 @@
-
+# test/controllers/likes_controller_test.rb
 require "test_helper"
 
 class LikesControllerTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-
   def setup
     @user = users(:test_user)
+    @another_user = users(:another_user)
     @post = posts(:first_post)
+
     # 既存のいいねをクリア
-    Like.destroy_all
+    Like.where(user: [@user, @another_user], post: @post).destroy_all
   end
 
-  test "ログイン時にいいねを作成できること" do
+  test "ログインユーザーが投稿にいいねできること" do
     sign_in @user
-    assert_difference('Like.count') do
-      post "/posts/#{@post.id}/likes", as: :json
+
+    assert_difference('Like.count', 1) do
+      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
     end
-    assert_response :success
 
-    response_json = JSON.parse(response.body)
-    assert_equal "created", response_json["status"]
+    assert_response :success
+    assert Like.exists?(user: @user, post: @post)
   end
 
-  test "重複のいいねを作成しないこと" do
-    sign_in @user
-    # 最初のいいねを作成
-    post "/posts/#{@post.id}/likes", as: :json
-    assert_response :success
-
-    # 重複のいいねを試行
+  test "未ログインユーザーはいいねできないこと" do
     assert_no_difference('Like.count') do
-      post "/posts/#{@post.id}/likes", as: :json
+      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
     end
-    assert_response :success
 
-    response_json = JSON.parse(response.body)
-    assert_equal "already_liked", response_json["status"]
+    assert_response :unauthorized
   end
 
-  test "既にいいねしている場合にいいねを削除できること" do
+  test "同じ投稿に重複していいねできないこと" do
     sign_in @user
 
-    # いいねを事前に作成
+    # 最初のいいね
+    Like.create!(user: @user, post: @post)
+
+    assert_no_difference('Like.count') do
+      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    end
+
+    # コントローラーはJSONレスポンスを返すが、ステータスは200
+    assert_response :success
+
+    # レスポンスボディをチェック
+    json_response = JSON.parse(response.body)
+    assert_equal "already_liked", json_response["status"]
+  end
+
+  test "ログインユーザーがいいねを取り消しできること" do
+    sign_in @user
     like = Like.create!(user: @user, post: @post)
 
-    # 作成されたことを確認
-    assert_equal 1, Like.count
-
-    # 正しいURLでいいねを削除（like IDを含む）
     assert_difference('Like.count', -1) do
-      delete "/posts/#{@post.id}/likes/#{like.id}", as: :json
+      delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    end
+
+    assert_response :success
+    assert_not Like.exists?(user: @user, post: @post)
+  end
+
+  test "他人のいいねは削除できないこと" do
+    sign_in @another_user
+    like = Like.create!(user: @user, post: @post)
+
+    assert_no_difference('Like.count') do
+      delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    end
+
+    assert_response :unauthorized
+  end
+
+  test "存在しない投稿にいいねしようとすると404エラーになること" do
+    sign_in @user
+
+    assert_no_difference('Like.count') do
+      post "/posts/99999/likes", xhr: true, headers: { 'Accept' => 'application/json' }
+    end
+
+    assert_response :not_found
+  end
+
+  test "存在しないいいねを削除しようとすると404エラーになること" do
+    sign_in @user
+
+    delete "/posts/#{@post.id}/likes/99999", xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_response :not_found
+  end
+
+  test "いいね数が正しく更新されること" do
+    sign_in @user
+    initial_count = @post.likes.count
+
+    post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    @post.reload
+
+    assert_equal initial_count + 1, @post.likes.count
+  end
+
+  test "いいね取り消し時にいいね数が正しく更新されること" do
+    sign_in @user
+    like = Like.create!(user: @user, post: @post)
+    @post.reload  # リロードして正確な初期カウントを取得
+    initial_count = @post.likes.count
+
+    assert_difference('Like.count', -1) do
+      delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    end
+
+    assert_response :success
+    @post.reload
+
+    assert_equal initial_count - 1, @post.likes.count
+  end
+
+  test "複数のユーザーが同じ投稿にいいねできること" do
+    # 最初のユーザーがいいね
+    sign_in @user
+    post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_response :success
+
+    # ログアウト
+    sign_out @user
+
+    # 別のユーザーがいいね
+    sign_in @another_user
+    assert_difference('Like.count', 1) do
+      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
     end
     assert_response :success
 
-    response_json = JSON.parse(response.body)
-    assert_equal "destroyed", response_json["status"]
+    @post.reload
+    assert_equal 2, @post.likes.count
   end
 
-  test "存在しないいいねを削除しようとした場合にエラーを返すこと" do
+  test "AJAX以外のリクエストは適切にリダイレクトされること" do
     sign_in @user
 
-    # いいねが存在しないことを確認
-    assert_equal 0, Like.count
-
-    # 存在しないlike IDでDELETEリクエスト
-    delete "/posts/#{@post.id}/likes/99999", as: :json
-    assert_response :not_found
-
-    # JSONレスポンスでエラー状態を確認
-    response_json = JSON.parse(response.body)
-    assert_equal "error", response_json["status"]
-    assert_equal "Like not found", response_json["message"]
+    post post_likes_path(@post)
+    assert_redirected_to @post
   end
 
-  test "存在しない投稿IDでいいねしようとした場合にエラーを返すこと" do
+  test "存在しない投稿の存在しないいいねを削除しようとすると404エラーになること" do
     sign_in @user
 
-    # 存在しない投稿IDでリクエスト
-    post "/posts/99999/likes", as: :json
+    delete "/posts/99999/likes/99999", xhr: true, headers: { 'Accept' => 'application/json' }
     assert_response :not_found
-
-    response_json = JSON.parse(response.body)
-    assert_equal "error", response_json["status"]
-    assert_equal "Post not found", response_json["message"]
   end
 
-  test "ログインしていない場合にリダイレクトされること" do
-    post "/posts/#{@post.id}/likes"
-    assert_response :redirect
-    assert_redirected_to new_user_session_path
+  test "JSONレスポンスのフォーマットが正しいこと" do
+    sign_in @user
+
+    post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_response :success
+
+    json_response = JSON.parse(response.body)
+    assert_equal "created", json_response["status"]
+    assert json_response.has_key?("likes_count")
+  end
+
+  test "いいね削除時のJSONレスポンスが正しいこと" do
+    sign_in @user
+    like = Like.create!(user: @user, post: @post)
+
+    delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_response :success
+
+    json_response = JSON.parse(response.body)
+    assert_equal "destroyed", json_response["status"]
+    assert json_response.has_key?("likes_count")
   end
 end

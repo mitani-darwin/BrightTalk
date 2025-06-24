@@ -16,9 +16,16 @@ class PostsController < ApplicationController
       @posts = @posts.joins(:tags).where(tags: { name: params[:tag] })
     end
 
-    # キーワード検索
+    # キーワード検索（データベースに依存しない方法）
     if params[:search].present?
-      @posts = @posts.where("title ILIKE ? OR content ILIKE ?", "%#{params[:search]}%", "%#{params[:search]}%")
+      search_term = "%#{params[:search]}%"
+      # SQLiteとPostgreSQL両方で動作するように修正
+      if ActiveRecord::Base.connection.adapter_name.downcase.include?('postgresql')
+        @posts = @posts.where("title ILIKE ? OR content ILIKE ?", search_term, search_term)
+      else
+        # SQLiteやその他のデータベースではLIKEを使用
+        @posts = @posts.where("title LIKE ? OR content LIKE ?", search_term, search_term)
+      end
     end
 
     @posts = @posts.order(created_at: :desc)
