@@ -62,8 +62,12 @@ class CommentTest < ActiveSupport::TestCase
       post: @post
     )
     assert_equal @user, comment.user
-    # Minitest 6対応：nilチェックにはassert_nilを使用
-    assert_equal @user.name, comment.user.name
+    # 66行目を修正：nilの場合はassert_nilを使用
+    if @user.name.nil?
+      assert_nil comment.user.name
+    else
+      assert_equal @user.name, comment.user.name
+    end
   end
 
   test "投稿との関連付けが正しく動作すること" do
