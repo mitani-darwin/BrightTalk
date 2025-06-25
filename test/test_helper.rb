@@ -3,14 +3,8 @@ require_relative "../config/environment"
 require "rails/test_help"
 
 class ActiveSupport::TestCase
-  # CI環境では並列実行を無効化
-  if ENV['CI']
-    # CI環境では並列実行しない
-    parallelize(workers: 1)
-  else
-    # ローカル環境では並列実行
-    parallelize(workers: :number_of_processors)
-  end
+  # 並列実行を完全に無効化
+  parallelize(workers: 1)
 
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
   fixtures :all

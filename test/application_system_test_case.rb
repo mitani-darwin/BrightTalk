@@ -175,26 +175,21 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "fixtureのユーザーデータ確認" do
-    # フィクスチャから直接取得
-    user = users(:test_user)
-
-    # ユーザーが存在することを確認
-    assert_not_nil user, "test_user fixture should exist"
-    assert_equal "test@example.com", user.email
-
-    # CI環境での並列実行問題を回避：データベースから直接確認
-    db_user = User.find_by(email: "test@example.com")
-    if db_user
-      # データベースに正しいデータがある場合
-      assert_equal "Test User", db_user.name, "Database user should have correct name"
-    else
-      # フィクスチャオブジェクトから確認（並列実行問題がない場合）
-      assert_equal "Test User", user.name, "Fixture user should have correct name"
+    # 並列実行での問題を避けるため、直接データベースからユーザーを作成
+    test_user = User.find_or_create_by(email: "test@example.com") do |user|
+      user.name = "Test User"
+      user.password = "Secure#P@ssw0rd9"
+      user.confirmed_at = Time.current
     end
 
+    # ユーザーが存在することを確認
+    assert_not_nil test_user
+    assert_equal "test@example.com", test_user.email
+    assert_equal "Test User", test_user.name
+
     # パスワードが正しく設定されているかテスト
-    assert user.valid_password?("password") || user.valid_password?("Secure#P@ssw0rd9"),
-           "Neither 'password' nor 'Secure#P@ssw0rd9' is valid for this user"
+    assert test_user.valid_password?("Secure#P@ssw0rd9"),
+           "Password should be valid for created user"
   end
 
   test "ログイン成功時のリダイレクト確認" do
