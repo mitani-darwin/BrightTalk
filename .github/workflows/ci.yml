@@ -23,16 +23,20 @@ jobs:
       - name: Setup Database
         env:
           RAILS_ENV: test
+          CI: true
         run: |
           bin/rails db:create
           bin/rails db:migrate
+          bin/rails db:fixtures:load
 
-      - name: Run tests
+      - name: Run tests (sequential execution for CI)
         env:
           RAILS_ENV: test
+          CI: true
+          PARALLEL_WORKERS: 1
         run: |
-          bin/rails test
-          bin/rails test:system
+          bin/rails test --verbose PARALLEL_WORKERS=1
+          bin/rails test:system --verbose PARALLEL_WORKERS=1
 
       - name: Run RuboCop
         run: bundle exec rubocop

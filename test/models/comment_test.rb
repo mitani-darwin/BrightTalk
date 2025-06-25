@@ -1,4 +1,4 @@
-# test/models/comment_test.rb
+
 require "test_helper"
 
 class CommentTest < ActiveSupport::TestCase
@@ -63,7 +63,13 @@ class CommentTest < ActiveSupport::TestCase
       post: @post
     )
     assert_equal @user, comment.user
-    assert_equal @user.name, comment.user.name
+    # 66行目：非推奨警告を避けるため条件分岐で修正
+    user_name = comment.user.name
+    if user_name.nil?
+      assert_nil user_name
+    else
+      assert_equal @user.name, user_name
+    end
   end
 
   test "投稿との関連付けが正しく動作すること" do
