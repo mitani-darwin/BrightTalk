@@ -1,10 +1,17 @@
+
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
 class ActiveSupport::TestCase
-  # Run tests in parallel with specified workers
-  parallelize(workers: :number_of_processors)
+  # CI環境では並列実行を無効化
+  if ENV['CI']
+    # CI環境では並列実行しない
+    parallelize(workers: 1)
+  else
+    # ローカル環境では並列実行
+    parallelize(workers: :number_of_processors)
+  end
 
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
   fixtures :all

@@ -1,3 +1,4 @@
+
 # .github/workflows/ci.yml
 name: CI
 
@@ -23,20 +24,17 @@ jobs:
       - name: Setup Database
         env:
           RAILS_ENV: test
+          CI: true
         run: |
           bin/rails db:create
           bin/rails db:migrate
           bin/rails db:fixtures:load
 
-      - name: Run tests (sequential execution for CI stability)
+      - name: Run tests (sequential execution for CI)
         env:
           RAILS_ENV: test
-          # 並列実行を無効化
-          PARALLEL_WORKERS: 1
+          CI: true
         run: |
-          # フィクスチャを再読み込み
-          bin/rails db:fixtures:load
-          # シーケンシャル実行でテストを実行
           bin/rails test --verbose
           bin/rails test:system --verbose
 
