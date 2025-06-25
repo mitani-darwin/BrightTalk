@@ -1,31 +1,36 @@
-require "application_system_test_case"
+require "test_helper"
 
-class PostsTest < ApplicationSystemTestCase
-  def setup
-    @user = users(:test_user)
-    @category = categories(:general)
+class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  if ENV["CI"]
+    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400] do |driver_options|
+      driver_options.add_argument("--disable-dev-shm-usage")
+      driver_options.add_argument("--no-sandbox")
+      driver_options.add_argument("--disable-gpu")
+      driver_options.add_argument("--disable-extensions")
+      driver_options.add_argument("--disable-dev-tools")
+    end
+  else
+    driven_by :selenium, using: :chrome, screen_size: [1400, 1400]
   end
 
-  test "投稿一覧ページを表示できること" do
-    visit posts_url
-    assert_selector "h1", text: "投稿一覧"
+  setup do
+    Capybara.app_host = "http://127.0.0.1"
+    Capybara.default_max_wait_time = 10
   end
 
-  test "ログイン時に投稿を作成できること" do
-    # ログイン
-    visit new_user_session_url
-    fill_in "Email", with: @user.email
-    fill_in "Password", with: "Password123!"
-    click_on "ログイン"
+  # システムテスト用のログインヘルパー
+  def login_as(user)
+    # 直接パスワード認証ルートを使用
+    visit new_user_session_path
 
-    # 投稿作成
-    click_on "新規投稿"
-    fill_in "Title", with: "Test Post Title"
-    fill_in "Content", with: "Test post content"
-    select @category.name, from: "Category"
-    click_on "投稿する"
+    # WebAuthn用のJavaScriptを無効化し、直接パスワードフォームを表示
+    page.execute_script("
+      document.getElementById('email-form').style.display = 'none';
+      document.getElementById('password-form').style.display = 'block';
+      document.getElementById('email-hidden').value = '#{user.email}';
+    ")
 
-    assert_text "投稿が作成されました"
-    assert_text "Test Post Title"
+    fill_in "password", with: "Secure#P@ssw0rd9"
+    click_button "ログイン"
   end
 end

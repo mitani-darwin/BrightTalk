@@ -35,6 +35,8 @@ class PostsController < ApplicationController
   end
 
   def show
+    # 投稿と関連データを適切に読み込む
+    @post = Post.includes(:user, :category, :tags, :comments => :user, images_attachments: :blob).find(params[:id])
     @comment = Comment.new
     @comments = @post.comments.includes(:user).order(created_at: :asc)
   end

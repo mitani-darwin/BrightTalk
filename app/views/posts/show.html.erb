@@ -12,7 +12,7 @@
                 <% if @post.user.present? %>
                   <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
                        style="width: 50px; height: 50px;">
-                    <span class="fw-bold"><%= @post.user.name.first %></span>
+                    <span class="fw-bold"><%= @post.user.name || @post.user.email %></span>
                   </div>
                 <% end %>
               </div>
@@ -47,17 +47,19 @@
           <% end %>
 
           <!-- 投稿の画像表示部分 -->
-          <% if @post.images.attached? %>
-            <div class="mb-4">
-              <div class="row">
-                <% @post.images.each do |image| %>
-                  <div class="col-md-6 mb-3">
-                    <%= image_tag image, class: "img-fluid rounded",
-                                  style: "width: 100%; height: 400px; object-fit: cover;" %>
+          <% if @post.images.attached? && @post.images.any? %>
+            <% if @post.images.attached? %>
+                <div class="mb-4">
+                  <div class="row">
+                    <% @post.images.each do |image| %>
+                      <div class="col-md-6 mb-3">
+                        <%= image_tag image, class: "img-fluid rounded",
+                                      style: "width: 100%; height: 400px; object-fit: cover;" %>
+                      </div>
+                    <% end %>
                   </div>
-                <% end %>
-              </div>
-            </div>
+                </div>
+              <% end %>
           <% end %>
 
           <!-- コンテンツ -->
