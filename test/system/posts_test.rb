@@ -13,19 +13,25 @@ class PostsTest < ApplicationSystemTestCase
 
   test "ログイン時に投稿を作成できること" do
     # ログイン
-    visit new_user_session_url
-    fill_in "Email", with: @user.email
-    fill_in "Password", with: "Secure#P@ssw0rd9"
-    click_on "ログイン"
+    login_as(@user)
 
-    # 投稿作成
+    # 投稿作成ページに移動
+    visit posts_url
     click_on "新規投稿"
-    fill_in "Title", with: "Test Post Title"
-    fill_in "Content", with: "Test post content"
-    select @category.name, from: "Category"
-    click_on "投稿する"
 
-    assert_text "投稿が作成されました"
+    # ページが読み込まれるまで待つ
+    assert_selector "form", wait: 10
+
+    # フォームに入力（Stale Element Referenceを避けるため、毎回要素を探す）
+    fill_in "post[title]", with: "Test Post Title"
+    fill_in "post[content]", with: "Test post content"
+    select @category.name, from: "post[category_id]"
+
+    # 投稿ボタンをクリック
+    click_button "投稿"
+
+    # 結果を確認（投稿が作成されたことを確認）
     assert_text "Test Post Title"
+    assert_text "投稿が作成されました"
   end
 end
