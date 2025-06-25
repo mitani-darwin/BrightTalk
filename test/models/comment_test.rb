@@ -1,4 +1,3 @@
-
 require "test_helper"
 
 class CommentTest < ActiveSupport::TestCase
@@ -63,8 +62,8 @@ class CommentTest < ActiveSupport::TestCase
       post: @post
     )
     assert_equal @user, comment.user
-    # Minitest 6対応：assert_equalでnilチェックをする代わりにassert_nilを使用
-    if comment.user.name.nil?
+    # フィクスチャのname属性がnilの場合に対応
+    if @user.name.nil?
       assert_nil comment.user.name
     else
       assert_equal @user.name, comment.user.name
