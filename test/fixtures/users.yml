@@ -1,4 +1,6 @@
+
 test_user:
+  name: "Test User"
   email: test@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, 'Secure#P@ssw0rd9') %>
   webauthn_enabled: false
