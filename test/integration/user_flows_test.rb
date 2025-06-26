@@ -21,7 +21,7 @@ class UserFlowsTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # 投稿作成
-    assert_difference('Post.count') do
+    assert_difference("Post.count") do
       post posts_path, params: {
         post: {
           title: "Integration Test Post",

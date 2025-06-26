@@ -20,7 +20,7 @@ class PostsController < ApplicationController
     if params[:search].present?
       search_term = "%#{params[:search]}%"
       # SQLiteとPostgreSQL両方で動作するように修正
-      if ActiveRecord::Base.connection.adapter_name.downcase.include?('postgresql')
+      if ActiveRecord::Base.connection.adapter_name.downcase.include?("postgresql")
         @posts = @posts.where("title ILIKE ? OR content ILIKE ?", search_term, search_term)
       else
         # SQLiteやその他のデータベースではLIKEを使用
@@ -36,7 +36,7 @@ class PostsController < ApplicationController
 
   def show
     # 投稿と関連データを適切に読み込む
-    @post = Post.includes(:user, :category, :tags, :comments => :user, images_attachments: :blob).find(params[:id])
+    @post = Post.includes(:user, :category, :tags, comments: :user, images_attachments: :blob).find(params[:id])
     @comment = Comment.new
     @comments = @post.comments.includes(:user).order(created_at: :asc)
   end

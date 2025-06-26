@@ -8,14 +8,14 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     @post = posts(:first_post)
 
     # 既存のいいねをクリア
-    Like.where(user: [@user, @another_user], post: @post).destroy_all
+    Like.where(user: [ @user, @another_user ], post: @post).destroy_all
   end
 
   test "ログインユーザーが投稿にいいねできること" do
     sign_in @user
 
-    assert_difference('Like.count', 1) do
-      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_difference("Like.count", 1) do
+      post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     end
 
     assert_response :success
@@ -23,8 +23,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "未ログインユーザーはいいねできないこと" do
-    assert_no_difference('Like.count') do
-      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_no_difference("Like.count") do
+      post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     end
 
     assert_response :unauthorized
@@ -36,8 +36,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     # 最初のいいね
     Like.create!(user: @user, post: @post)
 
-    assert_no_difference('Like.count') do
-      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_no_difference("Like.count") do
+      post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     end
 
     # コントローラーはJSONレスポンスを返すが、ステータスは200
@@ -52,8 +52,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     like = Like.create!(user: @user, post: @post)
 
-    assert_difference('Like.count', -1) do
-      delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_difference("Like.count", -1) do
+      delete post_like_path(@post, like), xhr: true, headers: { "Accept" => "application/json" }
     end
 
     assert_response :success
@@ -64,8 +64,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     sign_in @another_user
     like = Like.create!(user: @user, post: @post)
 
-    assert_no_difference('Like.count') do
-      delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_no_difference("Like.count") do
+      delete post_like_path(@post, like), xhr: true, headers: { "Accept" => "application/json" }
     end
 
     assert_response :unauthorized
@@ -74,8 +74,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
   test "存在しない投稿にいいねしようとすると404エラーになること" do
     sign_in @user
 
-    assert_no_difference('Like.count') do
-      post "/posts/99999/likes", xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_no_difference("Like.count") do
+      post "/posts/99999/likes", xhr: true, headers: { "Accept" => "application/json" }
     end
 
     assert_response :not_found
@@ -84,7 +84,7 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
   test "存在しないいいねを削除しようとすると404エラーになること" do
     sign_in @user
 
-    delete "/posts/#{@post.id}/likes/99999", xhr: true, headers: { 'Accept' => 'application/json' }
+    delete "/posts/#{@post.id}/likes/99999", xhr: true, headers: { "Accept" => "application/json" }
     assert_response :not_found
   end
 
@@ -92,7 +92,7 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     initial_count = @post.likes.count
 
-    post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     @post.reload
 
     assert_equal initial_count + 1, @post.likes.count
@@ -104,8 +104,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     @post.reload  # リロードして正確な初期カウントを取得
     initial_count = @post.likes.count
 
-    assert_difference('Like.count', -1) do
-      delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_difference("Like.count", -1) do
+      delete post_like_path(@post, like), xhr: true, headers: { "Accept" => "application/json" }
     end
 
     assert_response :success
@@ -117,7 +117,7 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
   test "複数のユーザーが同じ投稿にいいねできること" do
     # 最初のユーザーがいいね
     sign_in @user
-    post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     assert_response :success
 
     # ログアウト
@@ -125,8 +125,8 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
 
     # 別のユーザーがいいね
     sign_in @another_user
-    assert_difference('Like.count', 1) do
-      post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    assert_difference("Like.count", 1) do
+      post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     end
     assert_response :success
 
@@ -144,14 +144,14 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
   test "存在しない投稿の存在しないいいねを削除しようとすると404エラーになること" do
     sign_in @user
 
-    delete "/posts/99999/likes/99999", xhr: true, headers: { 'Accept' => 'application/json' }
+    delete "/posts/99999/likes/99999", xhr: true, headers: { "Accept" => "application/json" }
     assert_response :not_found
   end
 
   test "JSONレスポンスのフォーマットが正しいこと" do
     sign_in @user
 
-    post post_likes_path(@post), xhr: true, headers: { 'Accept' => 'application/json' }
+    post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
     assert_response :success
 
     json_response = JSON.parse(response.body)
@@ -163,7 +163,7 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     like = Like.create!(user: @user, post: @post)
 
-    delete post_like_path(@post, like), xhr: true, headers: { 'Accept' => 'application/json' }
+    delete post_like_path(@post, like), xhr: true, headers: { "Accept" => "application/json" }
     assert_response :success
 
     json_response = JSON.parse(response.body)

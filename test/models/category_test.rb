@@ -38,19 +38,19 @@ class CategoryTest < ActiveSupport::TestCase
 
     if post_count_before > 0
       # dependent: :destroyが設定されているため、投稿も一緒に削除される
-      assert_difference('Post.count', -post_count_before) do
+      assert_difference("Post.count", -post_count_before) do
         category.destroy
       end
     else
       # 投稿がない場合は、Post.countは変化しない
-      assert_difference('Post.count', 0) do
+      assert_difference("Post.count", 0) do
         category.destroy
       end
     end
   end
 
   test "新しいカテゴリが作成できること" do
-    assert_difference('Category.count', 1) do
+    assert_difference("Category.count", 1) do
       Category.create!(name: "新しいカテゴリ")
     end
   end
@@ -120,8 +120,8 @@ class CategoryTest < ActiveSupport::TestCase
     )
 
     # カテゴリを削除すると、関連する投稿も削除される
-    assert_difference('Post.count', -2) do
-      assert_difference('Category.count', -1) do
+    assert_difference("Post.count", -2) do
+      assert_difference("Category.count", -1) do
         category.destroy
       end
     end
@@ -132,8 +132,8 @@ class CategoryTest < ActiveSupport::TestCase
     empty_category = Category.create!(name: "空のカテゴリ")
 
     # このカテゴリを削除してもPost.countは変化しない
-    assert_difference('Post.count', 0) do
-      assert_difference('Category.count', -1) do
+    assert_difference("Post.count", 0) do
+      assert_difference("Category.count", -1) do
         empty_category.destroy
       end
     end

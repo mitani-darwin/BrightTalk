@@ -23,7 +23,7 @@ class PostsTest < ApplicationSystemTestCase
 
     # 新規投稿リンクの存在確認とクリック
     puts "Available links on posts page:"
-    page.all('a').each { |link| puts "- #{link.text}: #{link[:href]}" }
+    page.all("a").each { |link| puts "- #{link.text}: #{link[:href]}" }
 
     if page.has_link?("新規投稿")
       click_on "新規投稿"
@@ -46,13 +46,13 @@ class PostsTest < ApplicationSystemTestCase
 
     # 利用可能なフィールドを確認
     puts "Available form fields:"
-    page.all('input, textarea, select').each do |field|
+    page.all("input, textarea, select").each do |field|
       puts "- #{field.tag_name}: name=#{field[:name]}, id=#{field[:id]}, type=#{field[:type]}"
     end
 
     # タイトルフィールドを複数パターンで試行
     title_filled = false
-    ["post[title]", "post_title", "title"].each do |field_name|
+    [ "post[title]", "post_title", "title" ].each do |field_name|
       if page.has_field?(field_name)
         fill_in field_name, with: "Test Post Title"
         title_filled = true
@@ -74,7 +74,7 @@ class PostsTest < ApplicationSystemTestCase
 
     # コンテンツフィールドを複数パターンで試行
     content_filled = false
-    ["post[content]", "post_content", "content"].each do |field_name|
+    [ "post[content]", "post_content", "content" ].each do |field_name|
       if page.has_field?(field_name)
         fill_in field_name, with: "Test post content"
         content_filled = true
@@ -107,7 +107,7 @@ class PostsTest < ApplicationSystemTestCase
 
     # 投稿ボタンをクリック
     submit_clicked = false
-    ["投稿", "Create Post", "Submit", "作成"].each do |button_text|
+    [ "投稿", "Create Post", "Submit", "作成" ].each do |button_text|
       if page.has_button?(button_text)
         click_button button_text
         submit_clicked = true
@@ -139,7 +139,7 @@ class PostsTest < ApplicationSystemTestCase
       puts "Found post title on page"
     end
 
-    success_messages = ["投稿が作成されました", "Post was successfully created", "作成しました"]
+    success_messages = [ "投稿が作成されました", "Post was successfully created", "作成しました" ]
     success_messages.each do |message|
       if page.has_content?(message)
         success_confirmed = true

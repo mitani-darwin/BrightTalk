@@ -4,9 +4,9 @@ require "test_helper"
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # 環境変数でヘッドレスモードを制御
   if ENV["HEADLESS"] == "true" || ENV["CI"]
-    driven_by :selenium, using: :headless_chrome, screen_size: [1400, 1400]
+    driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ]
   else
-    driven_by :selenium, using: :chrome, screen_size: [1400, 1400]
+    driven_by :selenium, using: :chrome, screen_size: [ 1400, 1400 ]
   end
 
   # 以下同じ...
@@ -23,7 +23,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     visit new_user_session_path
 
     email_filled = false
-    ["user[email]", "user_email", "email"].each do |field_name|
+    [ "user[email]", "user_email", "email" ].each do |field_name|
       if page.has_field?(field_name)
         fill_in field_name, with: user.email
         email_filled = true
@@ -41,7 +41,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     assert email_filled, "Could not find email field"
 
     password_filled = false
-    ["user[password]", "user_password", "password"].each do |field_name|
+    [ "user[password]", "user_password", "password" ].each do |field_name|
       if page.has_field?(field_name)
         fill_in field_name, with: password
         password_filled = true
@@ -59,7 +59,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     assert password_filled, "Could not find password field"
 
     login_clicked = false
-    ["ログイン", "Log in", "Sign in"].each do |button_text|
+    [ "ログイン", "Log in", "Sign in" ].each do |button_text|
       if page.has_button?(button_text)
         click_button button_text
         login_clicked = true
@@ -78,14 +78,14 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
     sleep 2
 
-    error_messages = ["Invalid Email or password", "メールアドレスまたはパスワードが違います"]
+    error_messages = [ "Invalid Email or password", "メールアドレスまたはパスワードが違います" ]
     error_messages.each do |error_msg|
       assert_no_text error_msg, "Login failed with error: #{error_msg}"
     end
   end
 
   def logout
-    logout_texts = ["ログアウト", "Log out", "Sign out"]
+    logout_texts = [ "ログアウト", "Log out", "Sign out" ]
     logout_texts.each do |text|
       if page.has_link?(text)
         click_link text

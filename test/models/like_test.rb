@@ -10,7 +10,7 @@ class LikeTest < ActiveSupport::TestCase
 
   def teardown
     # 各テスト後にクリーンアップ
-    Like.where(user: [@user, @another_user], post: @post).destroy_all
+    Like.where(user: [ @user, @another_user ], post: @post).destroy_all
   end
 
   test "有効な属性でいいねが有効であること" do
@@ -66,7 +66,7 @@ class LikeTest < ActiveSupport::TestCase
 
   test "異なるユーザーが同じ投稿にいいねできること" do
     # 既存のいいねをクリア
-    Like.where(user: [@user, @another_user], post: @post).destroy_all
+    Like.where(user: [ @user, @another_user ], post: @post).destroy_all
 
     # 最初のユーザーがいいね
     like1 = Like.new(
@@ -171,14 +171,14 @@ class LikeTest < ActiveSupport::TestCase
       post: @post
     )
 
-    assert_difference('Like.count', -1) do
+    assert_difference("Like.count", -1) do
       like.destroy!
     end
   end
 
   test "複数のユーザーが同じ投稿にいいねできる" do
     # 既存のいいねをクリア
-    Like.where(user: [@user, @another_user], post: @post).destroy_all
+    Like.where(user: [ @user, @another_user ], post: @post).destroy_all
 
     # 両方のユーザーがいいねできる
     like1 = Like.create!(user: @user, post: @post)
@@ -213,7 +213,7 @@ class LikeTest < ActiveSupport::TestCase
       assert_not_equal like1.post, like2.post
     ensure
       # クリーンアップ
-      Like.where(user: @user, post: [@post, post2]).destroy_all
+      Like.where(user: @user, post: [ @post, post2 ]).destroy_all
       post2.destroy
     end
   end
