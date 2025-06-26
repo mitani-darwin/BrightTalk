@@ -16,7 +16,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   test "ログインユーザーがコメントを作成できること" do
     sign_in @user
 
-    assert_difference('Comment.count', 1) do
+    assert_difference("Comment.count", 1) do
       post post_comments_path(@post), params: {
         comment: {
           content: "新しいコメント"
@@ -30,7 +30,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "未ログインユーザーはコメントを作成できないこと" do
-    assert_no_difference('Comment.count') do
+    assert_no_difference("Comment.count") do
       post post_comments_path(@post), params: {
         comment: {
           content: "未ログインコメント"
@@ -44,7 +44,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   test "無効なデータでコメント作成が失敗すること" do
     sign_in @user
 
-    assert_no_difference('Comment.count') do
+    assert_no_difference("Comment.count") do
       post post_comments_path(@post), params: {
         comment: {
           content: "" # 空のコンテンツ
@@ -61,7 +61,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   test "コメント作成者がコメントを削除できること" do
     sign_in @user
 
-    assert_difference('Comment.count', -1) do
+    assert_difference("Comment.count", -1) do
       delete post_comment_path(@post, @comment)
     end
 
@@ -76,7 +76,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       post: @post
     )
 
-    assert_no_difference('Comment.count') do
+    assert_no_difference("Comment.count") do
       delete post_comment_path(@post, other_comment)
     end
 
@@ -86,7 +86,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "未ログインユーザーはコメントを削除できないこと" do
-    assert_no_difference('Comment.count') do
+    assert_no_difference("Comment.count") do
       delete post_comment_path(@post, @comment)
     end
 
@@ -105,7 +105,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
 
     long_content = "a" * 501 # 500文字制限を超える
 
-    assert_no_difference('Comment.count') do
+    assert_no_difference("Comment.count") do
       post post_comments_path(@post), params: {
         comment: {
           content: long_content
@@ -235,12 +235,12 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     # 自分のコメントは削除できる
-    assert_difference('Comment.count', -1) do
+    assert_difference("Comment.count", -1) do
       delete post_comment_path(@post, @comment)
     end
 
     # 他人のコメントは削除できない（権限チェック）
-    assert_no_difference('Comment.count') do
+    assert_no_difference("Comment.count") do
       delete post_comment_path(@post, other_comment)
     end
 

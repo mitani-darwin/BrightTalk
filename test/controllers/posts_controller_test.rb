@@ -37,7 +37,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   test "ログインユーザーが投稿を作成できること" do
     sign_in @user
 
-    assert_difference('Post.count', 1) do
+    assert_difference("Post.count", 1) do
       post posts_path, params: {
         post: {
           title: "新しい投稿",
@@ -55,7 +55,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   test "無効なデータで投稿作成が失敗すること" do
     sign_in @user
 
-    assert_no_difference('Post.count') do
+    assert_no_difference("Post.count") do
       post posts_path, params: {
         post: {
           title: "", # 空のタイトル
@@ -113,7 +113,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   test "投稿作成者が投稿を削除できること" do
     sign_in @user
 
-    assert_difference('Post.count', -1) do
+    assert_difference("Post.count", -1) do
       delete post_path(@post)
     end
 
@@ -123,7 +123,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
   test "他人の投稿は削除できないこと" do
     sign_in @another_user
 
-    assert_no_difference('Post.count') do
+    assert_no_difference("Post.count") do
       delete post_path(@post)
     end
 
@@ -161,7 +161,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
 
     # 統合テストでは、Railsが404を適切にハンドリングする
     # 実際のレスポンスステータスを確認
-    assert_includes [404, 500], response.status, "Expected 404 or 500 status for non-existent post"
+    assert_includes [ 404, 500 ], response.status, "Expected 404 or 500 status for non-existent post"
 
     # または、レコードが見つからない場合の動作を確認
     if response.status == 500
@@ -174,7 +174,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     get edit_post_path(99999)
-    assert_includes [404, 500], response.status
+    assert_includes [ 404, 500 ], response.status
   end
 
   test "存在しない投稿の更新でエラーになること" do
@@ -183,14 +183,14 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     patch post_path(99999), params: {
       post: { title: "更新テスト" }
     }
-    assert_includes [404, 500], response.status
+    assert_includes [ 404, 500 ], response.status
   end
 
   test "存在しない投稿の削除でエラーになること" do
     sign_in @user
 
     delete post_path(99999)
-    assert_includes [404, 500], response.status
+    assert_includes [ 404, 500 ], response.status
   end
 
   test "Deviseヘルパーでのログイン確認" do
@@ -198,7 +198,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     # ログイン状態での投稿作成
-    assert_difference('Post.count', 1) do
+    assert_difference("Post.count", 1) do
       post posts_path, params: {
         post: {
           title: "Deviseヘルパーテスト",

@@ -33,9 +33,9 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
       puts "Response body: #{response.body}"
     else
       # ログイン成功した場合（302, 303どちらも可能性がある）
-      assert_includes [302, 303], response.status
+      assert_includes [ 302, 303 ], response.status
       follow_redirect!
-      assert_includes [200, 302], response.status
+      assert_includes [ 200, 302 ], response.status
     end
   end
 
@@ -50,7 +50,7 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     }
 
     # レスポンスを常にチェックする（302, 303, 422を許可）
-    assert_includes [302, 303, 422], response.status, "Expected redirect (302/303) or unprocessable entity (422), got #{response.status}"
+    assert_includes [ 302, 303, 422 ], response.status, "Expected redirect (302/303) or unprocessable entity (422), got #{response.status}"
 
     case response.status
     when 302, 303
@@ -138,7 +138,7 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     get edit_post_path(post)
 
     # アクセス拒否されるかリダイレクトされる
-    assert_includes [403, 302, 303], response.status
+    assert_includes [ 403, 302, 303 ], response.status
   end
 
   test "不正なCSRFトークンでのリクエスト処理" do
@@ -156,7 +156,7 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
         "HTTP_X_CSRF_TOKEN" => "invalid_token"
       }
 
-      assert_includes [422, 302, 303, 403], response.status
+      assert_includes [ 422, 302, 303, 403 ], response.status
     rescue ActionController::InvalidAuthenticityToken
       assert true
     end
@@ -171,7 +171,7 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     }
 
     # 現在の実装では422エラーが返される
-    assert_includes [422, 200], response.status
+    assert_includes [ 422, 200 ], response.status
   end
 
   test "fixtureのユーザーデータ確認" do

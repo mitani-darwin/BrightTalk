@@ -38,7 +38,7 @@ class TagTest < ActiveSupport::TestCase
   end
 
   test "新しいタグが作成できること" do
-    assert_difference('Tag.count', 1) do
+    assert_difference("Tag.count", 1) do
       Tag.create!(name: "新しいタグ")
     end
   end
@@ -51,7 +51,7 @@ class TagTest < ActiveSupport::TestCase
   end
 
   test "find_or_create_by_namesが正しく動作すること" do
-    tag_names = ["タグ1", "タグ2", "既存タグ"]
+    tag_names = [ "タグ1", "タグ2", "既存タグ" ]
 
     # 既存タグを事前に作成
     existing_tag = Tag.create!(name: "既存タグ")
@@ -119,7 +119,7 @@ class TagTest < ActiveSupport::TestCase
   end
 
   test "スペースを含むタグ名の処理" do
-    tag_names = [" タグ1 ", "  タグ2  "]
+    tag_names = [ " タグ1 ", "  タグ2  " ]
     tags = Tag.find_or_create_by_names(tag_names)
 
     assert_equal "タグ1", tags[0].name
