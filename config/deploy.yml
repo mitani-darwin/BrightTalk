@@ -53,10 +53,10 @@ volumes:
 # Bridge fingerprinted assets
 asset_path: /rails/public/assets
 
-# Configure the image builder
+# Configure the image builder (remoteを削除またはコメントアウト)
 builder:
   arch: amd64
   cache:
     type: registry
     options: mode=max
-  remote: true
+  # remote: true  # この行が問題の原因
