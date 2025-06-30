@@ -26,11 +26,11 @@ env:
   secret:
     - RAILS_MASTER_KEY
   clear:
-    SOLID_QUEUE_IN_PUMA: true
-    RAILS_ENV: production
-    RAILS_LOG_LEVEL: info
-    RAILS_SERVE_STATIC_FILES: true
-    RAILS_LOG_TO_STDOUT: true
+    SOLID_QUEUE_IN_PUMA: "true"
+    RAILS_ENV: "production"
+    RAILS_LOG_LEVEL: "info"
+    RAILS_SERVE_STATIC_FILES: "true"
+    RAILS_LOG_TO_STDOUT: "true"
 
 # SSH configuration
 ssh:
