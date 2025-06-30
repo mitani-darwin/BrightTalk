@@ -1,4 +1,3 @@
-
 # サービス名（必須）
 service: bright_talk
 
@@ -57,9 +56,7 @@ asset_path: /rails/public/assets
 # Configure the image builder
 builder:
   arch: amd64
-  # 正しいキャッシュ設定の記述方法
   cache:
     type: registry
     options: mode=max
-  # リモートビルドの設定
   remote: true
