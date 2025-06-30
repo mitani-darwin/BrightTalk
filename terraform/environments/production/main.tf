@@ -1,63 +1,43 @@
-
-terraform {
-  required_version = ">= 1.0"
-
-  backend "s3" {
-    bucket         = "brighttalk-terraform-state-y4trnpld"
-    key            = "environments/production/terraform.tfstate"
-    region         = "ap-northeast-1"
-    dynamodb_table = "brighttalk-terraform-state-lock"  # 修正: 正しいテーブル名
-    encrypt        = true
-  }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "~> 4.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = {
-      Environment = "production"
-      Project     = "BrightTalk"
-      ManagedBy   = "Terraform"
-    }
-  }
-}
-
+# VPC Module
 module "vpc" {
   source = "../../modules/vpc"
 
-  environment = "production"
-  vpc_cidr    = var.vpc_cidr
+  environment = var.environment
+  project_name = var.project_name
+  vpc_cidr = "10.0.0.0/16"
+  availability_zones = ["ap-northeast-1a", "ap-northeast-1c"]  # 東京リージョンの2つのAZ
 }
 
+# Security Groups Module
 module "security" {
   source = "../../modules/security"
 
-  environment = "production"
-  vpc_id      = module.vpc.vpc_id
+  environment = var.environment
+  project_name = var.project_name
+  vpc_id = module.vpc.vpc_id
 }
 
+# EC2 Module
 module "ec2" {
   source = "../../modules/ec2"
 
-  environment         = "production"
-  instance_type      = var.instance_type
-  key_name           = var.key_name
-  subnet_id          = module.vpc.public_subnet_id
-  security_group_ids = [module.security.nginx_security_group_id]
+  environment        = var.environment
+  project_name      = var.project_name
+  vpc_id            = module.vpc.vpc_id
+  subnet_id         = module.vpc.public_subnet_id
+  security_group_ids = [module.security.web_security_group_id]
+  instance_type     = var.instance_type
+  key_name         = var.key_name
+}
+
+# ALB Module（2つの異なるサブネットを使用）
+module "alb" {
+  source = "../../modules/alb"
+
+  environment = var.environment
+  project_name = var.project_name
+  vpc_id = module.vpc.vpc_id
+  public_subnet_ids = [module.vpc.public_subnet_id, module.vpc.public_subnet_id_2]
+  security_group_id = module.security.alb_security_group_id
+  target_instance_id = module.ec2.instance_id
 }

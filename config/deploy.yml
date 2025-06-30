@@ -1,59 +1,54 @@
-# サービス名（必須）
-service: bright_talk
 
-# Name of the container image
-image: darwin2008/bright_talk
+service: brighttalk
 
-# Deploy to these servers
+image: brighttalk-app
+
 servers:
   web:
-    - 18.206.143.227
+    hosts:
+      - 54.150.47.143.
+    labels:
+      traefik.enable: true
+      traefik.http.routers.web.entrypoints: websecure
+      traefik.http.routers.web.rule: Host(`brighttalk.jp`) || Host(`www.brighttalk.jp`)
+      traefik.http.routers.web.tls.certresolver: letsencrypt
+      traefik.http.routers.web.middlewares: redirect-to-https
 
-# Enable SSL auto certification via Let's Encrypt
-proxy:
-  ssl: true
-  host: www.brighttalk.jp
-
-# Credentials for your image host
 registry:
-  username: darwin2008
+  server: 891377308994.dkr.ecr.us-east-1.amazonaws.com
+  username: AWS
   password:
-    - KAMAL_REGISTRY_PASSWORD
+    - aws ecr get-login-password --region us-east-1
 
-# Configure the image builder
-builder:
-  arch: amd64
-  local: true
-
-# Inject ENV variables into containers
 env:
+  clear:
+    PORT: 3000
   secret:
     - RAILS_MASTER_KEY
-  clear:
-    SOLID_QUEUE_IN_PUMA: true
-    RAILS_ENV: production
-    RAILS_LOG_LEVEL: info
-    RAILS_SERVE_STATIC_FILES: true
-    RAILS_LOG_TO_STDOUT: true
 
-# SSH configuration
-ssh:
-  user: ubuntu
-  keys_only: true
-  keys:
-    - ssh-keys/brighttalk-production-key.pem
+traefik:
+  options:
+    publish:
+      - "80:80"
+      - "443:443"
+    volume:
+      - "/letsencrypt/acme.json:/acme.json"
+  args:
+    entrypoints.web.address: ":80"
+    entrypoints.websecure.address: ":443"
 
-# Aliases for common commands
-aliases:
-  console: app exec --interactive --reuse "bin/rails console"
-  shell: app exec --interactive --reuse "bash"
-  logs: app logs -f
-  dbc: app exec --interactive --reuse "bin/rails dbconsole"
+    # HTTPからHTTPSへのリダイレクト
+    entrypoints.web.http.redirections.entrypoint.to: websecure
+    entrypoints.web.http.redirections.entrypoint.scheme: https
 
-# Use a persistent storage volume
-volumes:
-  - "bright_talk_storage:/rails/storage"
-  - "bright_talk_db:/rails/db"
+    # Let's Encrypt設定
+    certificatesresolvers.letsencrypt.acme.email: admin@brighttalk.jp
+    certificatesresolvers.letsencrypt.acme.storage: /acme.json
+    certificatesresolvers.letsencrypt.acme.httpchallenge: true
+    certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint: web
 
-# Bridge fingerprinted assets
-asset_path: /rails/public/assets
+# 任意：アクセサリ（今回は不要）
+# accessories:
+#   db:
+#     image: postgres:15
+  #     host: 18.206.143.227
