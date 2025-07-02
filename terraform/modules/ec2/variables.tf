@@ -1,26 +1,25 @@
-
 variable "environment" {
-  description = "Environment name (e.g., production, staging)"
+  description = "Environment name"
   type        = string
 }
 
 variable "project_name" {
-  description = "Name of the project"
+  description = "Project name"
   type        = string
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC"
+  description = "VPC ID"
   type        = string
 }
 
 variable "subnet_id" {
-  description = "ID of the subnet where the instance will be launched"
+  description = "Subnet ID"
   type        = string
 }
 
 variable "security_group_ids" {
-  description = "List of security group IDs to associate with the instance"
+  description = "Security group IDs"
   type        = list(string)
 }
 
@@ -30,25 +29,26 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
+# 複数のキーペアに対応
+variable "key_names" {
+  description = "List of AWS Key Pair names for EC2 instance access"
+  type        = list(string)
+  default     = []
+}
+
+# 後方互換性のため残す
 variable "key_name" {
-  description = "Name of the AWS key pair"
-  type        = string
-}
-
-variable "ami_id" {
-  description = "AMI ID for the EC2 instance (optional, will use latest Amazon Linux if not specified)"
-  type        = string
-  default     = null
-}
-
-variable "instance_name" {
-  description = "Custom name for the EC2 instance"
+  description = "Primary AWS Key Pair name for EC2 instance"
   type        = string
   default     = ""
 }
 
-variable "enable_elastic_ip" {
-  description = "Whether to create and associate an Elastic IP"
-  type        = bool
-  default     = true
+# ユーザーの公開鍵リスト
+variable "public_keys" {
+  description = "List of public keys for user access"
+  type = list(object({
+    name       = string
+    public_key = string
+  }))
+  default = []
 }

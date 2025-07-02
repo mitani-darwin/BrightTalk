@@ -5,7 +5,7 @@ module "vpc" {
   environment = var.environment
   project_name = var.project_name
   vpc_cidr = "10.0.0.0/16"
-  availability_zones = ["ap-northeast-1a", "ap-northeast-1c"]  # 東京リージョンの2つのAZ
+  availability_zones = ["ap-northeast-1a", "ap-northeast-1c"]
 }
 
 # Security Groups Module
@@ -17,7 +17,7 @@ module "security" {
   vpc_id = module.vpc.vpc_id
 }
 
-# EC2 Module
+# EC2 Module（複数ユーザー対応）
 module "ec2" {
   source = "../../modules/ec2"
 
@@ -28,9 +28,10 @@ module "ec2" {
   security_group_ids = [module.security.web_security_group_id]
   instance_type     = var.instance_type
   key_name         = var.key_name
+  public_keys      = var.authorized_users
 }
 
-# ALB Module（2つの異なるサブネットを使用）
+# ALB Module
 module "alb" {
   source = "../../modules/alb"
 

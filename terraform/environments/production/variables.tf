@@ -22,16 +22,15 @@ variable "instance_type" {
 variable "key_name" {
   description = "AWS Key Pair name for EC2 instance"
   type        = string
+  default     = ""
 }
 
-# Domain Configuration (ACM関連を削除)
-# variable "domain_name" {
-#   description = "Primary domain name for SSL certificate"
-#   type        = string
-# }
-
-# variable "subject_alternative_names" {
-#   description = "Additional domain names for SSL certificate"
-#   type        = list(string)
-#   default     = []
-# }
+# 複数ユーザー対応
+variable "authorized_users" {
+  description = "List of users with their SSH public keys"
+  type = list(object({
+    name       = string
+    public_key = string
+  }))
+  default = []
+}
