@@ -31,12 +31,12 @@ env:
     RAILS_SERVE_STATIC_FILES: "true"
     RAILS_LOG_TO_STDOUT: "true"
 
-# SSH configuration
+# SSH configuration - PC名は自動で更新される
 ssh:
   user: ec2-user
   keys_only: true
   keys:
-    - ssh-keys/brighttalk-production-key.pem
+    - ssh-keys/MacBookAir2025.local-ed25519-key
 
 # Aliases for common commands
 aliases:
@@ -53,10 +53,9 @@ volumes:
 # Bridge fingerprinted assets
 asset_path: /rails/public/assets
 
-# Configure the image builder (remoteを削除またはコメントアウト)
+# Configure the image builder
 builder:
   arch: amd64
   cache:
     type: registry
     options: mode=max
-  # remote: true  # この行が問題の原因

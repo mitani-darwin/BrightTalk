@@ -14,12 +14,12 @@ variable "vpc_id" {
 }
 
 variable "subnet_id" {
-  description = "Subnet ID"
+  description = "Subnet ID for EC2 instance"
   type        = string
 }
 
 variable "security_group_ids" {
-  description = "Security group IDs"
+  description = "List of security group IDs"
   type        = list(string)
 }
 
@@ -29,26 +29,10 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-# 複数のキーペアに対応
-variable "key_names" {
-  description = "List of AWS Key Pair names for EC2 instance access"
-  type        = list(string)
-  default     = []
-}
-
-# 後方互換性のため残す
 variable "key_name" {
-  description = "Primary AWS Key Pair name for EC2 instance"
+  description = "EC2 Key Pair name (not used - PC name based key is auto-generated)"
   type        = string
   default     = ""
 }
 
-# ユーザーの公開鍵リスト
-variable "public_keys" {
-  description = "List of public keys for user access"
-  type = list(object({
-    name       = string
-    public_key = string
-  }))
-  default = []
-}
+# 削除: authorized_usersとpublic_keysは不要

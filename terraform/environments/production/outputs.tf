@@ -52,3 +52,14 @@ output "alb_arn" {
   description = "ARN of the Application Load Balancer"
   value       = module.alb.alb_arn
 }
+
+# PC名とSSH鍵関連の出力値
+output "pc_name" {
+  description = "Automatically detected PC name"
+  value       = module.ec2.pc_name
+}
+
+output "ssh_key_filename_for_kamal" {
+  description = "SSH key filename for Kamal deploy.yml"
+  value       = module.ec2.ssh_key_filename_for_kamal
+}

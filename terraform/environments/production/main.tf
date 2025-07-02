@@ -17,7 +17,7 @@ module "security" {
   vpc_id = module.vpc.vpc_id
 }
 
-# EC2 Module（複数ユーザー対応）
+# EC2 Module（PC名ベースのSSH鍵対応、単一インスタンス）
 module "ec2" {
   source = "../../modules/ec2"
 
@@ -27,8 +27,7 @@ module "ec2" {
   subnet_id         = module.vpc.public_subnet_id
   security_group_ids = [module.security.web_security_group_id]
   instance_type     = var.instance_type
-  key_name         = var.key_name
-  public_keys      = var.authorized_users
+  # key_nameとpublic_keysパラメータを削除
 }
 
 # ALB Module

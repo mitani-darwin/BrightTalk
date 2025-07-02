@@ -1,4 +1,3 @@
-
 #!/bin/bash
 yum update -y
 yum install -y docker
@@ -10,7 +9,7 @@ systemctl enable docker
 # ec2-userをdockerグループに追加
 usermod -a -G docker ec2-user
 
-# 複数ユーザーのSSH公開鍵を設定
+# PC名ベースのユーザー設定（1ユーザーのみ）
 %{ for key in public_keys ~}
 # ${key.name} ユーザー用の設定
 if ! id "${key.name}" &>/dev/null; then
