@@ -1,65 +1,54 @@
+
+# VPC Outputs
 output "vpc_id" {
-  description = "ID of the VPC"
+  description = "VPC ID"
   value       = module.vpc.vpc_id
 }
 
-output "public_subnet_id" {
-  description = "ID of the public subnet"
-  value       = module.vpc.public_subnet_id
+output "public_subnet_ids" {
+  description = "Public subnet IDs"
+  value       = module.vpc.public_subnet_ids
 }
 
-output "public_subnet_id_2" {
-  description = "ID of the second public subnet"
-  value       = module.vpc.public_subnet_id_2
+output "private_subnet_ids" {
+  description = "Private subnet IDs"
+  value       = module.vpc.private_subnet_ids
 }
 
-output "private_subnet_id" {
-  description = "ID of the private subnet"
-  value       = module.vpc.private_subnet_id
+# Security Outputs
+output "security_group_id" {
+  description = "Security group ID"
+  value       = module.security.security_group_id
 }
 
-output "internet_gateway_id" {
-  description = "ID of the Internet Gateway"
-  value       = module.vpc.internet_gateway_id
-}
-
-output "availability_zone" {
-  description = "Availability zone used"
-  value       = module.vpc.availability_zone
-}
-
+# EC2 Outputs
 output "instance_id" {
-  description = "ID of the EC2 instance"
+  description = "EC2 instance ID"
   value       = module.ec2.instance_id
 }
 
 output "instance_public_ip" {
-  description = "Public IP of the EC2 instance (Elastic IP)"
-  value       = module.ec2.public_ip
-}
-
-output "elastic_ip_allocation_id" {
-  description = "Allocation ID of the Elastic IP"
-  value       = module.ec2.elastic_ip_allocation_id
-}
-
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = module.alb.alb_dns_name
-}
-
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
-  value       = module.alb.alb_arn
-}
-
-# PC名とSSH鍵関連の出力値
-output "pc_name" {
-  description = "Automatically detected PC name"
-  value       = module.ec2.pc_name
+  description = "EC2 instance public IP"
+  value       = module.ec2.instance_public_ip
 }
 
 output "ssh_key_filename_for_kamal" {
   description = "SSH key filename for Kamal deploy.yml"
   value       = module.ec2.ssh_key_filename_for_kamal
+}
+
+# 接続情報（高セキュリティSSHポート）
+output "connection_info" {
+  description = "Connection information"
+  value = {
+    public_ip    = module.ec2.instance_public_ip
+    ssh_command  = "ssh -p 47583 -i ${module.ec2.ssh_key_filename_for_kamal} ec2-user@${module.ec2.instance_public_ip}"
+    domain       = var.domain_name
+    ssh_port     = 47583
+  }
+}
+
+output "ssh_connection_command" {
+  description = "SSH connection command with obscured port"
+  value       = "ssh -p 47583 -i ${module.ec2.ssh_key_filename_for_kamal} ec2-user@${module.ec2.instance_public_ip}"
 }

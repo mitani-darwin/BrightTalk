@@ -7,15 +7,19 @@ image: darwin2008/bright_talk
 # Deploy to these servers
 servers:
   web:
-    - 35.75.129.232
+    hosts:
+      - 35.75.129.232
+    options:
+      "ssh-port": 47583
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
   ssl: true
   host: www.brighttalk.jp
 
-# Credentials for your image host
+# Credentials for your image host (DockerHub)
 registry:
+  server: docker.io
   username: darwin2008
   password:
     - DOCKER_HUB_PASSWORD
@@ -24,6 +28,7 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - DOCKER_HUB_PASSWORD
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
@@ -31,12 +36,20 @@ env:
     RAILS_SERVE_STATIC_FILES: "true"
     RAILS_LOG_TO_STDOUT: "true"
 
-# SSH configuration - PC名は自動で更新される
+# SSH configuration - カスタムポート47583を使用
 ssh:
+  port: 47583
   user: ec2-user
   keys_only: true
   keys:
     - ssh-keys/MacBookAir2025.local-ed25519-key
+
+# Healthcheck configuration
+healthcheck:
+  path: /health
+  port: 3000
+  max_attempts: 7
+  interval: 20s
 
 # Aliases for common commands
 aliases:
@@ -59,3 +72,16 @@ builder:
   cache:
     type: registry
     options: mode=max
+  multiarch: false
+
+# Logging configuration
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Boot configuration
+boot:
+  limit: 10
+  wait: 2
