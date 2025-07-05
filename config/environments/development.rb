@@ -41,15 +41,33 @@ Rails.application.configure do
 
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
-  config.action_mailer.smtp_settings = {
-    address: "smtp.gmail.com",
-    domain: "gmail.com",
-    port: 587,
-    user_name: Rails.application.credentials.gmail[:username],
-    password: Rails.application.credentials.gmail[:password],
-    authentication: "plain",
-    enable_starttls_auto: true
-  }
+
+  # Gmail credentials の安全な取得
+  gmail_credentials = Rails.application.credentials.gmail
+
+  if gmail_credentials.present?
+    config.action_mailer.smtp_settings = {
+      address: "smtp.gmail.com",
+      domain: "gmail.com",
+      port: 587,
+      user_name: gmail_credentials[:username],
+      password: gmail_credentials[:password],
+      authentication: "plain",
+      enable_starttls_auto: true
+    }
+  else
+    # credentialsが設定されていない場合は環境変数を使用
+    config.action_mailer.smtp_settings = {
+      address: "smtp.gmail.com",
+      domain: "gmail.com",
+      port: 587,
+      user_name: ENV['GMAIL_USERNAME'] || 'placeholder@gmail.com',
+      password: ENV['GMAIL_PASSWORD'] || 'placeholder-password',
+      authentication: "plain",
+      enable_starttls_auto: true
+    }
+  end
+
   # メールの送信元アドレス（デフォルト設定）
   config.action_mailer.default_options = {
     from: "toru.stitch.626@gmail.com"

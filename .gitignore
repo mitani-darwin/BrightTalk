@@ -63,9 +63,9 @@ terraform.tfstate.local.backup
 *.tmp
 
 # SSH秘密鍵（自動生成される）
-ssh-keys/*.pem
-ssh-keys/*.key
-ssh-keys/id_*
+terraform/ssh-keys/*.pem
+terraform/ssh-keys/*.key
+terraform/ssh-keys/id_*
 !ssh-keys/.keep
 !ssh-keys/README.md
 

@@ -1,15 +1,6 @@
 
 terraform {
   required_version = ">= 1.0"
-
-  backend "s3" {
-    bucket         = "brighttalk-terraform-state-y4trnpld"
-    key            = "environments/production/terraform.tfstate"
-    region         = "ap-northeast-1"
-    dynamodb_table = "brighttalk-terraform-state-lock"  # 修正: 正しいテーブル名
-    encrypt        = true
-  }
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -23,41 +14,44 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.0"
     }
+    external = {
+      source  = "hashicorp/external"
+      version = "~> 2.0"
+    }
   }
 }
 
 provider "aws" {
   region = var.aws_region
-
-  default_tags {
-    tags = {
-      Environment = "production"
-      Project     = "BrightTalk"
-      ManagedBy   = "Terraform"
-    }
-  }
 }
 
+# VPC Module
 module "vpc" {
   source = "../../modules/vpc"
 
-  environment = "production"
-  vpc_cidr    = var.vpc_cidr
+  project_name          = var.project_name
+  environment           = var.environment
+  vpc_cidr              = var.vpc_cidr
+  availability_zones    = var.availability_zones
+  public_subnet_cidrs   = var.public_subnet_cidrs
 }
 
+# Security Module
 module "security" {
   source = "../../modules/security"
 
-  environment = "production"
-  vpc_id      = module.vpc.vpc_id
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.vpc.vpc_id
 }
 
+# EC2 Module
 module "ec2" {
   source = "../../modules/ec2"
 
-  environment         = "production"
+  project_name       = var.project_name
+  environment        = var.environment
   instance_type      = var.instance_type
-  key_name           = var.key_name
-  subnet_id          = module.vpc.public_subnet_id
-  security_group_ids = [module.security.nginx_security_group_id]
+  security_group_ids = [module.security.security_group_id]
+  subnet_id          = module.vpc.public_subnet_ids[0]
 }

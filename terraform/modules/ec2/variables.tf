@@ -1,3 +1,8 @@
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
+}
+
 variable "environment" {
   description = "Environment name"
   type        = string
@@ -6,19 +11,15 @@ variable "environment" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-}
-
-variable "key_name" {
-  description = "AWS Key Pair name"
-  type        = string
-}
-
-variable "subnet_id" {
-  description = "ID of the subnet"
-  type        = string
+  default     = "t3.small"
 }
 
 variable "security_group_ids" {
   description = "List of security group IDs"
   type        = list(string)
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for EC2 instance"
+  type        = string
 }
