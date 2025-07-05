@@ -1,4 +1,3 @@
-
 variable "project_name" {
   description = "Name of the project"
   type        = string
@@ -12,7 +11,7 @@ variable "environment" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "security_group_ids" {

@@ -1,4 +1,3 @@
-
 # VPC Outputs
 output "vpc_id" {
   description = "VPC ID"
@@ -8,11 +7,6 @@ output "vpc_id" {
 output "public_subnet_ids" {
   description = "Public subnet IDs"
   value       = module.vpc.public_subnet_ids
-}
-
-output "private_subnet_ids" {
-  description = "Private subnet IDs"
-  value       = module.vpc.private_subnet_ids
 }
 
 # Security Outputs
@@ -35,6 +29,11 @@ output "instance_public_ip" {
 output "ssh_key_filename_for_kamal" {
   description = "SSH key filename for Kamal deploy.yml"
   value       = module.ec2.ssh_key_filename_for_kamal
+}
+
+output "pc_name" {
+  description = "PC name used for key generation"
+  value       = module.ec2.pc_name
 }
 
 # 接続情報（高セキュリティSSHポート）

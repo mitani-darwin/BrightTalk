@@ -1,13 +1,3 @@
-# Data source for availability zones
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-# Use provided AZs or fall back to available ones
-locals {
-  availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 2)
-}
-
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -17,6 +7,7 @@ resource "aws_vpc" "main" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-vpc"
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
@@ -27,47 +18,23 @@ resource "aws_internet_gateway" "main" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-igw"
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
-# Public Subnet 1
+# Public Subnets only
 resource "aws_subnet" "public" {
+  count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidr
-  availability_zone       = local.availability_zones[0]
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-public-subnet-1"
+    Name        = "${var.project_name}-${var.environment}-public-subnet-${count.index + 1}"
     Environment = var.environment
+    Project     = var.project_name
     Type        = "public"
-  }
-}
-
-# Public Subnet 2 (ALB用)
-resource "aws_subnet" "public_2" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidr_2
-  availability_zone       = local.availability_zones[1]
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-public-subnet-2"
-    Environment = var.environment
-    Type        = "public"
-  }
-}
-
-# Private Subnet
-resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidr
-  availability_zone = local.availability_zones[0]
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-private-subnet"
-    Environment = var.environment
-    Type        = "private"
   }
 }
 
@@ -83,32 +50,13 @@ resource "aws_route_table" "public" {
   tags = {
     Name        = "${var.project_name}-${var.environment}-public-rt"
     Environment = var.environment
+    Project     = var.project_name
   }
 }
 
-# Route Table Associations for Public Subnets
+# Route Table Association for Public Subnets
 resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "public_2" {
-  subnet_id      = aws_subnet.public_2.id
-  route_table_id = aws_route_table.public.id
-}
-
-# Route Table for Private Subnet
-resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-private-rt"
-    Environment = var.environment
-  }
-}
-
-# Route Table Association for Private Subnet
-resource "aws_route_table_association" "private" {
-  subnet_id      = aws_subnet.private.id
-  route_table_id = aws_route_table.private.id
 }

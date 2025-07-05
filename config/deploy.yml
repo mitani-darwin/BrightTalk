@@ -1,3 +1,4 @@
+
 # サービス名（必須）
 service: bright_talk
 
@@ -8,9 +9,7 @@ image: darwin2008/bright_talk
 servers:
   web:
     hosts:
-      - 35.75.129.232
-    options:
-      "ssh-port": 47583
+      - 52.194.156.29
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
@@ -42,14 +41,7 @@ ssh:
   user: ec2-user
   keys_only: true
   keys:
-    - ssh-keys/MacBookAir2025.local-ed25519-key
-
-# Healthcheck configuration
-healthcheck:
-  path: /health
-  port: 3000
-  max_attempts: 7
-  interval: 20s
+    - terraform/ssh-keys/MacBookAir2025.local-ed25519-key
 
 # Aliases for common commands
 aliases:
@@ -72,7 +64,6 @@ builder:
   cache:
     type: registry
     options: mode=max
-  multiarch: false
 
 # Logging configuration
 logging:

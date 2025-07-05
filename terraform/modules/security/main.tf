@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # Security Group for Web Server
 resource "aws_security_group" "web" {
   name        = "${var.project_name}-${var.environment}-web-sg"

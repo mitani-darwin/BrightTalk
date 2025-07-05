@@ -1,3 +1,9 @@
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "ap-northeast-1"
+}
+
 variable "project_name" {
   description = "Name of the project"
   type        = string
@@ -28,20 +34,14 @@ variable "public_subnet_cidrs" {
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
-variable "private_subnet_cidrs" {
-  description = "List of private subnet CIDR blocks"
-  type        = list(string)
-  default     = ["10.0.101.0/24", "10.0.102.0/24"]
-}
-
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "domain_name" {
-  description = "Domain name for SSL certificate"
+  description = "Domain name for the application"
   type        = string
-  default     = "brighttalk.example.com"
+  default     = "www.brighttalk.jp"
 }

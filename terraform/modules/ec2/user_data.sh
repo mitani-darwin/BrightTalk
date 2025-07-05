@@ -1,15 +1,40 @@
 #!/bin/bash
 yum update -y
 
+# Fix locale issues - 日本のロケール設定
+echo 'export LC_ALL=ja_JP.UTF-8' >> /etc/environment
+echo 'export LANG=ja_JP.UTF-8' >> /etc/environment
+echo 'export LANGUAGE=ja_JP.UTF-8' >> /etc/environment
+
+# Install Japanese locale packages
+yum install -y glibc-langpack-ja glibc-locale-source
+
+# Generate Japanese locale
+localedef -i ja_JP -f UTF-8 ja_JP.UTF-8
+
+# Set system locale to Japanese
+localectl set-locale LANG=ja_JP.UTF-8
+
+# Configure locale for ec2-user
+echo 'export LC_ALL=ja_JP.UTF-8' >> /home/ec2-user/.bashrc
+echo 'export LANG=ja_JP.UTF-8' >> /home/ec2-user/.bashrc
+echo 'export LANGUAGE=ja_JP.UTF-8' >> /home/ec2-user/.bashrc
+
+# Set timezone to Japan
+timedatectl set-timezone Asia/Tokyo
+
+# Disable and remove any firewall services
+systemctl stop firewalld 2>/dev/null || true
+systemctl disable firewalld 2>/dev/null || true
+yum remove -y firewalld iptables-services 2>/dev/null || true
+
 # Install Docker
 yum install -y docker
-systemctl start docker
 systemctl enable docker
-usermod -aG docker ec2-user
+systemctl start docker
 
-# Install Docker Compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+# Wait for Docker to be fully ready
+sleep 10
 
 # Change SSH port to 47583 for maximum security obfuscation
 sed -i 's/#Port 22/Port 47583/' /etc/ssh/sshd_config
@@ -24,34 +49,22 @@ sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
 # Restart SSH service
 systemctl restart sshd
 
-# Create users with their SSH keys
+# Configure ec2-user for Docker and SSH keys
 %{ for user in public_keys ~}
-# Create user: ${user.name}
-useradd -m -s /bin/bash ${user.name}
-usermod -aG wheel ${user.name}
-usermod -aG docker ${user.name}
-
-# Set up SSH key for ${user.name}
-mkdir -p /home/${user.name}/.ssh
-echo "${user.public_key}" > /home/${user.name}/.ssh/authorized_keys
-chmod 700 /home/${user.name}/.ssh
-chmod 600 /home/${user.name}/.ssh/authorized_keys
-chown -R ${user.name}:${user.name} /home/${user.name}/.ssh
-
-# Allow sudo without password
-echo "${user.name} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${user.name}
+# Add SSH key for ec2-user
+mkdir -p /home/ec2-user/.ssh
+echo "${user.public_key}" >> /home/ec2-user/.ssh/authorized_keys
+chmod 700 /home/ec2-user/.ssh
+chmod 600 /home/ec2-user/.ssh/authorized_keys
+chown -R ec2-user:ec2-user /home/ec2-user/.ssh
 %{ endfor ~}
 
-# Set up firewall rules
-yum install -y firewalld
-systemctl start firewalld
-systemctl enable firewalld
+# Add ec2-user to docker group
+usermod -aG docker ec2-user
 
-# Allow custom SSH port and web ports
-firewall-cmd --permanent --add-port=47583/tcp
-firewall-cmd --permanent --add-port=80/tcp
-firewall-cmd --permanent --add-port=443/tcp
-firewall-cmd --reload
+# Docker socket permissions (永続化)
+chmod 666 /var/run/docker.sock
+chown root:docker /var/run/docker.sock
 
 # Install additional tools
 yum install -y git curl wget htop fail2ban
@@ -75,3 +88,43 @@ backend = systemd
 EOF
 
 systemctl restart fail2ban
+
+# Install Docker Compose
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Configure Docker daemon for optimal networking
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json << EOF
+{
+  "iptables": true,
+  "ip-forward": true,
+  "ip-masq": true,
+  "userland-proxy": false,
+  "live-restore": true
+}
+EOF
+
+# Restart Docker with new configuration
+systemctl restart docker
+
+# Create a startup script to fix docker permissions on boot
+cat > /etc/systemd/system/docker-permissions.service << EOF
+[Unit]
+Description=Fix Docker permissions
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'chmod 666 /var/run/docker.sock && chown root:docker /var/run/docker.sock'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable docker-permissions.service
+systemctl start docker-permissions.service
+
+echo "User data script completed successfully - 日本のロケール設定完了、ファイアーウォール無効化完了"

@@ -1,3 +1,24 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = "~> 2.0"
+    }
+  }
+}
+
 # PC名をシェルから自動取得
 data "external" "pc_name" {
   program = ["bash", "-c", "echo '{\"pc_name\":\"'$(hostname)'\"}'"]
@@ -49,7 +70,7 @@ resource "local_file" "public_key" {
   depends_on = [local_file.ssh_keys_directory]
 }
 
-# 最新のAmazon Linux 2 AMIを取得
+# 最新のAmazon Linux 2 AMIを取得（x86_64対応）
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -62,6 +83,11 @@ data "aws_ami" "amazon_linux" {
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
@@ -79,12 +105,11 @@ resource "aws_eip" "web_server" {
 # EC2インスタンスの作成（1つのみ）
 resource "aws_instance" "web_server" {
   ami                     = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  key_name               = aws_key_pair.pc_key.key_name  # PC名ベースのキーを使用
+  instance_type          = "t3.small"  # 明示的にt3.smallを指定
+  key_name               = aws_key_pair.pc_key.key_name
   vpc_security_group_ids = var.security_group_ids
   subnet_id              = var.subnet_id
 
-  # PC名ベースのユーザーのみを作成
   user_data = templatefile("${path.module}/user_data.sh", {
     public_keys = [{
       name       = data.external.pc_name.result.pc_name
