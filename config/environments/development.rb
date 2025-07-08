@@ -71,12 +71,12 @@ Rails.application.configure do
 
   # Specify outgoing SMTP server using Rails credentials
   config.action_mailer.smtp_settings = {
-    user_name: Rails.application.credentials.dig(:smtp, :user_name),
-    password: Rails.application.credentials.dig(:smtp, :password),
-    address: Rails.application.credentials.dig(:smtp, :address),
-    port: Rails.application.credentials.dig(:smtp, :port),
-    authentication: Rails.application.credentials.dig(:smtp, :authentication),
-    enable_starttls_auto: Rails.application.credentials.dig(:smtp, :enable_starttls_auto)
+    user_name: Rails.application.credentials.dig(:development, :smtp, :user_name),
+    password: Rails.application.credentials.dig(:development, :smtp, :password),
+    address: Rails.application.credentials.dig(:development, :smtp, :address),
+    port: Rails.application.credentials.dig(:development, :smtp, :port),
+    authentication: Rails.application.credentials.dig(:development, :smtp, :authentication),
+    enable_starttls_auto: Rails.application.credentials.dig(:development, :smtp, :enable_starttls_auto)
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
