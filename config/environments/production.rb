@@ -53,12 +53,34 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
+  # メール送信設定
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = :smtp
+
+  # Set host to be used by links generated in mailer templates.
+  config.action_mailer.default_url_options = {
+    host: "www.brighttalk.jp",
+    protocol: "https"
+  }
+
+  config.action_mailer.default_options = {
+    from: 'dev-noreply@brighttalk.jp'
+  }
+
+  # Specify outgoing SMTP server using Rails credentials
+  config.action_mailer.smtp_settings = {
+    user_name: Rails.application.credentials.dig(:smtp, :user_name),
+    password: Rails.application.credentials.dig(:smtp, :password),
+    address: Rails.application.credentials.dig(:smtp, :address),
+    port: Rails.application.credentials.dig(:smtp, :port),
+    authentication: Rails.application.credentials.dig(:smtp, :authentication),
+    enable_starttls_auto: Rails.application.credentials.dig(:smtp, :enable_starttls_auto)
+  }
+
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
-
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
   # config.action_mailer.smtp_settings = {
