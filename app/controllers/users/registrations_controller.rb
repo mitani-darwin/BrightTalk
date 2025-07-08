@@ -9,11 +9,6 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   # POST /users
   def create
-    # パスワードを自動生成
-    generated_password = SecureRandom.alphanumeric(12)
-    params[:user][:password] = generated_password
-    params[:user][:password_confirmation] = generated_password
-
     super do |resource|
       if resource.persisted? && !resource.active_for_authentication?
         # 仮登録成功時は専用ページにリダイレクト
