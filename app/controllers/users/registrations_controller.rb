@@ -13,7 +13,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
       if resource.persisted? && !resource.active_for_authentication?
         # 仮登録成功時は専用ページにリダイレクト
         sign_out(resource) if user_signed_in?
-        redirect_to success_users_registration_path and return
+        redirect_to users_registration_success_path and return
       end
     end
   end
