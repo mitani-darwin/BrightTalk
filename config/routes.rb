@@ -12,6 +12,12 @@ Rails.application.routes.draw do
   end
 
 
+  # Deviseのカスタムルートを追加
+  devise_scope :user do
+    get '/users/registration/success', to: 'users/registrations#success', as: 'success_users_registration'
+  end
+
+
   root "posts#index"
 
   # check_webauthnルートを追加

@@ -27,7 +27,7 @@ class WebauthnCredentialsController < ApplicationController
         display_name: current_user.name
       },
       rp: {
-        id: Rails.env.development? ? "localhost" : "yourdomain.com",
+        id: Rails.env.development? ? "localhost" : request.host,
         name: "BrightTalk"
       },
       exclude: current_user.webauthn_credentials.pluck(:external_id)

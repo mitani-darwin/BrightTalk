@@ -61,8 +61,8 @@ Rails.application.configure do
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
-    host: "www.brighttalk.jp",
-    protocol: "https"
+    host: "localhost:3000",
+    protocol: "http"
   }
 
   config.action_mailer.default_options = {
