@@ -56,16 +56,18 @@ Rails.application.configure do
   # メール送信設定
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method = :smtp
+  # メール配信設定
+  config.action_mailer.delivery_method = :aws_ses
+  config.action_mailer.aws_ses_settings = {
+    access_key_id: Rails.application.credentials.aws[:access_key_id],
+    secret_access_key: Rails.application.credentials.aws[:secret_access_key],
+    region: Rails.application.credentials.aws[:region]
+  }
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
     host: "www.brighttalk.jp",
     protocol: "https"
-  }
-
-  config.action_mailer.default_options = {
-    from: 'dev-noreply@brighttalk.jp'
   }
 
   # Specify outgoing SMTP server using Rails credentials

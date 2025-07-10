@@ -57,26 +57,18 @@ Rails.application.configure do
   # メール送信設定
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.delivery_method = :aws_ses
+  config.action_mailer.delivery_method = :aws_ses
+  config.action_mailer.aws_ses_settings = {
+    access_key_id: Rails.application.credentials.aws[:access_key_id],
+    secret_access_key: Rails.application.credentials.aws[:secret_access_key],
+    region: Rails.application.credentials.aws[:region]
+  }
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
     host: "localhost:3000",
     protocol: "http"
-  }
-
-  config.action_mailer.default_options = {
-    from: 'dev-noreply@brighttalk.jp'
-  }
-
-  # Specify outgoing SMTP server using Rails credentials
-  config.action_mailer.smtp_settings = {
-    user_name: Rails.application.credentials.dig(:development, :smtp, :user_name),
-    password: Rails.application.credentials.dig(:development, :smtp, :password),
-    address: Rails.application.credentials.dig(:development, :smtp, :address),
-    port: Rails.application.credentials.dig(:development, :smtp, :port),
-    authentication: Rails.application.credentials.dig(:development, :smtp, :authentication),
-    enable_starttls_auto: Rails.application.credentials.dig(:development, :smtp, :enable_starttls_auto)
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

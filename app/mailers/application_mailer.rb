@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: Rails.application.config.action_mailer.default_options&.dig(:from) || 'noreply@brighttalk.jp'
+  default from: Rails.application.credentials.aws[:ses][:from_email]
   layout 'mailer'
 end
