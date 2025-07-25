@@ -56,28 +56,12 @@ Rails.application.configure do
   # メール送信設定
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
-  # メール配信設定
-  config.action_mailer.delivery_method = :aws_ses
-  config.action_mailer.aws_ses_settings = {
-    access_key_id: Rails.application.credentials.aws[:access_key_id],
-    secret_access_key: Rails.application.credentials.aws[:secret_access_key],
-    region: Rails.application.credentials.aws[:region]
-  }
+  config.action_mailer.delivery_method = :ses
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
     host: "www.brighttalk.jp",
     protocol: "https"
-  }
-
-  # Specify outgoing SMTP server using Rails credentials
-  config.action_mailer.smtp_settings = {
-    user_name: Rails.application.credentials.dig(:smtp, :user_name),
-    password: Rails.application.credentials.dig(:smtp, :password),
-    address: Rails.application.credentials.dig(:smtp, :address),
-    port: Rails.application.credentials.dig(:smtp, :port),
-    authentication: Rails.application.credentials.dig(:smtp, :authentication),
-    enable_starttls_auto: Rails.application.credentials.dig(:smtp, :enable_starttls_auto)
   }
 
   # Ignore bad email addresses and do not raise email delivery errors.
