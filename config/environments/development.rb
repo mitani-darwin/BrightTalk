@@ -58,15 +58,6 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
 
-  # AWS SESを使用する場合
-  if Rails.application.credentials.aws&.dig(:development)
-    config.action_mailer.delivery_method = :ses
-  else
-    # AWS設定がない場合はテストモード
-    config.action_mailer.delivery_method = :test
-    config.action_mailer.perform_deliveries = false
-  end
-
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
     host: "localhost:3000",

@@ -56,7 +56,6 @@ Rails.application.configure do
   # メール送信設定
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method = :ses
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
