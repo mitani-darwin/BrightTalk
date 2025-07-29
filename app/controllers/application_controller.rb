@@ -3,7 +3,6 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   # 認証が必要なアクション（特定のコントローラー・アクションを除外）
-  before_action :authenticate_user!, unless: :devise_controller?
   before_action :authenticate_user!, if: -> { !devise_controller? && !public_access_allowed? }
 
   # Deviseのパラメータ許可

@@ -6,10 +6,25 @@ Rails.application.routes.draw do
     confirmations: "users/confirmations"
   }
 
+  # ユーザー登録成功ページのルートを追加
+  devise_scope :user do
+    get "users/registration/success", to: "users/registrations#success", as: "users_registration_success"
+  end
+
+
+  # Deviseのカスタムルートを追加
+  devise_scope :user do
+    get '/users/registration/success', to: 'users/registrations#success', as: 'success_users_registration'
+  end
+
+
   root "posts#index"
 
   # check_webauthnルートを追加
   post "check_webauthn", to: "sessions#check_webauthn"
+
+  # WebAuthnログイン用のルート追加
+  get "login", to: "sessions#check_webauthn"
 
   resources :posts do
     member do

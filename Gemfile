@@ -43,6 +43,8 @@ gem "wkhtmltopdf-binary"
 # WebAuthn認証
 gem "webauthn", "~> 3.0"
 
+gem 'mail-ses'
+
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false
