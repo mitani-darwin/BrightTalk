@@ -27,7 +27,7 @@ Devise.setup do |config|
   config.mailer_sender = "BrightTalk <noreply@brighttalk.jp>"
 
   # Configure the class responsible to send e-mails.
-  config.mailer = 'Devise::Mailer'
+  config.mailer = 'DeviseMailer'
 
   # Configure the parent class responsible to send e-mails.
   config.parent_mailer = 'ActionMailer::Base'
@@ -129,10 +129,10 @@ Devise.setup do |config|
   # config.pepper = '3268bc2e1e034daa63c2615e04fc5dae2528830e5a7788b622691aa23c437b1c990af87971cdefe1845924238d6be00ffbbfe1c1e464f8fa0054a08e1b01e5af'
 
   # Send a notification to the original email when the user's email is changed.
-  config.send_email_changed_notification = false
+  config.send_email_changed_notification = true
 
   # Send a notification email when the user's password is changed.
-  config.send_password_change_notification = false
+  config.send_password_change_notification = true
 
   # ==> Configuration for :confirmable
   # A period that the user is allowed to access the website even without

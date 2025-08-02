@@ -105,7 +105,7 @@ resource "aws_eip" "web_server" {
 # EC2インスタンスの作成（1つのみ）
 resource "aws_instance" "web_server" {
   ami                     = data.aws_ami.amazon_linux.id
-  instance_type          = "t3.small"  # 明示的にt3.smallを指定
+  instance_type = "t4g.small"  # t3.smallからt4g.smallに変更
   key_name               = aws_key_pair.pc_key.key_name
   vpc_security_group_ids = var.security_group_ids
   subnet_id              = var.subnet_id

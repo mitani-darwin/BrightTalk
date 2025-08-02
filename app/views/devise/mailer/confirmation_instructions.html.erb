@@ -1,151 +1,248 @@
 
-<!DOCTYPE html>
-<html lang="ja">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BrightTalk - メール確認</title>
-  <style>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BrightTalk - メールアドレス確認</title>
+
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+
+  <style type="text/css">
+      /* Outlook対応のリセット */
+      body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+      table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+      img { -ms-interpolation-mode: bicubic; }
+
+      /* ベーススタイル */
       body {
-          font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          background-color: #f8f9fa;
           margin: 0;
-          padding: 20px;
+          padding: 0;
+          width: 100% !important;
+          min-width: 100%;
+          height: 100% !important;
+          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -webkit-text-size-adjust: none;
+          background-color: #f4f4f4;
       }
-      .container {
-          max-width: 600px;
-          margin: 0 auto;
-          background-color: #ffffff;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-      }
-      .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          text-align: center;
-          padding: 30px 20px;
-      }
-      .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 300;
-      }
-      .content {
-          padding: 40px 30px;
-      }
-      .welcome-text {
-          font-size: 18px;
-          margin-bottom: 20px;
-          color: #2c3e50;
-      }
-      .confirm-button {
-          display: inline-block;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
+
+      /* Gmailリンクスタイル無効化 */
+      u + .body a {
+          color: inherit;
           text-decoration: none;
-          padding: 15px 30px;
+          font-size: inherit;
+          font-family: inherit;
+          font-weight: inherit;
+          line-height: inherit;
+      }
+
+      /* テーブルリセット */
+      table {
+          border-collapse: collapse !important;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+      }
+
+      img {
+          border: 0;
+          height: auto;
+          line-height: 100%;
+          outline: none;
+          text-decoration: none;
+      }
+
+      /* ボタンスタイル */
+      .button-table {
+          border-collapse: separate !important;
           border-radius: 6px;
-          font-weight: bold;
+          background-color: #10b981;
+      }
+
+      .button-table td {
+          border-radius: 6px;
+          background-color: #10b981;
+      }
+
+      .button-link {
+          display: block;
+          padding: 15px 30px;
           font-size: 16px;
-          margin: 20px 0;
-          transition: transform 0.2s ease;
-      }
-      .confirm-button:hover {
-          transform: translateY(-2px);
+          font-weight: bold;
+          color: #ffffff !important;
           text-decoration: none;
-          color: white;
+          border-radius: 6px;
       }
-      .info-box {
-          background-color: #e3f2fd;
-          border-left: 4px solid #2196f3;
-          padding: 15px;
-          margin: 20px 0;
-          border-radius: 0 4px 4px 0;
-      }
-      .footer {
-          background-color: #f8f9fa;
-          padding: 20px 30px;
-          text-align: center;
-          font-size: 14px;
-          color: #6c757d;
-          border-top: 1px solid #e9ecef;
-      }
-      .features {
-          margin: 25px 0;
-      }
-      .features h3 {
-          color: #2c3e50;
-          margin-bottom: 15px;
-      }
-      .feature-item {
-          display: flex;
-          align-items: center;
-          margin: 10px 0;
-          padding: 8px 0;
-      }
-      .feature-icon {
-          margin-right: 10px;
-          font-size: 18px;
-      }
-      @media (max-width: 600px) {
-          .container {
-              margin: 10px;
-              border-radius: 4px;
+
+      /* レスポンシブ */
+      @media only screen and (max-width: 600px) {
+          .email-container {
+              width: 100% !important;
+              max-width: 100% !important;
           }
-          .content {
-              padding: 30px 20px;
+          .mobile-padding {
+              padding-left: 10px !important;
+              padding-right: 10px !important;
           }
-          .confirm-button {
-              display: block;
-              text-align: center;
-              margin: 20px 0;
+          .button-link {
+              padding: 12px 25px !important;
+              font-size: 14px !important;
           }
       }
   </style>
 </head>
-<body>
-<div class="container">
-  <div class="header">
-    <h1>🌟 BrightTalk</h1>
-    <p style="margin: 10px 0 0 0; opacity: 0.9;">Welcome to our community!</p>
-  </div>
 
-  <div class="content">
-    <p class="welcome-text">
-      <strong><%= @email %></strong> さん、こんにちは！
-    </p>
+<body class="body" style="margin: 0; padding: 0; width: 100%; min-width: 100%; height: 100%; background-color: #f4f4f4;">
 
-    <p>BrightTalkへようこそ！アカウント登録ありがとうございます。</p>
+<!-- 外側のコンテナテーブル -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f4f4f4;">
+  <tr>
+    <td align="center" valign="top">
 
-    <p>以下のボタンをクリックして、メールアドレスの確認を完了してください：</p>
+      <!-- メインコンテナテーブル（600px固定幅） -->
+      <table class="email-container" cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; margin: 0 auto;">
 
-    <div style="text-align: center; margin: 30px 0;">
-      <%= link_to 'メールアドレスを確認する', confirmation_url(@resource, confirmation_token: @token), class: 'confirm-button' %>
-    </div>
+        <!-- ヘッダー -->
+        <tr>
+          <td style="background-color: #2563eb; padding: 20px; text-align: center;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td align="center">
+                  <a href="https://brighttalk.jp" style="color: #ffffff; font-size: 24px; font-weight: bold; text-decoration: none;">
+                    🌟 BrightTalk
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
 
-    <div class="info-box">
-      <strong>💡 次のステップ:</strong><br>
-      メール確認後、セキュリティ向上のためWebAuthn認証（指紋認証・顔認証など）の設定をおすすめします。
-    </div>
+        <!-- メインコンテンツ -->
+        <tr>
+          <td class="mobile-padding" style="padding: 30px 20px;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
 
-    <p style="margin-top: 30px; font-size: 14px; color: #6c757d;">
-      このメールに心当たりがない場合は、このメールを無視してください。<br>
-      確認を完了するまで、アカウントは作成されません。
-    </p>
-  </div>
+              <!-- 挨拶 -->
+              <tr>
+                <td style="font-size: 18px; color: #333333; padding-bottom: 20px;">
+                  <%= @user_name || @email.split('@').first %> さん、こんにちは！
+                </td>
+              </tr>
 
-  <div class="footer">
-    <p>
-      <strong>BrightTalk</strong><br>
-      みんなで作る、明るい話題のコミュニティ
-    </p>
-    <p style="margin-top: 15px; font-size: 12px;">
-      このメールは自動送信されています。返信はできません。
-    </p>
-  </div>
-</div>
+              <!-- メッセージ1 -->
+              <tr>
+                <td style="font-size: 16px; line-height: 1.6; color: #333333; padding-bottom: 15px;">
+                  BrightTalkへようこそ！アカウント登録ありがとうございます。
+                </td>
+              </tr>
+
+              <!-- メッセージ2 -->
+              <tr>
+                <td style="font-size: 16px; line-height: 1.6; color: #333333; padding-bottom: 30px;">
+                  以下のボタンをクリックして、メールアドレスの確認を完了してください：
+                </td>
+              </tr>
+
+              <!-- ボタン -->
+              <tr>
+                <td align="center" style="padding: 0 0 30px 0;">
+                  <table class="button-table" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="center">
+                        <a href="<%= confirmation_url(@resource, confirmation_token: @token) %>"
+                           class="button-link"
+                           style="display: block; padding: 15px 30px; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; background-color: #10b981; border-radius: 6px;">
+                          メールアドレスを確認する
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- 注意書き -->
+              <tr>
+                <td style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0;">
+                  <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                      <td style="font-size: 14px; line-height: 1.6; color: #333333;">
+                        <strong>💡 次のステップ:</strong><br>
+                        メール確認後、セキュリティ向上のためWebAuthn認証（指紋認証・顔認証など）の設定をおすすめします。
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- スペーサー -->
+              <tr>
+                <td height="20"></td>
+              </tr>
+
+              <!-- 免責事項 -->
+              <tr>
+                <td style="font-size: 14px; line-height: 1.6; color: #666666;">
+                  このメールに心当たりがない場合は、このメールを無視してください。<br>
+                  確認を完了するまで、アカウントは作成されません。
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+
+        <!-- フッター -->
+        <tr>
+          <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+
+              <!-- 会社名 -->
+              <tr>
+                <td style="font-size: 16px; font-weight: bold; color: #333333; padding-bottom: 10px;">
+                  BrightTalk
+                </td>
+              </tr>
+
+              <!-- キャッチフレーズ -->
+              <tr>
+                <td style="font-size: 14px; color: #64748b; padding-bottom: 15px;">
+                  みんなで作る、明るい話題のコミュニティ
+                </td>
+              </tr>
+
+              <!-- 連絡先情報 -->
+              <tr>
+                <td style="font-size: 12px; color: #64748b; padding-bottom: 10px;">
+                  このメールは自動送信されています。返信はできません。<br>
+                  ご質問は <a href="mailto:support@brighttalk.jp" style="color: #2563eb;">support@brighttalk.jp</a> までお願いします。
+                </td>
+              </tr>
+
+              <!-- リンク -->
+              <tr>
+                <td style="font-size: 12px; color: #64748b;">
+                  <a href="https://brighttalk.jp/unsubscribe" style="color: #2563eb; text-decoration: none;">配信停止</a> |
+                  <a href="https://brighttalk.jp/privacy" style="color: #2563eb; text-decoration: none;">プライバシーポリシー</a>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
 </body>
 </html>

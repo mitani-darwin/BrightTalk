@@ -2,7 +2,7 @@
 # check=error=true
 
 ARG RUBY_VERSION=3.4.4
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+FROM --platform=linux/arm64 ruby:3.4.4-slim
 
 # Rails app lives here
 WORKDIR /rails
