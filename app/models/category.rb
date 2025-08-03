@@ -5,8 +5,8 @@ class Category < ApplicationRecord
 
   has_many :posts, dependent: :destroy
 
-  validates :name, presence: true, uniqueness: true
-  validates :name, length: { maximum: 50 }
+  validates :name, presence: true, uniqueness: true, length: { maximum: 50 }
+  validates :description, length: { maximum: 200 }
 
   # Article関連のスコープを削除し、Post関連のみ残す
   # scope :with_articles, -> { joins(:articles).distinct }
