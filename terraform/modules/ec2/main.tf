@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     aws = {
@@ -71,14 +70,14 @@ resource "local_file" "public_key" {
   depends_on = [local_file.ssh_keys_directory]
 }
 
-# 最新のAmazon Linux 2 AMIを取得（arm64対応）
+# 最新のAmazon Linux 2 AMIを取得（ARM64対応）
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["amzn2-ami-hvm-*-arm64-gp2"]  # ARM64に変更
   }
 
   filter {
@@ -88,10 +87,9 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "architecture"
-    values = ["x86_64"]
+    values = ["arm64"]  # ARM64に変更
   }
 }
-
 
 # Elastic IPの作成
 resource "aws_eip" "web_server" {

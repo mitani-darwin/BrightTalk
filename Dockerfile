@@ -1,6 +1,3 @@
-# syntax=docker/dockerfile:1
-# check=error=true
-
 ARG RUBY_VERSION=3.4.4
 FROM ruby:3.4.4-slim AS base
 
@@ -74,4 +71,4 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server via Thruster by default, this can be overwritten at runtime
 EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]」「’5ｒｔ4
+CMD ["./bin/thrust", "./bin/rails", "server"]
