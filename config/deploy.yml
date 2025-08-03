@@ -61,7 +61,7 @@ asset_path: /rails/public/assets
 # Configure the image builder
 # Configure the image builder
 builder:
-  arch: amd64
+  arch: arm64
   cache:
     type: registry
     options: mode=max
