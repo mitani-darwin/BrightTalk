@@ -2,14 +2,20 @@
 # check=error=true
 
 ARG RUBY_VERSION=3.4.4
-FROM --platform=linux/arm64 ruby:3.4.4-slim
+FROM ruby:3.4.4-slim AS base
 
 # Rails app lives here
 WORKDIR /rails
 
 # Install base packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    libjemalloc2 \
+    libvips \
+    sqlite3 \
+    nodejs \
+    npm && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -20,7 +26,7 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems (OpenSSL関連パッケージを追加)
+# Install packages needed to build gems and native extensions
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
     build-essential \
@@ -29,7 +35,10 @@ RUN apt-get update -qq && \
     pkg-config \
     libssl-dev \
     openssl \
-    ca-certificates && \
+    ca-certificates \
+    libvips-dev \
+    libsqlite3-dev \
+    python3 && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
@@ -65,4 +74,4 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server via Thruster by default, this can be overwritten at runtime
 EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+CMD ["./bin/thrust", "./bin/rails", "server"]」「’5ｒｔ4
