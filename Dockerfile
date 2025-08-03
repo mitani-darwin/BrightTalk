@@ -1,4 +1,5 @@
 ARG RUBY_VERSION=3.4.4
+ARG TARGETPLATFORM=linux/amd64
 FROM ruby:3.4.4-slim AS base
 
 # Rails app lives here
