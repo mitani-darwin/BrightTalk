@@ -88,4 +88,27 @@ Rails.application.configure do
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  config.middleware.insert_before 0, Rack::Cors do
+    allow do
+      origins 'https://www.brighttalk.jp'
+      resource '*',
+               headers: :any,
+               methods: [:get, :post, :put, :patch, :delete, :options, :head],
+               credentials: true
+    end
+  end if defined?(Rack::Cors)
+
+  # Content Security Policy for WebAuthn
+  config.content_security_policy do |policy|
+    policy.connect_src :self, 'https://www.brighttalk.jp'
+    policy.script_src :self, :unsafe_inline, 'https://www.brighttalk.jp'
+  end
+
+  # セッション設定
+  config.session_store :cookie_store,
+                       key: '_bright_talk_session',
+                       secure: true,
+                       httponly: true,
+                       same_site: :lax
+
 end
