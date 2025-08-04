@@ -41,7 +41,7 @@ ssh:
   user: ec2-user
   keys_only: true
   keys:
-    - terraform/ssh-keys/mac-mini-2023.local-ed25519-key
+    - terraform/ssh-keys/MacBookAir2025.local-ed25519-key
 
 # Aliases for common commands
 aliases:
