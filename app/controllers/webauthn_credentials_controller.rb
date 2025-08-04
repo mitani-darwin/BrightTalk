@@ -2,6 +2,7 @@ class WebauthnCredentialsController < ApplicationController
   before_action :authenticate_user!
 
   def new
+    # WebAuthnオプションを生成
     @options = WebAuthn::Credential.options_for_create(
       user: {
         id: current_user.webauthn_id,
@@ -10,26 +11,28 @@ class WebauthnCredentialsController < ApplicationController
       },
       exclude: current_user.webauthn_credentials.pluck(:external_id),
       rp: {
-        name: "BrightTalk"
+        name: "BrightTalk",
+        id: webauthn_rp_id
       }
     )
 
     # セッションにチャレンジを保存
     session[:webauthn_challenge] = @options.challenge
+
+    # デバッグ用ログ
+    Rails.logger.info "WebAuthn options generated: #{@options.as_json}"
   end
 
   def create
     webauthn_credential = WebAuthn::Credential.from_create(credential_params)
 
     begin
-      # Origin検証を含む検証を実行
       webauthn_credential.verify(
         session[:webauthn_challenge],
         origin: request_origin,
         rp_id: webauthn_rp_id
       )
 
-      # データベースに保存
       current_user.webauthn_credentials.create!(
         external_id: webauthn_credential.id,
         public_key: webauthn_credential.public_key,
@@ -44,22 +47,13 @@ class WebauthnCredentialsController < ApplicationController
         redirect_url: webauthn_credentials_path
       }
 
-    rescue WebAuthn::OriginVerificationError => e
-      Rails.logger.error "WebAuthn Origin Error: #{e.message}"
-      Rails.logger.error "Expected origin: #{request_origin}"
-      Rails.logger.error "RP ID: #{webauthn_rp_id}"
-
-      render json: {
-        success: false,
-        error: "WebAuthn認証の設定に失敗しました: オリジンが一致しません"
-      }, status: :unprocessable_entity
-
     rescue => e
       Rails.logger.error "WebAuthn Error: #{e.message}"
+      Rails.logger.error "Backtrace: #{e.backtrace.first(5).join("\n")}"
 
       render json: {
         success: false,
-        error: "WebAuthn認証の設定に失敗しました: #{e.class.name}"
+        error: "WebAuthn認証の設定に失敗しました: #{e.message}"
       }, status: :unprocessable_entity
     end
   end
