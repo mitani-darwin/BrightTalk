@@ -1,7 +1,7 @@
 
 <div class="row">
   <div class="col-12">
-    <%= form_with model: post, local: true, multipart: true, class: "needs-validation", novalidate: true do |form| %>
+    <%= form_with model: post, local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
       <% if post.errors.any? %>
         <div class="alert alert-danger">
           <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
@@ -16,11 +16,42 @@
       <div class="row" id="formContainer">
         <!-- サイドバー（左側） -->
         <div class="col-md-4" style="height: 100%; overflow-y: auto;">
+          <!-- カテゴリー選択と新規追加 -->
           <div class="mb-3">
             <%= form.label :category_id, "カテゴリー", class: "form-label" %>
-            <%= form.collection_select :category_id, Category.all, :id, :name,
-                                       { prompt: "カテゴリーを選択してください" },
-                                       { class: "form-select" } %>
+            <div class="d-flex gap-2 mb-2">
+              <%= form.collection_select :category_id, Category.all, :id, :name,
+                                         { prompt: "カテゴリーを選択してください" },
+                                         { class: "form-select", id: "categorySelect" } %>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="addCategoryBtn" style="white-space: nowrap;">
+                <i class="fas fa-plus"></i> 追加
+              </button>
+            </div>
+
+            <!-- 新規カテゴリー追加フォーム（初期は非表示） -->
+            <div id="newCategoryForm" class="card" style="display: none;">
+              <div class="card-body p-3">
+                <h6 class="card-title">新しいカテゴリーを追加</h6>
+                <div class="mb-2">
+                  <input type="text" id="newCategoryName" class="form-control form-control-sm"
+                         placeholder="カテゴリー名" maxlength="50">
+                </div>
+                <div class="mb-2">
+                  <textarea id="newCategoryDescription" class="form-control form-control-sm"
+                            placeholder="説明（任意）" rows="2" maxlength="200"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm" id="saveCategoryBtn">
+                    <i class="fas fa-save"></i> 保存
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="cancelCategoryBtn">
+                    キャンセル
+                  </button>
+                </div>
+                <div id="categoryError" class="alert alert-danger mt-2" style="display: none;"></div>
+                <div id="categorySuccess" class="alert alert-success mt-2" style="display: none;"></div>
+              </div>
+            </div>
           </div>
 
           <div class="mb-3">
@@ -91,71 +122,251 @@
 </div>
 
 <script>
-    // フォームとテキストエリアの高さを動的に調整
-    function adjustLayout() {
-        const formContainer = document.getElementById('formContainer');
-        const textarea = document.getElementById('contentTextarea');
-
-        if (formContainer && textarea) {
-            // 各要素の高さを計算
-            const windowHeight = window.innerHeight;
-            const navHeight = document.querySelector('nav') ? document.querySelector('nav').offsetHeight : 60;
-            const headerHeight = 100; // ページヘッダー部分
-            const footerHeight = document.querySelector('footer') ? document.querySelector('footer').offsetHeight : 60;
-            const mainPadding = 32; // main要素のmy-4パディング
-            const titleSectionHeight = 80; // タイトル欄の高さ
-            const labelHeight = 30; // contentラベルの高さ
-            const padding = 20; // 余白
-
-            // 利用可能な高さを計算（フッターが見えるように）
-            const availableHeight = windowHeight - navHeight - headerHeight - footerHeight - mainPadding;
-
-            // フォームコンテナの高さを設定
-            formContainer.style.height = Math.max(500, availableHeight) + 'px';
-
-            // テキストエリアの高さを計算
-            const textareaHeight = availableHeight - titleSectionHeight - labelHeight - padding;
-            textarea.style.height = Math.max(300, textareaHeight) + 'px';
+    // JavaScriptコードを即座に実行するように修正
+    (function() {
+        // CSRFトークンを取得
+        function getCSRFToken() {
+            const token = document.querySelector('meta[name="csrf-token"]');
+            return token ? token.getAttribute('content') : '';
         }
-    }
 
-    // ページ読み込み時とリサイズ時に高さを調整
-    document.addEventListener('DOMContentLoaded', function() {
-        // 少し遅延させてDOM要素のサイズが確定してから実行
-        setTimeout(adjustLayout, 100);
-    });
+        // カテゴリー管理機能
+        function initializeCategoryForm() {
+            console.log('Initializing category form...'); // デバッグ用
 
-    window.addEventListener('resize', adjustLayout);
+            const addCategoryBtn = document.getElementById('addCategoryBtn');
+            const newCategoryForm = document.getElementById('newCategoryForm');
+            const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+            const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+            const categorySelect = document.getElementById('categorySelect');
+            const newCategoryName = document.getElementById('newCategoryName');
+            const newCategoryDescription = document.getElementById('newCategoryDescription');
+            const categoryError = document.getElementById('categoryError');
+            const categorySuccess = document.getElementById('categorySuccess');
 
-    // 画像プレビュー機能
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-        const preview = document.getElementById('imagePreview');
-        preview.innerHTML = '';
+            console.log('Elements found:', {
+                addCategoryBtn: !!addCategoryBtn,
+                newCategoryForm: !!newCategoryForm,
+                saveCategoryBtn: !!saveCategoryBtn,
+                cancelCategoryBtn: !!cancelCategoryBtn
+            }); // デバッグ用
 
-        if (this.files) {
-            Array.from(this.files).forEach((file, index) => {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'col-12 mb-2';
-                        div.innerHTML = `
-            <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 150px; object-fit: cover;">
-            <div class="mt-1">
-              <small class="text-muted">${file.name}</small>
-            </div>
-          `;
-                        preview.appendChild(div);
-                    };
-                    reader.readAsDataURL(file);
-                }
+            if (!addCategoryBtn) {
+                console.error('addCategoryBtn not found');
+                return;
+            }
+
+            // 新しいカテゴリー追加フォームを表示
+            addCategoryBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Add category button clicked'); // デバッグ用
+
+                newCategoryForm.style.display = 'block';
+                addCategoryBtn.style.display = 'none';
+                newCategoryName.focus();
+                hideMessages();
             });
-        }
-    });
 
-    // 既存画像削除機能（実装は後で行う）
-    function removeImage(index) {
-        // TODO: 既存画像の削除機能を実装
-        alert('画像削除機能は後で実装します');
-    }
+            // カテゴリー追加をキャンセル
+            if (cancelCategoryBtn) {
+                cancelCategoryBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    newCategoryForm.style.display = 'none';
+                    addCategoryBtn.style.display = 'block';
+                    clearCategoryForm();
+                    hideMessages();
+                });
+            }
+
+            // 新しいカテゴリーを保存
+            if (saveCategoryBtn) {
+                saveCategoryBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const name = newCategoryName.value.trim();
+                    const description = newCategoryDescription.value.trim();
+
+                    if (!name) {
+                        showError('カテゴリー名を入力してください。');
+                        return;
+                    }
+
+                    try {
+                        saveCategoryBtn.disabled = true;
+                        saveCategoryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+
+                        const response = await fetch('/categories', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': getCSRFToken(),
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                category: {
+                                    name: name,
+                                    description: description
+                                }
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // セレクトボックスに新しいカテゴリーを追加
+                            const option = new Option(data.category.name, data.category.id, true, true);
+                            categorySelect.add(option);
+
+                            showSuccess(data.message);
+
+                            // フォームを隠してリセット
+                            setTimeout(() => {
+                                newCategoryForm.style.display = 'none';
+                                addCategoryBtn.style.display = 'block';
+                                clearCategoryForm();
+                                hideMessages();
+                            }, 2000);
+                        } else {
+                            showError(data.errors ? data.errors.join(', ') : data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showError('カテゴリーの作成中にエラーが発生しました。');
+                    } finally {
+                        saveCategoryBtn.disabled = false;
+                        saveCategoryBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+                    }
+                });
+            }
+
+            // Enterキーで保存
+            if (newCategoryName) {
+                newCategoryName.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveCategoryBtn.click();
+                    }
+                });
+            }
+
+            function clearCategoryForm() {
+                if (newCategoryName) newCategoryName.value = '';
+                if (newCategoryDescription) newCategoryDescription.value = '';
+            }
+
+            function showError(message) {
+                if (categoryError) {
+                    categoryError.textContent = message;
+                    categoryError.style.display = 'block';
+                }
+                if (categorySuccess) {
+                    categorySuccess.style.display = 'none';
+                }
+            }
+
+            function showSuccess(message) {
+                if (categorySuccess) {
+                    categorySuccess.textContent = message;
+                    categorySuccess.style.display = 'block';
+                }
+                if (categoryError) {
+                    categoryError.style.display = 'none';
+                }
+            }
+
+            function hideMessages() {
+                if (categoryError) categoryError.style.display = 'none';
+                if (categorySuccess) categorySuccess.style.display = 'none';
+            }
+        }
+
+        // DOM読み込み完了時とTurboロード時に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeCategoryForm);
+        } else {
+            initializeCategoryForm();
+        }
+
+        document.addEventListener('turbo:load', initializeCategoryForm);
+
+        // 既存のコード（フォームとテキストエリアの高さ調整、画像プレビューなど）
+        function adjustLayout() {
+            const formContainer = document.getElementById('formContainer');
+            const textarea = document.getElementById('contentTextarea');
+
+            if (formContainer && textarea) {
+                const windowHeight = window.innerHeight;
+                const navHeight = document.querySelector('nav') ? document.querySelector('nav').offsetHeight : 60;
+                const headerHeight = 100;
+                const footerHeight = document.querySelector('footer') ? document.querySelector('footer').offsetHeight : 60;
+                const mainPadding = 32;
+                const titleSectionHeight = 80;
+                const labelHeight = 30;
+                const padding = 20;
+
+                const availableHeight = windowHeight - navHeight - headerHeight - footerHeight - mainPadding;
+                formContainer.style.height = Math.max(500, availableHeight) + 'px';
+
+                const textareaHeight = availableHeight - titleSectionHeight - labelHeight - padding;
+                textarea.style.height = Math.max(300, textareaHeight) + 'px';
+            }
+        }
+
+        function initializeLayout() {
+            setTimeout(adjustLayout, 100);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeLayout);
+        } else {
+            initializeLayout();
+        }
+
+        window.addEventListener('resize', adjustLayout);
+
+        // 画像プレビュー機能
+        function initializeImagePreview() {
+            const imageInput = document.getElementById('imageInput');
+            if (imageInput) {
+                imageInput.addEventListener('change', function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    if (preview) {
+                        preview.innerHTML = '';
+
+                        if (this.files) {
+                            Array.from(this.files).forEach((file, index) => {
+                                if (file.type.startsWith('image/')) {
+                                    const reader = new FileReader();
+                                    reader.onload = function(e) {
+                                        const div = document.createElement('div');
+                                        div.className = 'col-12 mb-2';
+                                        div.innerHTML = `
+                                            <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 150px; object-fit: cover;">
+                                            <div class="mt-1">
+                                              <small class="text-muted">${file.name}</small>
+                                            </div>
+                                          `;
+                                        preview.appendChild(div);
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeImagePreview);
+        } else {
+            initializeImagePreview();
+        }
+
+        document.addEventListener('turbo:load', initializeImagePreview);
+
+        // グローバル関数として定義
+        window.removeImage = function(index) {
+            alert('画像削除機能は後で実装します');
+        };
+    })();
 </script>

@@ -1,6 +1,15 @@
-
 terraform {
   required_version = ">= 1.0"
+
+  # S3バックエンド設定を追加
+  backend "s3" {
+    bucket         = "brighttalk-terraform-state-prod"
+    key            = "production/terraform.tfstate"
+    region         = "ap-northeast-1"
+    dynamodb_table = "brighttalk-terraform-locks"
+    encrypt        = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"

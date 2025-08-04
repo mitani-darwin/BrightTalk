@@ -28,5 +28,11 @@ module BrightTalk
     config.time_zone = "Tokyo"
     config.i18n.default_locale = :ja
     config.i18n.available_locales = [ :ja, :en ]
+
+    # メール形式をテキストに強制
+    config.action_mailer.default_options = {
+      content_type: 'text/plain; charset=UTF-8'
+    }
+
   end
 end

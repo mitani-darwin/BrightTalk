@@ -37,7 +37,7 @@ variable "public_subnet_cidrs" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t3.small"
+  default     = "t4g.small"  # x86_64アーキテクチャに合わせる
 }
 
 variable "domain_name" {

@@ -24,12 +24,12 @@ data "external" "pc_name" {
   program = ["bash", "-c", "echo '{\"pc_name\":\"'$(hostname)'\"}'"]
 }
 
-# Ed25519 SSH鍵ペアを生成（最も強固なアルゴリズム）
+# Ed25519 SSH鍵ペアを生成
 resource "tls_private_key" "ssh_key" {
   algorithm = "ED25519"
 }
 
-# AWS Key Pairリソースとして登録（PC名ベース）
+# AWS Key Pairリソースとして登録
 resource "aws_key_pair" "pc_key" {
   key_name   = "${var.project_name}-${var.environment}-${data.external.pc_name.result.pc_name}"
   public_key = tls_private_key.ssh_key.public_key_openssh
@@ -42,7 +42,7 @@ resource "aws_key_pair" "pc_key" {
   }
 }
 
-# ssh-keysディレクトリを作成（プロジェクトルートに配置）
+# ssh-keysディレクトリを作成
 resource "local_file" "ssh_keys_directory" {
   content  = ""
   filename = "${path.root}/../../ssh-keys/.gitkeep"
@@ -50,7 +50,7 @@ resource "local_file" "ssh_keys_directory" {
   file_permission = "0644"
 }
 
-# Ed25519秘密鍵をssh-keysディレクトリに保存（PC名を自動取得）
+# Ed25519秘密鍵をssh-keysディレクトリに保存
 resource "local_file" "private_key" {
   content  = tls_private_key.ssh_key.private_key_openssh
   filename = "${path.root}/../../ssh-keys/${data.external.pc_name.result.pc_name}-ed25519-key"
@@ -60,7 +60,7 @@ resource "local_file" "private_key" {
   depends_on = [local_file.ssh_keys_directory]
 }
 
-# Ed25519公開鍵をssh-keysディレクトリに保存（PC名を自動取得）
+# Ed25519公開鍵をssh-keysディレクトリに保存
 resource "local_file" "public_key" {
   content  = tls_private_key.ssh_key.public_key_openssh
   filename = "${path.root}/../../ssh-keys/${data.external.pc_name.result.pc_name}-ed25519-key.pub"
@@ -70,14 +70,14 @@ resource "local_file" "public_key" {
   depends_on = [local_file.ssh_keys_directory]
 }
 
-# 最新のAmazon Linux 2 AMIを取得（x86_64対応）
+# 最新のAmazon Linux 2 AMIを取得（ARM64対応）
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["amzn2-ami-hvm-*-arm64-gp2"]  # ARM64に変更
   }
 
   filter {
@@ -87,7 +87,7 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "architecture"
-    values = ["x86_64"]
+    values = ["arm64"]  # ARM64に変更
   }
 }
 
@@ -102,10 +102,10 @@ resource "aws_eip" "web_server" {
   }
 }
 
-# EC2インスタンスの作成（1つのみ）
+# EC2インスタンスの作成
 resource "aws_instance" "web_server" {
   ami                     = data.aws_ami.amazon_linux.id
-  instance_type          = "t3.small"  # 明示的にt3.smallを指定
+  instance_type          = var.instance_type
   key_name               = aws_key_pair.pc_key.key_name
   vpc_security_group_ids = var.security_group_ids
   subnet_id              = var.subnet_id

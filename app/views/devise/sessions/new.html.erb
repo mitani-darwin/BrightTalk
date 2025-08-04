@@ -58,7 +58,10 @@
             <div class="d-grid gap-2">
               <button type="button" id="webauthn-login" class="btn btn-primary">
                 <i class="fas fa-fingerprint me-2"></i>
-                WebAuthn認証を開始
+                <span id="webauthn-button-text">WebAuthn認証を開始</span>
+              </button>
+              <button type="button" id="cancel-webauthn" class="btn btn-outline-danger" style="display: none;">
+                認証をキャンセル
               </button>
               <button type="button" id="back-to-email-webauthn" class="btn btn-outline-secondary">戻る</button>
             </div>
@@ -87,22 +90,23 @@
         const errorMessage = document.getElementById('error-message');
         const backToEmailBtn = document.getElementById('back-to-email');
         const backToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
+        const webauthnLoginBtn = document.getElementById('webauthn-login');
+        const cancelWebauthnBtn = document.getElementById('cancel-webauthn');
+        const webauthnButtonText = document.getElementById('webauthn-button-text');
 
-        // 既存のイベントリスナーを削除
-        if (checkEmailBtn) {
-            checkEmailBtn.replaceWith(checkEmailBtn.cloneNode(true));
-        }
-        if (backToEmailBtn) {
-            backToEmailBtn.replaceWith(backToEmailBtn.cloneNode(true));
-        }
-        if (backToEmailWebauthnBtn) {
-            backToEmailWebauthnBtn.replaceWith(backToEmailWebauthnBtn.cloneNode(true));
-        }
+        // 既存のイベントリスナーを削除して重複を防ぐ
+        [checkEmailBtn, backToEmailBtn, backToEmailWebauthnBtn, webauthnLoginBtn, cancelWebauthnBtn].forEach(btn => {
+            if (btn) {
+                btn.replaceWith(btn.cloneNode(true));
+            }
+        });
 
         // 再取得
         const newCheckEmailBtn = document.getElementById('check-email');
         const newBackToEmailBtn = document.getElementById('back-to-email');
         const newBackToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
+        const newWebauthnLoginBtn = document.getElementById('webauthn-login');
+        const newCancelWebauthnBtn = document.getElementById('cancel-webauthn');
 
         // CSRFトークンを取得
         function getCSRFToken() {
@@ -110,7 +114,27 @@
             return token ? token.getAttribute('content') : '';
         }
 
-        // メールアドレス確認
+        // WebAuthn認証開始
+        if (newWebauthnLoginBtn) {
+            newWebauthnLoginBtn.addEventListener('click', function() {
+                if (window.webauthnOptions) {
+                    startWebAuthnAuthentication(window.webauthnOptions);
+                }
+            });
+        }
+
+        // WebAuthn認証キャンセル
+        if (newCancelWebauthnBtn) {
+            newCancelWebauthnBtn.addEventListener('click', function() {
+                if (window.webauthnHandler) {
+                    window.webauthnHandler.abortCurrentAuthentication();
+                }
+                resetWebAuthnButton();
+                showError('認証がキャンセルされました');
+            });
+        }
+
+        // メールアドレス確認（既存のコードはそのまま）
         if (newCheckEmailBtn) {
             newCheckEmailBtn.addEventListener('click', async function() {
                 const email = emailInput.value.trim();
@@ -123,21 +147,19 @@
                 showLoading();
 
                 try {
-                    const response = await fetch('/check_webauthn', {
-                        method: 'POST',
+                    const url = `/login?email=${encodeURIComponent(email)}`;
+                    const response = await fetch(url, {
+                        method: 'GET',
                         headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
                             'Content-Type': 'application/json',
                             'X-CSRF-Token': getCSRFToken(),
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ email: email }),
                         credentials: 'same-origin'
                     });
 
-                    console.log('Response status:', response.status);
                     const data = await response.json();
-                    console.log('Response data:', data);
-
                     hideLoading();
 
                     if (response.ok) {
@@ -157,27 +179,18 @@
             });
         }
 
-        // WebAuthn認証開始
-        const webauthnLoginBtn = document.getElementById('webauthn-login');
-        if (webauthnLoginBtn) {
-            webauthnLoginBtn.addEventListener('click', async function() {
-                if (window.webauthnOptions) {
-                    try {
-                        await window.startWebAuthnAuthentication(window.webauthnOptions);
-                    } catch (error) {
-                        console.error('WebAuthn authentication failed:', error);
-                        showError('WebAuthn認証に失敗しました: ' + error.message);
-                    }
-                }
-            });
-        }
-
         // 戻るボタン
         if (newBackToEmailBtn) {
             newBackToEmailBtn.addEventListener('click', resetToEmailForm);
         }
         if (newBackToEmailWebauthnBtn) {
-            newBackToEmailWebauthnBtn.addEventListener('click', resetToEmailForm);
+            newBackToEmailWebauthnBtn.addEventListener('click', function() {
+                // WebAuthn認証を中断
+                if (window.webauthnHandler) {
+                    window.webauthnHandler.abortCurrentAuthentication();
+                }
+                resetToEmailForm();
+            });
         }
 
         // Enterキーでメール確認
@@ -189,6 +202,84 @@
             });
         }
 
+        function showWebAuthnForm(email, webauthnOptions) {
+            document.getElementById('webauthn-email').textContent = email;
+            window.webauthnOptions = webauthnOptions;
+            if (emailForm) emailForm.style.display = 'none';
+            if (webauthnForm) webauthnForm.style.display = 'block';
+        }
+
+        function resetWebAuthnButton() {
+            if (webauthnButtonText) webauthnButtonText.textContent = 'WebAuthn認証を開始';
+            if (newWebauthnLoginBtn) newWebauthnLoginBtn.disabled = false;
+            if (newCancelWebauthnBtn) newCancelWebauthnBtn.style.display = 'none';
+        }
+
+        function showWebAuthnInProgress() {
+            if (webauthnButtonText) webauthnButtonText.textContent = '認証中...';
+            if (newWebauthnLoginBtn) newWebauthnLoginBtn.disabled = true;
+            if (newCancelWebauthnBtn) newCancelWebauthnBtn.style.display = 'block';
+        }
+
+        async function startWebAuthnAuthentication(options) {
+            showWebAuthnInProgress();
+            hideError();
+
+            // WebAuthnHandlerを使用
+            if (window.webauthnHandler) {
+                await window.webauthnHandler.authenticate(
+                  options,
+                  // 成功時
+                  async function(credential) {
+                      try {
+                          const response = await fetch('/webauthn_authentications', {
+                              method: 'POST',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'X-CSRF-Token': getCSRFToken(),
+                                  'Accept': 'application/json'
+                              },
+                              body: JSON.stringify({
+                                  credential: {
+                                      id: credential.id,
+                                      rawId: credential.rawId,
+                                      type: credential.type,
+                                      response: {
+                                          clientDataJSON: credential.response.clientDataJSON,
+                                          authenticatorData: credential.response.authenticatorData,
+                                          signature: credential.response.signature,
+                                          userHandle: credential.response.userHandle
+                                      }
+                                  }
+                              })
+                          });
+
+                          const data = await response.json();
+
+                          if (data.success) {
+                              window.location.href = data.redirect_url || '/';
+                          } else {
+                              resetWebAuthnButton();
+                              showError(data.error || 'WebAuthn認証に失敗しました');
+                          }
+                      } catch (error) {
+                          resetWebAuthnButton();
+                          showError('WebAuthn認証の送信に失敗しました');
+                      }
+                  },
+                  // エラー時
+                  function(errorMessage) {
+                      resetWebAuthnButton();
+                      showError(errorMessage);
+                  }
+                );
+            } else {
+                resetWebAuthnButton();
+                showError('WebAuthn機能が利用できません');
+            }
+        }
+
+        // その他のヘルパー関数（既存のコードと同じ）
         function showLoading() {
             if (emailForm) emailForm.style.display = 'none';
             if (passwordForm) passwordForm.style.display = 'none';
@@ -209,18 +300,12 @@
             document.getElementById('password').focus();
         }
 
-        function showWebAuthnForm(email, webauthnOptions) {
-            document.getElementById('webauthn-email').textContent = email;
-            window.webauthnOptions = webauthnOptions;
-            if (emailForm) emailForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'block';
-        }
-
         function resetToEmailForm() {
             if (emailForm) emailForm.style.display = 'block';
             if (passwordForm) passwordForm.style.display = 'none';
             if (webauthnForm) webauthnForm.style.display = 'none';
             hideError();
+            resetWebAuthnButton();
             if (emailInput) emailInput.focus();
         }
 

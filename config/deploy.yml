@@ -9,7 +9,7 @@ image: darwin2008/bright_talk
 servers:
   web:
     hosts:
-      - 52.194.156.29
+      - 3.115.45.181
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
@@ -59,8 +59,9 @@ volumes:
 asset_path: /rails/public/assets
 
 # Configure the image builder
+# Configure the image builder
 builder:
-  arch: amd64
+  arch: arm64
   cache:
     type: registry
     options: mode=max

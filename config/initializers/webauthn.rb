@@ -1,21 +1,17 @@
+
 WebAuthn.configure do |config|
-  # アプリケーションの許可されたオリジン（複数設定可能）
-  config.allowed_origins = if Rails.env.development?
-                             [ "http://localhost:3000" ]
-  else
-                             [ "https://yourdomain.com" ] # 本番環境のドメインに変更
+  # 本番環境のオリジン設定
+  config.origin = "https://www.brighttalk.jp"
+
+  # RP ID（Relying Party ID）の設定
+  config.rp_id = "www.brighttalk.jp"
+
+  # 本番環境用の設定
+  if Rails.env.production?
+    config.origin = "https://www.brighttalk.jp"
+    config.rp_id = "www.brighttalk.jp"
+  elsif Rails.env.development?
+    config.origin = "http://localhost:3000"
+    config.rp_id = "localhost"
   end
-
-  # Relying Party (RP) の識別子
-  config.rp_id = if Rails.env.development?
-                   "localhost"
-  else
-                   "yourdomain.com" # 本番環境のドメインに変更
-  end
-
-  # Relying Party の名前
-  config.rp_name = "BrightTalk"
-
-  # 認証器の要件
-  config.credential_options_timeout = 120_000 # 2分
 end

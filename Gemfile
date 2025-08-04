@@ -37,8 +37,8 @@ gem "mini_magick"
 gem "active_storage_validations"
 
 # PDF生成
-gem "wicked_pdf"
-gem "wkhtmltopdf-binary"
+gem 'grover' # ChromeベースのPDF生成
+
 
 # WebAuthn認証
 gem "webauthn", "~> 3.0"

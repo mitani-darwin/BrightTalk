@@ -347,6 +347,86 @@ function arrayBufferToBase64URL(buffer) {
     }
 }
 
-// グローバルに関数を公開
+// WebAuthn認証処理の改善版
+export class WebAuthnHandler {
+    constructor() {
+        this.abortController = null;
+        this.isAuthenticating = false;
+    }
+
+    // 既存の認証プロセスを中断
+    abortCurrentAuthentication() {
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
+        this.isAuthenticating = false;
+    }
+
+    async authenticate(options, onSuccess, onError) {
+        // 既存の認証プロセスがある場合は中断
+        this.abortCurrentAuthentication();
+
+        // 重複認証防止
+        if (this.isAuthenticating) {
+            console.log('WebAuthn authentication already in progress');
+            return;
+        }
+
+        this.isAuthenticating = true;
+        this.abortController = new AbortController();
+
+        try {
+            // タイムアウト設定（60秒）
+            const timeoutId = setTimeout(() => {
+                this.abortController.abort();
+            }, 60000);
+
+            const credential = await navigator.credentials.get({
+                publicKey: {
+                    ...options,
+                    timeout: 60000 // 60秒のタイムアウト
+                },
+                signal: this.abortController.signal
+            });
+
+            clearTimeout(timeoutId);
+            this.isAuthenticating = false;
+
+            if (onSuccess) {
+                onSuccess(credential);
+            }
+
+        } catch (error) {
+            this.isAuthenticating = false;
+
+            // エラーの種類に応じた処理
+            if (error.name === 'AbortError') {
+                console.log('WebAuthn認証がキャンセルまたはタイムアウトしました');
+                if (onError) {
+                    onError('認証がキャンセルされました');
+                }
+            } else if (error.name === 'NotAllowedError') {
+                console.log('ユーザーが認証をキャンセルしました');
+                if (onError) {
+                    onError('認証がキャンセルされました');
+                }
+            } else if (error.name === 'InvalidStateError') {
+                console.log('認証デバイスが利用できません');
+                if (onError) {
+                    onError('認証デバイスが利用できません');
+                }
+            } else {
+                console.error('WebAuthn認証エラー:', error);
+                if (onError) {
+                    onError('認証に失敗しました: ' + error.message);
+                }
+            }
+        }
+    }
+}
+
+// グローバルインスタンス
 window.startWebAuthnRegistration = startWebAuthnRegistration;
 window.startWebAuthnAuthentication = startWebAuthnAuthentication;
+window.webauthnHandler = new WebAuthnHandler();
