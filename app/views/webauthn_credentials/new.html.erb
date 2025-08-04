@@ -1,4 +1,3 @@
-
 <% content_for :title, "生体認証の設定" %>
 
 <div class="container mt-4">
@@ -19,7 +18,7 @@
             <div class="mb-3">
               <label for="nickname" class="form-label">デバイス名</label>
               <input type="text" class="form-control" id="nickname" name="nickname"
-                     value="<%= "#{request.user_agent&.match(/\(([^)]+)\)/)?.[1]&.split(';')&.first || 'メインデバイス'}" %>"
+                     value="メインデバイス"
                      placeholder="例: iPhone, MacBook など">
               <div class="form-text">このデバイスを識別するための名前を入力してください。</div>
             </div>
@@ -39,24 +38,22 @@
 </div>
 
 <script type="module">
-    // WebAuthnオプションをJSONとして渡す
+    <% if @options %>
     const webauthnOptions = <%= raw @options.to_json %>;
-
     console.log('WebAuthn options from server:', webauthnOptions);
 
-    // ページ読み込み時にWebAuthn設定を初期化
     document.addEventListener('DOMContentLoaded', function() {
         const registerButton = document.getElementById('register-webauthn');
-
-        if (!webauthnOptions) {
-            console.error('WebAuthn options not available');
-            document.getElementById('webauthn-error').style.display = 'block';
-            document.getElementById('webauthn-error').textContent = 'WebAuthn設定の初期化に失敗しました。';
-            return;
-        }
 
         registerButton.addEventListener('click', function() {
             startWebAuthnRegistration(webauthnOptions);
         });
     });
+    <% else %>
+    console.error('WebAuthn options not available');
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('webauthn-error').style.display = 'block';
+        document.getElementById('webauthn-error').textContent = 'WebAuthn設定の初期化に失敗しました。';
+    });
+    <% end %>
 </script>
