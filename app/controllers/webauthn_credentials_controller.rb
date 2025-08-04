@@ -3,7 +3,7 @@ class WebauthnCredentialsController < ApplicationController
 
   def new
     # WebAuthnオプションを生成
-    @webauthn_options = WebAuthn::Credential.options_for_create(
+    @options = WebAuthn::Credential.options_for_create(
       user: {
         id: current_user.webauthn_id,
         name: current_user.email,
@@ -37,13 +37,7 @@ class WebauthnCredentialsController < ApplicationController
     Rails.logger.info "WebAuthn create called with params: #{params.keys}"
 
     begin
-      webauthn_credential = WebAuthn::Credential.from_create(credential_params)
-
-      Rails.logger.info "WebAuthn credential parsed successfully"
-      Rails.logger.info "Challenge from session: #{session[:webauthn_challenge]}"
-      Rails.logger.info "Origin: #{request_origin}"
-      Rails.logger.info "RP ID: #{webauthn_rp_id}"
-
+      # Origin検証を含む検証を実行
       webauthn_credential.verify(
         session[:webauthn_challenge],
         origin: request_origin,
@@ -76,7 +70,7 @@ class WebauthnCredentialsController < ApplicationController
 
       render json: {
         success: false,
-        error: "WebAuthn認証の登録に失敗しました: #{e.message}"
+        error: "WebAuthn認証の設定に失敗しました: オリジンが一致しません"
       }, status: :unprocessable_entity
 
     rescue => e
