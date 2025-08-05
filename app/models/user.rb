@@ -29,7 +29,7 @@ class User < ApplicationRecord
 
   def webauthn_id
     # WebAuthn用のユーザーIDを生成（ユーザーIDをbase64エンコード）
-    WebAuthn.generate_user_id
+    @webauthn_id ||= Base64.strict_encode64("user_#{id}")
   end
 
   # WebAuthn認証が有効で、かつ認証情報が登録されている場合のみWebAuthn認証を要求

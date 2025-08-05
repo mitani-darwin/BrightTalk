@@ -3,12 +3,12 @@
     <div class="col-md-8">
       <div class="card">
         <div class="card-header">
-          <h4><i class="fas fa-fingerprint me-2"></i>新しいWebAuthn認証を追加</h4>
+          <h4><i class="fas fa-fingerprint me-2"></i>新しいパスキー認証を追加</h4>
         </div>
         <div class="card-body">
           <!-- 説明 -->
           <div class="alert alert-info">
-            <h6><i class="fas fa-info-circle me-2"></i>WebAuthn認証について</h6>
+            <h6><i class="fas fa-info-circle me-2"></i>パスキー認証について</h6>
             <p class="mb-2">Touch ID、Face ID、またはセキュリティキーを使用して、パスワードなしでログインできます。</p>
             <ul class="mb-0">
               <li>より安全で便利なログイン方法です</li>
@@ -28,7 +28,7 @@
           <!-- 登録ボタン -->
           <div class="d-grid gap-2">
             <button type="button" id="register-webauthn-btn" class="btn btn-primary btn-lg">
-              <i class="fas fa-fingerprint me-2"></i>WebAuthn認証を登録
+              <i class="fas fa-fingerprint me-2"></i>パスキー認証を登録
             </button>
           </div>
 
@@ -47,7 +47,7 @@
             <div class="spinner-border" role="status">
               <span class="visually-hidden">登録中...</span>
             </div>
-            <p class="mt-2">WebAuthn認証を登録中...</p>
+            <p class="mt-2">パスキー認証を登録中...</p>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@
             }
             if (registerBtn) {
                 registerBtn.disabled = false;
-                registerBtn.innerHTML = '<i class="fas fa-fingerprint me-2"></i>WebAuthn認証を登録';
+                registerBtn.innerHTML = '<i class="fas fa-fingerprint me-2"></i>パスキー認証を登録';
             }
         }
 
@@ -243,7 +243,7 @@
                         console.log('Registration successful, redirecting...');
                         window.location.href = result.redirect_url || '/webauthn_credentials';
                     } else {
-                        throw new Error(result.error || 'WebAuthn認証の登録に失敗しました');
+                        throw new Error(result.error || 'パスキー認証の登録に失敗しました');
                     }
                 } else {
                     // HTMLレスポンスの場合

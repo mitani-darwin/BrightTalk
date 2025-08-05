@@ -13,12 +13,12 @@
           </div>
 
           <p class="mb-4">
-            次にWebAuthn認証（指紋認証・顔認証など）を設定して、<br>
+            次にパスキー認証（指紋認証・顔認証など）を設定して、<br>
             より安全で便利なログインを利用しましょう。
           </p>
 
           <div class="d-grid gap-2">
-            <%= link_to "WebAuthn認証を登録", new_webauthn_credential_path,
+            <%= link_to "パスキー認証を登録", new_webauthn_credential_path,
                         class: "btn btn-primary",
                         data: { turbo: false } %>
             <%= link_to "ホームに戻る", root_path,

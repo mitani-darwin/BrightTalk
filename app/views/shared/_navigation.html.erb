@@ -55,7 +55,7 @@
             <ul class="dropdown-menu">
               <li><%= link_to "マイページ", user_path(current_user), class: "dropdown-item" %></li>
               <li><%= link_to "アカウント設定", user_account_path, class: "dropdown-item" %></li>
-              <li><%= link_to "WebAuthn認証", webauthn_credentials_path, class: "dropdown-item" %></li>
+              <li><%= link_to "パスキー認証", webauthn_credentials_path, class: "dropdown-item" %></li>
               <li><hr class="dropdown-divider"></li>
               <li><%= link_to "ログアウト", destroy_user_session_path, method: :delete, class: "dropdown-item" %></li>
             </ul>

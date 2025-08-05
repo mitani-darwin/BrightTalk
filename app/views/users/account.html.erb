@@ -19,7 +19,7 @@
             <% end %>
           <% end %>
           <%= link_to webauthn_credentials_path, class: "list-group-item list-group-item-action" do %>
-            <i class="fas fa-fingerprint me-2"></i>WebAuthn認証
+            <i class="fas fa-fingerprint me-2"></i>パスキー認証
           <% end %>
         </div>
       </div>
@@ -102,10 +102,10 @@
               <% if @user.has_webauthn_credentials? %>
                 <div class="alert alert-success">
                   <i class="fas fa-fingerprint me-2"></i>
-                  WebAuthn認証が設定されています
+                  パスキー認証が設定されています
                 </div>
                 <p class="small text-muted">
-                  WebAuthn認証が設定されているため、パスワードログインは無効化されています。
+                  パスキー認証が設定されているため、パスワードログインは無効化されています。
                 </p>
               <% else %>
                 <div class="alert alert-warning">
@@ -113,9 +113,9 @@
                   パスワード認証のみ
                 </div>
                 <p class="small text-muted">
-                  セキュリティ向上のため、WebAuthn認証の設定をお勧めします。
+                  セキュリティ向上のため、パスキー認証の設定をお勧めします。
                 </p>
-                <%= link_to "WebAuthn認証を設定", new_webauthn_credential_path, class: "btn btn-primary btn-sm" %>
+                <%= link_to "パスキー認証を設定", new_webauthn_credential_path, class: "btn btn-primary btn-sm" %>
               <% end %>
             </div>
             <div class="col-md-6">

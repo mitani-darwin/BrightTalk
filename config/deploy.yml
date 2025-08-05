@@ -41,9 +41,9 @@ ssh:
   user: ec2-user
   keys_only: true
   keys:
-    - terraform/ssh-keys/MacBookAir2025.local-ed25519-key
+    - <%= ENV['SSH_KEY_PATH'] %>`
 
-# Aliases for common commands
+    # Aliases for common commands
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
