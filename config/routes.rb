@@ -1,4 +1,3 @@
-
 Rails.application.routes.draw do
   devise_for :users, controllers: {
     registrations: "users/registrations",
@@ -17,19 +16,7 @@ Rails.application.routes.draw do
 
   resources :categories, only: [:create, :index]
 
-  # Deviseのカスタムルートを追加
-  devise_scope :user do
-    get '/users/registration/success', to: 'users/registrations#success', as: 'success_users_registration'
-  end
-
-
   root "posts#index"
-
-  # check_webauthnルートを追加
-  post "check_webauthn", to: "sessions#check_webauthn"
-
-  # WebAuthnログイン用のルート追加
-  get "login", to: "sessions#check_webauthn"
 
   resources :posts do
     member do
@@ -45,7 +32,7 @@ Rails.application.routes.draw do
   resources :webauthn_credentials, except: [ :edit, :update ]
   resources :webauthn_authentications, only: [ :new, :create ] do
     collection do
-      get :login
+      post :check_login_method  # 新しいアクション
       post :password_login
     end
   end

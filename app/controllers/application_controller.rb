@@ -13,7 +13,7 @@ class ApplicationController < ActionController::Base
   # 公開アクセスを許可するかどうかの判定
   def public_access_allowed?
     # ログインページ、新規登録ページ、WebAuthn関連ページ
-    controller_name.in?([ "webauthn_authentications", "webauthn_credentials" ]) ||
+    controller_name.in?([ "webauthn_authentications", "webauthn_credentials", "sessions" ]) ||
       # ユーザー関連のnew, create, registration_pendingアクション
       (controller_name == "users" && action_name.in?([ "new", "create", "registration_pending" ])) ||
       # 投稿の一覧・詳細は公開
@@ -30,13 +30,23 @@ class ApplicationController < ActionController::Base
 
   # メール確認後のリダイレクト先をカスタマイズ
   def after_confirmation_path_for(resource_name, resource)
-    # WebAuthn設定ページにリダイレクト
-    new_webauthn_credential_path
+    # ユーザーが既にWebAuthn認証を持っている場合はroot_pathに
+    if resource.has_webauthn_credentials?
+      root_path
+    else
+      # WebAuthn設定ページにリダイレクト
+      new_webauthn_credential_path
+    end
   end
 
   # 新規登録後のリダイレクト先をカスタマイズ
   def after_sign_up_path_for(resource)
-    # WebAuthn設定ページにリダイレクト
-    new_webauthn_credential_path
+    # 確認メール送信の場合は、確認待ちページに遷移
+    if resource.pending_reconfirmation?
+      users_registration_success_path
+    else
+      # WebAuthn設定ページにリダイレクト
+      new_webauthn_credential_path
+    end
   end
 end

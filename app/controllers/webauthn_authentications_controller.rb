@@ -1,53 +1,108 @@
 class WebauthnAuthenticationsController < ApplicationController
-  # 認証不要（ログイン前のため）
-  skip_before_action :authenticate_user!
+  # ApplicationControllerの public_access_allowed? メソッドで制御されるため
+  # skip_before_action は不要
 
   def new
-    @nickname = params[:nickname] || "メインデバイス"
+    # 統合ログイン画面を表示
+    # メールアドレス入力フォームを表示
+    Rails.logger.info "WebAuthn authentication: showing unified login form"
+    @email = params[:email] || session[:webauthn_email]
+  end
 
-    # ログイン用のWebAuthn認証オプションを生成
-    # この段階ではユーザーはログインしていないため、emailからユーザーを特定
-    email = params[:email] || session[:webauthn_email]
+  def check_login_method
+    # メールアドレスを受け取って認証方法を判定するアクション
+    email = params[:email]
+    Rails.logger.info "check_login_method called with email: #{email}"
 
     if email.blank?
-      Rails.logger.error "WebAuthn authentication: email not provided"
-      redirect_to new_user_session_path, alert: "メールアドレスが必要です"
+      Rails.logger.warn "check_login_method: email is blank"
+      respond_to do |format|
+        format.json { render json: { error: "メールアドレスが必要です" }, status: :bad_request }
+        format.html { redirect_to new_webauthn_authentication_path, alert: "メールアドレスを入力してください" }
+      end
       return
     end
 
     user = User.find_by(email: email)
+    Rails.logger.info "check_login_method: user found: #{user.present?}"
+
     if user.nil?
-      Rails.logger.error "WebAuthn authentication: user not found for email: #{email}"
-      redirect_to new_user_session_path, alert: "ユーザーが見つかりませんでした"
+      Rails.logger.warn "check_login_method: user not found for email: #{email}"
+      respond_to do |format|
+        format.json { render json: { error: "このメールアドレスのユーザーは存在しません" }, status: :not_found }
+        format.html { redirect_to new_webauthn_authentication_path, alert: "このメールアドレスのユーザーは存在しません" }
+      end
       return
     end
 
     # セッションにメールアドレスを保存
     session[:webauthn_email] = email
 
-    # ユーザーのWebAuthn認証情報を取得
-    user_credentials = user.webauthn_credentials.pluck(:external_id)
+    Rails.logger.info "check_login_method: webauthn_enabled=#{user.webauthn_enabled}, has_credentials=#{user.has_webauthn_credentials?}"
 
-    if user_credentials.empty?
-      Rails.logger.error "WebAuthn authentication: no credentials found for user: #{user.id}"
-      redirect_to new_user_session_path, alert: "WebAuthn認証情報が登録されていません"
-      return
-    end
+    # WebAuthn認証が有効かどうかを判定
+    if user.webauthn_enabled?
+      # WebAuthn認証を使用
+      user_credentials = user.webauthn_credentials.pluck(:external_id)
 
-    # WebAuthn認証用のオプションを生成
-    @webauthn_options = WebAuthn::Credential.options_for_get(
-      allow: user_credentials.map { |cred_id| { id: cred_id, type: "public-key" } }
-    )
+      if user_credentials.empty?
+        Rails.logger.warn "check_login_method: WebAuthn enabled but no credentials found"
+        respond_to do |format|
+          format.json { render json: { error: "WebAuthn認証情報が登録されていません" }, status: :unprocessable_entity }
+          format.html { redirect_to new_webauthn_authentication_path, alert: "WebAuthn認証情報が登録されていません" }
+        end
+        return
+      end
 
-    # チャレンジをセッションに保存
-    session[:authentication_challenge] = @webauthn_options.challenge
+      # WebAuthn認証用のオプションを生成
+      allow_credentials = user_credentials.map { |cred_id|
+        {
+          id: cred_id,
+          type: "public-key"
+        }
+      }
 
-    Rails.logger.info "WebAuthn authentication options generated for user: #{user.id}"
-    Rails.logger.info "Challenge stored: #{session[:authentication_challenge]}"
+      webauthn_options = WebAuthn::Credential.options_for_get(
+        allow: allow_credentials
+      )
 
-    respond_to do |format|
-      format.html
-      format.json { render json: { webauthn_options: @webauthn_options } }
+      # セッションにチャレンジを保存
+      session[:authentication_challenge] = webauthn_options.challenge
+
+      Rails.logger.info "Generated WebAuthn options for user: #{user.id}"
+
+      respond_to do |format|
+        format.json {
+          render json: {
+            auth_method: "webauthn",
+            webauthn_enabled: true,
+            has_webauthn_credentials: true,
+            webauthn_options: webauthn_options
+          }
+        }
+        format.html {
+          @webauthn_options = webauthn_options
+          @email = email
+          render :webauthn_login
+        }
+      end
+    else
+      # パスワード認証を使用
+      Rails.logger.info "Using password authentication for user: #{user.id}"
+
+      respond_to do |format|
+        format.json {
+          render json: {
+            auth_method: "password",
+            webauthn_enabled: false,
+            has_webauthn_credentials: user.has_webauthn_credentials?
+          }
+        }
+        format.html {
+          @email = email
+          render :password_login
+        }
+      end
     end
   end
 
@@ -69,7 +124,7 @@ class WebauthnAuthenticationsController < ApplicationController
         Rails.logger.error "Authentication challenge not found in session"
 
         respond_to do |format|
-          format.html { redirect_to new_user_session_path, alert: error_message }
+          format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
         return
@@ -80,7 +135,7 @@ class WebauthnAuthenticationsController < ApplicationController
         Rails.logger.error "Email not found in session"
 
         respond_to do |format|
-          format.html { redirect_to new_user_session_path, alert: error_message }
+          format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
         return
@@ -92,7 +147,7 @@ class WebauthnAuthenticationsController < ApplicationController
         Rails.logger.error "User not found for email: #{email}"
 
         respond_to do |format|
-          format.html { redirect_to new_user_session_path, alert: error_message }
+          format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
         return
@@ -105,7 +160,7 @@ class WebauthnAuthenticationsController < ApplicationController
         Rails.logger.error "Credential data is blank"
 
         respond_to do |format|
-          format.html { redirect_to new_user_session_path, alert: error_message }
+          format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
         return
@@ -134,7 +189,7 @@ class WebauthnAuthenticationsController < ApplicationController
         Rails.logger.error "Stored credential not found for credential ID: #{webauthn_credential.id}"
 
         respond_to do |format|
-          format.html { redirect_to new_user_session_path, alert: error_message }
+          format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
         return
@@ -163,28 +218,28 @@ class WebauthnAuthenticationsController < ApplicationController
 
       # Safariでのリダイレクト対応
       respond_to do |format|
-        format.html { redirect_to root_path, notice: "WebAuthn認証でログインしました" }
-        format.json { render json: { success: true, redirect_url: root_path, message: "WebAuthn認証でログインしました" } }
+        format.html { redirect_to root_path, notice: "パスキー認証でログインしました" }
+        format.json { render json: { success: true, redirect_url: root_path, message: "パスキー認証でログインしました" } }
       end
 
     rescue WebAuthn::Error => e
       Rails.logger.error "WebAuthn authentication failed: #{e.message}"
       Rails.logger.error "WebAuthn authentication backtrace: #{e.backtrace.join("\n")}"
 
-      error_message = "WebAuthn認証に失敗しました: #{e.message}"
+      error_message = "パスキー認証に失敗しました: #{e.message}"
 
       respond_to do |format|
-        format.html { redirect_to new_user_session_path, alert: error_message }
+        format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
         format.json { render json: { error: error_message }, status: :unprocessable_entity }
       end
     rescue StandardError => e
       Rails.logger.error "Unexpected error during WebAuthn authentication: #{e.message}"
       Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
 
-      error_message = "WebAuthn認証中に予期しないエラーが発生しました。"
+      error_message = "パスキー認証中に予期しないエラーが発生しました。"
 
       respond_to do |format|
-        format.html { redirect_to new_user_session_path, alert: error_message }
+        format.html { redirect_to new_webauthn_authentication_path, alert: error_message }
         format.json { render json: { error: error_message }, status: :internal_server_error }
       end
     end
@@ -194,12 +249,18 @@ class WebauthnAuthenticationsController < ApplicationController
     Rails.logger.info "WebauthnAuthenticationsController#password_login called"
     Rails.logger.info "Params: #{params.inspect}"
 
-    email = params[:email]
+    email = params[:email] || session[:webauthn_email]
     password = params[:password]
 
     if email.blank? || password.blank?
-      flash.now[:alert] = "メールアドレスとパスワードを入力してください。"
-      redirect_to new_user_session_path, alert: "メールアドレスとパスワードを入力してください。"
+      respond_to do |format|
+        format.html {
+          flash.now[:alert] = "メールアドレスとパスワードを入力してください。"
+          @email = email
+          render :password_login
+        }
+        format.json { render json: { error: "メールアドレスとパスワードを入力してください。" }, status: :bad_request }
+      end
       return
     end
 
@@ -208,12 +269,25 @@ class WebauthnAuthenticationsController < ApplicationController
     if user && user.valid_password?(password)
       # パスワード認証成功
       sign_in(user)
+      session.delete(:webauthn_email)  # セッションをクリア
       Rails.logger.info "Password login successful for user: #{user.id}"
-      redirect_to root_path, notice: "ログインしました"
+
+      respond_to do |format|
+        format.html { redirect_to root_path, notice: "ログインしました" }
+        format.json { render json: { success: true, redirect_url: root_path, message: "ログインしました" } }
+      end
     else
       # パスワード認証失敗
       Rails.logger.warn "Password login failed for email: #{email}"
-      redirect_to new_user_session_path, alert: "メールアドレスまたはパスワードが正しくありません。"
+
+      respond_to do |format|
+        format.html {
+          flash.now[:alert] = "メールアドレスまたはパスワードが正しくありません。"
+          @email = email
+          render :password_login
+        }
+        format.json { render json: { error: "メールアドレスまたはパスワードが正しくありません。" }, status: :unauthorized }
+      end
     end
   end
 end

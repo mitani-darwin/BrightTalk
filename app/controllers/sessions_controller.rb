@@ -67,9 +67,13 @@ class SessionsController < Devise::SessionsController
       flash.clear
     end
 
-    # JSONリクエストの場合はエラーレスポンスを返す
+    # 通常のログイン画面表示処理を行う
+    # リダイレクトしない - 直接レンダリング
     respond_to do |format|
-      format.html { super }
+      format.html do
+        # Deviseのデフォルト処理を呼び出す
+        super
+      end
       format.json do
         Rails.logger.warn "JSON request to login page - this should use check_webauthn endpoint"
         render json: {
