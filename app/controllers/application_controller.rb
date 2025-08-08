@@ -8,7 +8,20 @@ class ApplicationController < ActionController::Base
   # Deviseのパラメータ許可
   before_action :configure_permitted_parameters, if: :devise_controller?
 
+  # デバッグ用ログ（開発環境のみ）
+  before_action :log_user_status, if: -> { Rails.env.development? }
+
   private
+
+  def log_user_status
+    Rails.logger.info "=== User Status Debug ==="
+    Rails.logger.info "Controller: #{self.class.name}##{action_name}"
+    Rails.logger.info "Current user: #{current_user&.id}"
+    Rails.logger.info "User signed in?: #{user_signed_in?}"
+    Rails.logger.info "Session ID: #{session.id}"
+    Rails.logger.info "=========================="
+  end
+
 
   # 公開アクセスを許可するかどうかの判定
   def public_access_allowed?

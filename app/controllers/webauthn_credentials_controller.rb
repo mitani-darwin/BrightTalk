@@ -10,8 +10,12 @@ class WebauthnCredentialsController < ApplicationController
   def show
   end
 
+
   def new
+    Rails.logger.info "WebAuthn new action - Current user: #{current_user&.id}"
+
     @nickname = params[:nickname] || "メインデバイス"
+    @first_time = params[:first_time] == 'true'
 
     # WebAuthn登録用のオプションを生成
     @webauthn_options = WebAuthn::Credential.options_for_create(
@@ -182,4 +186,13 @@ class WebauthnCredentialsController < ApplicationController
   def webauthn_credential_params
     params.require(:webauthn_credential).permit(:nickname)
   end
+
+  def log_authentication_status
+    Rails.logger.info "=== WebAuthn Authentication Status ==="
+    Rails.logger.info "User signed in?: #{user_signed_in?}"
+    Rails.logger.info "Current user: #{current_user&.id}"
+    Rails.logger.info "Session keys: #{session.keys}"
+    Rails.logger.info "======================================"
+  end
+
 end

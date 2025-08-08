@@ -1,38 +1,30 @@
 WebAuthn.configure do |config|
-  # 非推奨のWebAuthn.originの代わりにallowed_originsを使用
-  config.allowed_origins = case Rails.env
-                           when 'production'
-                             ['https://www.brighttalk.jp']
-                           when 'development'
-                             ['http://localhost:3000']
-                           when 'test'
-                             ['http://test.host']
-                           else
-                             ['http://localhost:3000']
-                           end
+  # 新しい書式でoriginを設定
+  if Rails.env.production?
+    # 本番環境：複数のoriginを許可する新しい書式
+    config.allowed_origins = [
+      "https://www.brighttalk.jp",
+      "https://brighttalk.jp"  # www無しも許可（必要に応じて）
+    ]
+    config.rp_id = "www.brighttalk.jp"
+  else
+    # 開発環境
+    config.allowed_origins = [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ]
+    config.rp_id = "localhost"
+  end
 
-  # Relying Party（RP）の設定
+  # RP名の設定
   config.rp_name = "BrightTalk"
 
-  # 本番環境とその他の環境でRP IDを設定
-  config.origin = nil
-  config.rp_id = case Rails.env
-                 when 'production'
-                   'www.brighttalk.jp'
-                 else
-                   'localhost'
-                 end
-
-  # 認証子の選択設定
-  config.credential_options_timeout = 60_000
-
-  # 認証の有効期限（秒）
+  # タイムアウト設定
   config.credential_options_timeout = 120_000
 
-  # セキュリティ設定
-  config.verify_attestation_statement = Rails.env.production?
-  config.acceptable_attestation_types = ['none', 'self', 'basic']
+  # 本番環境でのログ出力
+  config.logger = Rails.logger if Rails.env.production?
 
-  # アルゴリズム設定（ES256, RS256をサポート）
-  config.algorithms = ['ES256', 'RS256']
+  # アルゴリズムの設定（必要に応じて）
+  config.algorithms = ["ES256", "PS256", "RS256"]
 end

@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   # ユーザー登録成功ページのルートを追加
   devise_scope :user do
     get "users/registration/success", to: "users/registrations#success", as: "users_registration_success"
+    # 仮登録完了ページのルート追加
+    get "users/registration/pending", to: "users#registration_pending", as: "registration_pending_users"
     # check_webauthnルートをdevise_scope内に移動
     post "check_webauthn", to: "sessions#check_webauthn"
     # WebAuthnログイン用のルート追加も同様に移動
