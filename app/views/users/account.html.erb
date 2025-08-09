@@ -13,12 +13,12 @@
           <%= link_to edit_user_account_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_account'}" do %>
             <i class="fas fa-edit me-2"></i>アカウント編集
           <% end %>
-          <% unless current_user.has_webauthn_credentials? %>
+          <% unless current_user.has_passkey_credentials? %>
             <%= link_to edit_account_password_path, class: "list-group-item list-group-item-action #{'active' if action_name == 'edit_password'}" do %>
               <i class="fas fa-key me-2"></i>パスワード変更
             <% end %>
           <% end %>
-          <%= link_to webauthn_credentials_path, class: "list-group-item list-group-item-action" do %>
+          <%= link_to new_passkey_path, class: "list-group-item list-group-item-action" do %>
             <i class="fas fa-fingerprint me-2"></i>パスキー認証
           <% end %>
         </div>
@@ -99,7 +99,7 @@
           <div class="row">
             <div class="col-md-6">
               <h6>認証方法</h6>
-              <% if @user.has_webauthn_credentials? %>
+              <% if @user.has_passkey_credentials? %>
                 <div class="alert alert-success">
                   <i class="fas fa-fingerprint me-2"></i>
                   パスキー認証が設定されています
@@ -115,14 +115,14 @@
                 <p class="small text-muted">
                   セキュリティ向上のため、パスキー認証の設定をお勧めします。
                 </p>
-                <%= link_to "パスキー認証を設定", new_webauthn_credential_path, class: "btn btn-primary btn-sm" %>
+                <%= link_to "パスキー認証を設定", new_passkey_path, class: "btn btn-primary btn-sm" %>
               <% end %>
             </div>
             <div class="col-md-6">
               <h6>登録デバイス数</h6>
-              <div class="h4 text-info"><%= @webauthn_credentials.count %></div>
-              <% if @webauthn_credentials.any? %>
-                <%= link_to "デバイス管理", webauthn_credentials_path, class: "btn btn-outline-secondary btn-sm" %>
+              <div class="h4 text-info"><%= @passkeys.count %></div>
+              <% if @passkeys.any? %>
+                <%= link_to "デバイス管理", new_passkey_path, class: "btn btn-outline-secondary btn-sm" %>
               <% end %>
             </div>
           </div>

@@ -36,10 +36,10 @@ class UsersController < ApplicationController
     @posts = @user.posts.includes(:user, :category, :tags).page(params[:page]).per(10)
   end
 
-  # アカウント管理画面
+  # アカウント管理画面 - Passkeyに更新
   def account
     @user = current_user
-    @webauthn_credentials = current_user.webauthn_credentials.order(:created_at)
+    @passkeys = current_user.passkeys.order(:created_at)
     @recent_posts = current_user.posts.recent.limit(5)
     @stats = {
       posts_count: current_user.posts.count,
@@ -70,22 +70,21 @@ class UsersController < ApplicationController
     @user = current_user
   end
 
-  # パスワード更新
-  # パスワード更新
+  # パスワード更新 - Passkeyに更新
   def update_password
     @user = current_user
 
-    # パスワード変更パラメータとWebAuthn設定を分離
+    # パスワード変更パラメータとPasskey設定を分離
     password_params = user_password_params
-    webauthn_enabled = params[:user][:webauthn_enabled] == "1"
+    passkey_enabled = params[:user][:passkey_enabled] == "1"
 
     # パスワードが入力されているかチェック
     password_provided = password_params[:password].present?
 
     begin
       User.transaction do
-        # WebAuthn設定の更新（パスワード入力不要）
-        @user.update!(webauthn_enabled: webauthn_enabled)
+        # Passkey設定の更新（パスワード入力不要）
+        @user.update!(passkey_enabled: passkey_enabled)
 
         # パスワード変更が要求されている場合のみパスワード更新
         if password_provided
@@ -138,13 +137,12 @@ class UsersController < ApplicationController
       render :edit_password, status: :unprocessable_entity
     end
   end
+
   private
 
   def user_password_params
     params.require(:user).permit(:current_password, :password, :password_confirmation)
   end
-
-  private
 
   def set_user
     # IDが数値の場合のみUserを検索、それ以外は current_user を使用
@@ -154,7 +152,6 @@ class UsersController < ApplicationController
       @user = current_user
     end
   end
-
 
   def user_params
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
@@ -168,7 +165,7 @@ class UsersController < ApplicationController
     params.require(:user).permit(:password, :password_confirmation)
   end
 
-  def password_params_with_webauthn
-    params.require(:user).permit(:password, :password_confirmation, :webauthn_enabled)
+  def password_params_with_passkey
+    params.require(:user).permit(:password, :password_confirmation, :passkey_enabled)
   end
 end

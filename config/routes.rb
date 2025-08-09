@@ -10,8 +10,8 @@ Rails.application.routes.draw do
 
   # Passkey認証ルート
   resource :passkey_authentication, only: [:new, :create] do
-    collection do
-      get :check_login_method
+    member do
+      post :check_login_method    # ← member に変更
       post :password_login
     end
   end

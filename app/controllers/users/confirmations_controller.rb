@@ -1,3 +1,4 @@
+
 class Users::ConfirmationsController < Devise::ConfirmationsController
   # GET /resource/confirmation?confirmation_token=abcdef
   def show
@@ -25,9 +26,9 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
         # セッションから仮登録情報を削除
         session.delete(:pending_user_id)
 
-        # リダイレクト先を決定
-        if webauthn_available?
-          redirect_to new_webauthn_credential_path(first_time: true),
+        # リダイレクト先を決定 - Passkeyに変更
+        if passkey_available?
+          redirect_to new_passkey_path(first_time: true),
                       notice: "メール認証が完了し、ログインしました。セキュリティ強化のためパスキー認証を設定することをお勧めします。"
         else
           redirect_to root_path, notice: "アカウントが確認され、ログインしました。"
@@ -61,17 +62,16 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
     # セッションから仮登録情報を削除
     session.delete(:pending_user_id)
 
-    # リダイレクト先を決定
-    if webauthn_available?
-      new_webauthn_credential_path(first_time: true)
+    # リダイレクト先を決定 - Passkeyに変更
+    if passkey_available?
+      new_passkey_path(first_time: true)
     else
       root_path
     end
   end
 
-
-  def webauthn_available?
-    # WebAuthn APIが利用可能かどうかをチェック
+  def passkey_available?
+    # Passkey APIが利用可能かどうかをチェック
     true
   end
 end
