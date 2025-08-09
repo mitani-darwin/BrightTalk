@@ -35,7 +35,8 @@ Rails.application.routes.draw do
   resources :webauthn_authentications, only: [ :new, :create ] do
     collection do
       post :check_login_method  # 新しいアクション
-      post :password_login
+      post :password_login  # パスワードログイン用ルートを追加
+      post "check_webauthn", to: "sessions#check_webauthn"
     end
   end
 

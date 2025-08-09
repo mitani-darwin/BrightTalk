@@ -1,5 +1,6 @@
 class SessionsController < Devise::SessionsController
   # WebAuthn確認用のアクション
+
   def check_webauthn
     email = params[:email]
     Rails.logger.info "check_webauthn called with email: #{email}"
@@ -19,23 +20,40 @@ class SessionsController < Devise::SessionsController
       return
     end
 
-    # WebAuthn認証が必要かどうかを正しく判定
     webauthn_required = user.webauthn_required?
     has_credentials = user.has_webauthn_credentials?
 
     Rails.logger.info "check_webauthn: webauthn_enabled=#{user.webauthn_enabled}, has_credentials=#{has_credentials}, webauthn_required=#{webauthn_required}"
 
     if webauthn_required && has_credentials
-      # WebAuthn認証用のオプションを生成（修正版）
-      user_credentials = user.webauthn_credentials.pluck(:external_id)
+      # 認証情報を取得して形式を確認
+      credentials = user.webauthn_credentials
+      Rails.logger.info "Found #{credentials.count} credentials"
 
-      # allowCredentialsの形式を正しく設定
-      allow_credentials = user_credentials.map { |cred_id|
+      # external_idの形式を確認して修正
+      allow_credentials = credentials.map do |cred|
+        external_id = cred.external_id
+        Rails.logger.info "Processing credential - ID type: #{external_id.class}, value: #{external_id.inspect}"
+
+        # external_idが文字列でない場合の処理
+        credential_id = case external_id
+                        when String
+                          external_id
+                        when Array
+                          external_id.pack('c*') # バイト配列を文字列に変換
+                        else
+                          external_id.to_s
+                        end
+
+        Rails.logger.info "Converted credential ID: #{credential_id.class} - #{credential_id}"
+
         {
-          id: cred_id,  # 文字列のまま渡す
+          id: credential_id,
           type: "public-key"
         }
-      }
+      end
+
+      Rails.logger.info "Allow credentials prepared: #{allow_credentials.inspect}"
 
       webauthn_options = WebAuthn::Credential.options_for_get(
         allow: allow_credentials
@@ -45,8 +63,7 @@ class SessionsController < Devise::SessionsController
       session[:authentication_challenge] = webauthn_options.challenge
       session[:webauthn_email] = email
 
-      Rails.logger.info "Generated WebAuthn options: #{webauthn_options.inspect}"
-      Rails.logger.info "Allow credentials: #{allow_credentials.inspect}"
+      Rails.logger.info "Generated WebAuthn options with challenge: #{webauthn_options.challenge}"
 
       render json: {
         webauthn_enabled: true,

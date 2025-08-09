@@ -35,7 +35,7 @@ function startWebAuthnAuthentication(webauthnOptions) {
     console.log('- allowCredentials type:', typeof webauthnOptions.allowCredentials);
     console.log('- allowCredentials content:', webauthnOptions.allowCredentials);
 
-    // WebAuthnオプションの変換（修正版）
+    // WebAuthnオプションの変換（改善版）
     const convertedOptions = {
         challenge: base64URLToArrayBuffer(webauthnOptions.challenge),
         timeout: webauthnOptions.timeout || 120000,
@@ -43,66 +43,96 @@ function startWebAuthnAuthentication(webauthnOptions) {
         userVerification: webauthnOptions.userVerification || 'preferred'
     };
 
-    // allowCredentialsの処理（修正版）
+    // allowCredentialsの処理（改善版）
     if (webauthnOptions.allowCredentials && Array.isArray(webauthnOptions.allowCredentials)) {
         console.log('Processing allowCredentials array:', webauthnOptions.allowCredentials);
 
-        convertedOptions.allowCredentials = webauthnOptions.allowCredentials.map(cred => {
-            console.log('Processing credential:', cred);
-            console.log('- cred.id type:', typeof cred.id);
-            console.log('- cred.id value:', cred.id);
+        convertedOptions.allowCredentials = webauthnOptions.allowCredentials.map((cred, index) => {
+            console.log(`Processing credential ${index}:`, cred);
+            console.log(`- cred.id type: ${typeof cred.id}`);
+            console.log(`- cred.id value:`, cred.id);
 
             let credentialId;
 
-            if (typeof cred.id === 'string') {
-                // Base64URL文字列の場合
-                credentialId = base64URLToArrayBuffer(cred.id);
-                console.log('Converted string credential ID');
-            } else if (cred.id instanceof ArrayBuffer) {
-                // 既にArrayBufferの場合
-                credentialId = cred.id;
-                console.log('Using existing ArrayBuffer credential ID');
-            } else if (cred.id && cred.id.buffer) {
-                // TypedArrayの場合
-                credentialId = cred.id.buffer;
-                console.log('Converted TypedArray credential ID');
-            } else {
-                console.error('Unknown credential ID type:', typeof cred.id, cred.id);
-                throw new Error('Invalid credential ID format');
-            }
+            try {
+                if (typeof cred.id === 'string') {
+                    // Base64URL文字列の場合
+                    credentialId = base64URLToArrayBuffer(cred.id);
+                    console.log(`Converted string credential ID for ${index}`);
+                } else if (cred.id instanceof ArrayBuffer) {
+                    // 既にArrayBufferの場合
+                    credentialId = cred.id;
+                    console.log(`Using existing ArrayBuffer credential ID for ${index}`);
+                } else if (Array.isArray(cred.id)) {
+                    // 配列の場合（バイト配列）
+                    credentialId = new Uint8Array(cred.id).buffer;
+                    console.log(`Converted array credential ID for ${index}`);
+                } else if (cred.id && typeof cred.id === 'object' && cred.id.buffer) {
+                    // TypedArrayの場合
+                    credentialId = cred.id.buffer;
+                    console.log(`Converted TypedArray credential ID for ${index}`);
+                } else if (typeof cred.id === 'object' && cred.id !== null) {
+                    // オブジェクトの場合は文字列に変換してからBase64URL変換
+                    const idString = JSON.stringify(cred.id);
+                    console.log(`Converting object credential ID to string: ${idString}`);
+                    credentialId = base64URLToArrayBuffer(btoa(idString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''));
+                    console.log(`Converted object credential ID for ${index}`);
+                } else {
+                    console.error(`Unknown credential ID type for ${index}:`, typeof cred.id, cred.id);
+                    throw new Error(`Invalid credential ID format for credential ${index}`);
+                }
 
-            return {
-                id: credentialId,
-                type: cred.type || 'public-key'
-            };
+                return {
+                    id: credentialId,
+                    type: cred.type || 'public-key'
+                };
+            } catch (error) {
+                console.error(`Error processing credential ${index}:`, error);
+                throw new Error(`Failed to process credential ${index}: ${error.message}`);
+            }
         });
     } else if (webauthnOptions.allow && Array.isArray(webauthnOptions.allow)) {
-        // Rails WebAuthn gemの場合、'allow'プロパティを使用する場合がある
+        // Rails WebAuthn gemの'allow'プロパティを処理
         console.log('Processing allow array:', webauthnOptions.allow);
 
-        convertedOptions.allowCredentials = webauthnOptions.allow.map(cred => {
-            console.log('Processing allow credential:', cred);
+        convertedOptions.allowCredentials = webauthnOptions.allow.map((cred, index) => {
+            console.log(`Processing allow credential ${index}:`, cred);
 
             let credentialId;
-            if (typeof cred.id === 'string') {
-                credentialId = base64URLToArrayBuffer(cred.id);
-            } else {
-                credentialId = cred.id;
-            }
+            try {
+                if (typeof cred.id === 'string') {
+                    credentialId = base64URLToArrayBuffer(cred.id);
+                    console.log(`Converted string allow credential ID for ${index}`);
+                } else if (Array.isArray(cred.id)) {
+                    credentialId = new Uint8Array(cred.id).buffer;
+                    console.log(`Converted array allow credential ID for ${index}`);
+                } else if (typeof cred.id === 'object' && cred.id !== null) {
+                    // オブジェクトの場合の処理
+                    const idString = JSON.stringify(cred.id);
+                    credentialId = base64URLToArrayBuffer(btoa(idString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''));
+                    console.log(`Converted object allow credential ID for ${index}`);
+                } else {
+                    credentialId = cred.id;
+                    console.log(`Using existing allow credential ID for ${index}`);
+                }
 
-            return {
-                id: credentialId,
-                type: cred.type || 'public-key'
-            };
+                return {
+                    id: credentialId,
+                    type: cred.type || 'public-key'
+                };
+            } catch (error) {
+                console.error(`Error processing allow credential ${index}:`, error);
+                throw new Error(`Failed to process allow credential ${index}: ${error.message}`);
+            }
         });
     }
 
     console.log('Final converted authentication options:', {
         ...convertedOptions,
         challenge: '[ArrayBuffer]',
-        allowCredentials: convertedOptions.allowCredentials?.map(cred => ({
+        allowCredentials: convertedOptions.allowCredentials?.map((cred, index) => ({
             ...cred,
-            id: '[ArrayBuffer]'
+            id: `[ArrayBuffer ${index}]`
         }))
     });
 
