@@ -10,7 +10,9 @@
           <div id="email-form">
             <div class="mb-3">
               <label for="email" class="form-label">メールアドレス</label>
-              <input type="email" id="email" class="form-control" placeholder="メールアドレスを入力してください" autofocus>
+              <input type="email" id="email" class="form-control"
+                     value="<%= @email %>"
+                     placeholder="メールアドレスを入力してください" autofocus>
             </div>
             <div class="d-grid gap-2">
               <button type="button" id="check-email" class="btn btn-primary">認証方法を確認</button>
@@ -27,8 +29,9 @@
 
           <!-- パスワード認証フォーム -->
           <div id="password-form" style="display: none;">
-            <%= form_with url: password_login_webauthn_authentications_path, method: :post, local: true, id: "password-login-form", data: { turbo: false } do |f| %>
-              <input type="hidden" id="email-hidden" name="email">
+            <%= form_with url: user_session_path, method: :post, local: true,
+                          id: "password-login-form", data: { turbo: false } do |f| %>
+              <input type="hidden" id="email-hidden" name="user[email]">
 
               <div class="alert alert-info">
                 <i class="fas fa-key me-2"></i>
@@ -37,7 +40,8 @@
 
               <div class="mb-3">
                 <label for="password" class="form-label">パスワード</label>
-                <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password">
+                <input type="password" id="password" name="user[password]"
+                       class="form-control" required autocomplete="current-password">
               </div>
 
               <div class="d-grid gap-2">
@@ -47,20 +51,19 @@
             <% end %>
           </div>
 
-          <!-- WebAuthn認証 -->
-          <div id="webauthn-form" style="display: none;">
+          <!-- Passkey認証 -->
+          <div id="passkey-form" style="display: none;">
             <div class="alert alert-success">
               <i class="fas fa-fingerprint me-2"></i>
-              <!-- IDの不整合を修正：'パスキー-email' -> 'webauthn-email' -->
-              <span id="webauthn-email"></span> でパスキー認証を行います
+              <span id="passkey-email"></span> でパスキー認証を行います
             </div>
 
             <div class="d-grid gap-2">
-              <button type="button" id="webauthn-login" class="btn btn-primary">
+              <button type="button" id="passkey-login" class="btn btn-primary">
                 <i class="fas fa-fingerprint me-2"></i>
                 パスキー認証を開始
               </button>
-              <button type="button" id="back-to-email-webauthn" class="btn btn-outline-secondary">戻る</button>
+              <button type="button" id="back-to-email-passkey" class="btn btn-outline-secondary">戻る</button>
             </div>
           </div>
 
@@ -100,21 +103,9 @@
         const checkEmailBtn = document.getElementById('check-email');
         const emailForm = document.getElementById('email-form');
         const passwordForm = document.getElementById('password-form');
-        const webauthnForm = document.getElementById('webauthn-form');
+        const passkeyForm = document.getElementById('passkey-form');
         const loading = document.getElementById('loading');
         const errorMessage = document.getElementById('error-message');
-
-        // 冪等化
-        if (checkEmailBtn) checkEmailBtn.replaceWith(checkEmailBtn.cloneNode(true));
-        const newCheckEmailBtn = document.getElementById('check-email');
-
-        const backToEmailBtn = document.getElementById('back-to-email');
-        if (backToEmailBtn) backToEmailBtn.replaceWith(backToEmailBtn.cloneNode(true));
-        const newBackToEmailBtn = document.getElementById('back-to-email');
-
-        const backToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
-        if (backToEmailWebauthnBtn) backToEmailWebauthnBtn.replaceWith(backToEmailWebauthnBtn.cloneNode(true));
-        const newBackToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
 
         function getCSRFToken() {
             const token = document.querySelector('meta[name="csrf-token"]');
@@ -124,7 +115,7 @@
         function showLoading() {
             if (emailForm) emailForm.style.display = 'none';
             if (passwordForm) passwordForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'none';
+            if (passkeyForm) passkeyForm.style.display = 'none';
             if (loading) loading.style.display = 'block';
             hideError();
         }
@@ -152,25 +143,25 @@
             document.getElementById('password').focus();
         }
 
-        function showWebAuthnForm(email, webauthnOptions) {
-            const emailSpan = document.getElementById('webauthn-email');
+        function showPasskeyForm(email, passkeyOptions) {
+            const emailSpan = document.getElementById('passkey-email');
             if (emailSpan) emailSpan.textContent = email;
-            window.webauthnOptions = webauthnOptions;
+            window.passkeyOptions = passkeyOptions;
             if (emailForm) emailForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'block';
+            if (passkeyForm) passkeyForm.style.display = 'block';
         }
 
         function resetToEmailForm() {
             if (emailForm) emailForm.style.display = 'block';
             if (passwordForm) passwordForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'none';
+            if (passkeyForm) passkeyForm.style.display = 'none';
             hideError();
             if (emailInput) emailInput.focus();
         }
 
-        // 認証方法の確認（/login GET -> JSON）
-        if (newCheckEmailBtn) {
-            newCheckEmailBtn.addEventListener('click', async function() {
+        // 認証方法の確認
+        if (checkEmailBtn) {
+            checkEmailBtn.addEventListener('click', async function() {
                 const email = emailInput.value.trim();
                 if (!email) {
                     showError('メールアドレスを入力してください。');
@@ -179,13 +170,14 @@
 
                 showLoading();
                 try {
-                    const url = `/login?email=${encodeURIComponent(email)}`;
-                    const response = await fetch(url, {
-                        method: 'GET',
+                    const response = await fetch('<%= challenge_user_passkey_session_path %>', {
+                        method: 'POST',
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-Token': getCSRFToken()
                         },
+                        body: JSON.stringify({ email: email }),
                         credentials: 'same-origin'
                     });
 
@@ -193,8 +185,8 @@
                     hideLoading();
 
                     if (response.ok) {
-                        if (data.webauthn_enabled) {
-                            showWebAuthnForm(email, data.webauthn_options);
+                        if (data.passkey_enabled) {
+                            showPasskeyForm(email, data.passkey_options);
                         } else {
                             showPasswordForm(email);
                         }
@@ -209,21 +201,21 @@
             });
         }
 
-        // WebAuthn認証開始（必ず型変換を行う）
-        const webauthnLoginBtn = document.getElementById('webauthn-login');
-        if (webauthnLoginBtn) {
-            webauthnLoginBtn.addEventListener('click', async function() {
+        // Passkey認証開始
+        const passkeyLoginBtn = document.getElementById('passkey-login');
+        if (passkeyLoginBtn) {
+            passkeyLoginBtn.addEventListener('click', async function() {
                 try {
-                    if (!window.webauthnOptions) {
-                        showError('WebAuthnオプションが見つかりません。最初からやり直してください。');
+                    if (!window.passkeyOptions) {
+                        showError('パスキーオプションが見つかりません。最初からやり直してください。');
                         return;
                     }
                     if (!('PublicKeyCredential' in window)) {
-                        showError('このブラウザはWebAuthnに対応していません。');
+                        showError('このブラウザはパスキーに対応していません。');
                         return;
                     }
 
-                    const opts = window.webauthnOptions;
+                    const opts = window.passkeyOptions;
                     const publicKey = {
                         ...opts,
                         challenge: base64urlToBuffer(opts.challenge),
@@ -235,7 +227,6 @@
 
                     const assertion = await navigator.credentials.get({ publicKey });
 
-                    // サーバ送信用にBase64URLへ変換
                     const payload = {
                         credential: {
                             id: assertion.id,
@@ -246,13 +237,13 @@
                                 authenticatorData: bufferToBase64url(assertion.response.authenticatorData),
                                 signature: bufferToBase64url(assertion.response.signature),
                                 userHandle: assertion.response.userHandle
-                                  ? bufferToBase64url(assertion.response.userHandle)
-                                  : ''
+                                    ? bufferToBase64url(assertion.response.userHandle)
+                                    : ''
                             }
                         }
                     };
 
-                    const res = await fetch('/webauthn_authentications', {
+                    const res = await fetch('<%= user_passkey_session_path %>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -267,23 +258,26 @@
                     if (res.ok && result.success) {
                         window.location.assign(result.redirect_url || '/');
                     } else {
-                        showError(result.error || 'WebAuthn認証に失敗しました。');
+                        showError(result.error || 'パスキー認証に失敗しました。');
                     }
                 } catch (error) {
-                    console.error('WebAuthn error:', error);
-                    showError('WebAuthn認証に失敗しました。');
+                    console.error('Passkey error:', error);
+                    showError('パスキー認証に失敗しました。');
                 }
             });
         }
 
         // 戻るボタン
-        if (newBackToEmailBtn) newBackToEmailBtn.addEventListener('click', resetToEmailForm);
-        if (newBackToEmailWebauthnBtn) newBackToEmailWebauthnBtn.addEventListener('click', resetToEmailForm);
+        const backToEmailBtn = document.getElementById('back-to-email');
+        if (backToEmailBtn) backToEmailBtn.addEventListener('click', resetToEmailForm);
+
+        const backToEmailPasskeyBtn = document.getElementById('back-to-email-passkey');
+        if (backToEmailPasskeyBtn) backToEmailPasskeyBtn.addEventListener('click', resetToEmailForm);
 
         // Enterキーでメール確認
         if (emailInput) {
             emailInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') document.getElementById('check-email').click();
+                if (e.key === 'Enter') checkEmailBtn.click();
             });
         }
     }

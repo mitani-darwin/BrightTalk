@@ -5,19 +5,25 @@ Rails.application.routes.draw do
     confirmations: "users/confirmations"
   }
 
-  # ユーザー登録成功ページのルートを追加
+  # Devise Passkeys ルート
   devise_scope :user do
+    # Passkey 管理
+    resources :passkeys, controller: 'devise/passkeys', as: 'user_passkeys', path: 'users/passkeys'
+
+    # Passkey認証セッション
+    resource :passkey_session, controller: 'devise/passkey_sessions', as: 'user_passkey_session', path: 'users/passkey_session' do
+      collection do
+        post :challenge
+      end
+    end
+
+    # その他のdevise関連ルート
     get "users/registration/success", to: "users/registrations#success", as: "users_registration_success"
-    # 仮登録完了ページのルート追加
     get "users/registration/pending", to: "users#registration_pending", as: "registration_pending_users"
-    # check_webauthnルートをdevise_scope内に移動
-    post "check_webauthn", to: "sessions#check_webauthn"
-    # WebAuthnログイン用のルート追加も同様に移動
-    get "login", to: "sessions#check_webauthn"
   end
 
+  # 残りのルートは既存のまま...
   resources :categories, only: [:create, :index]
-
   root "posts#index"
 
   resources :posts do
@@ -31,16 +37,6 @@ Rails.application.routes.draw do
     resources :likes, only: [ :create, :destroy ]
   end
 
-  resources :webauthn_credentials, except: [ :edit, :update ]
-  resources :webauthn_authentications, only: [ :new, :create ] do
-    collection do
-      post :check_login_method  # 新しいアクション
-      post :password_login  # パスワードログイン用ルートを追加
-      post "check_webauthn", to: "sessions#check_webauthn"
-    end
-  end
-
-  # ユーザー関連のルート
   get "/users/:id", to: "users#show", as: "user"
   get "/users/:id/posts", to: "posts#user_posts", as: "user_posts"
   get "/account", to: "users#account", as: "user_account"
@@ -49,7 +45,6 @@ Rails.application.routes.draw do
   get "/account/password/edit", to: "users#edit_password", as: "edit_account_password"
   patch "/account/password", to: "users#update_password", as: "update_account_password"
 
-  # ヘルスチェック
   get "up" => "rails/health#show", as: :rails_health_check
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest

@@ -12,6 +12,9 @@ class User < ApplicationRecord
   # アバター画像の関連付け
   has_one_attached :avatar
 
+  # パスキー
+  has_many :passkeys, dependent: :destroy
+
   # バリデーション
   validates :name, presence: true
   validates :avatar, content_type: { in: %w[image/jpeg image/png image/gif],

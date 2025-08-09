@@ -141,6 +141,9 @@ GEM
     devise-i18n (1.14.0)
       devise (>= 4.9.0)
       rails-i18n
+    devise-passkeys (0.3.0)
+      devise (>= 4.7.1)
+      warden-webauthn (>= 0.3.0)
     dotenv (3.1.8)
     drb (2.2.3)
     ed25519 (1.4.0)
@@ -462,6 +465,9 @@ GEM
     useragent (0.16.11)
     warden (1.2.9)
       rack (>= 2.0.9)
+    warden-webauthn (0.3.0)
+      warden
+      webauthn (>= 3)
     web-console (4.2.1)
       actionview (>= 6.0.0)
       activemodel (>= 6.0.0)
@@ -507,6 +513,7 @@ DEPENDENCIES
   debug
   devise
   devise-i18n
+  devise-passkeys
   grover
   image_processing (~> 1.2)
   importmap-rails
@@ -528,7 +535,6 @@ DEPENDENCIES
   thruster
   turbo-rails
   web-console
-  webauthn (~> 3.0)
 
 BUNDLED WITH
    2.7.1

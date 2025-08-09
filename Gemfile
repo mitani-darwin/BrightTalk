@@ -30,6 +30,9 @@ gem "devise"
 # Deviseの日本語化
 gem "devise-i18n"
 
+# Passkeys支援（WebAuthnを置き換え）
+gem "devise-passkeys"
+
 # 画像処理
 gem "mini_magick"
 
@@ -38,10 +41,6 @@ gem "active_storage_validations"
 
 # PDF生成
 gem 'grover' # ChromeベースのPDF生成
-
-
-# WebAuthn認証
-gem "webauthn", "~> 3.0"
 
 gem 'mail-ses'
 
