@@ -25,7 +25,7 @@
                       </small>
                     </div>
                     <div class="col-auto">
-                      <%= link_to user_passkey_path(passkey),
+                      <%= link_to passkey_path(passkey),
                                   method: :delete,
                                   data: {
                                     confirm: "「#{passkey.label}」を削除してもよろしいですか？",
@@ -41,7 +41,7 @@
             <% end %>
 
             <div class="d-grid gap-2 mt-4">
-              <%= link_to new_user_passkey_path, class: "btn btn-primary" do %>
+              <%= link_to new_passkey_path, class: "btn btn-primary" do %>
                 <i class="fas fa-plus me-2"></i>新しいパスキーを追加
               <% end %>
             </div>
@@ -54,7 +54,7 @@
                 パスワードなしで安全にログインできます。
               </p>
               <div class="d-grid gap-2 col-md-6 mx-auto mt-4">
-                <%= link_to new_user_passkey_path, class: "btn btn-primary btn-lg" do %>
+                <%= link_to new_passkey_path, class: "btn btn-primary btn-lg" do %>
                   <i class="fas fa-fingerprint me-2"></i>パスキー認証を設定
                 <% end %>
               </div>
