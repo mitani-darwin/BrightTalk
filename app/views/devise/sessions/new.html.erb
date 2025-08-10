@@ -27,7 +27,7 @@
 
           <!-- パスワード認証フォーム -->
           <div id="password-form" style="display: none;">
-            <%= form_with url: password_login_webauthn_authentications_path, method: :post, local: true, id: "password-login-form", data: { turbo: false } do |f| %>
+            <%= form_with url: user_session_path, method: :post, local: true, id: "password-login-form", data: { turbo: false } do |f| %>
               <input type="hidden" id="email-hidden" name="email">
 
               <div class="alert alert-info">
@@ -79,6 +79,7 @@
 <script>
     // Base64URL <-> ArrayBuffer ユーティリティ
     function base64urlToBuffer(base64url) {
+        if (!base64url) return new ArrayBuffer(0);
         const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
         const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
         const raw = atob(base64);
@@ -95,199 +96,139 @@
         return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
     }
 
-    function initializeLoginForm() {
-        const emailInput = document.getElementById('email');
-        const checkEmailBtn = document.getElementById('check-email');
-        const emailForm = document.getElementById('email-form');
-        const passwordForm = document.getElementById('password-form');
-        const webauthnForm = document.getElementById('webauthn-form');
-        const loading = document.getElementById('loading');
+    function initializePasskeyRegistration() {
+        const form = document.getElementById('passkey-form');
         const errorMessage = document.getElementById('error-message');
+        const registerBtn = document.getElementById('register-passkey');
+        const labelInput = document.getElementById('passkey-label');
 
-        // 冪等化
-        if (checkEmailBtn) checkEmailBtn.replaceWith(checkEmailBtn.cloneNode(true));
-        const newCheckEmailBtn = document.getElementById('check-email');
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
 
-        const backToEmailBtn = document.getElementById('back-to-email');
-        if (backToEmailBtn) backToEmailBtn.replaceWith(backToEmailBtn.cloneNode(true));
-        const newBackToEmailBtn = document.getElementById('back-to-email');
-
-        const backToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
-        if (backToEmailWebauthnBtn) backToEmailWebauthnBtn.replaceWith(backToEmailWebauthnBtn.cloneNode(true));
-        const newBackToEmailWebauthnBtn = document.getElementById('back-to-email-webauthn');
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
 
         function getCSRFToken() {
             const token = document.querySelector('meta[name="csrf-token"]');
             return token ? token.getAttribute('content') : '';
         }
 
-        function showLoading() {
-            if (emailForm) emailForm.style.display = 'none';
-            if (passwordForm) passwordForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'none';
-            if (loading) loading.style.display = 'block';
-            hideError();
-        }
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideError();
 
-        function hideLoading() {
-            if (loading) loading.style.display = 'none';
-        }
-
-        function showError(message) {
-            if (errorMessage) {
-                errorMessage.textContent = message;
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        function hideError() {
-            if (errorMessage) errorMessage.style.display = 'none';
-        }
-
-        function showPasswordForm(email) {
-            document.getElementById('email-hidden').value = email;
-            document.getElementById('user-email').textContent = email;
-            if (emailForm) emailForm.style.display = 'none';
-            if (passwordForm) passwordForm.style.display = 'block';
-            document.getElementById('password').focus();
-        }
-
-        function showWebAuthnForm(email, webauthnOptions) {
-            const emailSpan = document.getElementById('webauthn-email');
-            if (emailSpan) emailSpan.textContent = email;
-            window.webauthnOptions = webauthnOptions;
-            if (emailForm) emailForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'block';
-        }
-
-        function resetToEmailForm() {
-            if (emailForm) emailForm.style.display = 'block';
-            if (passwordForm) passwordForm.style.display = 'none';
-            if (webauthnForm) webauthnForm.style.display = 'none';
-            hideError();
-            if (emailInput) emailInput.focus();
-        }
-
-        // 認証方法の確認（/login GET -> JSON）
-        if (newCheckEmailBtn) {
-            newCheckEmailBtn.addEventListener('click', async function() {
-                const email = emailInput.value.trim();
-                if (!email) {
-                    showError('メールアドレスを入力してください。');
+                const label = labelInput.value.trim();
+                if (!label) {
+                    showError('デバイス名を入力してください。');
                     return;
                 }
 
-                showLoading();
+                if (!('PublicKeyCredential' in window)) {
+                    showError('このブラウザはパスキーに対応していません。');
+                    return;
+                }
+
+                registerBtn.disabled = true;
+                registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>登録中...';
+
                 try {
-                    const url = `/login?email=${encodeURIComponent(email)}`;
-                    const response = await fetch(url, {
+                    // サーバーから登録オプションを取得
+                    const response = await fetch('<%= new_passkey_path %>', {
                         method: 'GET',
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         },
                         credentials: 'same-origin'
                     });
 
-                    const data = await response.json();
-                    hideLoading();
-
-                    if (response.ok) {
-                        if (data.webauthn_enabled) {
-                            showWebAuthnForm(email, data.webauthn_options);
-                        } else {
-                            showPasswordForm(email);
-                        }
-                    } else {
-                        showError(data.error || '認証方法の確認に失敗しました。');
-                    }
-                } catch (error) {
-                    hideLoading();
-                    console.error('Error:', error);
-                    showError('ネットワークエラーが発生しました。');
-                }
-            });
-        }
-
-        // WebAuthn認証開始（必ず型変換を行う）
-        const webauthnLoginBtn = document.getElementById('webauthn-login');
-        if (webauthnLoginBtn) {
-            webauthnLoginBtn.addEventListener('click', async function() {
-                try {
-                    if (!window.webauthnOptions) {
-                        showError('WebAuthnオプションが見つかりません。最初からやり直してください。');
-                        return;
-                    }
-                    if (!('PublicKeyCredential' in window)) {
-                        showError('このブラウザはWebAuthnに対応していません。');
-                        return;
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'サーバーエラーが発生しました。');
                     }
 
-                    const opts = window.webauthnOptions;
+                    const options = await response.json();
+                    console.log('Received options from server:', options);
+
+                    // WebAuthn形式に変換（安全にチェック）
                     const publicKey = {
-                        ...opts,
-                        challenge: base64urlToBuffer(opts.challenge),
-                        allowCredentials: (opts.allowCredentials || []).map(c => ({
-                            ...c,
-                            id: base64urlToBuffer(c.id)
+                        challenge: base64urlToBuffer(options.challenge),
+                        rp: options.rp || {},
+                        user: {
+                            id: base64urlToBuffer(options.user?.id || ''),
+                            name: options.user?.name || '',
+                            displayName: options.user?.displayName || options.user?.name || ''
+                        },
+                        pubKeyCredParams: options.pubKeyCredParams || [],
+                        authenticatorSelection: options.authenticatorSelection || {},
+                        timeout: options.timeout || 60000,
+                        attestation: options.attestation || 'none',
+                        excludeCredentials: (options.excludeCredentials || []).map(cred => ({
+                            ...cred,
+                            id: base64urlToBuffer(cred.id)
                         }))
                     };
 
-                    const assertion = await navigator.credentials.get({ publicKey });
+                    console.log('Converted publicKey:', publicKey);
 
-                    // サーバ送信用にBase64URLへ変換
-                    const payload = {
-                        credential: {
-                            id: assertion.id,
-                            rawId: bufferToBase64url(assertion.rawId),
-                            type: assertion.type,
-                            response: {
-                                clientDataJSON: bufferToBase64url(assertion.response.clientDataJSON),
-                                authenticatorData: bufferToBase64url(assertion.response.authenticatorData),
-                                signature: bufferToBase64url(assertion.response.signature),
-                                userHandle: assertion.response.userHandle
-                                  ? bufferToBase64url(assertion.response.userHandle)
-                                  : ''
+                    // パスキー作成
+                    const credential = await navigator.credentials.create({ publicKey });
+
+                    if (!credential) {
+                        throw new Error('パスキーの作成に失敗しました。');
+                    }
+
+                    // サーバー送信用に変換
+                    const credentialData = {
+                        passkey: {
+                            label: label,
+                            credential: {
+                                id: credential.id,
+                                rawId: bufferToBase64url(credential.rawId),
+                                type: credential.type,
+                                response: {
+                                    clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                                    attestationObject: bufferToBase64url(credential.response.attestationObject)
+                                }
                             }
                         }
                     };
 
-                    const res = await fetch('/webauthn_authentications', {
+                    // サーバーに登録
+                    const createResponse = await fetch('<%= passkeys_path %>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                             'X-CSRF-Token': getCSRFToken()
                         },
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify(credentialData),
                         credentials: 'same-origin'
                     });
 
-                    const result = await res.json();
-                    if (res.ok && result.success) {
-                        window.location.assign(result.redirect_url || '/');
+                    const result = await createResponse.json();
+
+                    if (createResponse.ok && result.success) {
+                        window.location.href = result.redirect_url || '<%= passkeys_path %>';
                     } else {
-                        showError(result.error || 'WebAuthn認証に失敗しました。');
+                        showError(result.error || 'パスキーの登録に失敗しました。');
                     }
+
                 } catch (error) {
-                    console.error('WebAuthn error:', error);
-                    showError('WebAuthn認証に失敗しました。');
+                    console.error('Passkey registration error:', error);
+                    showError(error.message || 'パスキーの登録に失敗しました。');
+                } finally {
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = '<i class="fas fa-fingerprint me-2"></i>パスキーを登録';
                 }
-            });
-        }
-
-        // 戻るボタン
-        if (newBackToEmailBtn) newBackToEmailBtn.addEventListener('click', resetToEmailForm);
-        if (newBackToEmailWebauthnBtn) newBackToEmailWebauthnBtn.addEventListener('click', resetToEmailForm);
-
-        // Enterキーでメール確認
-        if (emailInput) {
-            emailInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') document.getElementById('check-email').click();
             });
         }
     }
 
-    document.addEventListener('DOMContentLoaded', initializeLoginForm);
-    document.addEventListener('turbo:load', initializeLoginForm);
+    document.addEventListener('DOMContentLoaded', initializePasskeyRegistration);
+    document.addEventListener('turbo:load', initializePasskeyRegistration);
 </script>

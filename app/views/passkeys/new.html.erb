@@ -16,7 +16,7 @@
               <label for="passkey-label" class="form-label">デバイス名</label>
               <input type="text" id="passkey-label" class="form-control"
                      placeholder="例: iPhone, MacBook, セキュリティキー"
-                     value="<%= default_device_name %>" required>
+                     value="<%= @default_device_name %>" required>
               <div class="form-text">このパスキーを識別するための名前を入力してください。</div>
             </div>
 
@@ -34,66 +34,75 @@
         </div>
       </div>
     </div>
-
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">
-          <h6><i class="fas fa-question-circle me-2"></i>パスキー設定の流れ</h6>
-        </div>
-        <div class="card-body">
-          <ol class="ps-3">
-            <li class="mb-2">デバイス名を入力</li>
-            <li class="mb-2">「パスキーを登録」をクリック</li>
-            <li class="mb-2">生体認証またはPIN入力</li>
-            <li>設定完了</li>
-          </ol>
-
-          <hr>
-
-          <h6><i class="fas fa-shield-alt me-2"></i>セキュリティについて</h6>
-          <ul class="small text-muted list-unstyled">
-            <li class="mb-1">• 秘密鍵はデバイス内に保存</li>
-            <li class="mb-1">• サーバーには公開鍵のみ送信</li>
-            <li class="mb-1">• パスワードより安全</li>
-            <li>• フィッシング攻撃に強い</li>
-          </ul>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
 <script>
-    // Base64URL <-> ArrayBuffer ユーティリティ
+    console.log('Passkey registration script loaded');
+
+    // Base64URL <-> ArrayBuffer ユーティリティ（エラーハンドリング強化）
     function base64urlToBuffer(base64url) {
-        const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
-        const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const raw = atob(base64);
-        const bytes = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; ++i) bytes[i] = raw.charCodeAt(i);
-        return bytes.buffer;
+        try {
+            console.log('Converting base64url to buffer:', base64url);
+
+            if (!base64url || typeof base64url !== 'string') {
+                console.error('Invalid base64url input:', base64url);
+                throw new Error('Invalid base64url input');
+            }
+
+            const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
+            const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const raw = atob(base64);
+            const bytes = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; ++i) bytes[i] = raw.charCodeAt(i);
+
+            console.log('Successfully converted to buffer, length:', bytes.byteLength);
+            return bytes.buffer;
+        } catch (error) {
+            console.error('Error in base64urlToBuffer:', error);
+            throw error;
+        }
     }
 
     function bufferToBase64url(buffer) {
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        const base64 = btoa(binary);
-        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        try {
+            console.log('Converting buffer to base64url, length:', buffer.byteLength);
+
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+            const base64 = btoa(binary);
+            const result = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+            console.log('Successfully converted to base64url');
+            return result;
+        } catch (error) {
+            console.error('Error in bufferToBase64url:', error);
+            throw error;
+        }
     }
 
     function initializePasskeyRegistration() {
+        console.log('Initializing passkey registration');
+
         const form = document.getElementById('passkey-form');
         const errorMessage = document.getElementById('error-message');
         const registerBtn = document.getElementById('register-passkey');
         const labelInput = document.getElementById('passkey-label');
 
+        if (!form) {
+            console.error('Passkey form not found');
+            return;
+        }
+
         function showError(message) {
+            console.error('Showing error:', message);
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
         }
 
         function hideError() {
+            console.log('Hiding error');
             errorMessage.style.display = 'none';
         }
 
@@ -102,107 +111,180 @@
             return token ? token.getAttribute('content') : '';
         }
 
-        if (form) {
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                hideError();
+        form.addEventListener('submit', async function(e) {
+            console.log('Form submitted');
+            e.preventDefault();
+            hideError();
 
-                const label = labelInput.value.trim();
-                if (!label) {
-                    showError('デバイス名を入力してください。');
-                    return;
+            const label = labelInput.value.trim();
+            console.log('Label:', label);
+
+            if (!label) {
+                showError('デバイス名を入力してください。');
+                return;
+            }
+
+            if (!window.PublicKeyCredential) {
+                console.error('PublicKeyCredential not available');
+                showError('このブラウザはパスキーに対応していません。');
+                return;
+            }
+
+            console.log('Starting passkey registration process');
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>登録中...';
+
+            try {
+                console.log('Fetching registration options from server');
+
+                // サーバーから登録オプションを取得
+                const response = await fetch('<%= new_passkey_path %>', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                console.log('Server response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Server error:', errorData);
+                    throw new Error(errorData.error || 'サーバーエラーが発生しました。');
                 }
 
-                if (!('PublicKeyCredential' in window)) {
-                    showError('このブラウザはパスキーに対応していません。');
-                    return;
+                const options = await response.json();
+                console.log('Received options from server:', options);
+
+                // オプションの検証
+                if (!options.challenge) {
+                    throw new Error('Challenge not provided by server');
+                }
+                if (!options.user || !options.user.id) {
+                    throw new Error('User information not provided by server');
+                }
+                if (!options.rp) {
+                    throw new Error('RP information not provided by server');
                 }
 
-                registerBtn.disabled = true;
-                registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>登録中...';
+                console.log('Converting options to WebAuthn format');
+
+                // WebAuthn形式に変換（詳細なエラーハンドリング付き）
+                let challengeBuffer, userIdBuffer;
 
                 try {
-                    // サーバーから登録オプションを取得
-                    const response = await fetch('<%= new_passkey_path %>', {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        credentials: 'same-origin'
-                    });
+                    challengeBuffer = base64urlToBuffer(options.challenge);
+                } catch (error) {
+                    console.error('Failed to convert challenge:', error);
+                    throw new Error('チャレンジの変換に失敗しました');
+                }
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'サーバーエラーが発生しました。');
-                    }
+                try {
+                    userIdBuffer = base64urlToBuffer(options.user.id);
+                } catch (error) {
+                    console.error('Failed to convert user ID:', error);
+                    throw new Error('ユーザーIDの変換に失敗しました');
+                }
 
-                    const options = await response.json();
+                const publicKey = {
+                    challenge: challengeBuffer,
+                    rp: options.rp,
+                    user: {
+                        id: userIdBuffer,
+                        name: options.user.name || '',
+                        displayName: options.user.displayName || options.user.name || ''
+                    },
+                    pubKeyCredParams: options.pubKeyCredParams || [
+                        { type: "public-key", alg: -7 },  // ES256
+                        { type: "public-key", alg: -257 } // RS256
+                    ],
+                    authenticatorSelection: options.authenticatorSelection || {
+                        authenticatorAttachment: "platform",
+                        userVerification: "preferred"
+                    },
+                    timeout: options.timeout || 60000,
+                    attestation: options.attestation || 'none',
+                    excludeCredentials: []
+                };
 
-                    // WebAuthn形式に変換
-                    const publicKey = {
-                        ...options,
-                        challenge: base64urlToBuffer(options.challenge),
-                        user: {
-                            ...options.user,
-                            id: base64urlToBuffer(options.user.id)
-                        },
-                        excludeCredentials: (options.excludeCredentials || []).map(cred => ({
-                            ...cred,
-                            id: base64urlToBuffer(cred.id)
-                        }))
-                    };
+                console.log('Converted publicKey options:', publicKey);
+                console.log('About to call navigator.credentials.create');
 
-                    // パスキー作成
-                    const credential = await navigator.credentials.create({ publicKey });
+                // パスキー作成（ここで238行目のエラーが発生している可能性が高い）
+                const credential = await navigator.credentials.create({ publicKey });
 
-                    // サーバー送信用に変換
-                    const credentialData = {
-                        passkey: {
-                            label: label,
-                            credential: {
-                                id: credential.id,
-                                rawId: bufferToBase64url(credential.rawId),
-                                type: credential.type,
-                                response: {
-                                    clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
-                                    attestationObject: bufferToBase64url(credential.response.attestationObject)
-                                }
+                console.log('Credential created successfully:', credential);
+
+                if (!credential) {
+                    throw new Error('パスキーの作成に失敗しました。');
+                }
+
+                console.log('Converting credential for server');
+
+                // サーバー送信用に変換
+                const credentialData = {
+                    passkey: {
+                        label: label,
+                        credential: {
+                            id: credential.id,
+                            rawId: bufferToBase64url(credential.rawId),
+                            type: credential.type,
+                            response: {
+                                clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                                attestationObject: bufferToBase64url(credential.response.attestationObject)
                             }
                         }
-                    };
-
-                    // サーバーに登録
-                    const createResponse = await fetch('<%= passkeys_path %>', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-Token': getCSRFToken()
-                        },
-                        body: JSON.stringify(credentialData),
-                        credentials: 'same-origin'
-                    });
-
-                    const result = await createResponse.json();
-
-                    if (createResponse.ok && result.success) {
-                        window.location.href = '<%= passkeys_path %>';
-                    } else {
-                        showError(result.error || 'パスキーの登録に失敗しました。');
                     }
+                };
 
-                } catch (error) {
-                    console.error('Passkey registration error:', error);
-                    showError(error.message || 'パスキーの登録に失敗しました。');
-                } finally {
-                    registerBtn.disabled = false;
-                    registerBtn.innerHTML = '<i class="fas fa-fingerprint me-2"></i>パスキーを登録';
+                console.log('Sending credential to server');
+
+                // サーバーに登録
+                const createResponse = await fetch('<%= passkeys_path %>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-Token': getCSRFToken()
+                    },
+                    body: JSON.stringify(credentialData),
+                    credentials: 'same-origin'
+                });
+
+                console.log('Server registration response:', createResponse.status);
+
+                const result = await createResponse.json();
+                console.log('Registration result:', result);
+
+                if (createResponse.ok && result.success) {
+                    console.log('Registration successful, redirecting');
+                    window.location.href = result.redirect_url || '<%= passkeys_path %>';
+                } else {
+                    showError(result.error || 'パスキーの登録に失敗しました。');
                 }
-            });
-        }
+
+            } catch (error) {
+                console.error('Passkey registration error:', error);
+                console.error('Error stack:', error.stack);
+                showError(error.message || 'パスキーの登録に失敗しました。');
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = '<i class="fas fa-fingerprint me-2"></i>パスキーを登録';
+            }
+        });
+
+        console.log('Event listener attached to form');
     }
 
-    document.addEventListener('DOMContentLoaded', initializePasskeyRegistration);
+    // 複数の方法で初期化を試行
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePasskeyRegistration);
+    } else {
+        initializePasskeyRegistration();
+    }
+
     document.addEventListener('turbo:load', initializePasskeyRegistration);
+    console.log('Passkey registration initialization complete');
 </script>

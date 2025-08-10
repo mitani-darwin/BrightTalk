@@ -1,3 +1,4 @@
+
 class SessionsController < Devise::SessionsController
   # WebAuthn確認用のアクション
 
@@ -20,29 +21,30 @@ class SessionsController < Devise::SessionsController
       return
     end
 
-    webauthn_required = user.webauthn_required?
-    has_credentials = user.has_webauthn_credentials?
+    # ✅ Passkeyメソッドを使用するように変更
+    passkey_required = user.passkey_required?
+    has_credentials = user.has_passkey_credentials?
 
-    Rails.logger.info "check_webauthn: webauthn_enabled=#{user.webauthn_enabled}, has_credentials=#{has_credentials}, webauthn_required=#{webauthn_required}"
+    Rails.logger.info "check_webauthn: passkey_enabled=#{user.passkey_enabled?}, has_credentials=#{has_credentials}, passkey_required=#{passkey_required}"
 
-    if webauthn_required && has_credentials
-      # 認証情報を取得して形式を確認
-      credentials = user.webauthn_credentials
-      Rails.logger.info "Found #{credentials.count} credentials"
+    if passkey_required && has_credentials
+      # ✅ Passkeyテーブルから認証情報を取得
+      credentials = user.passkeys
+      Rails.logger.info "Found #{credentials.count} passkey credentials"
 
-      # external_idの形式を確認して修正
+      # identifierの形式を確認して修正
       allow_credentials = credentials.map do |cred|
-        external_id = cred.external_id
-        Rails.logger.info "Processing credential - ID type: #{external_id.class}, value: #{external_id.inspect}"
+        identifier = cred.identifier
+        Rails.logger.info "Processing credential - ID type: #{identifier.class}, value: #{identifier.inspect}"
 
-        # external_idが文字列でない場合の処理
-        credential_id = case external_id
+        # identifierが文字列でない場合の処理
+        credential_id = case identifier
                         when String
-                          external_id
+                          identifier
                         when Array
-                          external_id.pack('c*') # バイト配列を文字列に変換
+                          identifier.pack('c*') # バイト配列を文字列に変換
                         else
-                          external_id.to_s
+                          identifier.to_s
                         end
 
         Rails.logger.info "Converted credential ID: #{credential_id.class} - #{credential_id}"
@@ -67,13 +69,13 @@ class SessionsController < Devise::SessionsController
 
       render json: {
         webauthn_enabled: true,
-        has_webauthn_credentials: true,
+        has_webauthn_credentials: true,  # JSONレスポンス用は維持
         webauthn_options: webauthn_options
       }
     else
       render json: {
         webauthn_enabled: false,
-        has_webauthn_credentials: has_credentials
+        has_webauthn_credentials: has_credentials  # JSONレスポンス用は維持
       }
     end
   end

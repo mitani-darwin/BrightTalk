@@ -9,7 +9,6 @@ class WebauthnAuthenticationsController < ApplicationController
     @email = params[:email] || session[:webauthn_email]
   end
 
-
   def check_login_method
     # メールアドレスを受け取って認証方法を判定するアクション
     email = params[:email]
@@ -39,18 +38,19 @@ class WebauthnAuthenticationsController < ApplicationController
     # セッションにメールアドレスを保存
     session[:webauthn_email] = email
 
-    Rails.logger.info "check_login_method: webauthn_enabled=#{user.webauthn_enabled}, has_credentials=#{user.has_webauthn_credentials?}"
+    # ✅ Passkeyメソッドを使用するように変更
+    Rails.logger.info "check_login_method: passkey_enabled=#{user.passkey_enabled?}, has_credentials=#{user.has_passkey_credentials?}"
 
-    # WebAuthn認証が有効かどうかを判定
-    if user.webauthn_enabled?
-      # WebAuthn認証を使用
-      user_credentials = user.webauthn_credentials.pluck(:external_id)
+    # Passkey認証が有効かどうかを判定
+    if user.passkey_enabled?
+      # ✅ Passkeyテーブルから認証情報を取得
+      user_credentials = user.passkeys.pluck(:identifier)
 
       if user_credentials.empty?
-        Rails.logger.warn "check_login_method: WebAuthn enabled but no credentials found"
+        Rails.logger.warn "check_login_method: Passkey enabled but no credentials found"
         respond_to do |format|
-          format.json { render json: { error: "WebAuthn認証情報が登録されていません" }, status: :unprocessable_entity }
-          format.html { redirect_to new_webauthn_authentication_path, alert: "WebAuthn認証情報が登録されていません" }
+          format.json { render json: { error: "Passkey認証情報が登録されていません" }, status: :unprocessable_entity }
+          format.html { redirect_to new_webauthn_authentication_path, alert: "Passkey認証情報が登録されていません" }
         end
         return
       end
@@ -77,7 +77,7 @@ class WebauthnAuthenticationsController < ApplicationController
           render json: {
             auth_method: "webauthn",
             webauthn_enabled: true,
-            has_webauthn_credentials: true,
+            has_webauthn_credentials: true,  # JSONレスポンス用は維持
             webauthn_options: webauthn_options
           }
         }
@@ -96,7 +96,7 @@ class WebauthnAuthenticationsController < ApplicationController
           render json: {
             auth_method: "password",
             webauthn_enabled: false,
-            has_webauthn_credentials: user.has_webauthn_credentials?
+            has_webauthn_credentials: user.has_passkey_credentials?  # ✅ 内部ではpasskeyメソッドを使用
           }
         }
         format.html {
@@ -150,8 +150,8 @@ class WebauthnAuthenticationsController < ApplicationController
 
       Rails.logger.info "WebAuthn credential constructed"
 
-      # データベースから対応する認証情報を検索
-      stored_credential = user.webauthn_credentials.find_by(external_id: credential_params[:id])
+      # ✅ Passkeyテーブルから対応する認証情報を検索
+      stored_credential = user.passkeys.find_by(identifier: credential_params[:id])
 
       if stored_credential.nil?
         Rails.logger.error "Stored credential not found for ID: #{credential_params[:id]}"
@@ -171,8 +171,8 @@ class WebauthnAuthenticationsController < ApplicationController
 
         Rails.logger.info "WebAuthn verification successful"
 
-        # サインカウントを更新
-        stored_credential.update!(sign_count: webauthn_credential.sign_count)
+        # ✅ Passkeyテーブルのサインカウントを更新
+        stored_credential.update!(sign_count: webauthn_credential.sign_count, last_used_at: Time.current)
 
         # 認証成功 - ユーザーをログイン
         sign_in(user)
@@ -195,7 +195,6 @@ class WebauthnAuthenticationsController < ApplicationController
         render json: {
           error: "WebAuthn認証に失敗しました: #{e.message}"
         }, status: :unauthorized
-
       end
 
     rescue => e
