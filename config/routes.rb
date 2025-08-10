@@ -5,20 +5,15 @@ Rails.application.routes.draw do
     confirmations: "users/confirmations"
   }
 
-  # Passkeys の新しいルート
-  resources :passkeys, only: [:index, :new, :create, :destroy]
-
-  # Passkey認証ルート
-  resource :passkey_authentication, only: [:new, :create] do
-    member do
-      post :check_login_method    # ← member に変更
-      post :password_login
-    end
-  end
-
   devise_scope :user do
     get "users/registration/success", to: "users/registrations#success", as: "users_registration_success"
     get "users/registration/pending", to: "users#registration_pending", as: "registration_pending_users"
+
+    # ⭐ devise-passkeys の手動ルート定義
+    get '/users/passkeys/new', to: 'devise/passkeys#new', as: 'new_user_passkey'
+    post '/users/passkeys', to: 'devise/passkeys#create', as: 'user_passkeys'
+    get '/users/passkeys', to: 'devise/passkeys#index', as: 'user_passkeys_index'
+    delete '/users/passkeys/:id', to: 'devise/passkeys#destroy', as: 'destroy_user_passkey'
   end
 
   resources :categories, only: [:create, :index]
