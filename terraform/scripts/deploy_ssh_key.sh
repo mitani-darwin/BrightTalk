@@ -7,7 +7,7 @@ set -e
 
 # 設定
 SSH_KEY_DIR="terraform/ssh-keys"
-DEFAULT_KEY_NAME="MacBookAir2025.local-ed25519-key"
+DEFAULT_KEY_NAME=$(hostname)
 SSH_KEY_TYPE="ed25519"
 DEFAULT_SERVER="3.115.45.181"
 SSH_PORT="47583"
@@ -16,7 +16,7 @@ SSH_USER="ec2-user"
 # 引数の取得
 KEY_NAME=${1:-$DEFAULT_KEY_NAME}
 SERVER_IP=${2:-$DEFAULT_SERVER}
-PUBLIC_KEY_PATH="${SSH_KEY_DIR}/${KEY_NAME}.pub"
+PUBLIC_KEY_PATH="${SSH_KEY_DIR}/${KEY_NAME}-${SSH_KEY_TYPE}-key.pub"
 
 echo "🚀 公開鍵をサーバーに登録します..."
 echo "キー: $PUBLIC_KEY_PATH"
