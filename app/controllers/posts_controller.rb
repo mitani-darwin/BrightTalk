@@ -1,3 +1,4 @@
+
 class PostsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
   before_action :set_post, only: [:show, :edit, :update, :destroy]
@@ -15,6 +16,9 @@ class PostsController < ApplicationController
       redirect_to posts_path, alert: '指定された投稿は存在しません。'
       return
     end
+
+    # コメント投稿フォーム用の新しいコメントインスタンスを作成
+    @comment = Comment.new
   end
 
   def new
@@ -73,7 +77,7 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :status, :category_id)
+    params.require(:post).permit(:title, :content, :status, :category_id, images: [])
   end
 
   def log_user_status

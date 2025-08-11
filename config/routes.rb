@@ -1,3 +1,4 @@
+
 Rails.application.routes.draw do
   # Deviseルーティング
   devise_for :users, controllers: {
@@ -14,8 +15,13 @@ Rails.application.routes.draw do
       get :drafts
     end
 
+    # いいね機能を追加
+    resources :likes, only: [:create, :destroy]
     resources :comments, only: [:create, :destroy]
   end
+
+  # カテゴリー関連のルート
+  resources :categories, only: [:create, :index]
 
   # ユーザー関連のルート
   resources :users, only: [:show] do
