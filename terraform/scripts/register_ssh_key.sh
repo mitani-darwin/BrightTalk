@@ -7,7 +7,7 @@ set -e
 
 # 設定
 SSH_KEY_DIR="terraform/ssh-keys"
-DEFAULT_KEY_NAME="MacBookAir2025.local"
+DEFAULT_KEY_NAME=$(hostname)
 SSH_KEY_TYPE="ed25519"
 
 # 引数から鍵名を取得（省略時はデフォルト値を使用）
