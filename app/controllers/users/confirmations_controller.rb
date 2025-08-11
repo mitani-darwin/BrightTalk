@@ -1,25 +1,29 @@
-
 class Users::ConfirmationsController < Devise::ConfirmationsController
-  # GET /resource/confirmation?confirmation_token=abcdef
+  before_action :log_user_status
+
   def show
+    Rails.logger.info "Confirmation started with token: #{params[:confirmation_token]}"
+
+    # 元のconfirmationロジックを実行
     self.resource = resource_class.confirm_by_token(params[:confirmation_token])
     yield resource if block_given?
 
     if resource.errors.empty?
       set_flash_message!(:notice, :confirmed)
+      Rails.logger.info "User #{resource.id} confirmed successfully"
 
-      # ユーザーを自動的にログインさせる
-      sign_in(resource)
+      # ユーザーをサインイン
+      sign_in(resource_name, resource)
+      Rails.logger.info "User #{resource.id} signed in after confirmation"
 
-      # WebAuthnが利用可能かチェック
-      if webauthn_available?
-        # WebAuthn登録にリダイレクト
-        redirect_to new_webauthn_credential_path(first_time: true)
-      else
-        # WebAuthnが利用できない場合はホームページへ
-        redirect_to root_path, notice: "アカウントが確認されました。ログインしました。"
-      end
+      # セッションから仮登録情報を削除
+      session.delete(:pending_user_id)
+
+      # シンプルにホームページにリダイレクト
+      Rails.logger.info "Redirecting to home for confirmed user: #{resource.id}"
+      redirect_to root_path, notice: "メール認証が完了し、ログインしました。"
     else
+      Rails.logger.error "Confirmation failed for token #{params[:confirmation_token]}: #{resource.errors.full_messages}"
       respond_with(resource)
     end
   end
@@ -27,17 +31,15 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
   private
 
   def after_confirmation_path_for(resource_name, resource)
-    # WebAuthnが利用可能な場合はWebAuthn登録画面へ
-    if webauthn_available?
-      new_webauthn_credential_path(first_time: true)
-    else
-      root_path
-    end
+    root_path
   end
 
-  def webauthn_available?
-    # JavaScriptでWebAuthn APIの利用可能性をチェックするため、
-    # サーバーサイドでは常にtrueを返し、フロントエンドで判定する
-    true
+  def log_user_status
+    Rails.logger.info "=== User Status Debug ==="
+    Rails.logger.info "Controller: #{self.class.name}##{action_name}"
+    Rails.logger.info "Current user: #{current_user&.email || 'none'}"
+    Rails.logger.info "User signed in?: #{user_signed_in?}"
+    Rails.logger.info "Session ID: #{session.id}"
+    Rails.logger.info "=========================="
   end
 end

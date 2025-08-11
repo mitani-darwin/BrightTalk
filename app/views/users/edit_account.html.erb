@@ -13,13 +13,13 @@
           <%= link_to edit_user_account_path, class: "list-group-item list-group-item-action active" do %>
             <i class="fas fa-edit me-2"></i>アカウント編集
           <% end %>
-          <% unless current_user.has_webauthn_credentials? %>
+          <% unless current_user.has_passkey_credentials %>
             <%= link_to edit_account_password_path, class: "list-group-item list-group-item-action" do %>
               <i class="fas fa-key me-2"></i>パスワード変更
             <% end %>
           <% end %>
-          <%= link_to webauthn_credentials_path, class: "list-group-item list-group-item-action" do %>
-            <i class="fas fa-fingerprint me-2"></i>WebAuthn認証
+          <%= link_to passkeys_path, class: "list-group-item list-group-item-action" do %>
+            <i class="fas fa-fingerprint me-2"></i>パスキー認証
           <% end %>
         </div>
       </div>

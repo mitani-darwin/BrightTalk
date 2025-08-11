@@ -39,10 +39,6 @@ gem "active_storage_validations"
 # PDF生成
 gem 'grover' # ChromeベースのPDF生成
 
-
-# WebAuthn認証
-gem "webauthn", "~> 3.0"
-
 gem 'mail-ses'
 
 group :development, :test do

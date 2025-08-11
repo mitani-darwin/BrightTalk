@@ -1,42 +1,56 @@
-
-# frozen_string_literal: true
-
 class Users::RegistrationsController < Devise::RegistrationsController
-  # GET /users/sign_up
+  before_action :configure_sign_up_params, only: [:create]
+  before_action :configure_account_update_params, only: [:update]
+
+  # GET /resource/sign_up
   def new
     super
   end
 
-  # POST /users
+  # POST /resource
   def create
-    super do |resource|
-      if resource.persisted? && !resource.active_for_authentication?
-        # 仮登録成功時は専用ページにリダイレクト
-        sign_out(resource) if user_signed_in?
-        redirect_to users_registration_success_path and return
-      end
-    end
+    super
   end
 
-  # GET /users/registration/success
-  def success
-    # 成功ページを表示
+  # GET /resource/edit
+  def edit
+    super
+  end
+
+  # PUT /resource
+  def update
+    super
+  end
+
+  # GET /resource/cancel
+  def cancel
+    super
   end
 
   protected
 
+  # サインアップ後のリダイレクト先
   def after_sign_up_path_for(resource)
-    # この処理は上記のcreateメソッドで処理するため不要
-    root_path
+    # メール確認が必要な場合は確認待ちページへ
+    if resource.persisted? && !resource.confirmed?
+      registration_pending_users_path
+    else
+      root_path
+    end
   end
 
-  def after_inactive_sign_up_path_for(resource)
-    # この処理は上記のcreateメソッドで処理するため不要
-    root_path
+  # アカウント更新後のリダイレクト先
+  def after_update_path_for(resource)
+    user_account_path
   end
 
-  # 自動生成されたパスワードも含めて許可
-  def sign_up_params
-    params.require(:user).permit(:name, :email, :password, :password_confirmation)
+  private
+
+  def configure_sign_up_params
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
+  end
+
+  def configure_account_update_params
+    devise_parameter_sanitizer.permit(:account_update, keys: [:name])
   end
 end
