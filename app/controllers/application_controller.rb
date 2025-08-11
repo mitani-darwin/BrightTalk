@@ -1,4 +1,3 @@
-
 class ApplicationController < ActionController::Base
   # CSRF保護を有効にする
   protect_from_forgery with: :exception
@@ -48,7 +47,7 @@ class ApplicationController < ActionController::Base
       root_path
     else
       # Passkey設定ページにリダイレクト
-      new_passkey_path
+      new_user_passkey_path
     end
   end
 
@@ -59,7 +58,7 @@ class ApplicationController < ActionController::Base
       users_registration_success_path
     else
       # Passkey設定ページにリダイレクト
-      new_passkey_path
+      new_user_passkey_path
     end
   end
 end

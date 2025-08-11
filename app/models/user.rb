@@ -1,14 +1,11 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :validatable,
-         :passkey_authenticatable
+         :recoverable, :rememberable, :validatable
 
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :liked_posts, through: :likes, source: :post
-  has_many :webauthn_credentials, dependent: :destroy
-  has_many :passkeys, dependent: :destroy
 
   has_one_attached :avatar
 
@@ -32,47 +29,63 @@ class User < ApplicationRecord
     end
   end
 
-  # パスキー関連のメソッド
-  def has_passkeys?
-    passkeys.exists?
-  end
-
-  # 旧メソッド名との互換性のため
-  alias_method :has_passkey_credentials?, :has_passkeys?
-
-  def passkey_enabled?
-    has_passkeys?
-  end
-
   private
 
   def password_complexity
     return if password.blank?
+
     errors.add(:password, :too_weak) unless strong_password?(password)
   end
 
   def strong_password?(password)
+    # 英数字記号をそれぞれ1文字以上含む
     has_letter = password.match?(/[a-zA-Z]/)
     has_number = password.match?(/[0-9]/)
     has_symbol = password.match?(/[^a-zA-Z0-9]/)
+
     return false unless has_letter && has_number && has_symbol
+
+    # 推測しやすいパスワードをチェック
     !weak_password?(password)
   end
 
   def weak_password?(password)
     weak_patterns = [
-      /(.)\1{2,}/,
+      # 連続した文字（abc, 123, など）
+      /(.)\1{2,}/,                           # 同じ文字が3回以上連続
+      /(.)\\1{2,}/,
       /(?:abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i,
       /(?:012|123|234|345|456|567|678|789)/,
       /(?:987|876|765|654|543|432|321|210)/,
+
+      # キーボードパターン
       /(?:qwerty|asdfgh|zxcvbn|qwertyui|asdfghjk|zxcvbnm)/i,
       /(?:1qaz|2wsx|3edc|4rfv|5tgb|6yhn|7ujm|8ik|9ol|0p)/i,
       /^password/i, /^123456/, /^admin/i, /^user/i, /^test/i, /^guest/i, /^login/i,
-      /(?:19|20)\d{2}/, /^[a-z]+[0-9]+$/i, /^[0-9]+[a-z]+$/i
+      /(?:19|20)\\d{2}/, /^[a-z]+[0-9]+$/i, /^[0-9]+[a-z]+$/i,
+
+      # よくあるパスワードパターン
+      /^password/i,
+      /^123456/,
+      /^admin/i,
+      /^user/i,
+      /^test/i,
+      /^guest/i,
+      /^login/i,
+
+      # 年号パターン
+      /(?:19|20)\d{2}/,
+
+      # 単純な組み合わせ
+      /^[a-z]+[0-9]+$/i,        # 文字 + 数字のみ
+      /^[0-9]+[a-z]+$/i        # 数字 + 文字のみ
     ]
 
+    # ユーザー名やメールアドレスの一部が含まれているかチェック
     return true if name.present? && password.downcase.include?(name.downcase)
     return true if email.present? && password.downcase.include?(email.split("@").first.downcase)
+
+    # 弱いパターンのいずれかにマッチするかチェック
     weak_patterns.any? { |pattern| password.match?(pattern) }
   end
 

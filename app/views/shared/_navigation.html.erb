@@ -1,5 +1,6 @@
+<!-- Bootstrap 5 Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container">
+  <div class="container-fluid">
     <%= link_to "BrightTalk", root_path, class: "navbar-brand" %>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -9,44 +10,51 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <%= link_to "ホーム", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
+          <%= link_to "投稿一覧", posts_path, class: "nav-link" %>
         </li>
         <% if user_signed_in? %>
           <li class="nav-item">
-            <%= link_to "投稿作成", new_post_path, class: "nav-link" %>
+            <%= link_to new_post_path, class: "nav-link" do %>
+              <i class="fas fa-plus me-1"></i>投稿作成
+            <% end %>
           </li>
           <li class="nav-item">
-            <%= link_to "下書き", drafts_posts_path, class: "nav-link" %>
+            <%= link_to drafts_posts_path, class: "nav-link" do %>
+              <i class="fas fa-file-alt me-1"></i>下書き
+            <% end %>
           </li>
         <% end %>
       </ul>
 
+      <!-- 検索フォーム -->
+      <div class="d-flex me-3">
+        <%= form_with url: posts_path, method: :get, local: true, class: "d-flex" do |f| %>
+          <%= f.text_field :search,
+                           value: params[:search],
+                           placeholder: "投稿を検索...",
+                           class: "form-control form-control-sm me-2",
+                           style: "width: 200px;" %>
+          <%= f.submit "検索", class: "btn btn-outline-light btn-sm" %>
+        <% end %>
+      </div>
+
       <ul class="navbar-nav">
         <% if user_signed_in? %>
-          <!-- 通知エリア -->
-          <li class="nav-item">
-            <a class="nav-link" href="#" title="通知">
-              <i class="fas fa-bell"></i>
-              <span class="badge bg-danger">0</span>
-            </a>
-          </li>
-
-          <!-- ユーザーメニュー -->
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <% if current_user.avatar_or_default %>
-                <%= image_tag current_user.avatar_or_default, class: "rounded-circle me-2", style: "width: 32px; height: 32px; object-fit: cover;" %>
-              <% else %>
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                  <i class="fas fa-user text-white" style="font-size: 14px;"></i>
-                </div>
-              <% end %>
-              <%= current_user.name %>
+            <!-- Bootstrap 5 Dropdown Toggle -->
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               role="button"
+               data-bs-toggle="dropdown"
+               aria-expanded="false"
+               id="navbarDropdown">
+              <i class="fas fa-user-circle me-1"></i>
+              <%= current_user.name || current_user.email %>
             </a>
+            <!-- Bootstrap 5 Dropdown Menu -->
             <ul class="dropdown-menu">
               <li><%= link_to "マイページ", user_path(current_user), class: "dropdown-item" %></li>
-              <li><%= link_to "アカウント設定", user_account_path, class: "dropdown-item" %></li>
-              <li><%= link_to "パスキー認証", user_passkeys_index_path, class: "dropdown-item" %></li>
+              <li><%= link_to "アカウント設定", account_user_path(current_user), class: "dropdown-item" %></li>
               <li><hr class="dropdown-divider"></li>
               <li><%= link_to "ログアウト", destroy_user_session_path, data: { "turbo-method": :delete }, class: "dropdown-item" %></li>
             </ul>
@@ -56,7 +64,7 @@
             <%= link_to "ログイン", new_user_session_path, class: "nav-link" %>
           </li>
           <li class="nav-item">
-            <%= link_to "新規登録", new_user_registration_path, class: "nav-link" %>
+            <%= link_to "新規登録", new_user_registration_path, class: "btn btn-outline-light ms-2" %>
           </li>
         <% end %>
       </ul>

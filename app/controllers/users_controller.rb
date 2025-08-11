@@ -39,14 +39,11 @@ class UsersController < ApplicationController
   # アカウント管理画面 - Passkeyに更新
   def account
     @user = current_user
-    @passkeys = current_user.passkeys.order(:created_at)
     @recent_posts = current_user.posts.recent.limit(5)
     @stats = {
-      posts_count: current_user.posts.count,
-      comments_count: current_user.comments.count,
-      likes_given: current_user.likes.count,
-      likes_received: Like.joins(:post).where(posts: { user: current_user }).count
+      posts_count: current_user.posts.count
     }
+
   end
 
   # アカウント編集画面
@@ -83,9 +80,6 @@ class UsersController < ApplicationController
 
     begin
       User.transaction do
-        # Passkey設定の更新（パスワード入力不要）
-        @user.update!(passkey_enabled: passkey_enabled)
-
         # パスワード変更が要求されている場合のみパスワード更新
         if password_provided
           # 現在のパスワードチェック（初回設定以外）
@@ -165,7 +159,4 @@ class UsersController < ApplicationController
     params.require(:user).permit(:password, :password_confirmation)
   end
 
-  def password_params_with_passkey
-    params.require(:user).permit(:password, :password_confirmation, :passkey_enabled)
-  end
 end

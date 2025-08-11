@@ -1,192 +1,154 @@
 class Devise::PasskeysController < DeviseController
-  before_action :authenticate_user!
-  before_action :set_user
-
-  def index
-    @passkeys = current_user.passkeys.order(created_at: :desc)
-  end
+  prepend_before_action :authenticate_scope!, only: [:new, :create, :destroy]
+  before_action :set_passkey, only: [:destroy]
 
   def new
+    Rails.logger.info "Devise::Passkeys new action - Current user: #{current_user&.id}"
+
+    @label = params[:label] || "メインデバイス"
     @first_time = params[:first_time] == 'true'
-    @challenge = generate_challenge
-    session[:passkey_challenge] = @challenge
+
+    # Passkey登録用のチャレンジを生成
+    challenge = SecureRandom.urlsafe_base64(32)
+    session[:passkey_creation_challenge] = challenge
+
+    # WebAuthn Credential Creation Options
+    @passkey_options = {
+      challenge: challenge,
+      rp: {
+        id: Rails.env.development? ? "localhost" : "www.brighttalk.jp",
+        name: "BrightTalk"
+      },
+      user: {
+        id: Base64.urlsafe_encode64("user_#{current_user.id}", padding: false),
+        name: current_user.email,
+        displayName: current_user.name || current_user.email
+      },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }], # ES256
+      timeout: 300000,
+      attestation: "direct",
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        userVerification: "required"
+      },
+      excludeCredentials: current_user.passkeys.pluck(:identifier).map { |id|
+        { type: "public-key", id: id }
+      }
+    }
+
+    Rails.logger.info "Passkey registration options generated for user: #{current_user.id}"
 
     respond_to do |format|
       format.html
-      format.json { render json: registration_options }
+      format.json { render json: { passkey_options: @passkey_options } }
     end
   end
 
   def create
-    challenge = session.delete(:passkey_challenge)
-
-    if challenge.nil?
-      redirect_to new_user_passkey_path, alert: 'セッションが無効です。もう一度お試しください。'
-      return
-    end
+    Rails.logger.info "Devise::PasskeysController#create called"
 
     begin
-      # credential のパラメータをJSON形式で受け取り
-      credential_params = JSON.parse(params[:credential])
+      stored_challenge = session[:passkey_creation_challenge]
 
-      Rails.logger.info "Received credential params: #{credential_params.inspect}"
-
-      # WebAuthn gem は Base64URL 文字列形式を期待しているため、
-      # JavaScriptから送られてきたBase64URL文字列をそのまま使用
-      webauthn_credential_data = {
-        "id" => credential_params["id"],
-        "rawId" => credential_params["rawId"], # Base64URL文字列のまま
-        "response" => {
-          "attestationObject" => credential_params["response"]["attestationObject"], # Base64URL文字列のまま
-          "clientDataJSON" => credential_params["response"]["clientDataJSON"] # Base64URL文字列のまま
-        },
-        "type" => credential_params["type"]
-      }
-
-      Rails.logger.info "WebAuthn credential data: #{webauthn_credential_data.inspect}"
-
-      # WebAuthn::Credential オブジェクトを作成
-      credential = WebAuthn::Credential.from_create(webauthn_credential_data)
-
-      Rails.logger.info "WebAuthn::Credential created successfully"
-      Rails.logger.info "Credential ID: #{credential.id.inspect}"
-      Rails.logger.info "Credential public key: #{credential.public_key.inspect}"
-      Rails.logger.info "Credential sign count: #{credential.sign_count.inspect}"
-
-      # チャレンジ検証をスキップして、Passkeyの保存に集中
-      Rails.logger.info "=== Skipping challenge verification for now ==="
-      Rails.logger.info "Challenge from session: #{challenge.inspect}"
-
-      Rails.logger.info "=== Starting Passkey creation ==="
-
-      # identifier の作成
-      identifier = Base64.urlsafe_encode64(credential.id, padding: false)
-      Rails.logger.info "Generated identifier: #{identifier.inspect}"
-
-      # public_key の作成
-      public_key_encoded = Base64.strict_encode64(credential.public_key)
-      Rails.logger.info "Generated public_key: #{public_key_encoded.length} characters"
-
-      # Passkey をデータベースに保存
-      passkey_attributes = {
-        user: current_user,
-        identifier: identifier,
-        public_key: public_key_encoded,
-        sign_count: credential.sign_count,
-        label: params[:label] || 'パスキー',
-        last_used_at: Time.current
-      }
-
-      Rails.logger.info "Passkey attributes: #{passkey_attributes.inspect}"
-
-      # 既存のPasskeyが存在するかチェック
-      existing_passkey = current_user.passkeys.find_by(identifier: identifier)
-      if existing_passkey
-        Rails.logger.warn "Passkey with this identifier already exists: #{existing_passkey.id}"
+      if stored_challenge.blank?
+        error_message = "登録チャレンジが見つかりません。再度お試しください。"
+        Rails.logger.error "Creation challenge not found in session"
 
         respond_to do |format|
-          format.html { redirect_to user_passkeys_index_path, alert: 'この認証器は既に登録済みです。' }
-          format.json { render json: { success: false, error: 'この認証器は既に登録済みです。' } }
+          format.html { redirect_to new_user_passkey_path, alert: error_message }
+          format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
         return
       end
 
-      passkey = current_user.passkeys.build(passkey_attributes)
+      credential_data = params[:credential]
+      if credential_data.blank?
+        error_message = "認証データが提供されていません"
+        Rails.logger.error "Credential data is blank"
 
-      Rails.logger.info "Passkey built successfully"
-      Rails.logger.info "Passkey valid?: #{passkey.valid?}"
-
-      if !passkey.valid?
-        Rails.logger.error "Passkey validation errors: #{passkey.errors.full_messages}"
-        Rails.logger.info "Passkey errors details: #{passkey.errors.details}"
+        respond_to do |format|
+          format.html { redirect_to new_user_passkey_path, alert: error_message }
+          format.json { render json: { error: error_message }, status: :unprocessable_entity }
+        end
+        return
       end
 
-      Rails.logger.info "Attempting to save passkey..."
+      # WebAuthn認証情報を検証
+      webauthn_credential = WebAuthn::Credential.from_create({
+                                                               "type" => credential_data[:type],
+                                                               "id" => credential_data[:id],
+                                                               "rawId" => credential_data[:rawId],
+                                                               "response" => {
+                                                                 "clientDataJSON" => credential_data[:response][:clientDataJSON],
+                                                                 "attestationObject" => credential_data[:response][:attestationObject]
+                                                               }
+                                                             })
 
-      if passkey.save
-        Rails.logger.info "Passkey saved successfully: #{passkey.id}"
-        Rails.logger.info "User passkeys count after save: #{current_user.passkeys.count}"
+      webauthn_credential.verify(stored_challenge.to_s)
+
+      # データベースに保存
+      label = params[:label].presence || "パスキー"
+      new_passkey = current_user.passkeys.build(
+        identifier: webauthn_credential.id,
+        public_key: webauthn_credential.public_key,
+        label: label,
+        sign_count: webauthn_credential.sign_count
+      )
+
+      if new_passkey.save
+        session.delete(:passkey_creation_challenge)
 
         respond_to do |format|
-          format.html { redirect_to user_passkeys_index_path, notice: 'パスキーが正常に登録されました。' }
-          format.json { render json: { success: true, redirect_url: user_passkeys_index_path } }
+          format.html { redirect_to user_passkeys_path, notice: "パスキー認証が正常に登録されました" }
+          format.json {
+            render json: {
+              success: true,
+              redirect_url: user_passkeys_path,
+              message: "パスキー認証が正常に登録されました"
+            }
+          }
         end
       else
-        Rails.logger.error "Passkey save failed: #{passkey.errors.full_messages}"
-        Rails.logger.error "Passkey save failed details: #{passkey.errors.details}"
+        error_message = "パスキー認証の保存に失敗しました: #{new_passkey.errors.full_messages.join(', ')}"
 
         respond_to do |format|
-          format.html { redirect_to new_user_passkey_path, alert: "パスキーの登録に失敗しました: #{passkey.errors.full_messages.join(', ')}" }
-          format.json { render json: { success: false, error: "パスキーの登録に失敗しました: #{passkey.errors.full_messages.join(', ')}" } }
+          format.html { redirect_to new_user_passkey_path, alert: error_message }
+          format.json { render json: { error: error_message }, status: :unprocessable_entity }
         end
       end
 
     rescue WebAuthn::Error => e
-      Rails.logger.error "WebAuthn verification failed: #{e.class} - #{e.message}"
-      Rails.logger.error "Challenge verification skipped - proceeding with passkey creation"
-      # エラーを無視してパスキー作成を続行
-      retry_without_verification = true
-    rescue JSON::ParserError => e
-      Rails.logger.error "JSON parsing failed: #{e.message}"
+      Rails.logger.error "Passkey registration failed: #{e.message}"
+      error_message = "パスキー認証の登録に失敗しました: #{e.message}"
+
       respond_to do |format|
-        format.html { redirect_to new_user_passkey_path, alert: 'パラメータの解析に失敗しました。' }
-        format.json { render json: { success: false, error: 'パラメータの解析に失敗しました。' } }
-      end
-    rescue StandardError => e
-      Rails.logger.error "Unexpected error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      respond_to do |format|
-        format.html { redirect_to new_user_passkey_path, alert: '予期しないエラーが発生しました。' }
-        format.json { render json: { success: false, error: '予期しないエラーが発生しました。' } }
+        format.html { redirect_to new_user_passkey_path, alert: error_message }
+        format.json { render json: { error: error_message }, status: :unprocessable_entity }
       end
     end
   end
 
   def destroy
-    @passkey = current_user.passkeys.find(params[:id])
-
     if @passkey.destroy
-      redirect_to user_passkeys_index_path, notice: 'パスキーが削除されました。'
+      Rails.logger.info "Passkey deleted: #{@passkey.id}"
+      redirect_to user_passkeys_path, notice: "パスキー認証が削除されました"
     else
-      redirect_to user_passkeys_index_path, alert: 'パスキーの削除に失敗しました。'
+      Rails.logger.error "Failed to delete Passkey: #{@passkey.errors.full_messages}"
+      redirect_to user_passkeys_path, alert: "パスキー認証の削除に失敗しました"
     end
   end
 
   private
 
-  def set_user
-    @user = current_user
+  def authenticate_scope!
+    send(:"authenticate_#{resource_name}!", force: true)
+    self.resource = send(:"current_#{resource_name}")
   end
 
-  def generate_challenge
-    SecureRandom.urlsafe_base64(32)
-  end
-
-  def registration_options
-    {
-      publicKey: {
-        challenge: Base64.urlsafe_encode64(session[:passkey_challenge], padding: false),
-        rp: {
-          name: "BrightTalk", # WebAuthn.configuration.rp_name の代わり
-          id: "localhost"     # WebAuthn.configuration.rp_id の代わり
-        },
-        user: {
-          id: Base64.urlsafe_encode64(current_user.id.to_s, padding: false),
-          name: current_user.email,
-          displayName: current_user.name || current_user.email
-        },
-        pubKeyCredParams: [
-          { alg: -7, type: "public-key" },  # ES256
-          { alg: -257, type: "public-key" } # RS256
-        ],
-        authenticatorSelection: {
-          userVerification: "preferred",
-          requireResidentKey: false,
-          residentKey: "preferred"
-        },
-        timeout: 60000, # WebAuthn.configuration.credential_options_timeout の代わり
-        attestation: "none"
-      }
-    }
+  def set_passkey
+    @passkey = current_user.passkeys.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    Rails.logger.error "Passkey not found: #{params[:id]}"
+    redirect_to user_passkeys_path, alert: "パスキー認証が見つかりませんでした"
   end
 end

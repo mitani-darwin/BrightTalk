@@ -9,8 +9,9 @@ namespace :passkeys do
 
     WebauthnCredential.includes(:user).find_each do |credential|
       begin
-        # external_id の形式を正規化（Base64URL形式に統一）
-        normalized_identifier = normalize_identifier(credential.external_id)
+        # ✅ Passkeyモデルの正規化メソッドを使用
+        normalized_identifier = Passkey.normalize_identifier(credential.external_id)
+        Rails.logger.info "Normalizing identifier: #{credential.external_id} -> #{normalized_identifier}"
 
         # 既に移行済みかチェック
         if Passkey.exists?(identifier: normalized_identifier)
@@ -86,30 +87,4 @@ namespace :passkeys do
     end
   end
 
-  private
-
-  def normalize_identifier(external_id)
-    case external_id
-    when String
-      # すでに Base64URL 形式かチェック
-      if external_id.match?(/\A[A-Za-z0-9_-]+\z/) && !external_id.include?('=')
-        external_id
-      else
-        # 通常のBase64またはバイナリ文字列の場合は Base64URL に変換
-        begin
-          decoded = Base64.decode64(external_id)
-          Base64.urlsafe_encode64(decoded, padding: false)
-        rescue ArgumentError
-          # デコードできない場合はそのまま使用（すでにBase64URLの可能性）
-          external_id.tr('+/', '-_').gsub('=', '')
-        end
-      end
-    when Array
-      # 配列の場合はバイト配列としてpack
-      Base64.urlsafe_encode64(external_id.pack("C*"), padding: false)
-    else
-      # その他の形式は文字列化してからBase64URL化
-      Base64.urlsafe_encode64(external_id.to_s, padding: false)
-    end
-  end
 end

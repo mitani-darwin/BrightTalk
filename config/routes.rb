@@ -1,45 +1,36 @@
 Rails.application.routes.draw do
+  # Deviseルーティング
   devise_for :users, controllers: {
-    registrations: "users/registrations",
-    sessions: "sessions",
-    confirmations: "users/confirmations"
+    registrations: 'users/registrations',
+    confirmations: 'users/confirmations'
   }
 
-  devise_scope :user do
-    get "users/registration/success", to: "users/registrations#success", as: "users_registration_success"
-    get "users/registration/pending", to: "users#registration_pending", as: "registration_pending_users"
+  root 'posts#index'
 
-    # ⭐ devise-passkeys の手動ルート定義
-    get '/users/passkeys/new', to: 'devise/passkeys#new', as: 'new_user_passkey'
-    post '/users/passkeys', to: 'devise/passkeys#create', as: 'user_passkeys'
-    get '/users/passkeys', to: 'devise/passkeys#index', as: 'user_passkeys_index'
-    delete '/users/passkeys/:id', to: 'devise/passkeys#destroy', as: 'destroy_user_passkey'
-  end
-
-  resources :categories, only: [:create, :index]
-  root "posts#index"
-
+  # 投稿関連のルート
   resources :posts do
-    member do
-      patch :publish
-    end
+    # 下書き機能を追加
     collection do
       get :drafts
     end
-    resources :comments, only: [ :create, :destroy ]
-    resources :likes, only: [ :create, :destroy ]
+
+    resources :comments, only: [:create, :destroy]
   end
 
   # ユーザー関連のルート
-  get "/users/:id", to: "users#show", as: "user"
-  get "/users/:id/posts", to: "posts#user_posts", as: "user_posts"
-  get "/account", to: "users#account", as: "user_account"
-  get "/account/edit", to: "users#edit_account", as: "edit_user_account"
-  patch "/account", to: "users#update_account"
-  get "/account/password/edit", to: "users#edit_password", as: "edit_account_password"
-  patch "/account/password", to: "users#update_password", as: "update_account_password"
+  resources :users, only: [:show] do
+    collection do
+      get :registration_pending
+    end
+    member do
+      get :account
+      get :edit_account
+      patch :update_account
+      get :edit_password
+      patch :update_password
+    end
+  end
 
-  # ヘルスチェック
   get "up" => "rails/health#show", as: :rails_health_check
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest

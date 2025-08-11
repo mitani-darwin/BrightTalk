@@ -12,23 +12,33 @@ gem "kamal", require: false
 gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
+# Railsのセキュリティ機能に必要
 gem "solid_cache"
 gem "solid_queue"
 gem "solid_cable"
+
+# パスワードハッシュ化のため
 gem "bcrypt", "~> 3.1.7"
+
+# ページネーション
 gem "kaminari"
+
+# Sassプリプロセッサ
 gem "dartsass-rails"
 
 gem "devise"
+# Deviseの日本語化
 gem "devise-i18n"
 
-# ⭐ devise-passkeys gem と webauthn gem
-gem "devise-passkeys", "~> 0.3.0"
-gem "webauthn", "~> 3.1"
-
+# 画像処理
 gem "mini_magick"
+
+# Active Storage バリデーション
 gem "active_storage_validations"
-gem 'grover'
+
+# PDF生成
+gem 'grover' # ChromeベースのPDF生成
+
 gem 'mail-ses'
 
 group :development, :test do
