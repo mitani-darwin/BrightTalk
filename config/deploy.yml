@@ -41,7 +41,7 @@ ssh:
   user: ec2-user
   keys_only: true
   keys:
-    - <%= ENV["SSH_KEY_PATH"] %>
+    - <%= ENV['SSH_KEY_PATH'] %>
 
     # Aliases for common commands
 aliases:
