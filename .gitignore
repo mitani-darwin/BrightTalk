@@ -63,8 +63,8 @@ terraform.tfstate.local.backup
 *.tmp
 
 # SSH秘密鍵（自動生成される）
-terraform/ssh-keys/*.pem
-terraform/ssh-keys/*.key
+terraform/ssh-keys/*-key
+terraform/ssh-keys/*.pub
 terraform/ssh-keys/id_*
 !ssh-keys/.keep
 !ssh-keys/README.md
@@ -106,3 +106,4 @@ yarn-error.log*
 *.pid
 *.seed
 *.pid.lock
+/config/credentials/development.key
