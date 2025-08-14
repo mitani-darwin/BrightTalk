@@ -9,7 +9,7 @@ image: darwin2008/bright_talk
 servers:
   web:
     hosts:
-      - 3.115.45.181
+      - 57.182.140.42
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
