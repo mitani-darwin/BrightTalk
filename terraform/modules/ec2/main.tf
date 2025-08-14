@@ -77,7 +77,7 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-arm64-gp2"]  # ARM64に変更
+    values = ["amzn2-ami-hvm-*-arm64-gp2"]
   }
 
   filter {
@@ -87,7 +87,55 @@ data "aws_ami" "amazon_linux" {
 
   filter {
     name   = "architecture"
-    values = ["arm64"]  # ARM64に変更
+    values = ["arm64"]
+  }
+}
+
+# SSM用のIAMロール
+resource "aws_iam_role" "ssm_role" {
+  name = "${var.project_name}-${var.environment}-ssm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-ssm-role"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# SSM管理ポリシーをアタッチ
+resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# CloudWatchログ送信用ポリシー（オプション）
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_server_policy" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# IAMインスタンスプロファイル
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "${var.project_name}-${var.environment}-ssm-profile"
+  role = aws_iam_role.ssm_role.name
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-ssm-profile"
+    Environment = var.environment
+    Project     = var.project_name
   }
 }
 
@@ -109,6 +157,7 @@ resource "aws_instance" "web_server" {
   key_name               = aws_key_pair.pc_key.key_name
   vpc_security_group_ids = var.security_group_ids
   subnet_id              = var.subnet_id
+  iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   user_data = templatefile("${path.module}/user_data.sh", {
     public_keys = [{

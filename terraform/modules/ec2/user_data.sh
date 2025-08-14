@@ -28,6 +28,11 @@ systemctl stop firewalld 2>/dev/null || true
 systemctl disable firewalld 2>/dev/null || true
 yum remove -y firewalld iptables-services 2>/dev/null || true
 
+# Install SSM Agent
+yum install -y amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
+
 # Install Docker
 yum install -y docker
 systemctl enable docker
