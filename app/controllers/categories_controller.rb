@@ -19,7 +19,7 @@ class CategoriesController < ApplicationController
         success: false,
         errors: @category.errors.full_messages,
         message: "カテゴリーの作成に失敗しました"
-      }, status: :unprocessable_entity
+      }, status: :unprocessable_content
     end
   end
 

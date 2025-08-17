@@ -35,7 +35,7 @@ class PostsController < ApplicationController
         redirect_to drafts_posts_path, notice: '下書きが保存されました。'
       end
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -50,7 +50,7 @@ class PostsController < ApplicationController
         redirect_to drafts_posts_path, notice: '下書きが更新されました。'
       end
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

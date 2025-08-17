@@ -5,4 +5,12 @@ Rails.application.routes.draw do
     registrations: 'users/registrations',
     confirmations: 'users/confirmations'
   }
+  
+  # パスキー登録ルーティング
+  resources :passkey_registrations, only: [:new, :create] do
+    collection do
+      post :register_passkey
+      post :verify_passkey
+    end
+  end
 end

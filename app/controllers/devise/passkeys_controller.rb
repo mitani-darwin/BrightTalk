@@ -56,7 +56,7 @@ class Devise::PasskeysController < DeviseController
 
         respond_to do |format|
           format.html { redirect_to new_user_passkey_path, alert: error_message }
-          format.json { render json: { error: error_message }, status: :unprocessable_entity }
+          format.json { render json: { error: error_message }, status: :unprocessable_content }
         end
         return
       end
@@ -68,7 +68,7 @@ class Devise::PasskeysController < DeviseController
 
         respond_to do |format|
           format.html { redirect_to new_user_passkey_path, alert: error_message }
-          format.json { render json: { error: error_message }, status: :unprocessable_entity }
+          format.json { render json: { error: error_message }, status: :unprocessable_content }
         end
         return
       end
@@ -113,7 +113,7 @@ class Devise::PasskeysController < DeviseController
 
         respond_to do |format|
           format.html { redirect_to new_user_passkey_path, alert: error_message }
-          format.json { render json: { error: error_message }, status: :unprocessable_entity }
+          format.json { render json: { error: error_message }, status: :unprocessable_content }
         end
       end
 
@@ -123,7 +123,7 @@ class Devise::PasskeysController < DeviseController
 
       respond_to do |format|
         format.html { redirect_to new_user_passkey_path, alert: error_message }
-        format.json { render json: { error: error_message }, status: :unprocessable_entity }
+        format.json { render json: { error: error_message }, status: :unprocessable_content }
       end
     end
   end
