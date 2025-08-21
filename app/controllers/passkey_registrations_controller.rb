@@ -194,7 +194,8 @@ class PasskeyRegistrationsController < ApplicationController
       # パスキー検証成功後にユーザーを作成（仮登録状態）
       User.transaction do
         # 一時パスワードを生成して設定（後で削除）
-        temp_password = "Temp#{SecureRandom.hex(8)}@#{rand(100..999)}"
+        chars = [*('A'..'Z'), *('a'..'z'), *('0'..'9'), *%w[! @ # $ % ^ & *]]
+        temp_password = Array.new(16) { chars.sample }.join
         
         @user = User.create!(
           name: @pending_user_data['name'],
