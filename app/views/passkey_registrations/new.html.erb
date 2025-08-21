@@ -225,28 +225,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // パスキー登録実行
-        const credential = await startPasskeyRegistration(challengeData.publicKey, 'メインパスキー');
+        const result = await startPasskeyRegistration(challengeData.publicKey, 'メインパスキー');
         
-        // 登録完了通知
-        const verifyResponse = await fetch('<%= verify_passkey_passkey_registrations_path %>', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            credential: credential,
-            nickname: 'メインパスキー'
-          })
-        });
-        
-        const verifyData = await verifyResponse.json();
-        
-        if (verifyResponse.ok && verifyData.success) {
-          this.showStep(3);
+        // startPasskeyRegistration が既に verify_passkey を呼び出しているので、結果を処理
+        if (result && result.success) {
+          // 仮登録完了の場合は確認メッセージを表示
+          if (result.show_confirmation_notice) {
+            this.showConfirmationNotice(result.message);
+          } else {
+            this.showStep(3);
+          }
         } else {
-          throw new Error(verifyData.error || '登録検証に失敗しました');
+          throw new Error(result?.error || '登録検証に失敗しました');
         }
         
       } catch (error) {
@@ -311,6 +301,57 @@ document.addEventListener('DOMContentLoaded', function() {
         statusDiv.classList.add('d-none');
         setupBtn.disabled = false;
       }
+    }
+
+    showConfirmationNotice(message) {
+      // すべてのステップを非表示
+      document.querySelectorAll('.step').forEach(step => {
+        step.classList.add('d-none');
+      });
+      
+      // プログレスバーを100%に
+      const progressBar = document.getElementById('progress-bar');
+      progressBar.style.width = '100%';
+      progressBar.setAttribute('aria-valuenow', '100');
+      
+      // ステップ3ラベルをアクティブに
+      document.querySelectorAll('[id^="step-"][id$="-label"]').forEach(label => {
+        label.classList.remove('fw-bold', 'text-primary');
+        label.classList.add('text-muted');
+      });
+      document.getElementById('step-3-label').classList.remove('text-muted');
+      document.getElementById('step-3-label').classList.add('fw-bold', 'text-primary');
+      
+      // 仮登録完了画面を表示
+      const completionStep = document.getElementById('completion-step');
+      completionStep.innerHTML = `
+        <div class="text-center">
+          <div class="mb-4">
+            <i class="fas fa-envelope-check fa-4x text-warning"></i>
+          </div>
+          <h5 class="text-warning">仮登録完了</h5>
+          <p class="text-muted">${message}</p>
+          
+          <div class="alert alert-info mt-4">
+            <i class="fas fa-info-circle me-2"></i>
+            メールが届かない場合は、迷惑メールフォルダもご確認ください。
+          </div>
+          
+          <div class="d-grid">
+            <button id="go-to-login" class="btn btn-primary btn-lg">
+              <i class="fas fa-sign-in-alt me-2"></i>ログイン画面へ
+            </button>
+          </div>
+        </div>
+      `;
+      completionStep.classList.remove('d-none');
+      
+      // ログインボタンのイベントリスナーを追加
+      document.getElementById('go-to-login').addEventListener('click', () => {
+        window.location.href = '/users/sign_in';
+      });
+      
+      this.showPasskeyStatus(false);
     }
   }
 

@@ -110,6 +110,15 @@ class Devise::PasskeySessionsController < DeviseController
         last_used_at: Time.current
       )
 
+      # ユーザーの確認状態をチェック
+      unless user.confirmed?
+        Rails.logger.info "User attempted sign-in but email not confirmed: #{user.email}"
+        render json: {
+          error: "メールアドレスが確認されていません。確認メールに記載されたリンクをクリックして、登録を完了してください。"
+        }, status: :unauthorized
+        return
+      end
+
       # 認証成功 - ユーザーをログイン
       sign_in(user)
       Rails.logger.info "User signed in successfully: #{user.email}"

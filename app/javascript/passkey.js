@@ -235,7 +235,12 @@ function startPasskeyRegistration(passkeyOptions, label) {
                 console.log('Registration response data:', data);
 
                 if (data.success) {
-                    window.location.href = data.redirect_url || '/';
+                    // 仮登録完了の場合はリダイレクトしない
+                    if (data.show_confirmation_notice) {
+                        return data;
+                    } else {
+                        window.location.href = data.redirect_url || '/';
+                    }
                 } else {
                     throw new Error(data.error || 'Passkey registration failed');
                 }

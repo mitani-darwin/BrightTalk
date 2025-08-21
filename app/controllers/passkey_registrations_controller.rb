@@ -183,7 +183,7 @@ class PasskeyRegistrationsController < ApplicationController
         return
       end
 
-      # パスキー検証成功後にユーザーを作成
+      # パスキー検証成功後にユーザーを作成（仮登録状態）
       User.transaction do
         # 一時パスワードを生成して設定（後で削除）
         temp_password = "Temp#{SecureRandom.hex(8)}@#{rand(100..999)}"
@@ -193,8 +193,8 @@ class PasskeyRegistrationsController < ApplicationController
           email: @pending_user_data['email'],
           password: temp_password
         )
-        
-        # パスキーを保存
+
+        # パスキーを保存（仮登録状態でも保存）
         passkey = @user.webauthn_credentials.create!(
           external_id: credential_params[:id],
           public_key: webauthn_credential.public_key,
@@ -203,11 +203,18 @@ class PasskeyRegistrationsController < ApplicationController
         )
         
         # 一時パスワードを削除してパスキー認証のみにする
-        @user.update!(encrypted_password: "")
+        @user.update_column(:encrypted_password, "")
+        Rails.logger.info "Password removed without notification email for passkey-only user: #{@user.email}"
       end
       
-      # ユーザーをログインさせる
-      sign_in(@user)
+      # 確認メールを送信（仮登録状態なので確認が必要）
+      begin
+        @user.send_confirmation_instructions
+        Rails.logger.info "Confirmation instructions sent to: #{@user.email}"
+      rescue => mail_error
+        Rails.logger.error "Failed to send confirmation instructions: #{mail_error.message}"
+        # メール送信失敗は登録処理を止めない
+      end
       
       # セッションをクリア
       session.delete(:passkey_registration_challenge)
@@ -217,8 +224,8 @@ class PasskeyRegistrationsController < ApplicationController
       
       render json: {
         success: true,
-        message: "パスキー認証の設定が完了しました。",
-        redirect_url: after_sign_up_path_for(@user)
+        message: "パスキーの登録が完了しました。メールアドレスに送信された確認メールのリンクをクリックして、登録を完了してください。",
+        show_confirmation_notice: true
       }
       
     rescue WebAuthn::Error => e

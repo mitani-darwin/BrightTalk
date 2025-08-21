@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【BrightTalk】パスキー認証での登録が完了しました</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333; background-color: #f8f9fa;">
+  
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    
+    <!-- ヘッダー -->
+    <div style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 30px 40px; text-align: center; border-radius: 8px 8px 0 0;">
+      <h1 style="margin: 0; font-size: 24px; font-weight: 300;">
+        <span style="font-weight: 600;">BrightTalk</span>
+      </h1>
+      <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">パスキー認証での登録が完了しました</p>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div style="padding: 40px;">
+      
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-block; background-color: #28a745; color: white; width: 60px; height: 60px; border-radius: 50%; line-height: 60px; font-size: 24px; margin-bottom: 15px;">
+          ✓
+        </div>
+        <h2 style="margin: 0; color: #28a745; font-size: 20px; font-weight: 600;">登録完了</h2>
+      </div>
+
+      <div style="background-color: #f8f9fa; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+        <p style="margin: 0 0 10px 0; font-size: 16px;"><strong><%= @user_name %> さん</strong></p>
+        <p style="margin: 0; color: #666;">BrightTalkへのご登録、ありがとうございます！</p>
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <h3 style="color: #007bff; font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #007bff; padding-bottom: 5px;">
+          <span style="margin-right: 8px;">🔐</span>パスキー認証について
+        </h3>
+        <ul style="padding-left: 20px; color: #555;">
+          <li style="margin-bottom: 8px;"><strong>高いセキュリティ</strong>：生体認証やセキュリティキーによる安全な認証</li>
+          <li style="margin-bottom: 8px;"><strong>パスワード不要</strong>：パスワードを覚える必要がありません</li>
+          <li style="margin-bottom: 8px;"><strong>快適な体験</strong>：指紋や顔認証で素早くログイン</li>
+        </ul>
+      </div>
+
+      <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 25px;">
+        <p style="margin: 0; color: #1976d2; font-size: 14px;">
+          <strong>重要：</strong>パスキー認証が設定されているため、パスワードでのログインはできません。
+          ログイン時は登録したデバイスでの生体認証をご利用ください。
+        </p>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 30px;">
+        <a href="<%= root_url %>" 
+           style="display: inline-block; background-color: #007bff; color: white; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-weight: 600; transition: background-color 0.3s;">
+          BrightTalkを始める
+        </a>
+      </div>
+
+      <div style="border-top: 1px solid #dee2e6; padding-top: 20px;">
+        <h3 style="color: #007bff; font-size: 16px; margin-bottom: 15px;">
+          <span style="margin-right: 8px;">🎉</span>これからできること
+        </h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+          <div style="flex: 1; min-width: 200px; background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+            <h4 style="margin: 0 0 8px 0; color: #495057; font-size: 14px;">💬 投稿・コメント</h4>
+            <p style="margin: 0; font-size: 12px; color: #6c757d;">アイデアや情報を共有しましょう</p>
+          </div>
+          <div style="flex: 1; min-width: 200px; background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+            <h4 style="margin: 0 0 8px 0; color: #495057; font-size: 14px;">👍 いいね・交流</h4>
+            <p style="margin: 0; font-size: 12px; color: #6c757d;">他のユーザーと交流できます</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- フッター -->
+    <div style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #dee2e6;">
+      <p style="margin: 0 0 10px 0; font-size: 12px; color: #6c757d;">
+        このメールは自動送信されています。返信はできません。
+      </p>
+      <p style="margin: 0; font-size: 12px; color: #6c757d;">
+        © <%= Date.current.year %> BrightTalk. All rights reserved.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
