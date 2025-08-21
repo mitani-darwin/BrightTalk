@@ -25,7 +25,7 @@ class ApplicationController < ActionController::Base
   # 公開アクセスを許可するかどうかの判定 - Passkeyに更新
   def public_access_allowed?
     # ログインページ、新規登録ページ、Passkey関連ページ
-    controller_name.in?([ "passkey_authentications", "passkeys", "sessions" ]) ||
+    controller_name.in?([ "passkey_authentications", "passkeys", "sessions", "passkey_registrations" ]) ||
       # ユーザー関連のnew, create, registration_pendingアクション
       (controller_name == "users" && action_name.in?([ "new", "create", "registration_pending" ])) ||
       # 投稿の一覧・詳細は公開

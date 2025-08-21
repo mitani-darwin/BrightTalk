@@ -212,7 +212,7 @@ function startPasskeyRegistration(passkeyOptions, label) {
         }
         const csrfToken = csrfTokenElement.getAttribute('content');
 
-        return fetch('/passkeys', {
+        return fetch('/passkey_registrations/verify_passkey', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -235,7 +235,12 @@ function startPasskeyRegistration(passkeyOptions, label) {
                 console.log('Registration response data:', data);
 
                 if (data.success) {
-                    window.location.href = data.redirect_url || '/passkeys';
+                    // 仮登録完了の場合はリダイレクトしない
+                    if (data.show_confirmation_notice) {
+                        return data;
+                    } else {
+                        window.location.href = data.redirect_url || '/';
+                    }
                 } else {
                     throw new Error(data.error || 'Passkey registration failed');
                 }
@@ -244,7 +249,7 @@ function startPasskeyRegistration(passkeyOptions, label) {
             if (response.ok) {
                 return response.text().then(html => {
                     console.log('HTML response received:', html.substring(0, 200) + '...');
-                    window.location.href = '/passkeys';
+                    window.location.href = '/';
                 });
             } else {
                 throw new Error(`HTTP error! status: ${response.status}`);

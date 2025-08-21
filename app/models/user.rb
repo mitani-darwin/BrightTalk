@@ -1,11 +1,15 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable
 
   has_many :posts, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :liked_posts, through: :likes, source: :post
+  
+  # WebAuthn/Passkey認証
+  has_many :webauthn_credentials, dependent: :destroy
+  alias_method :passkeys, :webauthn_credentials
 
   has_one_attached :avatar
 
@@ -27,6 +31,19 @@ class User < ApplicationRecord
     else
       nil
     end
+  end
+  
+  # Passkey関連メソッド
+  def has_passkeys?
+    webauthn_credentials.exists?
+  end
+  
+  def active_passkeys
+    webauthn_credentials.active
+  end
+  
+  def passkey_count
+    webauthn_credentials.count
   end
 
   private
@@ -90,6 +107,9 @@ class User < ApplicationRecord
   end
 
   def password_required?
+    # パスキー登録フロー中はパスワード複雑性バリデーションをスキップ
+    return false if persisted? && has_passkeys?
+    
     !persisted? || !password.nil? || !password_confirmation.nil?
   end
 end

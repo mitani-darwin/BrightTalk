@@ -20,7 +20,7 @@ class UsersController < ApplicationController
       # 仮登録完了ページにリダイレクト
       redirect_to registration_pending_users_path
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -58,7 +58,7 @@ class UsersController < ApplicationController
     if @user.update(account_params)
       redirect_to user_account_path, notice: "アカウント情報を更新しました。"
     else
-      render :edit_account, status: :unprocessable_entity
+      render :edit_account, status: :unprocessable_content
     end
   end
 
@@ -124,11 +124,11 @@ class UsersController < ApplicationController
 
       redirect_to user_account_path
     rescue ActiveRecord::RecordInvalid => e
-      render :edit_password, status: :unprocessable_entity
+      render :edit_password, status: :unprocessable_content
     rescue => e
       Rails.logger.error "Password update failed: #{e.message}"
       @user.errors.add(:base, "更新に失敗しました。")
-      render :edit_password, status: :unprocessable_entity
+      render :edit_password, status: :unprocessable_content
     end
   end
 

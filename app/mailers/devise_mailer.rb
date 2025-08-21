@@ -54,4 +54,28 @@ class DeviseMailer < Devise::Mailer
       format.text { render 'reset_password_instructions' }
     end
   end
+
+  def passkey_registration_completed(record, opts={})
+    @resource = record
+    @email = record.email
+    @user_name = record.name || record.email.split('@').first
+
+    headers = {
+      'X-MC-Subaccount' => 'user-registration',
+      'X-MC-Metadata' => {
+        'user_id' => record.id,
+        'email_type' => 'passkey_registration_completed',
+        'created_at' => Time.current.iso8601
+      }.to_json
+    }
+
+    mail(
+      to: record.email,
+      subject: '【BrightTalk】パスキー認証での登録が完了しました',
+      headers: headers
+    ) do |format|
+      format.html { render 'passkey_registration_completed' }
+      format.text { render 'passkey_registration_completed' }
+    end
+  end
 end

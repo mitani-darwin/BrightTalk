@@ -1,0 +1,10 @@
+<% if errors.present? %>
+  <div class="alert alert-danger" role="alert">
+    <h6><i class="fas fa-exclamation-triangle me-2"></i>入力エラーがあります</h6>
+    <ul class="mb-0">
+      <% errors.each do |error| %>
+        <li><%= error %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
