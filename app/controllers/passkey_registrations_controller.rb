@@ -4,6 +4,14 @@ class PasskeyRegistrationsController < ApplicationController
 
   def new
     @user = User.new
+
+    # CSRFトークンが確実に生成されるよう明示的に設定
+    request.session_options[:skip] = false
+
+    # developmentまたはtest環境でのデバッグ情報
+    if Rails.env.development? || Rails.env.test?
+      Rails.logger.debug "CSRF token generated: #{form_authenticity_token.present?}"
+    end
   end
 
   def create
@@ -21,7 +29,7 @@ class PasskeyRegistrationsController < ApplicationController
         format.json {
           render json: {
             success: true,
-            message: "基本情報を確認しました。パスキーを設定してください。1"
+            message: "基本情報を確認しました。パスキーを設定してください。"
           }
         }
         format.html {
