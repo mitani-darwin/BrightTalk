@@ -18,12 +18,18 @@ class PasskeyRegistrationsController < ApplicationController
       }
 
       respond_to do |format|
-        format.html { redirect_to new_passkey_registration_path }
-        format.json { 
+        format.json {
           render json: {
             success: true,
-            message: "基本情報を確認しました。パスキーを設定してください。"
+            message: "基本情報を確認しました。パスキーを設定してください。1"
           }
+        }
+        format.html {
+          # HTMLで来た場合はJSON本文を返さずリダイレクト（生JSONが表示されるのを防止）
+          redirect_to new_passkey_registration_path, notice: "基本情報を確認しました。パスキーを設定してください。"
+        }
+        format.any {
+          head :ok
         }
       end
     else
@@ -92,23 +98,91 @@ class PasskeyRegistrationsController < ApplicationController
         render json: { error: "登録セッションが無効です。最初からやり直してください。" }, status: :bad_request
         return
       end
-      
+
+      # 修正後
       credential_params = params.require(:credential)
-      
-      # WebAuthn認証情報を構築
-      webauthn_credential = WebAuthn::Credential.from_create({
-        id: credential_params[:id],
-        rawId: credential_params[:rawId],
-        type: credential_params[:type],
-        response: {
-          clientDataJSON: credential_params[:response][:clientDataJSON],
-          attestationObject: credential_params[:response][:attestationObject]
-        }
-      })
-      
-      # パスキー登録を検証
-      webauthn_credential.verify(challenge)
-      
+
+      # パラメータの検証とログ出力
+      Rails.logger.debug "Credential params: #{credential_params.inspect}"
+
+      # 必須パラメータのnilチェック
+      if credential_params[:id].blank?
+        render json: { error: "認証ID が不足しています" }, status: :bad_request
+        return
+      end
+
+      if credential_params[:rawId].blank?
+        render json: { error: "認証rawID が不足しています" }, status: :bad_request
+        return
+      end
+
+      response_params = credential_params[:response]
+      if response_params.blank?
+        render json: { error: "認証レスポンスが不足しています" }, status: :bad_request
+        return
+      end
+
+      # より詳細なパラメータ検証とログ
+      Rails.logger.debug "clientDataJSON: #{response_params[:clientDataJSON]&.class} - #{response_params[:clientDataJSON]&.length} chars"
+      Rails.logger.debug "attestationObject: #{response_params[:attestationObject]&.class} - #{response_params[:attestationObject]&.length} chars"
+
+      if response_params[:clientDataJSON].blank?
+        Rails.logger.error "clientDataJSON is blank or nil"
+        render json: { error: "clientDataJSON が不足しています" }, status: :bad_request
+        return
+      end
+
+      if response_params[:attestationObject].blank?
+        render json: { error: "attestationObject が不足しています" }, status: :bad_request
+        return
+      end
+
+      Rails.logger.debug "All required parameters present, creating WebAuthn credential"
+
+      # WebAuthn認証情報を構築（文字列形式で明示的に指定＆詳細エラーハンドリング）
+      begin
+          credential_data = {
+            "type" => credential_params[:type].to_s.presence || "public-key",
+            "id" => credential_params[:id].to_s,
+            "rawId" => credential_params[:rawId].to_s,
+            "response" => {
+              "clientDataJSON" => response_params[:clientDataJSON].to_s,
+              "attestationObject" => response_params[:attestationObject].to_s
+            }
+          }
+
+          Rails.logger.debug "Credential data for WebAuthn: #{credential_data.inspect}"
+
+          webauthn_credential = WebAuthn::Credential.from_create(credential_data)
+          Rails.logger.debug "WebAuthn credential created successfully"
+
+      rescue => creation_error
+        Rails.logger.error "WebAuthn credential creation failed: #{creation_error.class}: #{creation_error.message}"
+        Rails.logger.error "Creation error backtrace: #{creation_error.backtrace.first(5).join(', ')}"
+        render json: { error: "認証データの処理に失敗しました: #{creation_error.message}" }, status: :bad_request
+        return
+      end
+
+      # パスキー登録を検証（詳細なエラーハンドリング付き）
+      begin
+        Rails.logger.debug "Starting WebAuthn verification with challenge: #{challenge.present? ? 'present' : 'nil'}"
+        webauthn_credential.verify(challenge)
+        Rails.logger.debug "WebAuthn verification successful"
+      rescue WebAuthn::OriginVerificationError => e
+        Rails.logger.error "Origin verification failed: #{e.message}"
+        render json: { error: "認証元の検証に失敗しました" }, status: :unauthorized
+        return
+      rescue WebAuthn::ChallengeVerificationError => e
+        Rails.logger.error "Challenge verification failed: #{e.message}"
+        render json: { error: "認証チャレンジの検証に失敗しました" }, status: :unauthorized
+        return
+      rescue => verification_error
+        Rails.logger.error "WebAuthn verification error: #{verification_error.class}: #{verification_error.message}"
+        Rails.logger.error "Verification error backtrace: #{verification_error.backtrace.first(10).join(', ')}"
+        render json: { error: "パスキー検証に失敗しました: #{verification_error.message}" }, status: :unauthorized
+        return
+      end
+
       # パスキー検証成功後にユーザーを作成
       User.transaction do
         # 一時パスワードを生成して設定（後で削除）

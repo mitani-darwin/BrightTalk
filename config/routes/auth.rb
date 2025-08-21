@@ -13,4 +13,10 @@ Rails.application.routes.draw do
       post :verify_passkey
     end
   end
+
+  # POST /passkeys を受けるルート（エラー解消のため）
+  devise_scope :user do
+    post '/passkeys', to: 'devise/passkeys#create'
+  end
+
 end

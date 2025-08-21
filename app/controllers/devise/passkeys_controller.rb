@@ -1,5 +1,5 @@
 class Devise::PasskeysController < DeviseController
-  prepend_before_action :authenticate_scope!, only: [:new, :create, :destroy]
+  prepend_before_action :authenticate_user!, only: [:new, :create, :destroy]
   before_action :set_passkey, only: [:destroy]
 
   def new

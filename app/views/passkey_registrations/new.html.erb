@@ -33,7 +33,7 @@
               <p class="text-muted">アカウント作成に必要な基本情報を入力してください。</p>
             </div>
 
-            <%= form_with model: @user, url: passkey_registrations_path, id: 'basic-info-form', class: 'needs-validation', novalidate: true do |f| %>
+            <%= form_with model: @user, url: passkey_registrations_path, id: 'basic-info-form', class: 'needs-validation', novalidate: true, data: { turbo: false } do |f| %>
               <div id="error-messages" class="alert alert-danger d-none" role="alert"></div>
 
               <div class="mb-3">
@@ -148,9 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initializeEventListeners() {
-      console.log('Register passkey path: <%= register_passkey_passkey_registrations_path %>');
       const basicInfoForm = document.getElementById('basic-info-form');
-      const nextToPasskeyBtn = document.getElementById('next-to-passkey');
+      const setupPasskeyBtn = document.getElementById('setup-passkey-btn');
       const backToBasicBtn = document.getElementById('back-to-basic');
       const goToHomeBtn = document.getElementById('go-to-home');
 
@@ -158,8 +157,8 @@ document.addEventListener('DOMContentLoaded', function() {
         basicInfoForm.addEventListener('submit', (e) => this.handleBasicInfoSubmission(e));
       }
       
-      if (nextToPasskeyBtn) {
-          nextToPasskeyBtn.addEventListener('click', () => this.setupPasskey());
+      if (setupPasskeyBtn) {
+        setupPasskeyBtn.addEventListener('click', () => this.setupPasskey());
       }
       
       if (backToBasicBtn) {
@@ -206,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    async nextToPasskeyBtn() {
+    async setupPasskey() {
       try {
         this.showPasskeyStatus(true);
         
