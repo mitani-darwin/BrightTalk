@@ -14,6 +14,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # パスキー認証ルーティング
+  resources :passkey_authentications, only: [:new, :create] do
+    collection do
+      post :auth_options
+    end
+  end
+
   # POST /passkeys を受けるルート（エラー解消のため）
   devise_scope :user do
     post '/passkeys', to: 'devise/passkeys#create'
