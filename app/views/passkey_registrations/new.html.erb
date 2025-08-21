@@ -85,11 +85,6 @@
               <p class="text-muted">お使いのデバイスの生体認証機能を使用します</p>
             </div>
 
-            <div class="alert alert-warning">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              <strong>重要:</strong> パスキー設定後はパスワードでのログインはできなくなります。
-            </div>
-
             <div class="d-grid gap-2">
               <button id="setup-passkey-btn" class="btn btn-success btn-lg">
                 <i class="fas fa-fingerprint me-2"></i>パスキーを設定
@@ -183,13 +178,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
       try {
         const formData = new FormData(form);
+        const userData = {
+            user: {
+                name: formData.get('user[name]'),
+                email: formData.get('user[email]')
+            }
+        };
         const response = await fetch('<%= passkey_registrations_path %>', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
-            'Accept': 'application/json'
-          }
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(userData)
         });
         
         const data = await response.json();
