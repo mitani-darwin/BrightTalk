@@ -1,0 +1,227 @@
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title text-center mb-0">
+          <i class="fas fa-fingerprint me-2"></i>ログイン
+        </h3>
+      </div>
+      <div class="card-body">
+        <!-- パスキー認証エリア -->
+        <div id="passkey-auth-area">
+          <!-- エラーメッセージの表示 -->
+          <% if resource.errors.any? %>
+            <div class="alert alert-danger" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>エラーが発生しました</strong>
+              <ul class="mb-0 mt-2">
+                <% resource.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <!-- メールアドレス入力 -->
+          <div class="mb-3">
+            <label for="email" class="form-label">メールアドレス</label>
+            <input type="email" id="email" class="form-control" required autofocus autocomplete="email">
+            <div class="invalid-feedback">
+              メールアドレスを入力してください
+            </div>
+          </div>
+          
+          <!-- パスキー認証ボタン -->
+          <div class="d-grid gap-2 mb-3">
+            <button type="button" id="passkey-login-btn" class="btn btn-primary btn-lg">
+              <i class="fas fa-fingerprint me-2"></i>パスキーでログイン
+            </button>
+          </div>
+          
+        <!-- パスワード認証エリア（初期は非表示） -->
+        <div id="password-auth-area" style="display: none;">
+          <%= form_for(resource, as: resource_name, url: session_path(resource_name), local: true, html: { class: "needs-validation", novalidate: true }) do |f| %>
+            <!-- エラーメッセージの表示 -->
+            <% if resource.errors.any? %>
+              <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>エラーが発生しました</strong>
+                <ul class="mb-0 mt-2">
+                  <% resource.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <!-- メールアドレス入力 -->
+            <div class="mb-3">
+              <%= f.label :email, "メールアドレス", class: "form-label" %>
+              <%= f.email_field :email, autocomplete: "email", class: "form-control", required: true %>
+            </div>
+
+            <!-- パスワード入力 -->
+            <div class="mb-3">
+              <%= f.label :password, "パスワード", class: "form-label" %>
+              <%= f.password_field :password, autocomplete: "current-password", class: "form-control", required: true %>
+            </div>
+
+            <!-- ログイン状態を保持するチェックボックス -->
+            <% if devise_mapping.rememberable? %>
+              <div class="mb-3 form-check">
+                <%= f.check_box :remember_me, class: "form-check-input" %>
+                <%= f.label :remember_me, "ログイン状態を保持する", class: "form-check-label" %>
+              </div>
+            <% end %>
+
+            <!-- ログインボタン -->
+            <div class="d-grid gap-2 mb-3">
+              <%= f.submit "ログイン", class: "btn btn-secondary btn-lg" %>
+            </div>
+            
+            <!-- パスキー認証に戻る -->
+            <div class="text-center mb-3">
+              <button type="button" id="switch-to-passkey" class="btn btn-link text-decoration-none">
+                <i class="fas fa-fingerprint me-2"></i>パスキーでログイン
+              </button>
+            </div>
+
+            <!-- 追加リンク -->
+            <div class="text-center">
+              <%= render "devise/shared/links" %>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- ステータス表示 -->
+        <div id="status-message" class="alert" style="display: none;" role="alert"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- パスキー認証と Bootstrap 5 フォームバリデーション用のJavaScript -->
+<%= javascript_include_tag "passkey" %>
+<script>
+// パスキー認証用JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  const emailInput = document.getElementById('email');
+  const passkeyAuthArea = document.getElementById('passkey-auth-area');
+  const passwordAuthArea = document.getElementById('password-auth-area');
+  const passkeyLoginBtn = document.getElementById('passkey-login-btn');
+  const switchToPassword = document.getElementById('switch-to-password');
+  const switchToPasskey = document.getElementById('switch-to-passkey');
+  const statusMessage = document.getElementById('status-message');
+
+  // ステータスメッセージ表示
+  function showStatus(message, type = 'info') {
+    statusMessage.textContent = message;
+    statusMessage.className = `alert alert-${type}`;
+    statusMessage.style.display = 'block';
+    
+    if (type === 'success') {
+      setTimeout(() => {
+        statusMessage.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  // パスキー認証実行
+  async function performPasskeyAuth() {
+    const email = emailInput.value.trim();
+    if (!email) {
+      showStatus('メールアドレスを入力してください', 'danger');
+      return;
+    }
+
+    try {
+      showStatus('パスキー認証を開始しています...', 'info');
+      passkeyLoginBtn.disabled = true;
+
+      // サーバーからパスキー認証オプションを取得
+      const response = await fetch('/passkey_authentications/auth_options', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ email: email })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '認証オプションの取得に失敗しました');
+      }
+
+      const authData = await response.json();
+      
+      if (!authData.passkey_options) {
+        throw new Error('このメールアドレスにはパスキーが登録されていません');
+      }
+
+      // パスキー認証実行
+      await startPasskeyAuthentication(authData.passkey_options);
+
+    } catch (error) {
+      console.error('Passkey authentication failed:', error);
+      showStatus(`パスキー認証に失敗しました: ${error.message}`, 'danger');
+      
+      // パスキー認証失敗時は自動的にパスワード認証に切り替え
+      setTimeout(() => {
+        switchToPasswordAuth();
+        showStatus('パスワードでログインしてください', 'warning');
+      }, 2000);
+    } finally {
+      passkeyLoginBtn.disabled = false;
+    }
+  }
+
+  // パスワード認証に切り替え
+  function switchToPasswordAuth() {
+    passkeyAuthArea.style.display = 'none';
+    passwordAuthArea.style.display = 'block';
+    // メールアドレスをコピー
+    const passwordEmailInput = passwordAuthArea.querySelector('input[type="email"]');
+    if (passwordEmailInput) {
+      passwordEmailInput.value = emailInput.value;
+    }
+  }
+
+  // パスキー認証に切り替え
+  function switchToPasskeyAuth() {
+    passwordAuthArea.style.display = 'none';
+    passkeyAuthArea.style.display = 'block';
+    statusMessage.style.display = 'none';
+  }
+
+  // イベントリスナー
+  passkeyLoginBtn.addEventListener('click', performPasskeyAuth);
+  switchToPassword.addEventListener('click', switchToPasswordAuth);
+  switchToPasskey.addEventListener('click', switchToPasskeyAuth);
+
+  // Enterキーでパスキー認証実行
+  emailInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performPasskeyAuth();
+    }
+  });
+
+  // Bootstrap 5 フォームバリデーション
+  (function() {
+    'use strict';
+    window.addEventListener('load', function() {
+      var forms = document.getElementsByClassName('needs-validation');
+      var validation = Array.prototype.filter.call(forms, function(form) {
+        form.addEventListener('submit', function(event) {
+          if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    }, false);
+  })();
+});
+</script>
