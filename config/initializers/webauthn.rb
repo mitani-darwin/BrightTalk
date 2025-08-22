@@ -30,8 +30,6 @@ WebAuthn.configure do |config|
   # 受け入れ可能な認証タイプ（修正済み）
   config.acceptable_attestation_types = ["none", "self", "indirect", "direct"]
 
-  # 証明書検証を開発環境では無効化（追加）
-  if Rails.env.development?
-    config.verify_attestation_statement = false
-  end
+  # 証明書検証を無効化（追加）
+  config.verify_attestation_statement = false
 end
