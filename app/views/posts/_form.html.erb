@@ -16,6 +16,49 @@
       <div class="row" id="formContainer">
         <!-- サイドバー（左側） -->
         <div class="col-md-4" style="height: 100%; overflow-y: auto;">
+          <!-- 投稿の目的と構造 -->
+          <div class="mb-3">
+            <%= form.label :post_type, "投稿タイプ", class: "form-label" %>
+            <%= form.select :post_type, options_for_select([
+              ['知識共有', 'knowledge_sharing'],
+              ['質問・相談', 'question'], 
+              ['議論・討論', 'discussion'],
+              ['チュートリアル・手順', 'tutorial'],
+              ['体験談・事例', 'experience_sharing'],
+              ['ニュース・更新情報', 'news_update'],
+              ['意見・考察', 'opinion']
+            ], post.post_type), { prompt: "投稿タイプを選択してください" }, { class: "form-select", required: true } %>
+            <div class="form-text">この投稿の主な目的を選択してください。</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :purpose, "投稿の目的", class: "form-label" %>
+            <%= form.text_area :purpose, class: "form-control", rows: 2, required: true,
+                               placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
+            <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :target_audience, "対象読者", class: "form-label" %>
+            <%= form.text_field :target_audience, class: "form-control", required: true,
+                                placeholder: "例: プログラミング初心者、Rails学習者" %>
+            <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :key_points, "要点・ポイント", class: "form-label" %>
+            <%= form.text_area :key_points, class: "form-control", rows: 3,
+                               placeholder: "例: 1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法" %>
+            <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :expected_outcome, "期待する成果", class: "form-label" %>
+            <%= form.text_area :expected_outcome, class: "form-control", rows: 2,
+                               placeholder: "例: 読者がRailsの基本的な開発環境を構築できるようになる" %>
+            <div class="form-text">この投稿を読んだ後、読者にどうなってほしいかを記入してください。</div>
+          </div>
+
           <!-- カテゴリー選択と新規追加 -->
           <div class="mb-3">
             <%= form.label :category_id, "カテゴリー", class: "form-label" %>
