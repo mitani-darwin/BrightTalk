@@ -8,7 +8,7 @@
 /.bundle
 
 # Ignore all default key files.
-/config/master.key
+#/config/master.key
 /config/credentials/*.key
 
 # Ignore all logfiles and tempfiles.
