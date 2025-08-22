@@ -34,8 +34,8 @@
                 <h6 class="card-title">新しい投稿タイプを追加</h6>
                 <div class="mb-2">
                   <label for="newPostTypeName" class="form-label form-label-sm">投稿タイプ名</label>
-                  <input type="text" id="newPostTypeName" class="form-control form-control-sm"
-                         placeholder="投稿タイプ名" maxlength="50" required>
+                  <input type="text" id="newPostTypeName" name="newPostTypeName" class="form-control form-control-sm"
+                         placeholder="投稿タイプ名" maxlength="50">
                 </div>
                 <div class="mb-2">
                   <label for="newPostTypeDescription" class="form-label form-label-sm">説明（任意）</label>
@@ -112,8 +112,8 @@
                 </div>
                 <div class="mb-2">
                   <label for="newCategoryName" class="form-label form-label-sm">カテゴリー名</label>
-                  <input type="text" id="newCategoryName" class="form-control form-control-sm"
-                         placeholder="カテゴリー名" maxlength="50" required>
+                  <input type="text" id="newCategoryName" name="newCategoryName" class="form-control form-control-sm"
+                         placeholder="カテゴリー名" maxlength="50">
                 </div>
                 <div class="mb-2">
                   <label for="newCategoryDescription" class="form-label form-label-sm">説明（任意）</label>
@@ -268,6 +268,7 @@
 
                     if (!name) {
                         showError('カテゴリー名を入力してください。');
+                        newCategoryName.focus(); // フォーカスを設定
                         return;
                     }
 
@@ -429,6 +430,7 @@
 
                     if (!name) {
                         showPostTypeError('投稿タイプ名を入力してください。');
+                        newPostTypeName.focus(); // フォーカスを設定
                         return;
                     }
 
