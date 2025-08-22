@@ -7,13 +7,13 @@
           <h5 class="mb-0">アカウント設定</h5>
         </div>
         <div class="list-group list-group-flush">
-          <%= link_to user_account_path, class: "list-group-item list-group-item-action" do %>
+          <%= link_to account_user_path, class: "list-group-item list-group-item-action" do %>
             <i class="fas fa-user me-2"></i>プロフィール
           <% end %>
-          <%= link_to edit_user_account_path, class: "list-group-item list-group-item-action active" do %>
+          <%= link_to edit_account_user_path, class: "list-group-item list-group-item-action active" do %>
             <i class="fas fa-edit me-2"></i>アカウント編集
           <% end %>
-          <% unless current_user.has_passkey_credentials %>
+          <% unless current_user.has_passkeys? %>
             <%= link_to edit_account_password_path, class: "list-group-item list-group-item-action" do %>
               <i class="fas fa-key me-2"></i>パスワード変更
             <% end %>
@@ -32,7 +32,7 @@
           <h5 class="mb-0">アカウント情報の編集</h5>
         </div>
         <div class="card-body">
-          <%= form_with model: @user, url: user_account_path, method: :patch, local: true, html: { multipart: true } do |f| %>
+          <%= form_with model: @user, url: update_account_user_path, method: :patch, local: true, html: { multipart: true } do |f| %>
             <% if @user.errors.any? %>
               <div class="alert alert-danger" role="alert">
                 <h6><%= I18n.t("errors.messages.not_saved",
@@ -85,9 +85,20 @@
                   </div>
                 </div>
 
+                <div class="mb-3">
+                  <%= f.label :bio, "自己紹介", class: "form-label" %>
+                  <%= f.text_area :bio,
+                                  class: "form-control",
+                                  rows: 4,
+                                  placeholder: "自分について簡単に紹介してください..." %>
+                  <div class="form-text">
+                    趣味や興味、経歴など自由に記入してください（500文字以内推奨）
+                  </div>
+                </div>
+
                 <div class="d-flex gap-2">
                   <%= f.submit "変更を保存", class: "btn btn-primary" %>
-                  <%= link_to "キャンセル", user_account_path, class: "btn btn-secondary" %>
+                  <%= link_to "キャンセル", account_user_path, class: "btn btn-secondary" %>
                 </div>
               </div>
             </div>

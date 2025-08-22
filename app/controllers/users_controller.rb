@@ -40,10 +40,13 @@ class UsersController < ApplicationController
   def account
     @user = current_user
     @recent_posts = current_user.posts.recent.limit(5)
+    @passkeys = current_user.webauthn_credentials  # または current_user.passkeys
     @stats = {
-      posts_count: current_user.posts.count
+      posts_count: current_user.posts.count,
+      comments_count: current_user.comments.count,
+      likes_given: current_user.likes.count,
+      likes_received: Like.joins(:post).where(posts: { user: current_user }).count
     }
-
   end
 
   # アカウント編集画面
@@ -65,6 +68,17 @@ class UsersController < ApplicationController
   # パスワード変更画面
   def edit_password
     @user = current_user
+  end
+
+  # アカウント削除
+  def destroy_account
+    @user = current_user
+    
+    if @user.destroy
+      redirect_to root_path, notice: "アカウントを削除しました。ご利用ありがとうございました。"
+    else
+      redirect_to user_account_path, alert: "アカウントの削除に失敗しました。"
+    end
   end
 
   # パスワード更新 - Passkeyに更新
@@ -152,7 +166,7 @@ class UsersController < ApplicationController
   end
 
   def account_params
-    params.require(:user).permit(:name, :email, :avatar)
+    params.require(:user).permit(:name, :email, :avatar, :bio)
   end
 
   def password_params

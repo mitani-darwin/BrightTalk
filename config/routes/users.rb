@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       patch :update_account
       get :edit_password
       patch :update_password
+      delete :destroy_account
     end
   end
 end
