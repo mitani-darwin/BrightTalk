@@ -59,7 +59,7 @@ class UsersController < ApplicationController
     @user = current_user
 
     if @user.update(account_params)
-      redirect_to user_account_path, notice: "アカウント情報を更新しました。"
+      redirect_to account_user_path(current_user), notice: "アカウント情報を更新しました。"
     else
       render :edit_account, status: :unprocessable_content
     end
@@ -77,7 +77,7 @@ class UsersController < ApplicationController
     if @user.destroy
       redirect_to root_path, notice: "アカウントを削除しました。ご利用ありがとうございました。"
     else
-      redirect_to user_account_path, alert: "アカウントの削除に失敗しました。"
+      redirect_to account_user_path(current_user), alert: "アカウントの削除に失敗しました。"
     end
   end
 
@@ -136,7 +136,7 @@ class UsersController < ApplicationController
         flash[:notice] = "認証設定を更新しました。"
       end
 
-      redirect_to user_account_path
+      redirect_to account_user_path(current_user)
     rescue ActiveRecord::RecordInvalid => e
       render :edit_password, status: :unprocessable_content
     rescue => e
