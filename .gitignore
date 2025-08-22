@@ -107,3 +107,5 @@ yarn-error.log*
 *.seed
 *.pid.lock
 /config/credentials/development.key
+
+/config/credentials/production.key

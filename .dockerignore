@@ -8,8 +8,12 @@
 /.bundle
 
 # Ignore all default key files.
-/config/master.key
+# COMMENTED OUT to include master.key
+# /config/master.key
 /config/credentials/*.key
+
+# Explicitly include master.key
+!config/master.key
 
 # Ignore all logfiles and tempfiles.
 /log/*
