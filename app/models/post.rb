@@ -2,6 +2,7 @@
 class Post < ApplicationRecord
   belongs_to :user
   belongs_to :category, optional: true
+  belongs_to :post_type, optional: true
 
   has_many :post_tags, dependent: :destroy
   has_many :tags, through: :post_tags
@@ -22,16 +23,6 @@ class Post < ApplicationRecord
     published: 1   # 公開済み
   }
 
-  # 投稿タイプのenum定義
-  enum :post_type, {
-    knowledge_sharing: 0,    # 知識共有
-    question: 1,            # 質問・相談
-    discussion: 2,          # 議論・討論
-    tutorial: 3,            # チュートリアル・手順
-    experience_sharing: 4,   # 体験談・事例
-    news_update: 5,         # ニュース・更新情報
-    opinion: 6              # 意見・考察
-  }
 
   # 最新の投稿を取得するスコープ
   scope :recent, -> { order(created_at: :desc) }

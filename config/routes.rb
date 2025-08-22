@@ -20,6 +20,9 @@ Rails.application.routes.draw do
   # カテゴリー機能
   draw(:categories)
 
+  # 投稿タイプ機能
+  draw(:post_types)
+
   # システム機能（ヘルスチェック、PWA）
   draw(:system)
 end

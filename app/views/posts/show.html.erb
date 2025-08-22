@@ -27,7 +27,7 @@
             <!-- カテゴリーバッジ -->
             <%= link_to posts_path(category_id: @post.category.id),
                         class: "badge bg-primary text-decoration-none" do %>
-              <i class="fas fa-tag"></i> <%= @post.category.name %>
+              <i class="fas fa-tag"></i> <%= @post.category.full_name %>
             <% end %>
           </div>
 
