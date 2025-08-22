@@ -61,7 +61,7 @@
                                 when 'experience_sharing' then '体験談・事例'
                                 when 'news_update' then 'ニュース・更新'
                                 when 'opinion' then '意見・考察'
-                                else post.post_type.humanize
+                                else post.post_type.name
                                 end %>
                           </span>
                         <% end %>
@@ -172,7 +172,7 @@
                                 when 'experience_sharing' then '体験談・事例'
                                 when 'news_update' then 'ニュース・更新'
                                 when 'opinion' then '意見・考察'
-                                else post.post_type.humanize
+                                else post.post_type.name
                                 end %>
                           </span>
                         <% end %>
