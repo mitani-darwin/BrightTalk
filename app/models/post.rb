@@ -13,11 +13,24 @@ class Post < ApplicationRecord
 
   validates :title, presence: true, length: { maximum: 100 }
   validates :content, presence: true
+  validates :purpose, presence: true, length: { maximum: 200 }
+  validates :target_audience, presence: true, length: { maximum: 100 }
 
   # 投稿状態のenum定義
   enum :status, {
     draft: 0,      # 下書き
     published: 1   # 公開済み
+  }
+
+  # 投稿タイプのenum定義
+  enum :post_type, {
+    knowledge_sharing: 0,    # 知識共有
+    question: 1,            # 質問・相談
+    discussion: 2,          # 議論・討論
+    tutorial: 3,            # チュートリアル・手順
+    experience_sharing: 4,   # 体験談・事例
+    news_update: 5,         # ニュース・更新情報
+    opinion: 6              # 意見・考察
   }
 
   # 最新の投稿を取得するスコープ
