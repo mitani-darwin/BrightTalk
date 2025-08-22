@@ -1,39 +1,94 @@
 
 <div class="container mt-4">
   <div class="row">
-    <div class="col-lg-8 mx-auto">
-      <div class="card">
+    <div class="col-lg-10 mx-auto">
+      <!-- マイページヘッダー -->
+      <div class="card mb-4">
         <div class="card-header">
-          <h1 class="h3 mb-0"><%= @user.name %>さんのプロフィール</h1>
+          <h1 class="h3 mb-0">
+            <% if user_signed_in? && @user == current_user %>
+              <i class="fas fa-user-circle me-2"></i>マイページ
+            <% else %>
+              <%= @user.name %>さんのプロフィール
+            <% end %>
+          </h1>
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-md-4">
-              <div class="user-info">
-                <p><strong>名前:</strong> <%= @user.name %></p>
-                <p><strong>メール:</strong> <%= @user.email if user_signed_in? && @user == current_user %></p>
-                <p><strong>登録日:</strong> <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
+            <!-- プロフィール画像エリア -->
+            <div class="col-md-3 text-center">
+              <div class="mb-3">
+                <% if @user.avatar_or_default %>
+                  <%= image_tag @user.avatar_or_default, class: "rounded-circle border", style: "width: 120px; height: 120px; object-fit: cover;" %>
+                <% else %>
+                  <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px;">
+                    <i class="fas fa-user fa-3x text-white"></i>
+                  </div>
+                <% end %>
               </div>
+              
+              <% if user_signed_in? && @user == current_user %>
+                <div class="mb-3">
+                  <%= link_to edit_account_user_path, class: "btn btn-outline-primary btn-sm" do %>
+                    <i class="fas fa-edit me-1"></i>アイコン編集
+                  <% end %>
+                </div>
+              <% end %>
             </div>
-            <div class="col-md-8">
-              <div class="user-stats">
-                <div class="row text-center">
-                  <div class="col-4">
-                    <div class="stat">
-                      <h4 class="mb-0 text-primary"><%= @user.posts.count %></h4>
-                      <small class="text-muted">投稿数</small>
-                    </div>
+
+            <!-- ユーザー情報エリア -->
+            <div class="col-md-9">
+              <div class="row">
+                <div class="col-md-8">
+                  <h4 class="mb-3"><%= @user.name %></h4>
+                  
+                  <!-- 自己紹介エリア -->
+                  <div class="mb-3">
+                    <h6 class="text-muted mb-2">自己紹介</h6>
+                    <% if @user.bio.present? %>
+                      <div class="p-3 bg-light rounded">
+                        <%= simple_format(@user.bio) %>
+                      </div>
+                    <% else %>
+                      <div class="p-3 bg-light rounded text-muted">
+                        <% if user_signed_in? && @user == current_user %>
+                          自己紹介がまだ登録されていません。
+                          <%= link_to "編集する", edit_account_user_path, class: "text-decoration-none" %>
+                        <% else %>
+                          自己紹介は登録されていません。
+                        <% end %>
+                      </div>
+                    <% end %>
                   </div>
-                  <div class="col-4">
-                    <div class="stat">
-                      <h4 class="mb-0 text-success"><%= @user.comments.count %></h4>
-                      <small class="text-muted">コメント数</small>
-                    </div>
+
+                  <div class="user-info">
+                    <p class="mb-2"><strong>メール:</strong> <%= @user.email if user_signed_in? && @user == current_user %></p>
+                    <p class="mb-2"><strong>登録日:</strong> <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
                   </div>
-                  <div class="col-4">
-                    <div class="stat">
-                      <h4 class="mb-0 text-danger"><%= @user.likes.count %></h4>
-                      <small class="text-muted">いいね数</small>
+                </div>
+
+                <!-- 統計エリア -->
+                <div class="col-md-4">
+                  <div class="user-stats">
+                    <div class="row text-center">
+                      <div class="col-12 mb-3">
+                        <div class="stat">
+                          <h4 class="mb-0 text-primary"><%= @user.posts.count %></h4>
+                          <small class="text-muted">投稿数</small>
+                        </div>
+                      </div>
+                      <div class="col-6">
+                        <div class="stat">
+                          <h5 class="mb-0 text-success"><%= @user.comments.count %></h5>
+                          <small class="text-muted">コメント</small>
+                        </div>
+                      </div>
+                      <div class="col-6">
+                        <div class="stat">
+                          <h5 class="mb-0 text-danger"><%= @user.likes.count %></h5>
+                          <small class="text-muted">いいね</small>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -41,11 +96,34 @@
             </div>
           </div>
 
+          <!-- マイページ専用ボタン群 -->
           <% if user_signed_in? && @user == current_user %>
             <hr>
-            <div class="text-center">
-              <%= link_to "プロフィール編集", edit_user_account_path, class: "btn btn-primary me-2" %>
-              <%= link_to "新規投稿", new_post_path, class: "btn btn-success" %>
+            <div class="row">
+              <div class="col-md-8">
+                <div class="d-flex flex-wrap gap-2">
+                  <%= link_to edit_account_user_path, class: "btn btn-primary" do %>
+                    <i class="fas fa-user-edit me-1"></i>プロフィール編集
+                  <% end %>
+                  <%= link_to new_post_path, class: "btn btn-success" do %>
+                    <i class="fas fa-plus me-1"></i>新規投稿
+                  <% end %>
+                  <%= link_to drafts_posts_path, class: "btn btn-outline-secondary" do %>
+                    <i class="fas fa-file-alt me-1"></i>下書き
+                  <% end %>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <%= link_to destroy_account_user_path(@user), 
+                    method: :delete,
+                    class: "btn btn-outline-danger",
+                    data: { 
+                      confirm: "本当にアカウントを削除しますか？この操作は取り消すことができません。",
+                      turbo_method: :delete
+                    } do %>
+                  <i class="fas fa-user-times me-1"></i>アカウント削除
+                <% end %>
+              </div>
             </div>
           <% end %>
         </div>
