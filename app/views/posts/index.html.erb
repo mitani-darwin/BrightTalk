@@ -48,7 +48,23 @@
                   <div class="card-body p-4">
                     <!-- ヘッダー情報 -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="d-flex align-items-center gap-2">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- 投稿タイプバッジ -->
+                        <% if post.post_type.present? %>
+                          <span class="badge bg-info fs-6 px-2 py-1">
+                            <i class="fas fa-tag me-1"></i>
+                            <%= case post.post_type
+                                when 'knowledge_sharing' then '知識共有'
+                                when 'question' then '質問・相談'
+                                when 'discussion' then '議論・討論'
+                                when 'tutorial' then 'チュートリアル'
+                                when 'experience_sharing' then '体験談・事例'
+                                when 'news_update' then 'ニュース・更新'
+                                when 'opinion' then '意見・考察'
+                                else post.post_type.humanize
+                                end %>
+                          </span>
+                        <% end %>
                         <!-- カテゴリーバッジ -->
                         <% if post.category %>
                           <span class="badge bg-primary fs-6 px-2 py-1">
@@ -73,9 +89,35 @@
                       <%= link_to post.title, post, class: "text-decoration-none text-dark fw-bold" %>
                     </h4>
 
+                    <!-- 構造化情報 -->
+                    <% if post.purpose.present? || post.target_audience.present? %>
+                      <div class="structured-info mb-3 p-3 bg-light rounded">
+                        <% if post.purpose.present? %>
+                          <div class="mb-2">
+                            <small class="text-primary fw-bold">
+                              <i class="fas fa-bullseye me-1"></i>目的:
+                            </small>
+                            <small class="text-muted d-block">
+                              <%= truncate(post.purpose, length: 80) %>
+                            </small>
+                          </div>
+                        <% end %>
+                        <% if post.target_audience.present? %>
+                          <div>
+                            <small class="text-success fw-bold">
+                              <i class="fas fa-users me-1"></i>対象読者:
+                            </small>
+                            <small class="text-muted">
+                              <%= truncate(post.target_audience, length: 50) %>
+                            </small>
+                          </div>
+                        <% end %>
+                      </div>
+                    <% end %>
+
                     <!-- 内容の一部 -->
                     <p class="card-text text-muted mb-3" style="line-height: 1.6;">
-                      <%= truncate(post.content, length: 200) %>
+                      <%= truncate(post.content, length: 150) %>
                     </p>
 
                     <!-- フッター部分 -->
@@ -117,7 +159,23 @@
                   <div class="card-body p-4">
                     <!-- ヘッダー情報 -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="d-flex align-items-center gap-2">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- 投稿タイプバッジ -->
+                        <% if post.post_type.present? %>
+                          <span class="badge bg-info fs-6 px-2 py-1">
+                            <i class="fas fa-tag me-1"></i>
+                            <%= case post.post_type
+                                when 'knowledge_sharing' then '知識共有'
+                                when 'question' then '質問・相談'
+                                when 'discussion' then '議論・討論'
+                                when 'tutorial' then 'チュートリアル'
+                                when 'experience_sharing' then '体験談・事例'
+                                when 'news_update' then 'ニュース・更新'
+                                when 'opinion' then '意見・考察'
+                                else post.post_type.humanize
+                                end %>
+                          </span>
+                        <% end %>
                         <!-- カテゴリーバッジ -->
                         <% if post.category %>
                           <span class="badge bg-primary fs-6 px-2 py-1">
@@ -142,9 +200,35 @@
                       <%= link_to post.title, post, class: "text-decoration-none text-dark fw-bold" %>
                     </h4>
 
+                    <!-- 構造化情報 -->
+                    <% if post.purpose.present? || post.target_audience.present? %>
+                      <div class="structured-info mb-3 p-3 bg-light rounded">
+                        <% if post.purpose.present? %>
+                          <div class="mb-2">
+                            <small class="text-primary fw-bold">
+                              <i class="fas fa-bullseye me-1"></i>目的:
+                            </small>
+                            <small class="text-muted d-block">
+                              <%= truncate(post.purpose, length: 80) %>
+                            </small>
+                          </div>
+                        <% end %>
+                        <% if post.target_audience.present? %>
+                          <div>
+                            <small class="text-success fw-bold">
+                              <i class="fas fa-users me-1"></i>対象読者:
+                            </small>
+                            <small class="text-muted">
+                              <%= truncate(post.target_audience, length: 50) %>
+                            </small>
+                          </div>
+                        <% end %>
+                      </div>
+                    <% end %>
+
                     <!-- 内容の一部 -->
                     <p class="card-text text-muted mb-3" style="line-height: 1.6;">
-                      <%= truncate(post.content, length: 200) %>
+                      <%= truncate(post.content, length: 150) %>
                     </p>
 
                     <!-- フッター部分 -->
