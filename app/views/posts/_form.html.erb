@@ -18,16 +18,42 @@
         <div class="col-md-4" style="height: 100%; overflow-y: auto;">
           <!-- 投稿の目的と構造 -->
           <div class="mb-3">
-            <%= form.label :post_type, "投稿タイプ", class: "form-label" %>
-            <%= form.select :post_type, options_for_select([
-              ['知識共有', 'knowledge_sharing'],
-              ['質問・相談', 'question'], 
-              ['議論・討論', 'discussion'],
-              ['チュートリアル・手順', 'tutorial'],
-              ['体験談・事例', 'experience_sharing'],
-              ['ニュース・更新情報', 'news_update'],
-              ['意見・考察', 'opinion']
-            ], post.post_type), { prompt: "投稿タイプを選択してください" }, { class: "form-select", required: true } %>
+            <%= form.label :post_type_id, "投稿タイプ", class: "form-label" %>
+            <div class="d-flex gap-2 mb-2">
+              <%= form.collection_select :post_type_id, PostType.all.order(:name), :id, :name,
+                                         { prompt: "投稿タイプを選択してください" },
+                                         { class: "form-select", id: "postTypeSelect" } %>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="addPostTypeBtn" style="white-space: nowrap;">
+                <i class="fas fa-plus"></i> 追加
+              </button>
+            </div>
+
+            <!-- 新規投稿タイプ追加フォーム（初期は非表示） -->
+            <div id="newPostTypeForm" class="card" style="display: none;">
+              <div class="card-body p-3">
+                <h6 class="card-title">新しい投稿タイプを追加</h6>
+                <div class="mb-2">
+                  <label for="newPostTypeName" class="form-label form-label-sm">投稿タイプ名</label>
+                  <input type="text" id="newPostTypeName" class="form-control form-control-sm"
+                         placeholder="投稿タイプ名" maxlength="50" required>
+                </div>
+                <div class="mb-2">
+                  <label for="newPostTypeDescription" class="form-label form-label-sm">説明（任意）</label>
+                  <textarea id="newPostTypeDescription" class="form-control form-control-sm"
+                            placeholder="説明（任意）" rows="2" maxlength="200"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm" id="savePostTypeBtn">
+                    <i class="fas fa-save"></i> 保存
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="cancelPostTypeBtn">
+                    キャンセル
+                  </button>
+                </div>
+                <div id="postTypeError" class="alert alert-danger mt-2" style="display: none;"></div>
+                <div id="postTypeSuccess" class="alert alert-success mt-2" style="display: none;"></div>
+              </div>
+            </div>
             <div class="form-text">この投稿の主な目的を選択してください。</div>
           </div>
 
@@ -59,11 +85,11 @@
             <div class="form-text">この投稿を読んだ後、読者にどうなってほしいかを記入してください。</div>
           </div>
 
-          <!-- カテゴリー選択と新規追加 -->
+          <!-- カテゴリー選択と新規追加（階層構造対応） -->
           <div class="mb-3">
             <%= form.label :category_id, "カテゴリー", class: "form-label" %>
             <div class="d-flex gap-2 mb-2">
-              <%= form.collection_select :category_id, Category.all, :id, :name,
+              <%= form.collection_select :category_id, Category.all.order(:name), :id, :full_name,
                                          { prompt: "カテゴリーを選択してください" },
                                          { class: "form-select", id: "categorySelect" } %>
               <button type="button" class="btn btn-outline-primary btn-sm" id="addCategoryBtn" style="white-space: nowrap;">
@@ -71,15 +97,26 @@
               </button>
             </div>
 
-            <!-- 新規カテゴリー追加フォーム（初期は非表示） -->
+            <!-- 新規カテゴリー追加フォーム（階層構造対応・初期は非表示） -->
             <div id="newCategoryForm" class="card" style="display: none;">
               <div class="card-body p-3">
                 <h6 class="card-title">新しいカテゴリーを追加</h6>
                 <div class="mb-2">
-                  <input type="text" id="newCategoryName" class="form-control form-control-sm"
-                         placeholder="カテゴリー名" maxlength="50">
+                  <label for="newCategoryParent" class="form-label form-label-sm">親カテゴリー（任意）</label>
+                  <select id="newCategoryParent" class="form-select form-select-sm">
+                    <option value="">-- ルートカテゴリーとして作成 --</option>
+                    <% Category.all.order(:name).each do |category| %>
+                      <option value="<%= category.id %>"><%= category.full_name %></option>
+                    <% end %>
+                  </select>
                 </div>
                 <div class="mb-2">
+                  <label for="newCategoryName" class="form-label form-label-sm">カテゴリー名</label>
+                  <input type="text" id="newCategoryName" class="form-control form-control-sm"
+                         placeholder="カテゴリー名" maxlength="50" required>
+                </div>
+                <div class="mb-2">
+                  <label for="newCategoryDescription" class="form-label form-label-sm">説明（任意）</label>
                   <textarea id="newCategoryDescription" class="form-control form-control-sm"
                             placeholder="説明（任意）" rows="2" maxlength="200"></textarea>
                 </div>
@@ -227,6 +264,7 @@
                     e.preventDefault();
                     const name = newCategoryName.value.trim();
                     const description = newCategoryDescription.value.trim();
+                    const parentId = document.getElementById('newCategoryParent')?.value || null;
 
                     if (!name) {
                         showError('カテゴリー名を入力してください。');
@@ -237,6 +275,15 @@
                         saveCategoryBtn.disabled = true;
                         saveCategoryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
 
+                        const categoryData = {
+                            name: name,
+                            description: description
+                        };
+                        
+                        if (parentId) {
+                            categoryData.parent_id = parseInt(parentId);
+                        }
+
                         const response = await fetch('/categories', {
                             method: 'POST',
                             headers: {
@@ -245,19 +292,24 @@
                                 'Accept': 'application/json'
                             },
                             body: JSON.stringify({
-                                category: {
-                                    name: name,
-                                    description: description
-                                }
+                                category: categoryData
                             })
                         });
 
                         const data = await response.json();
 
                         if (data.success) {
-                            // セレクトボックスに新しいカテゴリーを追加
-                            const option = new Option(data.category.name, data.category.id, true, true);
+                            // メインのカテゴリーセレクトボックスに新しいカテゴリーを追加
+                            const displayName = data.category.full_name || data.category.name;
+                            const option = new Option(displayName, data.category.id, true, true);
                             categorySelect.add(option);
+
+                            // 親カテゴリー選択肢にも新しいカテゴリーを追加
+                            const newCategoryParent = document.getElementById('newCategoryParent');
+                            if (newCategoryParent) {
+                                const parentOption = new Option(displayName, data.category.id);
+                                newCategoryParent.add(parentOption);
+                            }
 
                             showSuccess(data.message);
 
@@ -268,8 +320,6 @@
                                 clearCategoryForm();
                                 hideMessages();
                             }, 2000);
-                        } else {
-                            showError(data.errors ? data.errors.join(', ') : data.message);
                         }
                     } catch (error) {
                         console.error('Error:', error);
@@ -294,6 +344,9 @@
             function clearCategoryForm() {
                 if (newCategoryName) newCategoryName.value = '';
                 if (newCategoryDescription) newCategoryDescription.value = '';
+                // 親カテゴリーの選択もリセット
+                const newCategoryParent = document.getElementById('newCategoryParent');
+                if (newCategoryParent) newCategoryParent.value = '';
             }
 
             function showError(message) {
@@ -330,6 +383,150 @@
         }
 
         document.addEventListener('turbo:load', initializeCategoryForm);
+
+        // 投稿タイプフォームの初期化
+        function initializePostTypeForm() {
+            const addPostTypeBtn = document.getElementById('addPostTypeBtn');
+            const newPostTypeForm = document.getElementById('newPostTypeForm');
+            const cancelPostTypeBtn = document.getElementById('cancelPostTypeBtn');
+            const savePostTypeBtn = document.getElementById('savePostTypeBtn');
+            const newPostTypeName = document.getElementById('newPostTypeName');
+            const newPostTypeDescription = document.getElementById('newPostTypeDescription');
+            const postTypeError = document.getElementById('postTypeError');
+            const postTypeSuccess = document.getElementById('postTypeSuccess');
+            const postTypeSelect = document.getElementById('postTypeSelect');
+
+            if (!addPostTypeBtn || !newPostTypeForm || !postTypeSelect) return;
+
+            // 「追加」ボタンクリック時
+            addPostTypeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                newPostTypeForm.style.display = 'block';
+                addPostTypeBtn.style.display = 'none';
+                if (newPostTypeName) newPostTypeName.focus();
+                hidePostTypeMessages();
+            });
+
+            // 「キャンセル」ボタンクリック時
+            if (cancelPostTypeBtn) {
+                cancelPostTypeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    newPostTypeForm.style.display = 'none';
+                    addPostTypeBtn.style.display = 'block';
+                    clearPostTypeForm();
+                    hidePostTypeMessages();
+                });
+            }
+
+            // 「保存」ボタンクリック時
+            if (savePostTypeBtn) {
+                savePostTypeBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    hidePostTypeMessages();
+
+                    const name = newPostTypeName?.value?.trim();
+                    const description = newPostTypeDescription?.value?.trim();
+
+                    if (!name) {
+                        showPostTypeError('投稿タイプ名を入力してください。');
+                        return;
+                    }
+
+                    try {
+                        savePostTypeBtn.disabled = true;
+                        savePostTypeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+
+                        const response = await fetch('/post_types', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': getCSRFToken(),
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                post_type: {
+                                    name: name,
+                                    description: description
+                                }
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // メインの投稿タイプセレクトボックスに新しい投稿タイプを追加
+                            const option = new Option(data.post_type.name, data.post_type.id, true, true);
+                            postTypeSelect.add(option);
+
+                            showPostTypeSuccess(data.message);
+
+                            // フォームを隠してリセット
+                            setTimeout(() => {
+                                newPostTypeForm.style.display = 'none';
+                                addPostTypeBtn.style.display = 'block';
+                                clearPostTypeForm();
+                                hidePostTypeMessages();
+                            }, 2000);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showPostTypeError('投稿タイプの作成中にエラーが発生しました。');
+                    } finally {
+                        savePostTypeBtn.disabled = false;
+                        savePostTypeBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+                    }
+                });
+            }
+
+            // Enterキーで保存
+            if (newPostTypeName) {
+                newPostTypeName.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        savePostTypeBtn.click();
+                    }
+                });
+            }
+
+            function clearPostTypeForm() {
+                if (newPostTypeName) newPostTypeName.value = '';
+                if (newPostTypeDescription) newPostTypeDescription.value = '';
+            }
+
+            function showPostTypeError(message) {
+                if (postTypeError) {
+                    postTypeError.textContent = message;
+                    postTypeError.style.display = 'block';
+                }
+                if (postTypeSuccess) {
+                    postTypeSuccess.style.display = 'none';
+                }
+            }
+
+            function showPostTypeSuccess(message) {
+                if (postTypeSuccess) {
+                    postTypeSuccess.textContent = message;
+                    postTypeSuccess.style.display = 'block';
+                }
+                if (postTypeError) {
+                    postTypeError.style.display = 'none';
+                }
+            }
+
+            function hidePostTypeMessages() {
+                if (postTypeError) postTypeError.style.display = 'none';
+                if (postTypeSuccess) postTypeSuccess.style.display = 'none';
+            }
+        }
+
+        // DOM読み込み完了時とTurboロード時に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePostTypeForm);
+        } else {
+            initializePostTypeForm();
+        }
+
+        document.addEventListener('turbo:load', initializePostTypeForm);
 
         // 既存のコード（フォームとテキストエリアの高さ調整、画像プレビューなど）
         function adjustLayout() {
