@@ -28,6 +28,7 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - DOCKER_HUB_PASSWORD
+    - SECRET_KEY_BASE
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
