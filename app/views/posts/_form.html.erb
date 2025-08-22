@@ -565,8 +565,12 @@
 
         window.addEventListener('resize', adjustLayout);
 
-        // 画像プレビュー機能
+        // 画像プレビュー機能（重複登録を防ぐフラグ付き）
+        let imagePreviewInitialized = false;
+
         function initializeImagePreview() {
+            if (imagePreviewInitialized) return;
+            
             const imageInput = document.getElementById('imageInput');
             if (imageInput) {
                 imageInput.addEventListener('change', function(e) {
@@ -595,8 +599,14 @@
                         }
                     }
                 });
+                imagePreviewInitialized = true;
             }
         }
+
+        // Turbo対応でリセット
+        document.addEventListener('turbo:before-visit', function() {
+            imagePreviewInitialized = false;
+        });
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeImagePreview);

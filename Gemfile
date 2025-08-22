@@ -44,6 +44,8 @@ gem 'grover' # ChromeベースのPDF生成
 
 gem 'mail-ses'
 
+gem "aws-sdk-s3", require: false
+
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false
