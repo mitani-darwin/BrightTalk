@@ -171,8 +171,18 @@
           <% end %>
 
           <div class="mb-3">
-            <%= form.submit post.persisted? ? "更新" : "投稿", class: "btn btn-primary w-100" %>
-            <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100 mt-2" %>
+            <div class="d-flex gap-2 mb-2">
+              <%= form.submit post.persisted? ? "更新" : "投稿",
+                              class: "btn btn-primary flex-fill",
+                              name: "commit",
+                              onclick: "document.getElementById('post_status').value = 'published';" %>
+              <%= form.submit post.persisted? ? "下書きで更新" : "下書きに保存",
+                              class: "btn btn-outline-secondary flex-fill",
+                              name: "draft_commit",
+                              onclick: "document.getElementById('post_status').value = 'draft';" %>
+            </div>
+            <%= form.hidden_field :status, id: "post_status", value: post.status || "published" %>
+            <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100" %>
           </div>
         </div>
 
