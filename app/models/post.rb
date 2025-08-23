@@ -12,8 +12,8 @@ class Post < ApplicationRecord
   # Active Storage for images
   has_many_attached :images
 
-  validates :title, presence: true, length: { maximum: 100 }, unless: :draft?
-  validates :content, presence: true, unless: :draft?
+  validates :title, presence: true, length: { maximum: 100 }
+  validates :content, presence: true
   validates :purpose, presence: true, length: { maximum: 200 }, unless: :draft?
   validates :target_audience, presence: true, length: { maximum: 100 }, unless: :draft?
   validates :category_id, presence: true, unless: :draft?

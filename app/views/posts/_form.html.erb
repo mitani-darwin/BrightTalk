@@ -17,7 +17,7 @@
       <div class="alert alert-info mb-3">
         <i class="fas fa-info-circle"></i>
         <strong>必須項目について:</strong>
-        <span class="text-danger">*</span> マークの付いた項目は投稿時（公開）に必須です。下書き保存時は入力不要です。
+        タイトルと内容は常に必須です。<span class="text-danger">*</span> マークの付いたその他の項目は投稿時（公開）のみ必須です。
       </div>
 
       <div class="row" id="formContainer">
@@ -70,7 +70,7 @@
               <span class="text-danger">*</span>
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
-            <%= form.text_area :purpose, class: "form-control", rows: 2,
+            <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 2,
                                placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
             <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
           </div>
@@ -81,7 +81,7 @@
               <span class="text-danger">*</span>
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
-            <%= form.text_field :target_audience, class: "form-control", required: true,
+            <%= form.text_field :target_audience, class: "form-control #{'is-invalid' if post.errors[:target_audience].any?}", required: true,
                                 placeholder: "例: プログラミング初心者、Rails学習者" %>
             <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
           </div>
@@ -110,7 +110,7 @@
             <div class="d-flex gap-2 mb-2">
               <%= form.collection_select :category_id, Category.all.order(:name), :id, :full_name,
                                          { prompt: "カテゴリーを選択してください" },
-                                         { class: "form-select", id: "categorySelect" } %>
+                                         { class: "form-select #{'is-invalid' if post.errors[:category_id].any?}", id: "categorySelect" } %>
               <button type="button" class="btn btn-outline-primary btn-sm" id="addCategoryBtn" style="white-space: nowrap;">
                 <i class="fas fa-plus"></i> 追加
               </button>
@@ -211,9 +211,9 @@
             <%= form.label :title, class: "form-label" do %>
               タイトル
               <span class="text-danger">*</span>
-              <small class="text-muted">(公開時は必須)</small>
+              <small class="text-muted">(常に必須)</small>
             <% end %>
-            <%= form.text_field :title, class: "form-control", required: true %>
+            <%= form.text_field :title, class: "form-control #{'is-invalid' if post.errors[:title].any?}", required: true %>
             <div class="invalid-feedback">
               タイトルを入力してください。
             </div>
@@ -223,9 +223,9 @@
             <%= form.label :content, class: "form-label" do %>
               内容
               <span class="text-danger">*</span>
-              <small class="text-muted">(公開時は必須)</small>
+              <small class="text-muted">(常に必須)</small>
             <% end %>
-            <%= form.text_area :content, class: "form-control flex-grow-1",
+            <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
                                id: "contentTextarea", required: true,
                                style: "min-height: 400px; resize: none;" %>
             <div class="invalid-feedback">
