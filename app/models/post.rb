@@ -16,6 +16,7 @@ class Post < ApplicationRecord
   validates :content, presence: true, unless: :draft?
   validates :purpose, presence: true, length: { maximum: 200 }, unless: :draft?
   validates :target_audience, presence: true, length: { maximum: 100 }, unless: :draft?
+  validates :category_id, presence: true, unless: :draft?
 
   # 投稿状態のenum定義
   enum :status, {
