@@ -64,6 +64,34 @@ class PostsController < ApplicationController
     @posts = current_user.posts.draft.recent.page(params[:page]).per(10)
   end
 
+  # 自動保存（5秒間隔での下書き保存）
+  def auto_save
+    @post = if params[:id].present?
+              current_user.posts.find(params[:id])
+            else
+              current_user.posts.build
+            end
+
+    # バリデーションをスキップして強制保存
+    @post.assign_attributes(auto_save_params)
+    @post.status = 'draft'
+    @post.auto_save = true  # 自動保存フラグを設定
+    
+    if @post.save(validate: false)
+      render json: { 
+        success: true, 
+        post_id: @post.id,
+        message: '自動保存されました',
+        saved_at: Time.current.strftime('%H:%M:%S')
+      }
+    else
+      render json: { 
+        success: false, 
+        message: '自動保存に失敗しました' 
+      }
+    end
+  end
+
   private
 
   def set_post
@@ -78,6 +106,10 @@ class PostsController < ApplicationController
 
   def post_params
     params.require(:post).permit(:title, :content, :status, :category_id, :purpose, :target_audience, :post_type_id, :key_points, :expected_outcome, images: [])
+  end
+
+  def auto_save_params
+    params.permit(:title, :content, :purpose, :target_audience, :category_id, :post_type_id, :key_points, :expected_outcome)
   end
 
   def log_user_status

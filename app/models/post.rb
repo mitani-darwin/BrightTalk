@@ -3,6 +3,9 @@ class Post < ApplicationRecord
   belongs_to :user
   belongs_to :category, optional: true
   belongs_to :post_type, optional: true
+  
+  # 自動保存フラグ（バリデーション制御用）
+  attr_accessor :auto_save
 
   has_many :post_tags, dependent: :destroy
   has_many :tags, through: :post_tags
@@ -12,8 +15,8 @@ class Post < ApplicationRecord
   # Active Storage for images
   has_many_attached :images
 
-  validates :title, presence: true, length: { maximum: 100 }
-  validates :content, presence: true
+  validates :title, presence: true, length: { maximum: 100 }, unless: :auto_saved_draft?
+  validates :content, presence: true, unless: :auto_saved_draft?
   validates :purpose, presence: true, length: { maximum: 200 }, unless: :draft?
   validates :target_audience, presence: true, length: { maximum: 100 }, unless: :draft?
   validates :category_id, presence: true, unless: :draft?
@@ -37,5 +40,10 @@ class Post < ApplicationRecord
 
   def set_default_status
     self.status ||= :published
+  end
+
+  # 自動保存されたドラフトかどうかを判定
+  def auto_saved_draft?
+    draft? && auto_save == true
   end
 end

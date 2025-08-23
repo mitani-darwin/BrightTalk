@@ -657,5 +657,140 @@
         window.removeImage = function(index) {
             alert('画像削除機能は後で実装します');
         };
+
+        // 自動保存機能（5秒間隔）
+        function initializeAutoSave() {
+            let autoSaveInterval;
+            let currentPostId = null;
+            let lastSaveData = '';
+            
+            // フォームデータを取得
+            function getFormData() {
+                const form = document.querySelector('form[data-turbo="false"]');
+                if (!form) return null;
+                
+                const formData = new FormData();
+                
+                // 基本フィールドを収集
+                const fields = ['title', 'content', 'purpose', 'target_audience', 'key_points', 'expected_outcome'];
+                fields.forEach(fieldName => {
+                    const field = form.querySelector(`[name="post[${fieldName}]"]`);
+                    if (field && field.value.trim()) {
+                        formData.append(fieldName, field.value.trim());
+                    }
+                });
+                
+                // セレクトフィールド
+                const categorySelect = form.querySelector('[name="post[category_id]"]');
+                if (categorySelect && categorySelect.value) {
+                    formData.append('category_id', categorySelect.value);
+                }
+                
+                const postTypeSelect = form.querySelector('[name="post[post_type_id]"]');
+                if (postTypeSelect && postTypeSelect.value) {
+                    formData.append('post_type_id', postTypeSelect.value);
+                }
+                
+                // 現在の投稿IDがあれば追加
+                if (currentPostId) {
+                    formData.append('id', currentPostId);
+                }
+                
+                return formData;
+            }
+            
+            // 自動保存実行
+            async function performAutoSave() {
+                const formData = getFormData();
+                if (!formData) return;
+                
+                // データに変更がない場合はスキップ
+                const currentData = Array.from(formData.entries()).sort().toString();
+                if (currentData === lastSaveData) return;
+                
+                try {
+                    const response = await fetch('/posts/auto_save', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': getCSRFToken(),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        currentPostId = result.post_id;
+                        lastSaveData = currentData;
+                        showAutoSaveStatus('自動保存完了', 'success');
+                        
+                        // URLを更新（新規投稿の場合）
+                        if (!window.location.pathname.includes('/edit') && currentPostId) {
+                            history.replaceState(null, null, `/posts/${currentPostId}/edit`);
+                        }
+                    } else {
+                        showAutoSaveStatus('自動保存失敗', 'error');
+                    }
+                } catch (error) {
+                    console.error('Auto-save error:', error);
+                    showAutoSaveStatus('自動保存エラー', 'error');
+                }
+            }
+            
+            // 自動保存ステータス表示
+            function showAutoSaveStatus(message, type) {
+                let statusDiv = document.getElementById('auto-save-status');
+                if (!statusDiv) {
+                    statusDiv = document.createElement('div');
+                    statusDiv.id = 'auto-save-status';
+                    statusDiv.style.cssText = `
+                        position: fixed;
+                        top: 80px;
+                        right: 20px;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        z-index: 1000;
+                        opacity: 0;
+                        transition: opacity 0.3s;
+                    `;
+                    document.body.appendChild(statusDiv);
+                }
+                
+                statusDiv.textContent = message + ' ' + new Date().toLocaleTimeString();
+                statusDiv.className = type === 'success' ? 'alert alert-success' : 'alert alert-warning';
+                statusDiv.style.opacity = '1';
+                
+                setTimeout(() => {
+                    statusDiv.style.opacity = '0';
+                }, 2000);
+            }
+            
+            // 既存の投稿IDを取得（編集モードの場合）
+            const urlMatch = window.location.pathname.match(/\/posts\/(\d+)\/edit/);
+            if (urlMatch) {
+                currentPostId = urlMatch[1];
+            }
+            
+            // 5秒間隔で自動保存開始
+            autoSaveInterval = setInterval(performAutoSave, 5000);
+            
+            // ページ離脱時にクリア
+            window.addEventListener('beforeunload', () => {
+                if (autoSaveInterval) {
+                    clearInterval(autoSaveInterval);
+                }
+            });
+        }
+        
+        // 自動保存初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAutoSave);
+        } else {
+            initializeAutoSave();
+        }
+        
+        document.addEventListener('turbo:load', initializeAutoSave);
     })();
 </script>
