@@ -13,6 +13,13 @@
         </div>
       <% end %>
 
+      <!-- 必須項目についての説明 -->
+      <div class="alert alert-info mb-3">
+        <i class="fas fa-info-circle"></i>
+        <strong>必須項目について:</strong>
+        タイトルと内容は常に必須です。<span class="text-danger">*</span> マークの付いたその他の項目は投稿時（公開）のみ必須です。
+      </div>
+
       <div class="row" id="formContainer">
         <!-- サイドバー（左側） -->
         <div class="col-md-4" style="height: 100%; overflow-y: auto;">
@@ -58,15 +65,23 @@
           </div>
 
           <div class="mb-3">
-            <%= form.label :purpose, "投稿の目的", class: "form-label" %>
-            <%= form.text_area :purpose, class: "form-control", rows: 2, required: true,
+            <%= form.label :purpose, class: "form-label" do %>
+              投稿の目的
+              <span class="text-danger">*</span>
+              <small class="text-muted">(公開時は必須)</small>
+            <% end %>
+            <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 2,
                                placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
             <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
           </div>
 
           <div class="mb-3">
-            <%= form.label :target_audience, "対象読者", class: "form-label" %>
-            <%= form.text_field :target_audience, class: "form-control", required: true,
+            <%= form.label :target_audience, class: "form-label" do %>
+              対象読者
+              <span class="text-danger">*</span>
+              <small class="text-muted">(公開時は必須)</small>
+            <% end %>
+            <%= form.text_field :target_audience, class: "form-control #{'is-invalid' if post.errors[:target_audience].any?}", required: true,
                                 placeholder: "例: プログラミング初心者、Rails学習者" %>
             <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
           </div>
@@ -87,11 +102,15 @@
 
           <!-- カテゴリー選択と新規追加（階層構造対応） -->
           <div class="mb-3">
-            <%= form.label :category_id, "カテゴリー", class: "form-label" %>
+            <%= form.label :category_id, class: "form-label" do %>
+              カテゴリー
+              <span class="text-danger">*</span>
+              <small class="text-muted">(公開時は必須)</small>
+            <% end %>
             <div class="d-flex gap-2 mb-2">
               <%= form.collection_select :category_id, Category.all.order(:name), :id, :full_name,
                                          { prompt: "カテゴリーを選択してください" },
-                                         { class: "form-select", id: "categorySelect" } %>
+                                         { class: "form-select #{'is-invalid' if post.errors[:category_id].any?}", id: "categorySelect" } %>
               <button type="button" class="btn btn-outline-primary btn-sm" id="addCategoryBtn" style="white-space: nowrap;">
                 <i class="fas fa-plus"></i> 追加
               </button>
@@ -171,24 +190,42 @@
           <% end %>
 
           <div class="mb-3">
-            <%= form.submit post.persisted? ? "更新" : "投稿", class: "btn btn-primary w-100" %>
-            <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100 mt-2" %>
+            <div class="d-flex gap-2 mb-2">
+              <%= form.submit post.persisted? ? "更新" : "投稿",
+                              class: "btn btn-primary flex-fill",
+                              name: "commit",
+                              onclick: "document.getElementById('post_status').value = 'published';" %>
+              <%= form.submit post.persisted? ? "下書きで更新" : "下書きに保存",
+                              class: "btn btn-outline-secondary flex-fill",
+                              name: "draft_commit",
+                              onclick: "document.getElementById('post_status').value = 'draft';" %>
+            </div>
+            <%= form.hidden_field :status, id: "post_status", value: post.status || "published" %>
+            <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100" %>
           </div>
         </div>
 
         <!-- メインコンテンツ（右側） -->
         <div class="col-md-8 d-flex flex-column" style="height: 100%;">
           <div class="mb-3">
-            <%= form.label :title, class: "form-label" %>
-            <%= form.text_field :title, class: "form-control", required: true %>
+            <%= form.label :title, class: "form-label" do %>
+              タイトル
+              <span class="text-danger">*</span>
+              <small class="text-muted">(常に必須)</small>
+            <% end %>
+            <%= form.text_field :title, class: "form-control #{'is-invalid' if post.errors[:title].any?}", required: true %>
             <div class="invalid-feedback">
               タイトルを入力してください。
             </div>
           </div>
 
           <div class="mb-3 flex-grow-1 d-flex flex-column">
-            <%= form.label :content, class: "form-label" %>
-            <%= form.text_area :content, class: "form-control flex-grow-1",
+            <%= form.label :content, class: "form-label" do %>
+              内容
+              <span class="text-danger">*</span>
+              <small class="text-muted">(常に必須)</small>
+            <% end %>
+            <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
                                id: "contentTextarea", required: true,
                                style: "min-height: 400px; resize: none;" %>
             <div class="invalid-feedback">
@@ -620,5 +657,140 @@
         window.removeImage = function(index) {
             alert('画像削除機能は後で実装します');
         };
+
+        // 自動保存機能（5秒間隔）
+        function initializeAutoSave() {
+            let autoSaveInterval;
+            let currentPostId = null;
+            let lastSaveData = '';
+            
+            // フォームデータを取得
+            function getFormData() {
+                const form = document.querySelector('form[data-turbo="false"]');
+                if (!form) return null;
+                
+                const formData = new FormData();
+                
+                // 基本フィールドを収集
+                const fields = ['title', 'content', 'purpose', 'target_audience', 'key_points', 'expected_outcome'];
+                fields.forEach(fieldName => {
+                    const field = form.querySelector(`[name="post[${fieldName}]"]`);
+                    if (field && field.value.trim()) {
+                        formData.append(fieldName, field.value.trim());
+                    }
+                });
+                
+                // セレクトフィールド
+                const categorySelect = form.querySelector('[name="post[category_id]"]');
+                if (categorySelect && categorySelect.value) {
+                    formData.append('category_id', categorySelect.value);
+                }
+                
+                const postTypeSelect = form.querySelector('[name="post[post_type_id]"]');
+                if (postTypeSelect && postTypeSelect.value) {
+                    formData.append('post_type_id', postTypeSelect.value);
+                }
+                
+                // 現在の投稿IDがあれば追加
+                if (currentPostId) {
+                    formData.append('id', currentPostId);
+                }
+                
+                return formData;
+            }
+            
+            // 自動保存実行
+            async function performAutoSave() {
+                const formData = getFormData();
+                if (!formData) return;
+                
+                // データに変更がない場合はスキップ
+                const currentData = Array.from(formData.entries()).sort().toString();
+                if (currentData === lastSaveData) return;
+                
+                try {
+                    const response = await fetch('/posts/auto_save', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': getCSRFToken(),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        currentPostId = result.post_id;
+                        lastSaveData = currentData;
+                        showAutoSaveStatus('自動保存完了', 'success');
+                        
+                        // URLを更新（新規投稿の場合）
+                        if (!window.location.pathname.includes('/edit') && currentPostId) {
+                            history.replaceState(null, null, `/posts/${currentPostId}/edit`);
+                        }
+                    } else {
+                        showAutoSaveStatus('自動保存失敗', 'error');
+                    }
+                } catch (error) {
+                    console.error('Auto-save error:', error);
+                    showAutoSaveStatus('自動保存エラー', 'error');
+                }
+            }
+            
+            // 自動保存ステータス表示
+            function showAutoSaveStatus(message, type) {
+                let statusDiv = document.getElementById('auto-save-status');
+                if (!statusDiv) {
+                    statusDiv = document.createElement('div');
+                    statusDiv.id = 'auto-save-status';
+                    statusDiv.style.cssText = `
+                        position: fixed;
+                        top: 80px;
+                        right: 20px;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        z-index: 1000;
+                        opacity: 0;
+                        transition: opacity 0.3s;
+                    `;
+                    document.body.appendChild(statusDiv);
+                }
+                
+                statusDiv.textContent = message + ' ' + new Date().toLocaleTimeString();
+                statusDiv.className = type === 'success' ? 'alert alert-success' : 'alert alert-warning';
+                statusDiv.style.opacity = '1';
+                
+                setTimeout(() => {
+                    statusDiv.style.opacity = '0';
+                }, 2000);
+            }
+            
+            // 既存の投稿IDを取得（編集モードの場合）
+            const urlMatch = window.location.pathname.match(/\/posts\/(\d+)\/edit/);
+            if (urlMatch) {
+                currentPostId = urlMatch[1];
+            }
+            
+            // 5秒間隔で自動保存開始
+            autoSaveInterval = setInterval(performAutoSave, 5000);
+            
+            // ページ離脱時にクリア
+            window.addEventListener('beforeunload', () => {
+                if (autoSaveInterval) {
+                    clearInterval(autoSaveInterval);
+                }
+            });
+        }
+        
+        // 自動保存初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAutoSave);
+        } else {
+            initializeAutoSave();
+        }
+        
+        document.addEventListener('turbo:load', initializeAutoSave);
     })();
 </script>

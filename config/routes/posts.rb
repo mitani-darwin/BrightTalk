@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     # 下書き機能を追加
     collection do
       get :drafts
+      post :auto_save
     end
 
     # いいね機能を追加
