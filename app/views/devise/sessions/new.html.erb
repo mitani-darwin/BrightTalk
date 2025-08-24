@@ -46,77 +46,71 @@
 <!-- パスキー認証用JavaScript -->
 <%= javascript_import_module_tag "passkey" %>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const emailInput = document.getElementById('email');
-  const passkeyLoginBtn = document.getElementById('passkey-login-btn');
-  const statusMessage = document.getElementById('status-message');
+(function() {
+  function setupPasskeyLogin() {
+    const emailInput = document.getElementById('email');
+    const passkeyLoginBtn = document.getElementById('passkey-login-btn');
+    const statusMessage = document.getElementById('status-message');
+    if (!emailInput || !passkeyLoginBtn || !statusMessage) return;
 
-  // ステータスメッセージ表示
-  function showStatus(message, type = 'info') {
-    statusMessage.textContent = message;
-    statusMessage.className = `alert alert-${type}`;
-    statusMessage.style.display = 'block';
-    
-    if (type === 'success') {
-      setTimeout(() => {
-        statusMessage.style.display = 'none';
-      }, 3000);
+    function showStatus(message, type = 'info') {
+      statusMessage.textContent = message;
+      statusMessage.className = `alert alert-${type}`;
+      statusMessage.style.display = 'block';
+      if (type === 'success') {
+        setTimeout(() => { statusMessage.style.display = 'none'; }, 3000);
+      }
     }
+
+    async function performPasskeyAuth() {
+      const email = emailInput.value.trim();
+      if (!email) { showStatus('メールアドレスを入力してください', 'danger'); return; }
+      try {
+        showStatus('パスキー認証を開始しています...', 'info');
+        passkeyLoginBtn.disabled = true;
+        const response = await fetch('/passkey_authentications/auth_options', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ email })
+        });
+        if (!response.ok) {
+          let msg = '認証オプションの取得に失敗しました';
+          try { const err = await response.json(); msg = err.error || msg; } catch(e) {}
+          throw new Error(msg);
+        }
+        const authData = await response.json();
+        if (!authData.passkey_options) throw new Error('このメールアドレスにはパスキーが登録されていません');
+        await startPasskeyAuthentication(authData.passkey_options);
+      } catch (error) {
+        console.error('Passkey authentication failed:', error);
+        showStatus(`パスキー認証に失敗しました: ${error.message}`, 'danger');
+      } finally {
+        passkeyLoginBtn.disabled = false;
+      }
+    }
+
+    // 二重登録防止のため、ボタンをクローンして置き換え
+    const btnClone = passkeyLoginBtn.cloneNode(true);
+    passkeyLoginBtn.parentNode.replaceChild(btnClone, passkeyLoginBtn);
+
+    btnClone.addEventListener('click', performPasskeyAuth);
+    emailInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); performPasskeyAuth(); }
+    });
   }
 
-  // パスキー認証実行
-  async function performPasskeyAuth() {
-    const email = emailInput.value.trim();
-    if (!email) {
-      showStatus('メールアドレスを入力してください', 'danger');
-      return;
-    }
+  // Turbo 遷移対応
+  document.addEventListener('turbo:load', setupPasskeyLogin);
+  document.addEventListener('turbo:render', setupPasskeyLogin);
 
-    try {
-      showStatus('パスキー認証を開始しています...', 'info');
-      passkeyLoginBtn.disabled = true;
-
-      // サーバーからパスキー認証オプションを取得
-      const response = await fetch('/passkey_authentications/auth_options', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ email: email })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '認証オプションの取得に失敗しました');
-      }
-
-      const authData = await response.json();
-      
-      if (!authData.passkey_options) {
-        throw new Error('このメールアドレスにはパスキーが登録されていません');
-      }
-
-      // パスキー認証実行
-      await startPasskeyAuthentication(authData.passkey_options);
-
-    } catch (error) {
-      console.error('Passkey authentication failed:', error);
-      showStatus(`パスキー認証に失敗しました: ${error.message}`, 'danger');
-    } finally {
-      passkeyLoginBtn.disabled = false;
-    }
+  // 非Turboロードにも対応
+  if (document.readyState !== 'loading') {
+    setupPasskeyLogin();
+  } else {
+    document.addEventListener('DOMContentLoaded', setupPasskeyLogin);
   }
-
-  // イベントリスナー
-  passkeyLoginBtn.addEventListener('click', performPasskeyAuth);
-
-  // Enterキーでパスキー認証実行
-  emailInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      performPasskeyAuth();
-    }
-  });
-});
+})();
 </script>
