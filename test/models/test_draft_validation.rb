@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # Test script to verify new draft validation requirements
 
-require_relative 'config/environment'
+require_relative 'config/onfig/environment'
 
 # Find a test user (create one if needed)
 user = User.first

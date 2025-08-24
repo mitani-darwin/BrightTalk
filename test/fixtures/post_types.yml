@@ -1,9 +1,9 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  name: MyString
-  description: MyText
+tutorial:
+  name: "チュートリアル"
+  description: "初心者向けの学習コンテンツ"
 
-two:
-  name: MyString
-  description: MyText
+technical_note:
+  name: "技術記事"
+  description: "技術的な知識を共有する記事"
