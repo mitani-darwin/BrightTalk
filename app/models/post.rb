@@ -14,12 +14,15 @@ class Post < ApplicationRecord
 
   # Active Storage for images
   has_many_attached :images
+  # Active Storage for videos
+  has_many_attached :videos
 
   validates :title, presence: true, length: { maximum: 100 }, unless: :auto_saved_draft?
   validates :content, presence: true, unless: :auto_saved_draft?
   validates :purpose, presence: true, length: { maximum: 200 }, unless: :draft?
   validates :target_audience, presence: true, length: { maximum: 100 }, unless: :draft?
   validates :category_id, presence: true, unless: :draft?
+  validates :post_type_id, presence: true, unless: :draft?
 
   # 投稿状態のenum定義
   enum :status, {
