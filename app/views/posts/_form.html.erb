@@ -13,68 +13,11 @@
         </div>
       <% end %>
 
-      <!-- 必須項目についての説明 -->
-      <div class="alert alert-info mb-3">
-        <i class="fas fa-info-circle"></i>
-        <strong>必須項目について:</strong>
-        タイトルと内容は常に必須です。<span class="text-danger">*</span> マークの付いたその他の項目は投稿時（公開）のみ必須です。
-      </div>
-
       <div class="row" id="formContainer">
         <!-- サイドバー（左側） -->
-        <div class="col-md-4" style="height: 100%; overflow-y: auto;">
-          <!-- 投稿の目的と構造 -->
-          <div class="mb-3">
-            <%= form.label :post_type_id, "投稿タイプ", class: "form-label" %>
-            <div class="d-flex gap-2 mb-2">
-              <%= form.collection_select :post_type_id, PostType.all.order(:name), :id, :name,
-                                         { prompt: "投稿タイプを選択してください" },
-                                         { class: "form-select", id: "postTypeSelect" } %>
-              <button type="button" class="btn btn-outline-primary btn-sm" id="addPostTypeBtn" style="white-space: nowrap;">
-                <i class="fas fa-plus"></i> 追加
-              </button>
-            </div>
+        <div class="col-md-4" style="height: 100%;">
 
-            <!-- 新規投稿タイプ追加フォーム（初期は非表示） -->
-            <div id="newPostTypeForm" class="card" style="display: none;">
-              <div class="card-body p-3">
-                <h6 class="card-title">新しい投稿タイプを追加</h6>
-                <div class="mb-2">
-                  <label for="newPostTypeName" class="form-label form-label-sm">投稿タイプ名</label>
-                  <input type="text" id="newPostTypeName" name="newPostTypeName" class="form-control form-control-sm"
-                         placeholder="投稿タイプ名" maxlength="50">
-                </div>
-                <div class="mb-2">
-                  <label for="newPostTypeDescription" class="form-label form-label-sm">説明（任意）</label>
-                  <textarea id="newPostTypeDescription" class="form-control form-control-sm"
-                            placeholder="説明（任意）" rows="2" maxlength="200"></textarea>
-                </div>
-                <div class="d-flex gap-2">
-                  <button type="button" class="btn btn-success btn-sm" id="savePostTypeBtn">
-                    <i class="fas fa-save"></i> 保存
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm" id="cancelPostTypeBtn">
-                    キャンセル
-                  </button>
-                </div>
-                <div id="postTypeError" class="alert alert-danger mt-2" style="display: none;"></div>
-                <div id="postTypeSuccess" class="alert alert-success mt-2" style="display: none;"></div>
-              </div>
-            </div>
-            <div class="form-text">この投稿の主な目的を選択してください。</div>
-          </div>
-
-          <div class="mb-3">
-            <%= form.label :purpose, class: "form-label" do %>
-              投稿の目的
-              <span class="text-danger">*</span>
-              <small class="text-muted">(公開時は必須)</small>
-            <% end %>
-            <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 2,
-                               placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
-            <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
-          </div>
-
+          <!-- 対象読者（投稿の目的の下） -->
           <div class="mb-3">
             <%= form.label :target_audience, class: "form-label" do %>
               対象読者
@@ -86,13 +29,15 @@
             <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
           </div>
 
+          <!-- 要点・ポイント（対象読者の下） -->
           <div class="mb-3">
             <%= form.label :key_points, "要点・ポイント", class: "form-label" %>
-            <%= form.text_area :key_points, class: "form-control", rows: 3,
-                               placeholder: "例: 1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法" %>
+            <%= form.text_area :key_points, class: "form-control", rows: 4,
+                               placeholder: "例：\n1. 環境構築の手順\n2. 基本的なコマンドの使い方\n3. よくあるエラーとその対処法" %>
             <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
           </div>
 
+          <!-- 期待する成果（対象読者の下） -->
           <div class="mb-3">
             <%= form.label :expected_outcome, "期待する成果", class: "form-label" %>
             <%= form.text_area :expected_outcome, class: "form-control", rows: 2,
@@ -189,36 +134,79 @@
             </div>
           <% end %>
 
-          <div class="mb-3">
-            <div class="d-flex gap-2 mb-2">
-              <%= form.submit post.persisted? ? "更新" : "投稿",
-                              class: "btn btn-primary flex-fill",
-                              name: "commit",
-                              onclick: "document.getElementById('post_status').value = 'published';" %>
-              <%= form.submit post.persisted? ? "下書きで更新" : "下書きに保存",
-                              class: "btn btn-outline-secondary flex-fill",
-                              name: "draft_commit",
-                              onclick: "document.getElementById('post_status').value = 'draft';" %>
-            </div>
-            <%= form.hidden_field :status, id: "post_status", value: post.status || "published" %>
-            <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100" %>
-          </div>
+
         </div>
 
         <!-- メインコンテンツ（右側） -->
         <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+
+          <!-- 投稿タイプ（タイトルの上） -->
+          <div class="mb-3">
+            <%= form.label :post_type_id, "投稿タイプ", class: "form-label" %>
+            <div class="d-flex gap-2 mb-2">
+              <%= form.collection_select :post_type_id, PostType.all.order(:name), :id, :name,
+                                         { prompt: "投稿タイプを選択してください" },
+                                         { class: "form-select", id: "postTypeSelect" } %>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="addPostTypeBtn" style="white-space: nowrap;">
+                <i class="fas fa-plus"></i> 追加
+              </button>
+            </div>
+
+            <!-- 新規投稿タイプ追加フォーム（初期は非表示） -->
+            <div id="newPostTypeForm" class="card" style="display: none;">
+              <div class="card-body p-3">
+                <h6 class="card-title">新しい投稿タイプを追加</h6>
+                <div class="mb-2">
+                  <label for="newPostTypeName" class="form-label form-label-sm">投稿タイプ名</label>
+                  <input type="text" id="newPostTypeName" name="newPostTypeName" class="form-control form-control-sm"
+                         placeholder="投稿タイプ名" maxlength="50">
+                </div>
+                <div class="mb-2">
+                  <label for="newPostTypeDescription" class="form-label form-label-sm">説明（任意）</label>
+                  <textarea id="newPostTypeDescription" class="form-control form-control-sm"
+                            placeholder="説明（任意）" rows="2" maxlength="200"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm" id="savePostTypeBtn">
+                    <i class="fas fa-save"></i> 保存
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="cancelPostTypeBtn">
+                    キャンセル
+                  </button>
+                </div>
+                <div id="postTypeError" class="alert alert-danger mt-2" style="display: none;"></div>
+                <div id="postTypeSuccess" class="alert alert-success mt-2" style="display: none;"></div>
+              </div>
+            </div>
+            <div class="form-text">この投稿の主な目的を選択してください。</div>
+          </div>
+
+          <!-- 投稿の目的（タイトルの上） -->
+          <div class="mb-3">
+            <%= form.label :purpose, class: "form-label" do %>
+              投稿の目的
+              <span class="text-danger">*</span>
+              <small class="text-muted">(公開時は必須)</small>
+            <% end %>
+            <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 1,
+                               placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
+            <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
+          </div>
+
+          <!-- タイトル -->
           <div class="mb-3">
             <%= form.label :title, class: "form-label" do %>
               タイトル
               <span class="text-danger">*</span>
               <small class="text-muted">(常に必須)</small>
             <% end %>
-            <%= form.text_field :title, class: "form-control #{'is-invalid' if post.errors[:title].any?}", required: true %>
+            <%= form.text_field :title, class: "form-control #{'is-invalid' if post.errors[:title].any?}", required: true, placeholder: "投稿タイトル" %>
             <div class="invalid-feedback">
               タイトルを入力してください。
             </div>
           </div>
 
+          <!-- 内容 -->
           <div class="mb-3 flex-grow-1 d-flex flex-column">
             <%= form.label :content, class: "form-label" do %>
               内容
@@ -226,12 +214,28 @@
               <small class="text-muted">(常に必須)</small>
             <% end %>
             <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
-                               id: "contentTextarea", required: true,
-                               style: "min-height: 400px; resize: none;" %>
+                               id: "contentTextarea", required: true, style: "overflow:auto; resize:none;", placeholder: "内容を入力してください" %>
             <div class="invalid-feedback">
               内容を入力してください。
             </div>
           </div>
+
+          <!-- 投稿・キャンセル（入力欄の下／2列レイアウト） -->
+          <div class="mb-3 sticky-actions">
+            <div class="row g-2">
+              <div class="col-6">
+                <%= form.submit post.persisted? ? "更新" : "投稿",
+                                class: "btn btn-primary w-100",
+                                name: "commit",
+                                onclick: "document.getElementById('post_status').value = 'published';" %>
+              </div>
+              <div class="col-6">
+                <%= link_to "キャンセル", posts_path, class: "btn btn-secondary w-100" %>
+              </div>
+            </div>
+            <%= form.hidden_field :status, id: "post_status", value: post.status || "published" %>
+          </div>
+
         </div>
       </div>
     <% end %>
@@ -573,25 +577,51 @@
             const textarea = document.getElementById('contentTextarea');
 
             if (formContainer && textarea) {
-                const windowHeight = window.innerHeight;
-                const navHeight = document.querySelector('nav') ? document.querySelector('nav').offsetHeight : 60;
-                const headerHeight = 100;
-                const footerHeight = document.querySelector('footer') ? document.querySelector('footer').offsetHeight : 60;
-                const mainPadding = 32;
-                const titleSectionHeight = 80;
-                const labelHeight = 30;
-                const padding = 20;
+                // Let the page scroll naturally; do not fix the container height
+                if (formContainer.style.height) formContainer.style.height = '';
 
-                const availableHeight = windowHeight - navHeight - headerHeight - footerHeight - mainPadding;
-                formContainer.style.height = Math.max(500, availableHeight) + 'px';
-
-                const textareaHeight = availableHeight - titleSectionHeight - labelHeight - padding;
-                textarea.style.height = Math.max(300, textareaHeight) + 'px';
+                // Fill the viewport vertically (at least), and grow further to fit content
+                // Make content area larger and ensure buttons stay above the footer
+                const minHeight = 220; // px (larger default height)
+                textarea.style.height = 'auto';
+                const rect = textarea.getBoundingClientRect();
+                const sticky = document.querySelector('#formContainer .sticky-actions');
+                const stickyHeight = sticky ? sticky.getBoundingClientRect().height : 0;
+                const footer = document.querySelector('footer');
+                const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
+                const extraPadding = 16; // small bottom padding
+                const verticalPadding = stickyHeight + footerHeight + extraPadding;
+                // Position sticky actions just above the footer
+                if (sticky) sticky.style.bottom = footerHeight + 'px';
+                const availableViewport = Math.max(0, window.innerHeight - rect.top - verticalPadding);
+                const desiredHeight = Math.min(availableViewport, Math.max(minHeight, textarea.scrollHeight));
+                textarea.style.height = desiredHeight + 'px';
+                textarea.style.overflow = 'auto';
             }
         }
 
         function initializeLayout() {
-            setTimeout(adjustLayout, 100);
+            setTimeout(adjustLayout, 50);
+            const textarea = document.getElementById('contentTextarea');
+            if (textarea) {
+                const autoResize = () => {
+                    textarea.style.height = 'auto';
+                    const minHeight = 220;
+                    const rect = textarea.getBoundingClientRect();
+                    const sticky = document.querySelector('#formContainer .sticky-actions');
+                    const stickyHeight = sticky ? sticky.getBoundingClientRect().height : 0;
+                    const footer = document.querySelector('footer');
+                    const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
+                    const extraPadding = 16;
+                    const verticalPadding = stickyHeight + footerHeight + extraPadding;
+                    // Update sticky position relative to footer height
+                    if (sticky) sticky.style.bottom = footerHeight + 'px';
+                    const availableViewport = Math.max(0, window.innerHeight - rect.top - verticalPadding);
+                    const desiredHeight = Math.min(availableViewport, Math.max(minHeight, textarea.scrollHeight));
+                    textarea.style.height = desiredHeight + 'px';
+                };
+                textarea.addEventListener('input', autoResize);
+            }
         }
 
         if (document.readyState === 'loading') {
@@ -599,6 +629,9 @@
         } else {
             initializeLayout();
         }
+
+        // Ensure re-initialization after Turbo navigation
+        document.addEventListener('turbo:load', initializeLayout);
 
         window.addEventListener('resize', adjustLayout);
 

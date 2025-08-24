@@ -44,7 +44,7 @@
 </div>
 
 <!-- パスキー認証用JavaScript -->
-<%= javascript_include_tag "passkey" %>
+<%= javascript_import_module_tag "passkey" %>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const emailInput = document.getElementById('email');

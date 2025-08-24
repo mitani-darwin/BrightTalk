@@ -80,7 +80,7 @@
                       <!-- 投稿者 -->
                       <div class="d-flex align-items-center text-muted">
                         <i class="fas fa-user me-1"></i>
-                        <small><%= post.user.name %></small>
+                        <small><%= post.user&.name || "削除されたユーザー" %></small>
                       </div>
                     </div>
 
@@ -191,7 +191,7 @@
                       <!-- 投稿者 -->
                       <div class="d-flex align-items-center text-muted">
                         <i class="fas fa-user me-1"></i>
-                        <small><%= post.user.name %></small>
+                        <small><%= post.user&.name || "削除されたユーザー" %></small>
                       </div>
                     </div>
 

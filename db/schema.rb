@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_21_074059) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_23_015903) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -62,6 +62,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_21_074059) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "parent_id"
+    t.index ["parent_id"], name: "index_categories_on_parent_id"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -94,21 +96,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_21_074059) do
     t.index ["tag_id"], name: "index_post_tags_on_tag_id"
   end
 
+  create_table "post_types", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_post_types_on_name", unique: true
+  end
+
   create_table "posts", force: :cascade do |t|
     t.string "title"
     t.text "content"
     t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "category_id", null: false
+    t.integer "category_id"
     t.boolean "published", default: true, null: false
     t.integer "likes_count", default: 0, null: false
     t.string "ip_address"
     t.boolean "draft", default: false
     t.integer "status", default: 1, null: false
+    t.string "purpose"
+    t.string "target_audience"
+    t.text "key_points"
+    t.text "expected_outcome"
+    t.integer "post_type_id"
     t.index ["category_id"], name: "index_posts_on_category_id"
     t.index ["draft"], name: "index_posts_on_draft"
+    t.index ["post_type_id"], name: "index_posts_on_post_type_id"
     t.index ["published"], name: "index_posts_on_published"
+    t.index ["purpose"], name: "index_posts_on_purpose"
     t.index ["status"], name: "index_posts_on_status"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
@@ -147,6 +164,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_21_074059) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
+    t.text "bio"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
@@ -170,6 +188,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_21_074059) do
   add_foreign_key "article_tags", "articles"
   add_foreign_key "article_tags", "tags"
   add_foreign_key "articles", "categories"
+  add_foreign_key "categories", "categories", column: "parent_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "likes", "posts"
@@ -177,6 +196,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_21_074059) do
   add_foreign_key "post_tags", "posts"
   add_foreign_key "post_tags", "tags"
   add_foreign_key "posts", "categories"
+  add_foreign_key "posts", "post_types"
   add_foreign_key "posts", "users"
   add_foreign_key "search_histories", "users"
   add_foreign_key "webauthn_credentials", "users"

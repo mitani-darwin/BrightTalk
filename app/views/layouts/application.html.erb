@@ -23,9 +23,10 @@
 <body>
 <%= render 'shared/navigation' %>
 
-<main class="container mt-4">
+<main class="<%= content_for?(:full_width) ? 'container-fluid px-0' : 'container' %> mt-4">
   <%= render 'shared/flash_messages' %>
   <%= yield %>
 </main>
+<%= render 'shared/footer' %>
 </body>
 </html>

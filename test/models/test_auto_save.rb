@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # Test script to verify auto-save functionality
 
-require_relative 'config/environment'
+require_relative 'config/onfig/environment'
 
 # Find a test user
 user = User.first
