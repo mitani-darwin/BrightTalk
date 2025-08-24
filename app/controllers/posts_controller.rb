@@ -105,7 +105,7 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :status, :category_id, :purpose, :target_audience, :post_type_id, :key_points, :expected_outcome, images: [])
+    params.require(:post).permit(:title, :content, :status, :category_id, :purpose, :target_audience, :post_type_id, :key_points, :expected_outcome, images: [], videos: [])
   end
 
   def auto_save_params

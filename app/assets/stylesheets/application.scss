@@ -572,13 +572,20 @@ main {
 
 // アクションボタンを常に表示: 入力欄の下に張り付け
 #formContainer .sticky-actions {
-  position: sticky;
-  bottom: 0;
+  position: static; /* Place directly under the content field (no fixed positioning) */
   background: #ffffff;
   padding-top: 0.5rem;
-  /* Ensure full visibility on devices with bottom safe area (iOS Safari etc.) */
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  z-index: 1040; /* Below fixed footer (1050) to avoid overlapping it */
+  padding-bottom: 0.5rem;
   border-top: 1px solid #dee2e6;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+}
+
+/* Keep inner width responsive and centered similar to page content */
+
+/* Hide vertical scrollbar in the content textarea while keeping it scrollable */
+#contentTextarea {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+#contentTextarea::-webkit-scrollbar { /* Chrome/Safari/Edge (Chromium) */
+  display: none;
 }
