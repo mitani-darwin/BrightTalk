@@ -40,11 +40,17 @@
   }
 }
 
-// フッターのスタイル
+// フッターのスタイル（常に画面下部に固定）
 footer {
-  width: 100vw !important; // ビューポート全体の幅
-  margin-left: calc(-50vw + 50%); // 中央揃えのための調整
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050; // 手前に表示
+  width: 100%;
+  margin-left: 0; // 固定配置時はオフセット不要
   box-shadow: 0 -2px 8px rgba(0,0,0,0.1); // 上方向の影
+  padding-bottom: env(safe-area-inset-bottom); // iOS セーフエリア対応
 
   .container-fluid {
     padding-left: 2rem;
@@ -80,9 +86,10 @@ body {
   flex-direction: column;
 }
 
+// メインコンテンツの下に余白を確保して、固定フッターと重ならないようにする
 main {
   flex: 1;
-  overflow-y: auto; // スクロール可能にする
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
 }
 
 // 投稿フォームのテキストエリアをレスポンシブに調整
@@ -539,4 +546,39 @@ main {
   .post-content {
     padding: 30px !important;
   }
+}
+
+// 投稿入力画面: 必須項目の背景色を $pink-100 に設定
+#formContainer {
+  .mb-3 {
+    // ラベルに必須(*)表示があるフィールド
+    &:has(> label .text-danger) {
+      input.form-control,
+      textarea.form-control,
+      select.form-select {
+        background-color: #f7d6e6; // Bootstrap $pink-100
+      }
+    }
+
+    // HTML の required 属性が付いているフィールド
+    input.form-control[required],
+    textarea.form-control[required],
+    select.form-select[required] {
+      background-color: #f7d6e6; // Bootstrap $pink-100
+    }
+  }
+}
+
+
+// アクションボタンを常に表示: 入力欄の下に張り付け
+#formContainer .sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  padding-top: 0.5rem;
+  /* Ensure full visibility on devices with bottom safe area (iOS Safari etc.) */
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  z-index: 1040; /* Below fixed footer (1050) to avoid overlapping it */
+  border-top: 1px solid #dee2e6;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
 }
