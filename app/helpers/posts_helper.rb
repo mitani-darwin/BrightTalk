@@ -17,15 +17,15 @@ module PostsHelper
         if post&.images&.attached?
           matching_image = post.images.find { |img| img.filename.to_s == filename }
           if matching_image
-            actual_url = url_for(matching_image)
+            actual_url = Rails.application.routes.url_helpers.rails_blob_path(matching_image, only_path: true)
             %Q(<img src="#{ERB::Util.html_escape(actual_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="img-fluid rounded my-3 clickable-image" style="max-width: 100%; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-image-src="#{ERB::Util.html_escape(actual_url)}" data-image-alt="#{ERB::Util.html_escape(alt_text)}" />)
           else
-            # Fallback: show placeholder if attachment not found
-            %Q(<img src="" alt="#{ERB::Util.html_escape(alt_text)} (画像が見つかりません)" class="img-fluid rounded my-3" style="max-width: 100%;" />)
+            # Fallback: don't display anything if attachment not found
+            ""
           end
         else
-          # Fallback: show placeholder if no post or no images
-          %Q(<img src="" alt="#{ERB::Util.html_escape(alt_text)} (画像が見つかりません)" class="img-fluid rounded my-3" style="max-width: 100%;" />)
+          # Fallback: don't display anything if no post or no images
+          ""
         end
       else
         # For regular URLs, create proper img tag
