@@ -222,10 +222,10 @@
               </div>
             <% end %>
             
-            <%= form.file_field :videos, multiple: true, accept: "video/*",
+            <%= form.file_field :videos, accept: "video/*",
                                 class: "form-control", id: "videoInput" %>
             <div class="form-text">
-              複数の動画を選択できます（MP4, WebM など）。選択すると、内容欄のカーソル位置に動画のプレースホルダを自動で挿入します（プレビューは表示しません）。
+              動画は1つのみ選択できます（MP4, WebM など）。選択すると、内容欄のカーソル位置に動画のプレースホルダを自動で挿入します（プレビューは表示しません）。
             </div>
           </div>
         </div>
@@ -749,19 +749,17 @@
             if (videoInput && content) {
                 videoInput.addEventListener('change', function(e) {
                     if (!this.files || this.files.length === 0) return;
-                    const names = Array.from(this.files)
-                        .filter(f => f.type && f.type.startsWith('video/'))
-                        .map(f => f.name);
-                    const sig = names.join('|');
-                    if (!sig) return;
-                    if (this.dataset.lastSig === sig) return;
-                    this.dataset.lastSig = sig;
-                    // 動画はMarkdownの画像埋め込みがないため、プレースホルダとしてリンク形式を使用
-                    const parts = names.map(name => `[動画 ${name}](attachment:${name})`);
-                    if (parts.length > 0) {
-                        const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
-                        insertAtCursor(content, prefix + parts.join('\n') + '\n');
-                    }
+                    const first = Array.from(this.files)
+                        .find(f => f.type && f.type.startsWith('video/'));
+                    if (!first) return;
+                    const name = first.name;
+                    // 重複挿入防止
+                    if (this.dataset.lastSig === name) return;
+                    this.dataset.lastSig = name;
+                    // 動画は1つのみのため、1つだけ挿入
+                    const md = `[動画 ${name}](attachment:${name})`;
+                    const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
+                    insertAtCursor(content, prefix + md + '\n');
                 });
                 videoInsertionInitialized = true;
             }
