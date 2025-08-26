@@ -112,28 +112,33 @@
             </div>
           <% end %>
 
-          <!-- 投稿の画像表示部分 -->
-          <% if @post.images.attached? && @post.images.any? %>
-            <% if @post.images.attached? %>
-                <div class="mb-4">
-                  <div class="row">
-                    <% @post.images.each do |image| %>
-                      <div class="col-md-6 mb-3">
-                        <%= image_tag image, class: "img-fluid rounded",
-                                      style: "width: 100%; height: 400px; object-fit: cover;" %>
-                      </div>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
-          <% end %>
-
           <!-- コンテンツ -->
           <div class="mb-4">
             <div class="content-text">
-              <%= simple_format(@post.content) %>
+              <%= format_content_with_images(@post.content, @post) %>
             </div>
           </div>
+
+          <!-- 動画表示（投稿内容の下） -->
+          <% if @post.videos&.attached? %>
+            <% first_video = @post.videos.first %>
+            <% if first_video %>
+              <div class="mb-4">
+                <h5 class="mb-3"><i class="fas fa-video me-2"></i>動画</h5>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <div class="ratio ratio-16x9 border rounded p-2 bg-light">
+                      <video controls preload="metadata" style="width:100%; height:100%;">
+                        <source src="<%= url_for(first_video) %>" type="<%= first_video.content_type %>">
+                        お使いのブラウザは動画再生に対応していません。
+                      </video>
+                    </div>
+                    <small class="text-muted d-block mt-1"><i class="fas fa-file-video me-1"></i><%= first_video.filename %></small>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
 
           <!-- いいねとコメント数 -->
           <div class="d-flex justify-content-between align-items-center border-top pt-3">
@@ -236,3 +241,41 @@
     </div>
   </div>
 </div>
+
+<!-- 画像拡大表示用モーダル -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">画像</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" src="" alt="" class="img-fluid" style="max-width: 100%; max-height: 80vh;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 画像モーダルの初期化
+  const imageModal = document.getElementById('imageModal');
+  const modalImage = document.getElementById('modalImage');
+  const modalTitle = document.getElementById('imageModalLabel');
+  
+  if (imageModal) {
+    imageModal.addEventListener('show.bs.modal', function (event) {
+      // クリックされた画像から情報を取得
+      const clickedImage = event.relatedTarget;
+      const imageSrc = clickedImage.getAttribute('data-image-src') || clickedImage.src;
+      const imageAlt = clickedImage.getAttribute('data-image-alt') || clickedImage.alt || '画像';
+      
+      // モーダル内の画像を更新
+      modalImage.src = imageSrc;
+      modalImage.alt = imageAlt;
+      modalTitle.textContent = imageAlt || '画像';
+    });
+  }
+});
+</script>

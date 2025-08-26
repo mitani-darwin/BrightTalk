@@ -105,7 +105,33 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :status, :category_id, :purpose, :target_audience, :post_type_id, :key_points, :expected_outcome, images: [], videos: [])
+    attrs = params.require(:post).permit(
+      :title, :content, :status, :category_id, :purpose, :target_audience,
+      :post_type_id, :key_points, :expected_outcome,
+      images: [], videos: []
+    )
+
+    # 空配列（新規選択なし）の場合はキーごと削除して既存添付を維持
+    if attrs.key?(:images)
+      imgs = attrs[:images]
+      attrs.delete(:images) if imgs.blank? || (imgs.respond_to?(:all?) && imgs.all?(&:blank?))
+    end
+    if attrs.key?(:videos)
+      vids = attrs[:videos]
+      if vids.blank? || (vids.respond_to?(:all?) && vids.all?(&:blank?))
+        attrs.delete(:videos)
+      else
+        # 動画は1つのみ許可するため、最初の1件以外は無視
+        if vids.is_a?(Array)
+          first = vids.find { |v| v.present? }
+          attrs[:videos] = first ? [first] : []
+        else
+          attrs[:videos] = [vids]
+        end
+      end
+    end
+
+    attrs
   end
 
   def auto_save_params
