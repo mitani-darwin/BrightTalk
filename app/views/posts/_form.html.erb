@@ -38,7 +38,7 @@
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
             <div class="d-flex gap-2 mb-2">
-              <%= form.collection_select :post_type_id, PostType.all.order(:name), :id, :name,
+              <%= form.collection_select :post_type_id, PostType.all.order(:name), :id, :display_name,
                                          { prompt: "投稿タイプを選択してください" },
                                          { class: "form-select #{'is-invalid' if post.errors[:post_type_id].any?}", id: "postTypeSelect" } %>
               <button type="button" class="btn btn-outline-primary btn-sm" id="addPostTypeBtn" style="white-space: nowrap;">
