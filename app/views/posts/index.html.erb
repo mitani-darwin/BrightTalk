@@ -36,16 +36,9 @@
         <% @posts.each do |post| %>
           <article class="post-item border rounded-3 mb-4 bg-white shadow-sm">
             <div class="row g-0">
-              <!-- 画像部分 -->
-              <% if post.images.attached? %>
-                <div class="col-md-4">
-                  <%= link_to post do %>
-                    <%= image_tag post.images.first, class: "img-fluid rounded-start",
-                                  style: "height: 250px; width: 100%; object-fit: cover;" %>
-                  <% end %>
-                </div>
-                <div class="col-md-8">
-                  <div class="card-body p-4">
+              <!-- 画像・動画は一覧では表示しないため、常にテキストレイアウト -->
+              <div class="col-12">
+                <div class="card-body p-4">
                     <!-- ヘッダー情報 -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -117,7 +110,7 @@
 
                     <!-- 内容の一部 -->
                     <p class="card-text text-muted mb-3" style="line-height: 1.6;">
-                      <%= truncate(post.content, length: 150) %>
+                      <%= truncate(strip_media_from_content(post.content), length: 150) %>
                     </p>
 
                     <!-- フッター部分 -->
@@ -154,118 +147,6 @@
                     </div>
                   </div>
                 </div>
-              <% else %>
-                <div class="col-12">
-                  <div class="card-body p-4">
-                    <!-- ヘッダー情報 -->
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <!-- 投稿タイプバッジ -->
-                        <% if post.post_type.present? %>
-                          <span class="badge bg-info fs-6 px-2 py-1">
-                            <i class="fas fa-tag me-1"></i>
-                            <%= case post.post_type.name
-                                when 'knowledge_sharing' then '知識共有'
-                                when 'question' then '質問・相談'
-                                when 'discussion' then '議論・討論'
-                                when 'tutorial' then 'チュートリアル'
-                                when 'experience_sharing' then '体験談・事例'
-                                when 'news_update' then 'ニュース・更新'
-                                when 'opinion' then '意見・考察'
-                                else post.post_type.name
-                                end %>
-                          </span>
-                        <% end %>
-                        <!-- カテゴリーバッジ -->
-                        <% if post.category %>
-                          <span class="badge bg-primary fs-6 px-2 py-1">
-                            <%= post.category.full_name %>
-                          </span>
-                        <% end %>
-                        <!-- 投稿日 -->
-                        <small class="text-muted">
-                          <i class="fas fa-calendar-alt"></i>
-                          <%= post.created_at.strftime("%Y年%m月%d日") %>
-                        </small>
-                      </div>
-                      <!-- 投稿者 -->
-                      <div class="d-flex align-items-center text-muted">
-                        <i class="fas fa-user me-1"></i>
-                        <small><%= post.user&.name || "削除されたユーザー" %></small>
-                      </div>
-                    </div>
-
-                    <!-- タイトル -->
-                    <h4 class="card-title mb-3">
-                      <%= link_to post.title, post, class: "text-decoration-none text-dark fw-bold" %>
-                    </h4>
-
-                    <!-- 構造化情報 -->
-                    <% if post.purpose.present? || post.target_audience.present? %>
-                      <div class="structured-info mb-3 p-3 bg-light rounded">
-                        <% if post.purpose.present? %>
-                          <div class="mb-2">
-                            <small class="text-primary fw-bold">
-                              <i class="fas fa-bullseye me-1"></i>目的:
-                            </small>
-                            <small class="text-muted d-block">
-                              <%= truncate(post.purpose, length: 80) %>
-                            </small>
-                          </div>
-                        <% end %>
-                        <% if post.target_audience.present? %>
-                          <div>
-                            <small class="text-success fw-bold">
-                              <i class="fas fa-users me-1"></i>対象読者:
-                            </small>
-                            <small class="text-muted">
-                              <%= truncate(post.target_audience, length: 50) %>
-                            </small>
-                          </div>
-                        <% end %>
-                      </div>
-                    <% end %>
-
-                    <!-- 内容の一部 -->
-                    <p class="card-text text-muted mb-3" style="line-height: 1.6;">
-                      <%= truncate(post.content, length: 150) %>
-                    </p>
-
-                    <!-- フッター部分 -->
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                      <!-- タグ -->
-                      <div class="tags">
-                        <% if post.tags.any? %>
-                          <% post.tags.limit(3).each do |tag| %>
-                            <%= link_to "##{tag.name}", posts_path(tag: tag.name),
-                                        class: "badge bg-light text-secondary text-decoration-none me-1 border" %>
-                          <% end %>
-                          <% if post.tags.count > 3 %>
-                            <small class="text-muted">+<%= post.tags.count - 3 %>個</small>
-                          <% end %>
-                        <% end %>
-                      </div>
-
-                      <!-- 統計情報 -->
-                      <div class="post-stats d-flex align-items-center gap-3">
-                        <% if post.likes.any? %>
-                          <small class="text-muted d-flex align-items-center">
-                            <i class="fas fa-heart text-danger me-1"></i>
-                            <%= post.likes.count %>
-                          </small>
-                        <% end %>
-                        <% if post.comments.any? %>
-                          <small class="text-muted d-flex align-items-center">
-                            <i class="fas fa-comment text-info me-1"></i>
-                            <%= post.comments.count %>
-                          </small>
-                        <% end %>
-                        <%= link_to "続きを読む →", post, class: "btn btn-outline-primary btn-sm" %>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
             </div>
           </article>
         <% end %>
