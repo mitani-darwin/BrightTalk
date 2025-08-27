@@ -64,3 +64,12 @@ module "ec2" {
   security_group_ids = [module.security.security_group_id]
   subnet_id          = module.vpc.public_subnet_ids[0]
 }
+
+# S3 module for image storage
+module "s3" {
+  source = "../../modules/s3"
+
+  bucket_name    = "brighttalk.jp-image"
+  environment    = "production"
+  ec2_role_name  = "brighttalk-production-ssm-role"  # 既存のSSMロール名
+}
