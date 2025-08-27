@@ -17,6 +17,8 @@ amazon:
 # EC2 IAMロール用の新しい設定を追加
 amazon_iam:
   service: S3
+  access_key_id: <%= Rails.application.credentials.dig(:aws, :access_key_id) %>
+  secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
   region: ap-northeast-1
   bucket: brighttalk.jp-image
   # access_key_id と secret_access_key を削除することでIAMロールを使用
