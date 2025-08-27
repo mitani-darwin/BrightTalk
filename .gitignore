@@ -106,5 +106,3 @@ yarn-error.log*
 *.pid
 *.seed
 *.pid.lock
-
-config/credentials.yml.enc
