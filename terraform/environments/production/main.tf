@@ -71,5 +71,5 @@ module "s3" {
 
   bucket_name    = "brighttalk.jp-image"
   environment    = "production"
-  ec2_role_name  = "brighttalk-production-ssm-role"  # 既存のSSMロール名
+  ec2_role_name  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
 }

@@ -1,4 +1,3 @@
-
 # サービス名（必須）
 service: bright_talk
 
@@ -10,6 +9,8 @@ servers:
   web:
     hosts:
       - 57.182.140.42
+    options:
+      network: host
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
@@ -59,7 +60,6 @@ volumes:
 # Bridge fingerprinted assets
 asset_path: /rails/public/assets
 
-# Configure the image builder
 # Configure the image builder
 builder:
   arch: arm64
