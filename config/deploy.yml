@@ -9,9 +9,9 @@ servers:
   web:
     hosts:
       - 57.182.140.42
-    #options:
+    options:
     #  # ホストネットワークを使用してメタデータサービスアクセスを確保
-    #  network: host
+      add-host: "host.docker.internal:host-gateway"
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
