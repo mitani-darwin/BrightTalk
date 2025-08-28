@@ -9,6 +9,9 @@ servers:
   web:
     hosts:
       - 57.182.140.42
+    options:
+      # EC2メタデータサービスへのアクセスを確保
+      add-host: "169.254.169.254:host-gateway"
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
