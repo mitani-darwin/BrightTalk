@@ -9,6 +9,9 @@ servers:
   web:
     hosts:
       - 57.182.140.42
+    options:
+      # ホストネットワークを使用してメタデータサービスアクセスを確保
+      network: host
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
