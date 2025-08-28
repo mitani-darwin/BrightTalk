@@ -28,15 +28,13 @@ env:
     - RAILS_MASTER_KEY
     - DOCKER_HUB_PASSWORD
     - SECRET_KEY_BASE
-    - AWS_ACCESS_KEY_ID
-    - AWS_SECRET_ACCESS_KEY
-    - AWS_SESSION_TOKEN
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
     RAILS_LOG_LEVEL: "info"
     RAILS_SERVE_STATIC_FILES: "true"
     RAILS_LOG_TO_STDOUT: "true"
+    AWS_REGION: "ap-northeast-1"
 
 # SSH configuration - カスタムポート47583を使用
 ssh:
