@@ -9,9 +9,6 @@ servers:
   web:
     hosts:
       - 57.182.140.42
-    options:
-    #  # ホストネットワークを使用してメタデータサービスアクセスを確保
-      add-host: "host.docker.internal:host-gateway"
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
@@ -31,6 +28,9 @@ env:
     - RAILS_MASTER_KEY
     - DOCKER_HUB_PASSWORD
     - SECRET_KEY_BASE
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - AWS_SESSION_TOKEN
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
