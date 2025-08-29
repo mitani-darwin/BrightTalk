@@ -11,7 +11,7 @@ servers:
       - 57.182.140.42
     options:
       # EC2メタデータサービスへのアクセスを確保
-      extra_hosts:
+      add-host:
         - "169.254.169.254:host-gateway"
         - "host.docker.internal:host-gateway"
       # ネットワークモードの追加設定
@@ -35,8 +35,8 @@ env:
     - RAILS_MASTER_KEY
     - DOCKER_HUB_PASSWORD
     - SECRET_KEY_BASE
-    # - AWS_ACCESS_KEY_ID
-    # - AWS_SECRET_ACCESS_KEY
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
