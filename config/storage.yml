@@ -17,13 +17,11 @@ amazon:
 # EC2 IAMロール用の新しい設定を追加
 amazon_iam:
   service: S3
-  access_key_id: <%= Rails.application.credentials.dig(:aws, :access_key_id) %>
-  secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
+  access_key_id: <%= ENV['AWS_ACCESS_KEY_ID'] if ENV['AWS_ACCESS_KEY_ID'].present? %>
+  secret_access_key: <%= ENV['AWS_SECRET_ACCESS_KEY'] if ENV['AWS_SECRET_ACCESS_KEY'].present? %>
   region: ap-northeast-1
   bucket: brighttalk.jp-image
   prefix: <%= Rails.env %>/uploads/
-  # access_key_id と secret_access_key を削除することでIAMロールを使用
-
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
