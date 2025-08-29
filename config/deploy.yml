@@ -87,4 +87,4 @@ logging:
 # Boot configuration
 boot:
   limit: 10
-  wait: 2
+  wait: 5  # 2秒から5秒に増加
