@@ -21,7 +21,6 @@ amazon_iam:
   secret_access_key: <%= ENV['AWS_SECRET_ACCESS_KEY'] if ENV['AWS_SECRET_ACCESS_KEY'].present? %>
   region: ap-northeast-1
   bucket: brighttalk.jp-image
-  prefix: <%= Rails.env %>/uploads/
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
