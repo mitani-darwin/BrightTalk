@@ -2,13 +2,39 @@ require 'mail/ses'
 
 ActiveSupport.on_load(:action_mailer) do
   def self.configure_aws_ses(environment)
+    # デバッグ情報を出力
+    puts "🔍 [DEBUG] Environment: #{environment}"
+    puts "🔍 [DEBUG] Rails.env: #{Rails.env}"
+    
+    # Rails credentialsから試行
     aws_config = Rails.application.credentials.dig(:aws, environment.to_sym)
-
+    
+    # 認証情報の取得優先順位: Rails credentials → 環境変数
     if aws_config&.dig(:access_key_id) && aws_config&.dig(:secret_access_key)
+      access_key_id = aws_config[:access_key_id]
+      secret_access_key = aws_config[:secret_access_key]
+      region = aws_config[:region] || ENV['AWS_REGION'] || 'ap-northeast-1'
+      auth_source = 'Rails credentials'
+      puts "🔑 [AUTH] Using Rails credentials for AWS authentication"
+    else
+      # 環境変数から読み込み（Kamal対応）
+      access_key_id = ENV['AWS_ACCESS_KEY_ID']
+      secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
+      region = ENV['AWS_REGION'] || 'ap-northeast-1'
+      auth_source = 'environment variables'
+      puts "🔑 [AUTH] Rails credentials not available, trying environment variables"
+    end
+
+    # デバッグ情報
+    puts "🔍 [DEBUG] Rails credentials available: #{aws_config ? 'Yes' : 'No'}"
+    puts "🔍 [DEBUG] ENV AWS_ACCESS_KEY_ID present: #{ENV['AWS_ACCESS_KEY_ID'] ? 'Yes (***' + ENV['AWS_ACCESS_KEY_ID'][-4..-1] + ')' : 'No'}"
+    puts "🔍 [DEBUG] ENV AWS_SECRET_ACCESS_KEY present: #{ENV['AWS_SECRET_ACCESS_KEY'] ? 'Yes (***' + ENV['AWS_SECRET_ACCESS_KEY'][-4..-1] + ')' : 'No'}"
+
+    if access_key_id && secret_access_key
       ActionMailer::Base.add_delivery_method :ses, Mail::SES,
-                                             region: aws_config[:region] || 'ap-northeast-1',
-                                             access_key_id: aws_config[:access_key_id],
-                                             secret_access_key: aws_config[:secret_access_key]
+                                             region: region,
+                                             access_key_id: access_key_id,
+                                             secret_access_key: secret_access_key
 
       ActionMailer::Base.delivery_method = :ses
       ActionMailer::Base.perform_deliveries = true
@@ -186,9 +212,14 @@ ActiveSupport.on_load(:action_mailer) do
       )
 
       puts "✅ AWS SES configured for #{environment} environment"
+      puts "🔑 Using #{auth_source} for AWS authentication"
+      puts "🌏 Region: #{region}"
       return true
     else
       puts "❌ AWS credentials not found for #{environment} environment"
+      puts "💡 Available sources checked:"
+      puts "   - Rails credentials: #{aws_config ? 'Found but incomplete' : 'Not found'}"
+      puts "   - Environment variables: AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID'] ? 'Set' : 'Not set'}, AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY'] ? 'Set' : 'Not set'}"
       return false
     end
   end

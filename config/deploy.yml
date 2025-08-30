@@ -14,8 +14,6 @@ servers:
       add-host:
         - "169.254.169.254:host-gateway"
         - "host.docker.internal:host-gateway"
-      # ネットワークモードの追加設定
-      network_mode: "bridge"
 
 # Enable SSL auto certification via Let's Encrypt
 proxy:
