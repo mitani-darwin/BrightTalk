@@ -1,58 +1,50 @@
-# See https://docs.docker.com/engine/reference/builder/#dockerignore-file for more about ignoring files.
-
-# Ignore git directory.
+# Exclude VCS and metadata
 .git
 .gitignore
-
-# Ignore bundler config.
-/.bundle
-
-# Ignore all default key files.
-# COMMENTED OUT to include master.key
-# /config/master.key
-/config/credentials/*.key
-
-# Explicitly include master.key
-!config/master.key
-
-# Ignore all logfiles and tempfiles.
-/log/*
-/tmp/*
-!/log/.keep
-!/tmp/.keep
-
-# Ignore pidfiles, but keep the directory.
-/tmp/pids/*
-!/tmp/pids/.keep
-
-# Ignore storage (uploaded files in development and any SQLite databases).
-/storage/*
-!/storage/.keep
-/db/*.sqlite*
-/db/*.db
-
-# Ignore assets.
-/public/assets
-
-# Ignore CI service files.
-.github
-
-# Ignore development/test files
-/test
-.rspec
-spec/
-
-# Ignore node modules
-node_modules/
-
-# Ignore editor files
-.vscode/
-.idea/
-
-# Ignore OS files
+.gitattributes
 .DS_Store
-Thumbs.db
 
-# Ignore terraform files
-terraform/
-terraform.tfstate*
+# Local editor/IDE settings
+.idea
+.vscode
+
+# Logs and temporary files
+log
+log/*
+tmp
+tmp/*
+
+# Rails storage (ActiveStorage local dir)
+storage
+storage/*
+
+# Node and Ruby artifacts not needed in build context
+node_modules
+vendor/bundle
+.bundle
+coverage
+
+# Test and development files not needed for production image
+spec
+test
+db/*.sqlite3
+db/*.sqlite3-journal
+
+# Terraform and infrastructure code (keeps image context small)
+terraform
+
+# Compiled assets from previous builds (will be recompiled in image)
+public/assets
+
+# Environment and secrets (should be provided via CI/CD or runtime env)
+.env
+.env.*
+config/master.key
+config/credentials.yml.enc
+
+# Sample and large media files
+db/sample_images
+
+# Other misc
+*.swp
+*.swo

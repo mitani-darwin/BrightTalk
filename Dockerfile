@@ -57,6 +57,17 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Final stage for app image
 FROM base
 
+# Install unzip and AWS CLI v2 for ARM64 in the final stage
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y unzip && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws/ && \
+    apt-get remove -y unzip && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
@@ -64,6 +75,7 @@ COPY --from=build /rails /rails
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    mkdir -p db log storage tmp && \
     chown -R rails:rails db log storage tmp
 USER 1000:1000
 

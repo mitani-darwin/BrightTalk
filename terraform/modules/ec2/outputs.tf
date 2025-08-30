@@ -46,3 +46,14 @@ output "eip_public_ip" {
   description = "Elastic IP public IP"
   value       = aws_eip.web_server.public_ip
 }
+
+# IAM Role Outputs
+output "iam_role_name" {
+  description = "IAM role name for EC2 instance"
+  value       = aws_iam_role.ssm_role.name
+}
+
+output "iam_instance_profile_name" {
+  description = "IAM instance profile name"
+  value       = aws_iam_instance_profile.ssm_profile.name
+}
