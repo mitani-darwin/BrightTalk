@@ -6,4 +6,9 @@ class PagesController < ApplicationController
     # プライバシーポリシーページ
     # Privacy policy page
   end
+
+  def terms_of_service
+    # 利用規約ページ
+    # Terms of service page
+  end
 end
