@@ -25,4 +25,7 @@ Rails.application.routes.draw do
 
   # システム機能（ヘルスチェック、PWA）
   draw(:system)
+
+  # 静的ページ機能（プライバシーポリシーなど）
+  draw(:pages)
 end
