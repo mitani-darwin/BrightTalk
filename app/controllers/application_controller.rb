@@ -31,7 +31,9 @@ class ApplicationController < ActionController::Base
       # 投稿の一覧・詳細は公開
       (controller_name == "posts" && action_name.in?([ "index", "show" ])) ||
       # ユーザーの詳細は公開
-      (controller_name == "users" && action_name == "show")
+      (controller_name == "users" && action_name == "show") ||
+      # 静的ページ（プライバシーポリシーなど）は公開
+      (controller_name == "pages")
   end
 
   # Deviseのストロングパラメータ設定
