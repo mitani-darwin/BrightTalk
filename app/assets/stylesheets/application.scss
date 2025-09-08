@@ -267,6 +267,60 @@ main {
   .col-lg-9 {
     order: 1;
   }
+
+  // モバイル端末でのフッター調整
+  footer {
+    // フッターの内部パディングを縮小
+    .container-fluid {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    // フッター内のテキストサイズを調整
+    h5 {
+      font-size: 1.1rem;
+    }
+    
+    p {
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    small {
+      font-size: 0.7rem;
+    }
+  }
+  
+  // メインコンテンツの下部余白を縮小
+  main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)); // 120px → 80px
+  }
+}
+
+@media (max-width: 480px) {
+  // さらに小さなモバイル端末での調整
+  footer {
+    .container-fluid {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    h5 {
+      font-size: 1rem;
+    }
+    
+    p {
+      font-size: 0.8rem;
+    }
+    
+    small {
+      font-size: 0.65rem;
+    }
+  }
+  
+  main {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom)); // さらに縮小
+  }
 }
 
 // フォームのカスタムスタイル
