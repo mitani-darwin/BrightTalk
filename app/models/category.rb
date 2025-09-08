@@ -6,8 +6,8 @@ class Category < ApplicationRecord
   has_many :posts, dependent: :destroy
 
   # 階層構造のアソシエーション
-  belongs_to :parent, class_name: 'Category', optional: true
-  has_many :children, class_name: 'Category', foreign_key: 'parent_id', dependent: :destroy
+  belongs_to :parent, class_name: "Category", optional: true
+  has_many :children, class_name: "Category", foreign_key: "parent_id", dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :parent_id }, length: { maximum: 50 }
   validates :description, length: { maximum: 200 }
@@ -37,21 +37,21 @@ class Category < ApplicationRecord
     result = []
     current = parent
     visited = Set.new
-    
+
     while current && !visited.include?(current.id)
       visited.add(current.id)
       result.unshift(current)
       current = current.parent
     end
-    
+
     result
   end
 
   def descendants
-    children.flat_map { |child| [child] + child.descendants }
+    children.flat_map { |child| [ child ] + child.descendants }
   end
 
-  def full_name(separator: ' > ')
+  def full_name(separator: " > ")
     if root?
       name
     else
@@ -65,9 +65,9 @@ class Category < ApplicationRecord
     return unless parent_id
 
     if parent_id == id
-      errors.add(:parent_id, '自分自身を親カテゴリーに設定することはできません')
+      errors.add(:parent_id, "自分自身を親カテゴリーに設定することはできません")
     elsif ancestors.include?(self)
-      errors.add(:parent_id, '循環参照が発生します')
+      errors.add(:parent_id, "循環参照が発生します")
     end
   end
 end

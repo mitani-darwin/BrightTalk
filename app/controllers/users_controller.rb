@@ -73,7 +73,7 @@ class UsersController < ApplicationController
   # アカウント削除
   def destroy_account
     @user = current_user
-    
+
     if @user.destroy
       redirect_to root_path, notice: "アカウントを削除しました。ご利用ありがとうございました。"
     else
@@ -172,5 +172,4 @@ class UsersController < ApplicationController
   def password_params
     params.require(:user).permit(:password, :password_confirmation)
   end
-
 end

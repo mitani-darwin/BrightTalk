@@ -3,7 +3,7 @@ class Post < ApplicationRecord
   belongs_to :user
   belongs_to :category, optional: true
   belongs_to :post_type, optional: true
-  
+
   # 自動保存フラグ（バリデーション制御用）
   attr_accessor :auto_save
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # Test script to verify new draft validation requirements
 
-require_relative 'config/onfig/environment'
+require_relative "config/onfig/environment"
 
 # Find a test user (create one if needed)
 user = User.first
@@ -96,7 +96,7 @@ else
 end
 
 # Clean up
-[post1, post2, post3, post4, post5].each do |post|
+[ post1, post2, post3, post4, post5 ].each do |post|
   post.destroy if post&.persisted?
 end
 

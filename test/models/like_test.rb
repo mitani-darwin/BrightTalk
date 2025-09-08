@@ -92,6 +92,9 @@ class LikeTest < ActiveSupport::TestCase
     another_post = Post.create!(
       title: "Another Post",
       content: "Another content",
+      purpose: "テスト目的",
+      target_audience: "テスト対象者",
+      post_type: post_types(:tutorial),
       user: @user,
       category: categories(:general)
     )
@@ -198,6 +201,9 @@ class LikeTest < ActiveSupport::TestCase
     post2 = Post.create!(
       title: "Post 2 #{Time.current.to_i}",
       content: "Content 2",
+      purpose: "テスト目的",
+      target_audience: "テスト対象者",
+      post_type: post_types(:tutorial),
       user: @user,
       category: categories(:general)
     )

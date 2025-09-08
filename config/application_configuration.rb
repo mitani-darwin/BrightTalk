@@ -31,8 +31,7 @@ module BrightTalk
 
     # メール形式をテキストに強制
     config.action_mailer.default_options = {
-      content_type: 'text/plain; charset=UTF-8'
+      content_type: "text/plain; charset=UTF-8"
     }
-
   end
 end

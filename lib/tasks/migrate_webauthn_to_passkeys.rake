@@ -78,7 +78,7 @@ namespace :passkeys do
     print "Are you sure you want to delete all WebAuthn credentials? (yes/NO): "
     confirmation = STDIN.gets.chomp
 
-    if confirmation.downcase == 'yes'
+    if confirmation.downcase == "yes"
       deleted_count = WebauthnCredential.count
       WebauthnCredential.destroy_all
       puts "Deleted #{deleted_count} WebAuthn credentials"
@@ -86,5 +86,4 @@ namespace :passkeys do
       puts "Cleanup cancelled"
     end
   end
-
 end

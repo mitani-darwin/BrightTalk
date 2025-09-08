@@ -21,7 +21,7 @@ namespace :passkeys do
         # Base64URLデコードを試行
         begin
           decoded = Base64.urlsafe_decode64(passkey.identifier)
-          hex_value = decoded.unpack1('H*')
+          hex_value = decoded.unpack1("H*")
           puts "    - Decoded Hex: #{hex_value}"
           puts "    - Decoded Length: #{decoded.length} bytes"
         rescue => e
@@ -41,7 +41,7 @@ namespace :passkeys do
   end
 
   desc "Clear all passkeys for a specific user (dangerous)"
-  task :clear_user_passkeys, [:email] => :environment do |t, args|
+  task :clear_user_passkeys, [ :email ] => :environment do |t, args|
     if args[:email].blank?
       puts "Usage: rails passkeys:clear_user_passkeys[user@example.com]"
       exit 1
@@ -57,7 +57,7 @@ namespace :passkeys do
     print "⚠️  Are you sure you want to delete #{passkey_count} passkeys for #{user.email}? (yes/NO): "
     confirmation = STDIN.gets.chomp
 
-    if confirmation.downcase == 'yes'
+    if confirmation.downcase == "yes"
       deleted = user.passkeys.destroy_all.count
       puts "✅ Deleted #{deleted} passkeys for #{user.email}"
     else

@@ -1,8 +1,8 @@
 
 class PostsController < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show]
-  before_action :set_post, only: [:show, :edit, :update, :destroy]
-  before_action :check_post_owner, only: [:edit, :update, :destroy]
+  before_action :authenticate_user!, except: [ :index, :show ]
+  before_action :set_post, only: [ :show, :edit, :update, :destroy ]
+  before_action :check_post_owner, only: [ :edit, :update, :destroy ]
   before_action :log_user_status
 
   def index
@@ -13,7 +13,7 @@ class PostsController < ApplicationController
   def show
     # 下書きは作者のみ閲覧可能
     if @post.draft? && @post.user != current_user
-      redirect_to posts_path, alert: '指定された投稿は存在しません。'
+      redirect_to posts_path, alert: "指定された投稿は存在しません。"
       return
     end
 
@@ -30,9 +30,9 @@ class PostsController < ApplicationController
 
     if @post.save
       if @post.published?
-        redirect_to @post, notice: '投稿が作成されました。'
+        redirect_to @post, notice: "投稿が作成されました。"
       else
-        redirect_to drafts_posts_path, notice: '下書きが保存されました。'
+        redirect_to drafts_posts_path, notice: "下書きが保存されました。"
       end
     else
       render :new, status: :unprocessable_content
@@ -45,9 +45,9 @@ class PostsController < ApplicationController
   def update
     if @post.update(post_params)
       if @post.published?
-        redirect_to @post, notice: '投稿が更新されました。'
+        redirect_to @post, notice: "投稿が更新されました。"
       else
-        redirect_to drafts_posts_path, notice: '下書きが更新されました。'
+        redirect_to drafts_posts_path, notice: "下書きが更新されました。"
       end
     else
       render :edit, status: :unprocessable_content
@@ -56,7 +56,7 @@ class PostsController < ApplicationController
 
   def destroy
     @post.destroy!
-    redirect_to posts_path, notice: '投稿が削除されました。'
+    redirect_to posts_path, notice: "投稿が削除されました。"
   end
 
   # 下書き一覧
@@ -68,26 +68,26 @@ class PostsController < ApplicationController
   def auto_save
     @post = if params[:id].present?
               current_user.posts.find(params[:id])
-            else
+    else
               current_user.posts.build
-            end
+    end
 
     # バリデーションをスキップして強制保存
     @post.assign_attributes(auto_save_params)
-    @post.status = 'draft'
+    @post.status = "draft"
     @post.auto_save = true  # 自動保存フラグを設定
-    
+
     if @post.save(validate: false)
-      render json: { 
-        success: true, 
+      render json: {
+        success: true,
         post_id: @post.id,
-        message: '自動保存されました',
-        saved_at: Time.current.strftime('%H:%M:%S')
+        message: "自動保存されました",
+        saved_at: Time.current.strftime("%H:%M:%S")
       }
     else
-      render json: { 
-        success: false, 
-        message: '自動保存に失敗しました' 
+      render json: {
+        success: false,
+        message: "自動保存に失敗しました"
       }
     end
   end
@@ -100,7 +100,7 @@ class PostsController < ApplicationController
 
   def check_post_owner
     unless @post.user == current_user
-      redirect_to posts_path, alert: 'アクセス権限がありません。'
+      redirect_to posts_path, alert: "アクセス権限がありません。"
     end
   end
 
@@ -124,9 +124,9 @@ class PostsController < ApplicationController
         # 動画は1つのみ許可するため、最初の1件以外は無視
         if vids.is_a?(Array)
           first = vids.find { |v| v.present? }
-          attrs[:videos] = first ? [first] : []
+          attrs[:videos] = first ? [ first ] : []
         else
-          attrs[:videos] = [vids]
+          attrs[:videos] = [ vids ]
         end
       end
     end
