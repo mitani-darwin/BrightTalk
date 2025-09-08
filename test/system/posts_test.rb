@@ -94,6 +94,53 @@ class PostsTest < ApplicationSystemTestCase
 
     assert content_filled, "Could not find or fill content field"
 
+    # 投稿目的フィールドを埋める
+    purpose_filled = false
+    if page.has_field?("post[purpose]")
+      fill_in "post[purpose]", with: "System test purpose"
+      purpose_filled = true
+      puts "Filled purpose field"
+    elsif page.has_css?("textarea[name*='purpose']")
+      page.find("textarea[name*='purpose']").set("System test purpose")
+      purpose_filled = true
+      puts "Filled purpose field using CSS selector"
+    end
+    assert purpose_filled, "Could not find or fill purpose field"
+
+    # 対象読者フィールドを埋める
+    target_audience_filled = false
+    if page.has_field?("post[target_audience]")
+      fill_in "post[target_audience]", with: "System test audience"
+      target_audience_filled = true
+      puts "Filled target_audience field"
+    elsif page.has_css?("input[name*='target_audience']")
+      page.find("input[name*='target_audience']").set("System test audience")
+      target_audience_filled = true
+      puts "Filled target_audience field using CSS selector"
+    end
+    assert target_audience_filled, "Could not find or fill target_audience field"
+
+    # 投稿タイプ選択
+    post_type_selected = false
+    if page.has_select?("post[post_type_id]")
+      # 最初のオプション（プロンプト以外）を選択
+      options = page.find("select[name='post[post_type_id]']").all("option")
+      if options.length > 1
+        select options[1].text, from: "post[post_type_id]"
+        post_type_selected = true
+        puts "Selected post type: #{options[1].text}"
+      end
+    elsif page.has_css?("select[name*='post_type']")
+      select_element = page.find("select[name*='post_type']")
+      options = select_element.all("option")
+      if options.length > 1
+        select_element.select(options[1].text)
+        post_type_selected = true
+        puts "Selected post type using CSS selector"
+      end
+    end
+    assert post_type_selected, "Could not find or select post type"
+
     # カテゴリ選択（存在する場合）
     if page.has_select?("post[category_id]")
       select @category.name, from: "post[category_id]"
@@ -168,6 +215,16 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "post[title]", with: "Manual Login Test Post"
     fill_in "post[content]", with: "Manual login test content"
+    fill_in "post[purpose]", with: "Manual test purpose"
+    fill_in "post[target_audience]", with: "Manual test audience"
+
+    # 投稿タイプ選択
+    if page.has_select?("post[post_type_id]")
+      options = page.find("select[name='post[post_type_id]']").all("option")
+      if options.length > 1
+        select options[1].text, from: "post[post_type_id]"
+      end
+    end
 
     if page.has_select?("post[category_id]")
       select @category.name, from: "post[category_id]"
