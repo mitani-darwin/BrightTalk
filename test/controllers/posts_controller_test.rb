@@ -42,7 +42,10 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
         post: {
           title: "新しい投稿",
           content: "新しい投稿の内容",
-          category_id: @category.id
+          purpose: "テスト目的",
+          target_audience: "テストユーザー",
+          category_id: @category.id,
+          post_type_id: post_types(:tutorial).id
         }
       }
     end
@@ -148,7 +151,7 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
       content: "下書き内容",
       user: @user,
       category: @category,
-      draft: true
+      status: :draft
     )
 
     get posts_path
@@ -203,7 +206,10 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
         post: {
           title: "Deviseヘルパーテスト",
           content: "Deviseヘルパーでのログインテスト",
-          category_id: @category.id
+          purpose: "Deviseテスト目的",
+          target_audience: "テスト担当者",
+          category_id: @category.id,
+          post_type_id: post_types(:tutorial).id
         }
       }
     end

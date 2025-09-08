@@ -80,6 +80,9 @@ class PostTagTest < ActiveSupport::TestCase
     another_post = Post.create!(
       title: "Another Post",
       content: "Another content",
+      purpose: "テスト目的",
+      target_audience: "テスト対象者",
+      post_type: post_types(:tutorial),
       user: users(:test_user),
       category: categories(:general)
     )

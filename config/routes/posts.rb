@@ -9,7 +9,7 @@ Rails.application.routes.draw do
     end
 
     # いいね機能を追加
-    resources :likes, only: [:create, :destroy]
-    resources :comments, only: [:create, :destroy]
+    resources :likes, only: [ :create, :destroy ]
+    resources :comments, only: [ :create, :destroy ]
   end
 end

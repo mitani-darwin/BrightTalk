@@ -8,7 +8,7 @@ class PasskeyAuthenticationsController < ApplicationController
 
   def create
     Rails.logger.info "PasskeyAuthenticationsController#create called"
-    
+
     begin
       credential_data = params[:credential]
       if credential_data.blank?
@@ -31,7 +31,7 @@ class PasskeyAuthenticationsController < ApplicationController
 
       # データベースから対応するパスキーを取得
       stored_credential = WebauthnCredential.find_by(external_id: credential_data[:id])
-      
+
       if stored_credential.blank?
         Rails.logger.error "Stored credential not found for ID: #{credential_data[:id]}"
         render json: { error: "パスキーが見つかりません" }, status: :unauthorized
@@ -62,12 +62,12 @@ class PasskeyAuthenticationsController < ApplicationController
       # ユーザーをログインさせる
       user = stored_credential.user
       sign_in(user)
-      
+
       # セッションをクリア
       session.delete(:passkey_auth_challenge)
-      
+
       Rails.logger.info "Passkey authentication successful for user: #{user.id}"
-      
+
       respond_to do |format|
         format.json {
           render json: {
@@ -90,7 +90,7 @@ class PasskeyAuthenticationsController < ApplicationController
 
   def auth_options
     Rails.logger.info "Generating passkey authentication options"
-    
+
     email = params[:email]
     if email.blank?
       render json: { error: "メールアドレスが必要です" }, status: :bad_request
@@ -127,10 +127,10 @@ class PasskeyAuthenticationsController < ApplicationController
     }
 
     Rails.logger.info "Authentication options generated for user: #{user.id}"
-    
-    render json: { 
+
+    render json: {
       success: true,
-      passkey_options: auth_options 
+      passkey_options: auth_options
     }
   end
 end

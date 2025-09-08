@@ -1,11 +1,11 @@
 # app/controllers/categories_controller.rb
 class CategoriesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_category, only: [:show, :edit, :update, :destroy]
+  before_action :set_category, only: [ :show, :edit, :update, :destroy ]
 
   def index
     @root_categories = Category.root_categories.includes(:children).order(:name)
-    
+
     respond_to do |format|
       format.json do
         render json: {
@@ -44,7 +44,7 @@ class CategoriesController < ApplicationController
             message: "カテゴリー「#{@category.name}」を作成しました"
           }
         end
-        format.html { redirect_to categories_path, notice: 'カテゴリーが作成されました。' }
+        format.html { redirect_to categories_path, notice: "カテゴリーが作成されました。" }
       end
     else
       respond_to do |format|
@@ -64,7 +64,7 @@ class CategoriesController < ApplicationController
   end
 
   def edit
-    @parent_categories = Category.where.not(id: [@category.id] + @category.descendants.pluck(:id)).order(:name)
+    @parent_categories = Category.where.not(id: [ @category.id ] + @category.descendants.pluck(:id)).order(:name)
   end
 
   def update
@@ -77,7 +77,7 @@ class CategoriesController < ApplicationController
             message: "カテゴリー「#{@category.name}」を更新しました"
           }
         end
-        format.html { redirect_to categories_path, notice: 'カテゴリーが更新されました。' }
+        format.html { redirect_to categories_path, notice: "カテゴリーが更新されました。" }
       end
     else
       respond_to do |format|
@@ -89,7 +89,7 @@ class CategoriesController < ApplicationController
           }, status: :unprocessable_content
         end
         format.html do
-          @parent_categories = Category.where.not(id: [@category.id] + @category.descendants.pluck(:id)).order(:name)
+          @parent_categories = Category.where.not(id: [ @category.id ] + @category.descendants.pluck(:id)).order(:name)
           render :edit, status: :unprocessable_content
         end
       end
@@ -107,20 +107,20 @@ class CategoriesController < ApplicationController
       @category.destroy
       respond_to do |format|
         format.json { render json: { success: true, message: "カテゴリー「#{@category.name}」を削除しました" } }
-        format.html { redirect_to categories_path, notice: 'カテゴリーが削除されました。' }
+        format.html { redirect_to categories_path, notice: "カテゴリーが削除されました。" }
       end
     end
   end
 
   def children
     render json: {
-      children: @category.children.order(:name).map { |c| 
-        { 
-          id: c.id, 
-          name: c.name, 
+      children: @category.children.order(:name).map { |c|
+        {
+          id: c.id,
+          name: c.name,
           description: c.description,
           full_name: c.full_name
-        } 
+        }
       }
     }
   end

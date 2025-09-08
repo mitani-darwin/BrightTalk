@@ -133,7 +133,8 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to @post
     follow_redirect!
     # HTMLタグがエスケープされているかチェック
-    assert_no_match "<script>", response.body
+    assert_match "&lt;script&gt;", response.body  # エスケープされたスクリプトタグ
+    assert_no_match "<script>alert('XSS')</script>", response.body  # エスケープされていない悪意のあるスクリプト
     assert_match "安全なコメント", response.body
   end
 

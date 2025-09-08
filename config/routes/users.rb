@@ -1,7 +1,7 @@
 # ユーザー関連のルーティング
 Rails.application.routes.draw do
   # ユーザー関連のルート
-  resources :users, only: [:show] do
+  resources :users, only: [ :show ] do
     collection do
       get :registration_pending
     end

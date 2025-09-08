@@ -72,6 +72,9 @@ class TagTest < ActiveSupport::TestCase
     post2 = Post.create!(
       title: "Second Post",
       content: "Second content",
+      purpose: "セカンドテスト目的",
+      target_audience: "セカンドテスト対象者",
+      post_type: post_types(:tutorial),
       user: users(:test_user),
       category: categories(:general)
     )
@@ -98,6 +101,9 @@ class TagTest < ActiveSupport::TestCase
       post = Post.create!(
         title: "Post #{i}",
         content: "Content #{i}",
+        purpose: "テスト目的 #{i}",
+        target_audience: "テスト対象者",
+        post_type: post_types(:tutorial),
         user: user,
         category: category
       )
@@ -108,6 +114,9 @@ class TagTest < ActiveSupport::TestCase
     post = Post.create!(
       title: "Normal Post",
       content: "Normal Content",
+      purpose: "普通のテスト目的",
+      target_audience: "普通のテスト対象者",
+      post_type: post_types(:tutorial),
       user: user,
       category: category
     )

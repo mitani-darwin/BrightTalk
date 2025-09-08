@@ -5,7 +5,7 @@ class AddPurposeAndStructureToPosts < ActiveRecord::Migration[8.0]
     add_column :posts, :post_type, :integer, default: 0
     add_column :posts, :key_points, :text
     add_column :posts, :expected_outcome, :text
-    
+
     add_index :posts, :purpose
     add_index :posts, :post_type
   end

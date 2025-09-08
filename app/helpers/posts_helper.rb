@@ -1,9 +1,9 @@
 module PostsHelper
-  require 'cgi'
+  require "cgi"
 
   # Convert Markdown image syntax to HTML img tags
   def format_content_with_images(content, post = nil)
-    return '' if content.blank?
+    return "" if content.blank?
 
     # Normalizer to make filename comparisons robust across encodings and Unicode forms
     normalize_name = ->(name) do
@@ -24,9 +24,9 @@ module PostsHelper
 
       # Handle attachment: URLs (convert to proper Rails attachment URLs)
       normalized_url = image_url.to_s.strip
-      if normalized_url.start_with?('attachment:')
+      if normalized_url.start_with?("attachment:")
         # Extract and normalize filename from attachment URL
-        raw = normalized_url.sub(/^attachment:/, '')
+        raw = normalized_url.sub(/^attachment:/, "")
         placeholder_name = normalize_name.call(raw)
 
         # Try to find matching image in post's attachments (robust match)
@@ -60,16 +60,16 @@ module PostsHelper
   # - Removes in-text video placeholders like [動画 foo](attachment:bar)
   # - Also strips any attachment: style links used for media
   def strip_media_from_content(content)
-    return '' if content.blank?
+    return "" if content.blank?
     text = content.dup
     # Remove markdown image syntax
-    text.gsub!(/!\[[^\]]*\]\([^)]*\)/, '')
+    text.gsub!(/!\[[^\]]*\]\([^)]*\)/, "")
     # Remove [動画 ...](attachment:...) links
-    text.gsub!(/\[\s*動画[^\]]*\]\(attachment:[^)]*\)/, '')
+    text.gsub!(/\[\s*動画[^\]]*\]\(attachment:[^)]*\)/, "")
     # Optionally remove any other attachment: links that might remain
-    text.gsub!(/\[[^\]]*\]\(attachment:[^)]*\)/, '')
+    text.gsub!(/\[[^\]]*\]\(attachment:[^)]*\)/, "")
     # Collapse multiple spaces and newlines after removals
-    text = text.gsub(/\n{3,}/, "\n\n").squeeze(' ')
+    text = text.gsub(/\n{3,}/, "\n\n").squeeze(" ")
     text.strip
   end
 end

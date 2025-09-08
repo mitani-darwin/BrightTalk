@@ -2,12 +2,12 @@
 Rails.application.routes.draw do
   # Deviseルーティング
   devise_for :users, controllers: {
-    registrations: 'users/registrations',
-    confirmations: 'users/confirmations'
+    registrations: "users/registrations",
+    confirmations: "users/confirmations"
   }
-  
+
   # パスキー登録ルーティング
-  resources :passkey_registrations, only: [:new, :create] do
+  resources :passkey_registrations, only: [ :new, :create ] do
     collection do
       post :register_passkey
       post :verify_passkey
@@ -15,7 +15,7 @@ Rails.application.routes.draw do
   end
 
   # パスキー認証ルーティング
-  resources :passkey_authentications, only: [:new, :create] do
+  resources :passkey_authentications, only: [ :new, :create ] do
     collection do
       post :auth_options
     end
@@ -24,6 +24,6 @@ Rails.application.routes.draw do
   # POST /passkeys を受けるルート（エラー解消のため）
   # パスキー管理ルーティング
   devise_scope :user do
-    resources :passkeys, only: [:index, :create, :destroy], controller: 'devise/passkeys'
+    resources :passkeys, only: [ :index, :create, :destroy ], controller: "devise/passkeys"
   end
 end

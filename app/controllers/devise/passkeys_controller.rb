@@ -1,6 +1,6 @@
 class Devise::PasskeysController < DeviseController
-  prepend_before_action :authenticate_user!, only: [:new, :create, :destroy]
-  before_action :set_passkey, only: [:destroy]
+  prepend_before_action :authenticate_user!, only: [ :new, :create, :destroy ]
+  before_action :set_passkey, only: [ :destroy ]
 
   def index
     @passkeys = current_user.passkeys.order(created_at: :desc)
@@ -10,7 +10,7 @@ class Devise::PasskeysController < DeviseController
     Rails.logger.info "Devise::Passkeys new action - Current user: #{current_user&.id}"
 
     @label = params[:label] || "メインデバイス"
-    @first_time = params[:first_time] == 'true'
+    @first_time = params[:first_time] == "true"
 
     # Passkey登録用のチャレンジを生成
     challenge = SecureRandom.urlsafe_base64(32)
@@ -28,7 +28,7 @@ class Devise::PasskeysController < DeviseController
         name: current_user.email,
         displayName: current_user.name || current_user.email
       },
-      pubKeyCredParams: [{ type: "public-key", alg: -7 }], # ES256
+      pubKeyCredParams: [ { type: "public-key", alg: -7 } ], # ES256
       timeout: 300000,
       attestation: "direct",
       authenticatorSelection: {

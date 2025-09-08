@@ -6,7 +6,7 @@ class User < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :liked_posts, through: :likes, source: :post
-  
+
   # WebAuthn/Passkey認証
   has_many :webauthn_credentials, dependent: :destroy
   alias_method :passkeys, :webauthn_credentials
@@ -33,16 +33,16 @@ class User < ApplicationRecord
       nil
     end
   end
-  
+
   # Passkey関連メソッド
   def has_passkeys?
     webauthn_credentials.exists?
   end
-  
+
   def active_passkeys
     webauthn_credentials.active
   end
-  
+
   def passkey_count
     webauthn_credentials.count
   end
@@ -110,7 +110,7 @@ class User < ApplicationRecord
   def password_required?
     # パスキー登録フロー中はパスワード複雑性バリデーションをスキップ
     return false if persisted? && has_passkeys?
-    
+
     !persisted? || !password.nil? || !password_confirmation.nil?
   end
 end

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # Test script to verify auto-save functionality
 
-require_relative 'config/onfig/environment'
+require_relative "config/onfig/environment"
 
 # Find a test user
 user = User.first
@@ -15,7 +15,7 @@ puts "=== Testing Auto-Save Functionality ==="
 # Test 1: Auto-save with completely empty data (should succeed)
 puts "\n1. Testing auto-save with completely empty data..."
 post1 = user.posts.build
-post1.status = 'draft'
+post1.status = "draft"
 post1.auto_save = true
 
 if post1.save(validate: false)
@@ -32,7 +32,7 @@ end
 # Test 2: Auto-save with partial data (should succeed)
 puts "\n2. Testing auto-save with partial data..."
 post2 = user.posts.build(title: "Partial Title")
-post2.status = 'draft'
+post2.status = "draft"
 post2.auto_save = true
 
 if post2.save(validate: false)
@@ -48,7 +48,7 @@ end
 # Test 3: Regular draft save with validation (should fail for empty)
 puts "\n3. Testing regular draft save with validation (should fail for empty)..."
 post3 = user.posts.build
-post3.status = 'draft'
+post3.status = "draft"
 # Note: auto_save flag not set, so validations should apply
 
 if post3.save
@@ -64,7 +64,7 @@ post4 = user.posts.build(
   title: "Valid Draft Title",
   content: "Valid draft content"
 )
-post4.status = 'draft'
+post4.status = "draft"
 
 if post4.save
   puts "✅ SUCCESS: Valid draft saved with validation"
@@ -77,7 +77,7 @@ else
 end
 
 # Clean up
-[post1, post2, post3, post4].each do |post|
+[ post1, post2, post3, post4 ].each do |post|
   post.destroy if post&.persisted?
 end
 

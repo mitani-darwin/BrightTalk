@@ -40,9 +40,9 @@ gem "mini_magick"
 gem "active_storage_validations"
 
 # PDF生成
-gem 'grover' # ChromeベースのPDF生成
+gem "grover" # ChromeベースのPDF生成
 
-gem 'mail-ses'
+gem "mail-ses"
 
 gem "aws-sdk-s3", require: false
 

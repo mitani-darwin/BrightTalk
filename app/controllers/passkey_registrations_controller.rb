@@ -1,6 +1,6 @@
 class PasskeyRegistrationsController < ApplicationController
   before_action :ensure_user_not_signed_in
-  before_action :find_pending_user, only: [:register_passkey, :verify_passkey]
+  before_action :find_pending_user, only: [ :register_passkey, :verify_passkey ]
 
   def new
     @user = User.new
@@ -43,7 +43,7 @@ class PasskeyRegistrationsController < ApplicationController
     else
       respond_to do |format|
         format.html { render :new, status: :unprocessable_content }
-        format.json { 
+        format.json {
           render json: {
             success: false,
             errors: @user.errors.full_messages
@@ -55,15 +55,15 @@ class PasskeyRegistrationsController < ApplicationController
 
   def register_passkey
     Rails.logger.info "Generating passkey registration challenge for pending user: #{@pending_user_data['email']}"
-    
+
     challenge = SecureRandom.urlsafe_base64(32)
     session[:passkey_registration_challenge] = challenge
-    
+
     rp_id = Rails.env.development? ? "localhost" : "www.brighttalk.jp"
-    
+
     # 一意なユーザーIDを生成（メールアドレスをベースに）
-    temp_user_id = Digest::SHA256.hexdigest(@pending_user_data['email'])
-    
+    temp_user_id = Digest::SHA256.hexdigest(@pending_user_data["email"])
+
     # WebAuthn登録オプション生成
     registration_options = {
       challenge: challenge,
@@ -73,8 +73,8 @@ class PasskeyRegistrationsController < ApplicationController
       },
       user: {
         id: Base64.urlsafe_encode64(temp_user_id),
-        name: @pending_user_data['email'],
-        displayName: @pending_user_data['name']
+        name: @pending_user_data["email"],
+        displayName: @pending_user_data["name"]
       },
       pubKeyCredParams: [
         { type: "public-key", alg: -7 },  # ES256
@@ -89,7 +89,7 @@ class PasskeyRegistrationsController < ApplicationController
       },
       excludeCredentials: [] # 新規ユーザーなので既存クレデンシャルはなし
     }
-    
+
     render json: {
       success: true,
       publicKey: registration_options
@@ -98,10 +98,10 @@ class PasskeyRegistrationsController < ApplicationController
 
   def verify_passkey
     Rails.logger.info "Verifying passkey registration for pending user: #{@pending_user_data['email']}"
-    
+
     begin
       challenge = session[:passkey_registration_challenge]
-      
+
       if challenge.blank?
         render json: { error: "登録セッションが無効です。最初からやり直してください。" }, status: :bad_request
         return
@@ -194,12 +194,12 @@ class PasskeyRegistrationsController < ApplicationController
       # パスキー検証成功後にユーザーを作成（仮登録状態）
       User.transaction do
         # 一時パスワードを生成して設定（後で削除）
-        chars = [*('A'..'Z'), *('a'..'z'), *('0'..'9'), *%w[! @ # $ % ^ & *]]
+        chars = [ *("A".."Z"), *("a".."z"), *("0".."9"), *%w[! @ # $ % ^ & *] ]
         temp_password = Array.new(16) { chars.sample }.join
-        
+
         @user = User.create!(
-          name: @pending_user_data['name'],
-          email: @pending_user_data['email'],
+          name: @pending_user_data["name"],
+          email: @pending_user_data["email"],
           password: temp_password
         )
 
@@ -210,12 +210,12 @@ class PasskeyRegistrationsController < ApplicationController
           nickname: params[:nickname] || "メインパスキー",
           sign_count: webauthn_credential.sign_count
         )
-        
+
         # 一時パスワードを削除してパスキー認証のみにする
         @user.update_column(:encrypted_password, "")
         Rails.logger.info "Password removed without notification email for passkey-only user: #{@user.email}"
       end
-      
+
       # 確認メールを送信（仮登録状態なので確認が必要）
       begin
         @user.send_confirmation_instructions
@@ -224,19 +224,19 @@ class PasskeyRegistrationsController < ApplicationController
         Rails.logger.error "Failed to send confirmation instructions: #{mail_error.message}"
         # メール送信失敗は登録処理を止めない
       end
-      
+
       # セッションをクリア
       session.delete(:passkey_registration_challenge)
       session.delete(:pending_user_data)
-      
+
       Rails.logger.info "User created and passkey registration successful for user: #{@user.id}"
-      
+
       render json: {
         success: true,
         message: "パスキーの登録が完了しました。メールアドレスに送信された確認メールのリンクをクリックして、登録を完了してください。",
         show_confirmation_notice: true
       }
-      
+
     rescue WebAuthn::Error => e
       Rails.logger.error "Passkey verification failed: #{e.message}"
       render json: {
@@ -262,12 +262,12 @@ class PasskeyRegistrationsController < ApplicationController
 
   def find_pending_user
     pending_user_data = session[:pending_user_data]
-    
+
     if pending_user_data.nil?
       render json: { error: "登録セッションが見つかりません。最初からやり直してください。" }, status: :not_found
       return
     end
-    
+
     # セッションからユーザー情報を復元（まだ保存されていない）
     @pending_user_data = pending_user_data
   end

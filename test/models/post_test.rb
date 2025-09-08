@@ -11,8 +11,11 @@ class PostTest < ActiveSupport::TestCase
     post = Post.new(
       title: "Test Post",
       content: "This is a test post content.",
+      purpose: "Test purpose",
+      target_audience: "Test audience",
       user: @user,
-      category: @category
+      category: @category,
+      post_type: post_types(:tutorial)
     )
     assert post.valid?, "Post should be valid but got errors: #{post.errors.full_messages}"
   end
@@ -53,10 +56,11 @@ class PostTest < ActiveSupport::TestCase
     post = Post.new(
       title: "Test Post",
       content: "This is a test post content.",
-      user: @user
+      user: @user,
+      status: :draft
       # categoryは設定しない
     )
-    # カテゴリーがoptionalなので、バリデーションエラーにはならない
+    # 下書きの場合はカテゴリーがoptionalなので、バリデーションエラーにはならない
     assert post.valid?, "Post should be valid without category but got errors: #{post.errors.full_messages}"
   end
 end

@@ -1,20 +1,20 @@
 class PostTypesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_post_type, only: [:show, :edit, :update, :destroy]
+  before_action :set_post_type, only: [ :show, :edit, :update, :destroy ]
 
   def index
     @post_types = PostType.all.order(:name)
-    
+
     respond_to do |format|
       format.json do
         render json: {
-          post_types: @post_types.map { |pt| 
-            { 
-              id: pt.id, 
-              name: pt.name, 
+          post_types: @post_types.map { |pt|
+            {
+              id: pt.id,
+              name: pt.name,
               description: pt.description,
               posts_count: pt.posts_count
-            } 
+            }
           }
         }
       end
@@ -59,7 +59,7 @@ class PostTypesController < ApplicationController
             message: "投稿タイプ「#{@post_type.name}」を作成しました"
           }
         end
-        format.html { redirect_to post_types_path, notice: '投稿タイプが作成されました。' }
+        format.html { redirect_to post_types_path, notice: "投稿タイプが作成されました。" }
       end
     else
       respond_to do |format|
@@ -95,7 +95,7 @@ class PostTypesController < ApplicationController
             message: "投稿タイプ「#{@post_type.name}」を更新しました"
           }
         end
-        format.html { redirect_to post_types_path, notice: '投稿タイプが更新されました。' }
+        format.html { redirect_to post_types_path, notice: "投稿タイプが更新されました。" }
       end
     else
       respond_to do |format|
@@ -124,7 +124,7 @@ class PostTypesController < ApplicationController
       @post_type.destroy
       respond_to do |format|
         format.json { render json: { success: true, message: "投稿タイプ「#{@post_type.name}」を削除しました" } }
-        format.html { redirect_to post_types_path, notice: '投稿タイプが削除されました。' }
+        format.html { redirect_to post_types_path, notice: "投稿タイプが削除されました。" }
       end
     end
   end

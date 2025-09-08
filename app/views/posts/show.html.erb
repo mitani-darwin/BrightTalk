@@ -217,7 +217,7 @@
                           <%= time_ago_in_words(comment.created_at) %>前
                         </small>
                       </div>
-                      <p class="mb-0"><%= simple_format(comment.content) %></p>
+                      <p class="mb-0"><%= simple_format(h(comment.content)) %></p>
                     </div>
                   </div>
                 </div>

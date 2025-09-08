@@ -62,6 +62,9 @@ class CategoryTest < ActiveSupport::TestCase
     post = Post.create!(
       title: "テスト投稿",
       content: "テスト内容",
+      purpose: "テスト目的",
+      target_audience: "テスト対象者",
+      post_type: post_types(:tutorial),
       user: user,
       category: category
     )
@@ -93,6 +96,9 @@ class CategoryTest < ActiveSupport::TestCase
     Post.create!(
       title: "テスト投稿",
       content: "テスト内容",
+      purpose: "テスト目的",
+      target_audience: "テスト対象者",
+      post_type: post_types(:tutorial),
       user: user,
       category: category
     )
@@ -108,6 +114,9 @@ class CategoryTest < ActiveSupport::TestCase
     post1 = Post.create!(
       title: "削除テスト投稿1",
       content: "テスト内容1",
+      purpose: "削除テスト目的1",
+      target_audience: "削除テスト対象者1",
+      post_type: post_types(:tutorial),
       user: user,
       category: category
     )
@@ -115,6 +124,9 @@ class CategoryTest < ActiveSupport::TestCase
     post2 = Post.create!(
       title: "削除テスト投稿2",
       content: "テスト内容2",
+      purpose: "削除テスト目的2",
+      target_audience: "削除テスト対象者2",
+      post_type: post_types(:technical_note),
       user: user,
       category: category
     )
@@ -173,6 +185,9 @@ class CategoryTest < ActiveSupport::TestCase
     Post.create!(
       title: "カウントテスト投稿1",
       content: "テスト内容1",
+      purpose: "テスト目的",
+      target_audience: "テスト対象者",
+      post_type: post_types(:tutorial),
       user: user,
       category: category
     )
@@ -183,6 +198,9 @@ class CategoryTest < ActiveSupport::TestCase
     Post.create!(
       title: "カウントテスト投稿2",
       content: "テスト内容2",
+      purpose: "テスト目的2",
+      target_audience: "テスト対象者2",
+      post_type: post_types(:technical_note),
       user: user,
       category: category
     )

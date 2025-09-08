@@ -1,27 +1,27 @@
-require 'mail/ses'
+require "mail/ses"
 
 ActiveSupport.on_load(:action_mailer) do
   def self.configure_aws_ses(environment)
     # デバッグ情報を出力
     puts "🔍 [DEBUG] Environment: #{environment}"
     puts "🔍 [DEBUG] Rails.env: #{Rails.env}"
-    
+
     # Rails credentialsから試行
     aws_config = Rails.application.credentials.dig(:aws, environment.to_sym)
-    
+
     # 認証情報の取得優先順位: Rails credentials → 環境変数
     if aws_config&.dig(:access_key_id) && aws_config&.dig(:secret_access_key)
       access_key_id = aws_config[:access_key_id]
       secret_access_key = aws_config[:secret_access_key]
-      region = aws_config[:region] || ENV['AWS_REGION'] || 'ap-northeast-1'
-      auth_source = 'Rails credentials'
+      region = aws_config[:region] || ENV["AWS_REGION"] || "ap-northeast-1"
+      auth_source = "Rails credentials"
       puts "🔑 [AUTH] Using Rails credentials for AWS authentication"
     else
       # 環境変数から読み込み（Kamal対応）
-      access_key_id = ENV['AWS_ACCESS_KEY_ID']
-      secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
-      region = ENV['AWS_REGION'] || 'ap-northeast-1'
-      auth_source = 'environment variables'
+      access_key_id = ENV["AWS_ACCESS_KEY_ID"]
+      secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
+      region = ENV["AWS_REGION"] || "ap-northeast-1"
+      auth_source = "environment variables"
       puts "🔑 [AUTH] Rails credentials not available, trying environment variables"
     end
 
@@ -42,34 +42,34 @@ ActiveSupport.on_load(:action_mailer) do
 
       # スパム対策ヘッダーの強化
       ActionMailer::Base.default(
-        from: 'BrightTalk <noreply@brighttalk.jp>',
-        reply_to: 'BrightTalk Support <support@brighttalk.jp>',
+        from: "BrightTalk <noreply@brighttalk.jp>",
+        reply_to: "BrightTalk Support <support@brighttalk.jp>",
 
         # 配信停止リンク（必須）
-        'List-Unsubscribe' => '<mailto:unsubscribe@brighttalk.jp>, <https://brighttalk.jp/unsubscribe>',
-        'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+        "List-Unsubscribe" => "<mailto:unsubscribe@brighttalk.jp>, <https://brighttalk.jp/unsubscribe>",
+        "List-Unsubscribe-Post" => "List-Unsubscribe=One-Click",
 
         # スパム対策ヘッダー
-        'X-Mailer' => 'BrightTalk/1.0',
-        'X-Priority' => '3',
-        'X-MSMail-Priority' => 'Normal',
-        'Importance' => 'Normal',
-        'Precedence' => 'bulk',
+        "X-Mailer" => "BrightTalk/1.0",
+        "X-Priority" => "3",
+        "X-MSMail-Priority" => "Normal",
+        "Importance" => "Normal",
+        "Precedence" => "bulk",
 
         # メール分類（トランザクションメール）
-        'X-MC-Tags' => 'transactional,user-authentication',
-        'X-Category' => 'transactional',
-        'X-Classification' => 'system-notification',
+        "X-MC-Tags" => "transactional,user-authentication",
+        "X-Category" => "transactional",
+        "X-Classification" => "system-notification",
 
         # 自動応答抑制
-        'X-Auto-Response-Suppress' => 'OOF, DR, RN, NRN, AutoReply',
+        "X-Auto-Response-Suppress" => "OOF, DR, RN, NRN, AutoReply",
 
         # 信頼性向上
-        'Organization' => 'BrightTalk Community Platform',
-        'X-Originating-IP' => '[AWS SES]',
+        "Organization" => "BrightTalk Community Platform",
+        "X-Originating-IP" => "[AWS SES]",
 
         # メッセージID（独自ドメイン使用）
-        'Message-ID' => -> { "<#{SecureRandom.uuid}@mail.brighttalk.jp>" }
+        "Message-ID" => -> { "<#{SecureRandom.uuid}@mail.brighttalk.jp>" }
       )
 
       # メール送信前の検証とマルチパート強制（修正版）
@@ -86,7 +86,7 @@ ActiveSupport.on_load(:action_mailer) do
 
           def self.ensure_multipart_format(message)
             # HTMLメールを検出してマルチパート化
-            if message.content_type&.start_with?('text/html') && !message.multipart?
+            if message.content_type&.start_with?("text/html") && !message.multipart?
               Rails.logger.info "🔄 [MULTIPART] HTMLのみのメールを検出 - マルチパート化します"
 
               # 既存のHTMLコンテンツを保存
@@ -101,13 +101,13 @@ ActiveSupport.on_load(:action_mailer) do
 
               # テキストパートを追加
               message.text_part = Mail::Part.new do
-                content_type 'text/plain; charset=UTF-8'
+                content_type "text/plain; charset=UTF-8"
                 body text_content
               end
 
               # HTMLパートを追加
               message.html_part = Mail::Part.new do
-                content_type 'text/html; charset=UTF-8'
+                content_type "text/html; charset=UTF-8"
                 body html_content
               end
 
@@ -138,19 +138,19 @@ ActiveSupport.on_load(:action_mailer) do
             text = text.gsub(/<li[^>]*>/i, "• ")
 
             # HTMLタグの除去
-            text = text.gsub(/<[^>]+>/, '')
+            text = text.gsub(/<[^>]+>/, "")
 
             # HTMLエンティティの変換
-            text = text.gsub(/&nbsp;/, ' ')
-            text = text.gsub(/&amp;/, '&')
-            text = text.gsub(/&lt;/, '<')
-            text = text.gsub(/&gt;/, '>')
+            text = text.gsub(/&nbsp;/, " ")
+            text = text.gsub(/&amp;/, "&")
+            text = text.gsub(/&lt;/, "<")
+            text = text.gsub(/&gt;/, ">")
             text = text.gsub(/&quot;/, '"')
             text = text.gsub(/&#39;/, "'")
-            text = text.gsub(/&hellip;/, '...')
+            text = text.gsub(/&hellip;/, "...")
 
             # スペースと改行の整理
-            text = text.gsub(/[ \t]+/, ' ')           # 複数スペースを1つに
+            text = text.gsub(/[ \t]+/, " ")           # 複数スペースを1つに
             text = text.gsub(/\n[ \t]+/, "\n")       # 行頭のスペース削除
             text = text.gsub(/[ \t]+\n/, "\n")       # 行末のスペース削除
             text = text.gsub(/\n{3,}/, "\n\n")       # 3つ以上の改行を2つに
@@ -214,28 +214,28 @@ ActiveSupport.on_load(:action_mailer) do
       puts "✅ AWS SES configured for #{environment} environment"
       puts "🔑 Using #{auth_source} for AWS authentication"
       puts "🌏 Region: #{region}"
-      return true
+      true
     else
       puts "❌ AWS credentials not found for #{environment} environment"
       puts "💡 Available sources checked:"
       puts "   - Rails credentials: #{aws_config ? 'Found but incomplete' : 'Not found'}"
       puts "   - Environment variables: AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID'] ? 'Set' : 'Not set'}, AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY'] ? 'Set' : 'Not set'}"
-      return false
+      false
     end
   end
 
   case Rails.env
-  when 'development'
-    unless configure_aws_ses('development')
+  when "development"
+    unless configure_aws_ses("development")
       ActionMailer::Base.delivery_method = :test
       ActionMailer::Base.perform_deliveries = false
       puts "🔄 Falling back to test mode for development"
     end
-  when 'production'
-    unless configure_aws_ses('production')
+  when "production"
+    unless configure_aws_ses("production")
       raise "AWS SES credentials are required for production environment"
     end
-  when 'test'
+  when "test"
     ActionMailer::Base.delivery_method = :test
     ActionMailer::Base.perform_deliveries = false
   end

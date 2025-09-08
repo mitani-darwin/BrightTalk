@@ -26,7 +26,10 @@ class UserFlowsTest < ActionDispatch::IntegrationTest
         post: {
           title: "Integration Test Post",
           content: "This is an integration test post",
-          category_id: categories(:general).id
+          purpose: "統合テスト目的",
+          target_audience: "テスト担当者",
+          category_id: categories(:general).id,
+          post_type_id: post_types(:tutorial).id
         }
       }
     end

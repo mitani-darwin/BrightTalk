@@ -1,26 +1,35 @@
 first_post:
   title: "First Post"
   content: "This is the first test post content."
+  purpose: "テスト用の投稿"
+  target_audience: "開発者"
   user: test_user
   category: general
-  draft: false
+  post_type: tutorial
+  status: 1
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
 draft_post:
   title: "Draft Post"
   content: "This is a draft post content."
+  purpose: "下書きテスト用の投稿"
+  target_audience: "テスト担当者"
   user: test_user
   category: tech
-  draft: true
+  post_type: technical_note
+  status: 0
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
 
 another_post:
   title: "Another Post"
   content: "This is another test post content."
+  purpose: "別ユーザーのテスト投稿"
+  target_audience: "一般ユーザー"
   user: another_user
   category: life
-  draft: false
+  post_type: tutorial
+  status: 1
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
