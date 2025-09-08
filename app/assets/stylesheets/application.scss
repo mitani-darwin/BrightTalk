@@ -2,8 +2,7 @@
 
 // ナビゲーションバーのカスタマイズ
 .navbar {
-  width: 100vw !important; // ビューポート全体の幅
-  margin-left: calc(-50vw + 50%); // 中央揃えのための調整
+  width: 100%; // 親要素の幅に合わせる
   box-shadow: 0 2px 4px rgba(0,0,0,0.1); // 影をつけて浮かせる
 }
 
@@ -84,6 +83,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden; // 横スクロールを無効化
 }
 
 // メインコンテンツの下に余白を確保して、固定フッターと重ならないようにする
