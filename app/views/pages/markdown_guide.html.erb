@@ -20,6 +20,7 @@
             </h5>
             <ul class="mb-0">
               <li><a href="#headers" class="text-decoration-none">見出し</a></li>
+              <li><a href="#paragraphs" class="text-decoration-none">段落と改行</a></li>
               <li><a href="#text-formatting" class="text-decoration-none">文字装飾</a></li>
               <li><a href="#links" class="text-decoration-none">リンク</a></li>
               <li><a href="#lists" class="text-decoration-none">リスト</a></li>
@@ -28,6 +29,7 @@
               <li><a href="#blockquotes" class="text-decoration-none">引用</a></li>
               <li><a href="#tables" class="text-decoration-none">表</a></li>
               <li><a href="#horizontal-rules" class="text-decoration-none">水平線</a></li>
+              <li><a href="#escaping" class="text-decoration-none">エスケープ文字</a></li>
             </ul>
           </div>
 
@@ -58,6 +60,70 @@
                     <h4>見出し4</h4>
                     <h5>見出し5</h5>
                     <h6>見出し6</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 段落と改行 -->
+          <section id="paragraphs" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-paragraph me-2 text-primary"></i>段落と改行
+            </h2>
+            <p>Markdownでは段落の作成と改行の方法が明確に定義されています。</p>
+            
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5>段落の作成：</h5>
+                <p>段落を区切るには、空行を1行以上入れます。</p>
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>記述例：</h6>
+                    <pre class="bg-light p-3 border rounded"><code>これは第一段落です。
+文章が続きます。
+
+これは第二段落です。
+別の段落として表示されます。</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>表示結果：</h6>
+                    <div class="border rounded p-3 bg-white">
+                      <div class="content-text">
+                        <p>これは第一段落です。
+                        文章が続きます。</p>
+                        <p>これは第二段落です。
+                        別の段落として表示されます。</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <h5>改行の作成：</h5>
+                <p>段落内で改行するには、行末に2つのスペースを入れるか、<code>&lt;br&gt;</code>タグを使用します。</p>
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>記述例：</h6>
+                    <pre class="bg-light p-3 border rounded"><code>これは一つの段落内での改行です。  
+行末に2つのスペースを入れました。
+
+HTMLタグでの改行：&lt;br&gt;
+次の行です。</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>表示結果：</h6>
+                    <div class="border rounded p-3 bg-white">
+                      <div class="content-text">
+                        <p>これは一つの段落内での改行です。<br>
+                        行末に2つのスペースを入れました。</p>
+                        <p>HTMLタグでの改行：<br>
+                        次の行です。</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -398,6 +464,52 @@ greet('World');</code></pre>
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <!-- エスケープ文字 -->
+          <section id="escaping" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-backspace me-2 text-primary"></i>エスケープ文字
+            </h2>
+            <p>Markdownで特別な意味を持つ文字を通常の文字として表示したい場合は、バックスラッシュ（<code>\</code>）を使用してエスケープします。</p>
+            
+            <div class="alert alert-info mb-4">
+              <h6><i class="fas fa-info-circle me-2"></i>エスケープ可能な文字</h6>
+              <p class="mb-0">以下の文字をエスケープできます：<code>\ ` * _ { } [ ] ( ) # + - . !</code></p>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>\*これは装飾されません\*
+\# これは見出しになりません
+\[リンク\](URL) - リンクになりません
+\`コード\` - インラインコードになりません
+
+通常の使用例：
+**これは太字になります**
+# これは見出しになります</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <p>*これは装飾されません*<br>
+                    # これは見出しになりません<br>
+                    [リンク](URL) - リンクになりません<br>
+                    `コード` - インラインコードになりません</p>
+                    <p>通常の使用例：<br>
+                    <strong>これは太字になります</strong><br>
+                    <span style="font-size: 1.5em; font-weight: bold;">これは見出しになります</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-warning mt-4">
+              <h6><i class="fas fa-exclamation-triangle me-2"></i>注意</h6>
+              <p class="mb-0">バックスラッシュ自体を表示したい場合は、<code>\\</code>のように2つ続けて記述します。</p>
             </div>
           </section>
 
