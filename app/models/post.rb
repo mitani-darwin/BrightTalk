@@ -39,6 +39,32 @@ class Post < ApplicationRecord
   # デフォルトは公開状態
   after_initialize :set_default_status, if: :new_record?
 
+  # Markdownを HTMLに変換
+  def content_as_html
+    return "" if content.blank?
+    
+    renderer = Redcarpet::Render::HTML.new(
+      filter_html: true,
+      no_links: false,
+      no_images: false,
+      hard_wrap: true,
+      link_attributes: { target: "_blank", rel: "noopener" }
+    )
+    
+    markdown = Redcarpet::Markdown.new(renderer,
+      autolink: true,
+      tables: true,
+      fenced_code_blocks: true,
+      strikethrough: true,
+      superscript: true,
+      underline: true,
+      quote: true,
+      footnotes: true
+    )
+    
+    markdown.render(content).html_safe
+  end
+
   private
 
   def set_default_status

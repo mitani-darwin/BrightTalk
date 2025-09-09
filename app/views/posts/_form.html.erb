@@ -260,6 +260,13 @@
               内容
               <span class="text-danger">*</span>
               <small class="text-muted">(常に必須)</small>
+              <small class="text-muted d-block">
+                <%= link_to markdown_guide_path, 
+                            target: "_blank", 
+                            class: "text-decoration-none" do %>
+                  <i class="fas fa-book me-1"></i>Markdown記法ガイド（日本語）
+                <% end %>
+              </small>
             <% end %>
             <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
                                id: "contentTextarea", required: true, style: "overflow:auto; resize:none;", placeholder: "内容を入力してください" %>

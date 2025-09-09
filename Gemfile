@@ -39,6 +39,9 @@ gem "mini_magick"
 # Active Storage バリデーション
 gem "active_storage_validations"
 
+# Markdown処理
+gem "redcarpet"
+
 # PDF生成
 gem "grover" # ChromeベースのPDF生成
 

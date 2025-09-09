@@ -11,4 +11,9 @@ class PagesController < ApplicationController
     # 利用規約ページ
     # Terms of service page
   end
+
+  def markdown_guide
+    # マークダウン記法ガイドページ
+    # Markdown syntax guide page
+  end
 end

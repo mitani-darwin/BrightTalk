@@ -115,7 +115,7 @@
           <!-- コンテンツ -->
           <div class="mb-4">
             <div class="content-text">
-              <%= format_content_with_images(@post.content, @post) %>
+              <%= @post.content_as_html %>
             </div>
           </div>
 
