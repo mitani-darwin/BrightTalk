@@ -24,7 +24,7 @@
 
                   <% if post.content.present? %>
                     <p class="card-text text-muted">
-                      <%= truncate(strip_tags(post.content), length: 150) %>
+                      <%= truncate(strip_tags(post.content_as_html), length: 150) %>
                     </p>
                   <% end %>
 

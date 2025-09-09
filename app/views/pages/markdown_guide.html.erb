@@ -1,0 +1,429 @@
+<div class="container-fluid my-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h1 class="card-title mb-0">
+            <i class="fas fa-markdown me-2"></i>
+            Markdown記法ガイド
+          </h1>
+        </div>
+        <div class="card-body">
+          <p class="lead text-muted mb-4">
+            BrightTalkではMarkdown記法を使用して投稿の内容を記述できます。このガイドでは、よく使用されるMarkdown記法について説明します。
+          </p>
+
+          <!-- 目次 -->
+          <div class="alert alert-info">
+            <h5 class="alert-heading">
+              <i class="fas fa-list me-2"></i>目次
+            </h5>
+            <ul class="mb-0">
+              <li><a href="#headers" class="text-decoration-none">見出し</a></li>
+              <li><a href="#text-formatting" class="text-decoration-none">文字装飾</a></li>
+              <li><a href="#links" class="text-decoration-none">リンク</a></li>
+              <li><a href="#lists" class="text-decoration-none">リスト</a></li>
+              <li><a href="#images" class="text-decoration-none">画像</a></li>
+              <li><a href="#code" class="text-decoration-none">コード</a></li>
+              <li><a href="#blockquotes" class="text-decoration-none">引用</a></li>
+              <li><a href="#tables" class="text-decoration-none">表</a></li>
+              <li><a href="#horizontal-rules" class="text-decoration-none">水平線</a></li>
+            </ul>
+          </div>
+
+          <!-- 見出し -->
+          <section id="headers" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-heading me-2 text-primary"></i>見出し
+            </h2>
+            <p>見出しを作成するには、行の先頭に<code>#</code>を付けます。<code>#</code>の数で見出しレベルが決まります。</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code># 見出し1
+## 見出し2
+### 見出し3
+#### 見出し4
+##### 見出し5
+###### 見出し6</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <h1>見出し1</h1>
+                    <h2>見出し2</h2>
+                    <h3>見出し3</h3>
+                    <h4>見出し4</h4>
+                    <h5>見出し5</h5>
+                    <h6>見出し6</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 文字装飾 -->
+          <section id="text-formatting" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-font me-2 text-primary"></i>文字装飾
+            </h2>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>**太字**
+*斜体*
+***太字かつ斜体***
+~~取り消し線~~
+`インラインコード`</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <p><strong>太字</strong></p>
+                    <p><em>斜体</em></p>
+                    <p><strong><em>太字かつ斜体</em></strong></p>
+                    <p><del>取り消し線</del></p>
+                    <p><code>インラインコード</code></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- リンク -->
+          <section id="links" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-link me-2 text-primary"></i>リンク
+            </h2>
+            <p>リンクを作成するには、リンクテキストを<code>[]</code>で囲み、続けてURLを<code>()</code>で囲みます。</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>[BrightTalk](https://www.brighttalk.jp)
+[Google](https://www.google.com)
+
+自動リンク：
+https://www.example.com</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <p><a href="https://www.brighttalk.jp" target="_blank" rel="noopener">BrightTalk</a></p>
+                    <p><a href="https://www.google.com" target="_blank" rel="noopener">Google</a></p>
+                    <p>自動リンク：<br>
+                    <a href="https://www.example.com" target="_blank" rel="noopener">https://www.example.com</a></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- リスト -->
+          <section id="lists" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-list-ul me-2 text-primary"></i>リスト
+            </h2>
+            
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5>箇条書き（順序なしリスト）：</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <pre class="bg-light p-3 border rounded"><code>- 項目1
+- 項目2
+  - サブ項目1
+  - サブ項目2
+- 項目3</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="border rounded p-3 bg-white">
+                      <div class="content-text">
+                        <ul>
+                          <li>項目1</li>
+                          <li>項目2
+                            <ul>
+                              <li>サブ項目1</li>
+                              <li>サブ項目2</li>
+                            </ul>
+                          </li>
+                          <li>項目3</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <h5>番号付きリスト（順序ありリスト）：</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <pre class="bg-light p-3 border rounded"><code>1. 第一項目
+2. 第二項目
+   1. サブ項目A
+   2. サブ項目B
+3. 第三項目</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="border rounded p-3 bg-white">
+                      <div class="content-text">
+                        <ol>
+                          <li>第一項目</li>
+                          <li>第二項目
+                            <ol>
+                              <li>サブ項目A</li>
+                              <li>サブ項目B</li>
+                            </ol>
+                          </li>
+                          <li>第三項目</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 画像 -->
+          <section id="images" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-image me-2 text-primary"></i>画像
+            </h2>
+            <p>画像を挿入するには、<code>!</code>の後にリンクと同じ記法を使用します。</p>
+            
+            <div class="alert alert-success">
+              <h6><i class="fas fa-info-circle me-2"></i>BrightTalkでの画像挿入</h6>
+              <p class="mb-0">投稿フォームで画像をアップロードすると、自動的に適切なMarkdown記法が挿入されます。</p>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>![画像の説明](画像のURL)
+![サンプル画像](https://via.placeholder.com/300x200)</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>説明：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <ul>
+                    <li><code>![...]</code>：画像であることを示す</li>
+                    <li><code>[画像の説明]</code>：画像が表示されない場合に表示される代替テキスト</li>
+                    <li><code>(画像のURL)</code>：画像ファイルの場所</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- コード -->
+          <section id="code" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-code me-2 text-primary"></i>コード
+            </h2>
+            
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5>インラインコード：</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <pre class="bg-light p-3 border rounded"><code>`console.log('Hello World')`を実行する</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="border rounded p-3 bg-white">
+                      <div class="content-text">
+                        <p><code>console.log('Hello World')</code>を実行する</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <h5>コードブロック：</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <pre class="bg-light p-3 border rounded"><code>```javascript
+function greet(name) {
+  console.log(`Hello, ${name}!`);
+}
+
+greet('World');
+```</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="border rounded p-3 bg-white">
+                      <div class="content-text">
+                        <pre><code>function greet(name) {
+  console.log(`Hello, ${name}!`);
+}
+
+greet('World');</code></pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 引用 -->
+          <section id="blockquotes" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-quote-left me-2 text-primary"></i>引用
+            </h2>
+            <p>引用を作成するには、行の先頭に<code>&gt;</code>を付けます。</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>&gt; これは引用文です。
+&gt; 複数行にわたって
+&gt; 書くことができます。
+&gt; 
+&gt; &gt; これは入れ子の引用です。</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <blockquote>
+                      <p>これは引用文です。<br>
+                      複数行にわたって<br>
+                      書くことができます。</p>
+                      <blockquote>
+                        <p>これは入れ子の引用です。</p>
+                      </blockquote>
+                    </blockquote>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 表 -->
+          <section id="tables" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-table me-2 text-primary"></i>表
+            </h2>
+            <p>表を作成するには、<code>|</code>でセルを区切り、2行目で列の配置を指定します。</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>| 項目 | 価格 | 在庫 |
+|------|------|------|
+| リンゴ | 100円 | 50個 |
+| バナナ | 80円 | 30個 |
+| オレンジ | 120円 | 20個 |</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>項目</th>
+                          <th>価格</th>
+                          <th>在庫</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>リンゴ</td>
+                          <td>100円</td>
+                          <td>50個</td>
+                        </tr>
+                        <tr>
+                          <td>バナナ</td>
+                          <td>80円</td>
+                          <td>30個</td>
+                        </tr>
+                        <tr>
+                          <td>オレンジ</td>
+                          <td>120円</td>
+                          <td>20個</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <h6><i class="fas fa-info-circle me-2"></i>列の配置</h6>
+              <ul class="mb-0">
+                <li><code>:---</code> 左揃え</li>
+                <li><code>:---:</code> 中央揃え</li>
+                <li><code>---:</code> 右揃え</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- 水平線 -->
+          <section id="horizontal-rules" class="mb-5">
+            <h2 class="border-bottom pb-2 mb-3">
+              <i class="fas fa-minus me-2 text-primary"></i>水平線
+            </h2>
+            <p>水平線を作成するには、<code>---</code>を単独行に記述します。</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <h5>記述例：</h5>
+                <pre class="bg-light p-3 border rounded"><code>上の内容
+
+---
+
+下の内容</code></pre>
+              </div>
+              <div class="col-md-6">
+                <h5>表示結果：</h5>
+                <div class="border rounded p-3 bg-white">
+                  <div class="content-text">
+                    <p>上の内容</p>
+                    <hr>
+                    <p>下の内容</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- まとめ -->
+          <div class="alert alert-success">
+            <h5 class="alert-heading">
+              <i class="fas fa-lightbulb me-2"></i>まとめ
+            </h5>
+            <p class="mb-2">Markdown記法を使うことで、簡単にきれいな文書を作成できます。</p>
+            <ul class="mb-2">
+              <li>見出しや装飾で構造化された読みやすい投稿が作れます</li>
+              <li>コードやリンクを適切に表示できます</li>
+              <li>表や引用で情報を整理して伝えることができます</li>
+            </ul>
+            <p class="mb-0">
+              <strong>ヒント：</strong>プレビュー機能を使って、投稿前に表示を確認することをお勧めします。
+            </p>
+          </div>
+
+          <!-- フッター -->
+          <div class="text-center mt-4 pt-4 border-top">
+            <%= link_to "投稿作成に戻る", new_post_path, class: "btn btn-primary me-3" %>
+            <%= link_to "投稿一覧を見る", posts_path, class: "btn btn-outline-secondary" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

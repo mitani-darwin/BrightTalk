@@ -643,3 +643,119 @@ main {
 #contentTextarea::-webkit-scrollbar { /* Chrome/Safari/Edge (Chromium) */
   display: none;
 }
+
+// Markdown styling
+.content-text {
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #2d3748;
+  }
+
+  h1 { font-size: 1.875rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.125rem; }
+  h5 { font-size: 1rem; }
+  h6 { font-size: 0.875rem; }
+
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  ul, ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    
+    li {
+      margin-bottom: 0.25rem;
+    }
+  }
+
+  blockquote {
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    font-style: italic;
+    
+    p {
+      margin-bottom: 0;
+    }
+  }
+
+  code {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.25rem;
+    color: #e83e8c;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    padding: 0.125rem 0.25rem;
+  }
+
+  pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    
+    code {
+      background-color: transparent;
+      border: none;
+      padding: 0;
+      color: #495057;
+    }
+  }
+
+  table {
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    width: 100%;
+    
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+  }
+
+  a {
+    color: #007bff;
+    text-decoration: none;
+    
+    &:hover {
+      color: #0056b3;
+      text-decoration: underline;
+    }
+  }
+
+  hr {
+    border: none;
+    border-top: 2px solid #e9ecef;
+    margin: 2rem 0;
+  }
+
+  del {
+    text-decoration: line-through;
+    color: #6c757d;
+  }
+
+  strong, b {
+    font-weight: 600;
+  }
+
+  em, i {
+    font-style: italic;
+  }
+}

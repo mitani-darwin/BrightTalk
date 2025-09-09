@@ -110,7 +110,7 @@
 
                     <!-- 内容の一部 -->
                     <p class="card-text text-muted mb-3" style="line-height: 1.6;">
-                      <%= truncate(strip_media_from_content(post.content), length: 150) %>
+                      <%= truncate(strip_tags(post.content_as_html), length: 150) %>
                     </p>
 
                     <!-- フッター部分 -->
