@@ -17,6 +17,10 @@ class PostsController < ApplicationController
       return
     end
 
+    # 同じ投稿者の前・次の投稿を取得
+    @previous_post = @post.previous_post_by_author
+    @next_post = @post.next_post_by_author
+
     # コメント投稿フォーム用の新しいコメントインスタンスを作成
     @comment = Comment.new
   end

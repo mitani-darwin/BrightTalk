@@ -1,4 +1,47 @@
 
+<div class="container-fluid p-0">
+  <!-- ヘッダー画像エリア -->
+  <div class="position-relative" style="height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <% if @user.header_image_or_default %>
+      <%= image_tag @user.header_image_or_default, 
+          class: "w-100 h-100", 
+          style: "object-fit: cover;" %>
+    <% end %>
+    <div class="position-absolute bottom-0 start-0 w-100 h-100" 
+         style="background: linear-gradient(transparent, rgba(0,0,0,0.3));"></div>
+  </div>
+  
+  <!-- プロフィール画像（ヘッダーに重複表示） -->
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-end" style="margin-top: -60px; position: relative; z-index: 1;">
+          <div class="me-4">
+            <% if @user.avatar_or_default %>
+              <%= image_tag @user.avatar_or_default, 
+                  class: "rounded-circle border border-4 border-white shadow", 
+                  style: "width: 120px; height: 120px; object-fit: cover;" %>
+            <% else %>
+              <div class="rounded-circle bg-secondary border border-4 border-white shadow d-flex align-items-center justify-content-center" 
+                   style="width: 120px; height: 120px;">
+                <i class="fas fa-user fa-3x text-white"></i>
+              </div>
+            <% end %>
+          </div>
+          <div class="pb-3">
+            <h1 class="h2 text-white mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);"><%= @user.name %></h1>
+            <% if user_signed_in? && @user == current_user %>
+              <%= link_to edit_account_user_path, class: "btn btn-light btn-sm" do %>
+                <i class="fas fa-edit me-1"></i>プロフィール編集
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container mt-4">
   <div class="row">
     <div class="col-lg-10 mx-auto">
@@ -9,7 +52,7 @@
             <% if user_signed_in? && @user == current_user %>
               <i class="fas fa-user-circle me-2"></i>マイページ
             <% else %>
-              <%= @user.name %>さんのプロフィール
+              <%= @user.name %>さんのプロフィール詳細
             <% end %>
           </h1>
         </div>
@@ -61,6 +104,25 @@
                     <% end %>
                   </div>
 
+                  <!-- ソーシャルリンクエリア -->
+                  <% if @user.has_social_links? %>
+                    <div class="mb-3">
+                      <h6 class="text-muted mb-2">ソーシャルリンク</h6>
+                      <div class="d-flex flex-wrap gap-2">
+                        <% if @user.twitter_url.present? %>
+                          <%= link_to @user.twitter_url, target: "_blank", class: "btn btn-sm btn-outline-info" do %>
+                            <i class="fab fa-twitter me-1"></i>Twitter
+                          <% end %>
+                        <% end %>
+                        <% if @user.github_url.present? %>
+                          <%= link_to @user.github_url, target: "_blank", class: "btn btn-sm btn-outline-dark" do %>
+                            <i class="fab fa-github me-1"></i>GitHub
+                          <% end %>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+
                   <div class="user-info">
                     <p class="mb-2"><strong>メール:</strong> <%= @user.email if user_signed_in? && @user == current_user %></p>
                     <p class="mb-2"><strong>登録日:</strong> <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
@@ -69,24 +131,36 @@
 
                 <!-- 統計エリア -->
                 <div class="col-md-4">
-                  <div class="user-stats">
-                    <div class="row text-center">
-                      <div class="col-12 mb-3">
-                        <div class="stat">
-                          <h4 class="mb-0 text-primary"><%= @user.posts.count %></h4>
-                          <small class="text-muted">投稿数</small>
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="mb-0">アクティビティ統計</h6>
+                    </div>
+                    <div class="card-body">
+                      <% stats = @user.extended_stats %>
+                      <div class="row text-center">
+                        <div class="col-6 mb-3">
+                          <div class="stat">
+                            <h4 class="mb-0 text-primary"><%= stats[:posts_count] %></h4>
+                            <small class="text-muted">総投稿数</small>
+                          </div>
                         </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="stat">
-                          <h5 class="mb-0 text-success"><%= @user.comments.count %></h5>
-                          <small class="text-muted">コメント</small>
+                        <div class="col-6 mb-3">
+                          <div class="stat">
+                            <h4 class="mb-0 text-success"><%= stats[:likes_received] %></h4>
+                            <small class="text-muted">受けたいいね</small>
+                          </div>
                         </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="stat">
-                          <h5 class="mb-0 text-danger"><%= @user.likes.count %></h5>
-                          <small class="text-muted">いいね</small>
+                        <div class="col-6 mb-2">
+                          <div class="stat">
+                            <h5 class="mb-0 text-info"><%= stats[:comments_count] %></h5>
+                            <small class="text-muted">コメント</small>
+                          </div>
+                        </div>
+                        <div class="col-6 mb-2">
+                          <div class="stat">
+                            <h5 class="mb-0 text-warning"><%= stats[:likes_given] %></h5>
+                            <small class="text-muted">付けたいいね</small>
+                          </div>
                         </div>
                       </div>
                     </div>
