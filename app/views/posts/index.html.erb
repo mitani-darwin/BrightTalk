@@ -72,8 +72,18 @@
                       </div>
                       <!-- 投稿者 -->
                       <div class="d-flex align-items-center text-muted">
-                        <i class="fas fa-user me-1"></i>
-                        <small><%= post.user&.name || "削除されたユーザー" %></small>
+                        <% if post.user&.avatar_or_default %>
+                          <%= image_tag post.user.avatar_or_default, 
+                              class: "rounded-circle me-2", 
+                              style: "width: 20px; height: 20px; object-fit: cover;" %>
+                        <% else %>
+                          <i class="fas fa-user me-1"></i>
+                        <% end %>
+                        <small>
+                          <%= link_to post.user&.name || "削除されたユーザー", 
+                              post.user ? user_path(post.user) : "#", 
+                              class: "text-decoration-none text-muted" %>
+                        </small>
                       </div>
                     </div>
 
