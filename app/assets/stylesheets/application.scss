@@ -309,6 +309,11 @@ main {
 
   // モバイル端末でのフッター調整
   footer {
+    // ★★★ 追加: モバイルではfixedを解除 ★★★
+    position: static !important;
+    box-shadow: none;
+    z-index: auto;
+    
     // フッターの内部パディングを縮小
     .container-fluid {
       padding-left: 1rem;
@@ -330,15 +335,20 @@ main {
     }
   }
   
-  // メインコンテンツの下部余白を縮小
+  // メインコンテンツの下部余白を削除（固定フッターが無いため）
   main {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom)); // 120px → 80px
+    padding-bottom: 1rem; // 80px → 1rem
   }
 }
 
 @media (max-width: 480px) {
   // さらに小さなモバイル端末での調整
   footer {
+    // ★★★ 追加: より小さな画面でもfixedを解除 ★★★
+    position: static !important;
+    box-shadow: none;
+    z-index: auto;
+    
     .container-fluid {
       padding-left: 0.5rem;
       padding-right: 0.5rem;
@@ -357,8 +367,9 @@ main {
     }
   }
   
+  // メインコンテンツの下部余白を削除
   main {
-    padding-bottom: calc(70px + env(safe-area-inset-bottom)); // さらに縮小
+    padding-bottom: 0.5rem; // さらに縮小
   }
 }
 
