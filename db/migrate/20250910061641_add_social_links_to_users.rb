@@ -6,3 +6,4 @@ class AddSocialLinksToUsers < ActiveRecord::Migration[8.0]
     add_column :users, :website_url, :string
   end
 end
+
