@@ -4,3 +4,4 @@ class RemoveLinkedinAndWebsiteFromUsers < ActiveRecord::Migration[8.0]
     remove_column :users, :website_url, :string
   end
 end
+

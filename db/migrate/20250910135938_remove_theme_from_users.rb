@@ -3,3 +3,4 @@ class RemoveThemeFromUsers < ActiveRecord::Migration[8.0]
     remove_column :users, :theme, :string
   end
 end
+

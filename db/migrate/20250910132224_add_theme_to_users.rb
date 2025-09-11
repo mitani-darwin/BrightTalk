@@ -3,3 +3,4 @@ class AddThemeToUsers < ActiveRecord::Migration[8.0]
     add_column :users, :theme, :string
   end
 end
+
