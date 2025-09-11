@@ -268,8 +268,11 @@
                 <% end %>
               </small>
             <% end %>
-            <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
-                               id: "contentTextarea", required: true, style: "overflow:auto; resize:none;", placeholder: "内容を入力してください" %>
+            <div data-controller="code-editor">
+              <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
+                                 id: "contentTextarea", required: true, style: "overflow:auto; resize:none;", 
+                                 placeholder: "内容を入力してください", data: { "code-editor-target" => "textarea" } %>
+            </div>
             <div class="invalid-feedback">
               内容を入力してください。
             </div>

@@ -48,6 +48,28 @@
             <% end %>
 
             <div class="row">
+              <div class="col-md-12">
+                <div class="mb-4">
+                  <label class="form-label">ヘッダー画像</label>
+                  <div class="mb-3">
+                    <% if @user.header_image_or_default %>
+                      <div style="height: 200px; width: 100%; background-size: cover; background-position: center; border-radius: 8px; background-image: url('<%= url_for(@user.header_image_or_default) %>');" 
+                           id="header-preview">
+                      </div>
+                    <% else %>
+                      <div class="bg-secondary d-flex align-items-center justify-content-center rounded" 
+                           style="height: 200px; width: 100%;" id="header-preview">
+                        <i class="fas fa-image fa-3x text-white"></i>
+                      </div>
+                    <% end %>
+                  </div>
+                  <%= f.file_field :header_image, class: "form-control", accept: "image/*", onchange: "previewHeader(this)" %>
+                  <div class="form-text">
+                    JPEG、PNG、GIF形式のファイル 推奨サイズ：1500x500px
+                  </div>
+                </div>
+              </div>
+
               <div class="col-md-4 text-center">
                 <div class="mb-3">
                   <label class="form-label">プロフィール画像</label>
@@ -96,6 +118,29 @@
                   </div>
                 </div>
 
+                <!-- ソーシャルリンクセクション -->
+                <div class="mb-4">
+                  <h6 class="form-label mb-3">ソーシャルリンク</h6>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <%= f.label :twitter_url, "Twitter", class: "form-label" %>
+                      <div class="input-group">
+                        <span class="input-group-text"><i class="fab fa-twitter"></i></span>
+                        <%= f.url_field :twitter_url, class: "form-control", 
+                                       placeholder: "https://twitter.com/username" %>
+                      </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <%= f.label :github_url, "GitHub", class: "form-label" %>
+                      <div class="input-group">
+                        <span class="input-group-text"><i class="fab fa-github"></i></span>
+                        <%= f.url_field :github_url, class: "form-control", 
+                                       placeholder: "https://github.com/username" %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="d-flex gap-2">
                   <%= f.submit "変更を保存", class: "btn btn-primary" %>
                   <%= link_to "キャンセル", account_user_path, class: "btn btn-secondary" %>
@@ -116,6 +161,20 @@
             reader.onload = function(e) {
                 const preview = document.getElementById('avatar-preview');
                 preview.innerHTML = '<img src="' + e.target.result + '" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewHeader(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('header-preview');
+                preview.style.backgroundImage = 'url(' + e.target.result + ')';
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                preview.innerHTML = '';
             }
             reader.readAsDataURL(input.files[0]);
         }

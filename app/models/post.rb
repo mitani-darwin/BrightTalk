@@ -65,6 +65,22 @@ class Post < ApplicationRecord
     markdown.render(content).html_safe
   end
 
+  # 同じ投稿者の前の投稿を取得
+  def previous_post_by_author
+    user.posts.published
+        .where("created_at < ?", created_at)
+        .order(created_at: :desc)
+        .first
+  end
+
+  # 同じ投稿者の次の投稿を取得
+  def next_post_by_author
+    user.posts.published
+        .where("created_at > ?", created_at)
+        .order(created_at: :asc)
+        .first
+  end
+
   private
 
   def set_default_status
