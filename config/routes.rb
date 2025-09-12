@@ -28,4 +28,7 @@ Rails.application.routes.draw do
 
   # 静的ページ機能（プライバシーポリシーなど）
   draw(:pages)
+
+  # お問い合わせ機能
+  draw(:contacts)
 end

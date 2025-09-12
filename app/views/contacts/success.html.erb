@@ -1,0 +1,33 @@
+<% content_for :title, "お問い合わせ完了" %>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow text-center">
+        <div class="card-body">
+          <div class="mb-4">
+            <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+          </div>
+          
+          <h1 class="display-5 mb-4">お問い合わせありがとうございます</h1>
+          
+          <p class="text-muted mb-4">
+            お問い合わせを受け付けました。<br>
+            ご記入いただいた内容を確認の上、担当者よりご連絡させていただきます。<br>
+            お返事までお時間をいただく場合がございますが、必ずご返信いたします。
+          </p>
+          
+          <div class="alert alert-info">
+            <strong>お急ぎの場合は：</strong><br>
+            info@brighttalk.jp まで直接メールをお送りください。
+          </div>
+          
+          <div class="mt-4">
+            <%= link_to "トップページへ", root_path, class: "btn btn-primary me-3" %>
+            <%= link_to "もう一度お問い合わせ", new_contact_path, class: "btn btn-outline-primary" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
