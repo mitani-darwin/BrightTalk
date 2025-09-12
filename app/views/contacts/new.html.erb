@@ -1,0 +1,56 @@
+<% content_for :title, "お問い合わせ" %>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="display-4 mb-4">お問い合わせ</h1>
+      
+      <div class="card shadow">
+        <div class="card-body">
+          <p class="text-muted mb-4">
+            ご質問やご意見がございましたら、以下のフォームよりお気軽にお問い合わせください。<br>
+            お返事までお時間をいただく場合がございますが、必ずご連絡いたします。
+          </p>
+
+          <%= form_with model: @contact, url: contacts_path, local: true do |f| %>
+            <% if @contact.errors.any? %>
+              <div class="alert alert-danger" role="alert">
+                <h6 class="alert-heading">入力内容をご確認ください</h6>
+                <ul class="mb-0">
+                  <% @contact.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= f.label :name, "お名前", class: "form-label" %>
+              <%= f.text_field :name, class: "form-control", placeholder: "山田太郎" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :email, "メールアドレス", class: "form-label" %>
+              <%= f.email_field :email, class: "form-control", placeholder: "example@email.com" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :subject, "件名", class: "form-label" %>
+              <%= f.text_field :subject, class: "form-control", placeholder: "お問い合わせの件名" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :message, "お問い合わせ内容", class: "form-label" %>
+              <%= f.text_area :message, rows: 6, class: "form-control", placeholder: "お問い合わせの詳細をご記入ください" %>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to "戻る", root_path, class: "btn btn-outline-secondary" %>
+              <%= f.submit "送信する", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
