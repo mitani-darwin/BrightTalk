@@ -71,7 +71,7 @@ class PostsController < ApplicationController
   # 自動保存（5秒間隔での下書き保存）
   def auto_save
     @post = if params[:id].present?
-              current_user.posts.find(params[:id])
+              current_user.posts.friendly.find(params[:id])
     else
               current_user.posts.build
     end
@@ -99,7 +99,7 @@ class PostsController < ApplicationController
   private
 
   def set_post
-    @post = Post.find(params[:id])
+    @post = Post.friendly.find(params[:id])
   end
 
   def check_post_owner

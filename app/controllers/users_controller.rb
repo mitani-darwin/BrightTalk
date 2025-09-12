@@ -153,9 +153,9 @@ class UsersController < ApplicationController
   end
 
   def set_user
-    # IDが数値の場合のみUserを検索、それ以外は current_user を使用
-    if params[:id] && params[:id].match?(/\A\d+\z/)
-      @user = User.find(params[:id])
+    # IDまたはslugでUserを検索、見つからない場合は current_user を使用
+    if params[:id]
+      @user = User.friendly.find(params[:id])
     else
       @user = current_user
     end

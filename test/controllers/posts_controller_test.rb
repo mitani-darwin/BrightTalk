@@ -93,8 +93,8 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_redirected_to @post
     @post.reload
+    assert_redirected_to @post
     assert_equal "更新されたタイトル", @post.title
   end
 
