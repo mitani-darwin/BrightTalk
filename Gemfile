@@ -42,6 +42,9 @@ gem "active_storage_validations"
 # Markdown処理
 gem "redcarpet"
 
+# URL slug generation
+gem "friendly_id"
+
 # PDF生成
 gem "grover" # ChromeベースのPDF生成
 

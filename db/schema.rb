@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_10_135938) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_12_063652) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -76,6 +76,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_135938) do
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
+  create_table "friendly_id_slugs", force: :cascade do |t|
+    t.string "slug", null: false
+    t.integer "sluggable_id", null: false
+    t.string "sluggable_type", limit: 50
+    t.string "scope"
+    t.datetime "created_at"
+    t.index ["slug", "sluggable_type", "scope"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
+    t.index ["slug", "sluggable_type"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
+    t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
+  end
+
   create_table "likes", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "post_id", null: false
@@ -121,11 +132,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_135938) do
     t.text "key_points"
     t.text "expected_outcome"
     t.integer "post_type_id"
+    t.string "slug"
     t.index ["category_id"], name: "index_posts_on_category_id"
     t.index ["draft"], name: "index_posts_on_draft"
     t.index ["post_type_id"], name: "index_posts_on_post_type_id"
     t.index ["published"], name: "index_posts_on_published"
     t.index ["purpose"], name: "index_posts_on_purpose"
+    t.index ["slug"], name: "index_posts_on_slug"
     t.index ["status"], name: "index_posts_on_status"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
@@ -167,9 +180,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_10_135938) do
     t.text "bio"
     t.string "twitter_url"
     t.string "github_url"
+    t.string "slug"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["slug"], name: "index_users_on_slug"
   end
 
   create_table "webauthn_credentials", force: :cascade do |t|
