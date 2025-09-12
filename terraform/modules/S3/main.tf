@@ -39,7 +39,7 @@ resource "aws_s3_bucket_public_access_block" "image_storage" {
 
 # IAM Policy for EC2 instances to access S3
 resource "aws_iam_policy" "s3_access_policy" {
-  name        = "${var.environment}-s3-access-policy"
+  name        = "${var.environment}-${var.bucket_name}-s3-access-policy"
   description = "Policy for EC2 instances to access S3 bucket"
 
   policy = jsonencode({

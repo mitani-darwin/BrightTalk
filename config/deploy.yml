@@ -2,7 +2,7 @@
 service: bright_talk
 
 # Name of the container image
-image: darwin2008/bright_talk
+image: bright_talk
 
 # Deploy to these servers
 servers:
@@ -22,15 +22,16 @@ proxy:
 
 # Credentials for your image host (DockerHub)
 registry:
-  server: docker.io
-  username: darwin2008
+  server: 017820660529.dkr.ecr.ap-northeast-1.amazonaws.com
+  username: AWS
   password:
-    - DOCKER_HUB_PASSWORD
+    - ECR_PASSWORD
 
 # Inject ENV variables into containers
 env:
   secret:
     - RAILS_MASTER_KEY
+    - ECR_PASSWORD
     - DOCKER_HUB_PASSWORD
     - SECRET_KEY_BASE
     - AWS_ACCESS_KEY_ID
@@ -71,9 +72,6 @@ asset_path: /rails/public/assets
 # Configure the image builder
 builder:
   arch: arm64
-  cache:
-    type: registry
-    options: mode=max
 
 # Logging configuration
 logging:
