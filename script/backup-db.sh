@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# デプロイスクリプト for BrightTalk
-# ECR + Kamal を使用したデプロイ自動化
+# データベースバックアップ専用スクリプト for BrightTalk
+# SQLite3データベースをS3にバックアップ
 
 set -e  # エラー時に停止
 
@@ -13,10 +13,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 設定値
-ECR_REGISTRY="017820660529.dkr.ecr.ap-northeast-1.amazonaws.com"
-ECR_REPOSITORY="bright_talk"
 AWS_REGION="ap-northeast-1"
-IMAGE_TAG=${1:-latest}
+S3_BUCKET="brighttalk-db-backup"
 
 echo_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -43,77 +41,23 @@ check_prerequisites() {
         exit 1
     fi
 
-    if ! command -v docker &> /dev/null; then
-        echo_error "Dockerが見つかりません。インストールしてください。"
+    if ! command -v ssh &> /dev/null; then
+        echo_error "SSHが見つかりません。"
         exit 1
     fi
 
-    if ! command -v kamal &> /dev/null; then
-        echo_error "Kamalが見つかりません。インストールしてください。"
+    # SSH_KEY_PATHの設定確認
+    if [ -z "$SSH_KEY_PATH" ]; then
+        echo_warning "SSH_KEY_PATHが設定されていません。terraform/ssh-keys/mac-mini-2023.local-ed25519-keyを使用します。"
+        export SSH_KEY_PATH="terraform/ssh-keys/mac-mini-2023.local-ed25519-key"
+    fi
+
+    if [ ! -f "$SSH_KEY_PATH" ]; then
+        echo_error "SSH秘密鍵が見つかりません: $SSH_KEY_PATH"
         exit 1
     fi
 
     echo_success "前提条件のチェック完了"
-}
-
-# ECRログイン
-ecr_login() {
-    echo_info "ECRにログイン中..."
-
-    if aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY; then
-        echo_success "ECRログイン成功"
-    else
-        echo_error "ECRログインに失敗しました"
-        exit 1
-    fi
-}
-
-# 環境変数の設定
-setup_environment() {
-    echo_info "環境変数を設定中..."
-
-    # ECRパスワードの取得と設定
-    export ECR_PASSWORD=$(aws ecr get-login-password --region $AWS_REGION)
-
-    if [ -z "$ECR_PASSWORD" ]; then
-        echo_error "ECRパスワードの取得に失敗しました"
-        exit 1
-    fi
-
-    # 必要な環境変数のチェック
-    if [ -z "$SSH_KEY_PATH" ]; then
-        echo_warning "SSH_KEY_PATHが設定されていません。~/.ssh/id_rsaを使用します。"
-        export SSH_KEY_PATH="~/.ssh/id_rsa"
-    fi
-
-    echo_success "環境変数の設定完了"
-    echo_info "ECRパスワード: 設定済み（12時間有効）"
-    echo_info "SSH_KEY_PATH: $SSH_KEY_PATH"
-}
-
-# Dockerイメージのビルドとプッシュ
-build_and_push() {
-    local full_image_name="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-
-    echo_info "Dockerイメージをビルド中: $full_image_name"
-
-    if docker build -t $ECR_REPOSITORY:$IMAGE_TAG .; then
-        echo_success "Dockerイメージのビルド完了"
-    else
-        echo_error "Dockerイメージのビルドに失敗しました"
-        exit 1
-    fi
-
-    echo_info "イメージにタグを付与中..."
-    docker tag $ECR_REPOSITORY:$IMAGE_TAG $full_image_name
-
-    echo_info "ECRにプッシュ中: $full_image_name"
-    if docker push $full_image_name; then
-        echo_success "ECRへのプッシュ完了"
-    else
-        echo_error "ECRへのプッシュに失敗しました"
-        exit 1
-    fi
 }
 
 # データベースバックアップ
@@ -122,7 +66,6 @@ backup_database() {
     
     local date_dir=$(date +"%Y-%m-%d")
     local timestamp=$(date +"%Y%m%d_%H%M%S")
-    local s3_bucket="brighttalk-db-backup"
     
     echo_info "SQLite3 .backupコマンドを使用してデータベースバックアップを作成中..."
     echo_info "バックアップディレクトリ: $date_dir"
@@ -167,9 +110,9 @@ backup_database() {
                     ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
                     
                     # S3に圧縮ファイルをアップロード
-                    echo_info "S3に圧縮バックアップをアップロード中: s3://$s3_bucket/$date_dir/$compressed_filename"
+                    echo_info "S3に圧縮バックアップをアップロード中: s3://$S3_BUCKET/$date_dir/$compressed_filename"
                     
-                    if aws s3 cp "$compressed_filename" "s3://$s3_bucket/$date_dir/" --region $AWS_REGION; then
+                    if aws s3 cp "$compressed_filename" "s3://$S3_BUCKET/$date_dir/" --region $AWS_REGION; then
                         echo_success "$db_file のS3アップロード完了"
                         uploaded_files+=("$compressed_filename")
                         rm -f "$compressed_filename"
@@ -194,7 +137,7 @@ backup_database() {
     if [ ${#uploaded_files[@]} -gt 0 ]; then
         echo_success "データベースバックアップ完了: ${#uploaded_files[@]}個のファイルをS3にアップロード"
         for file in "${uploaded_files[@]}"; do
-            echo_info "  - s3://$s3_bucket/$date_dir/$file"
+            echo_info "  - s3://$S3_BUCKET/$date_dir/$file"
         done
     else
         echo_error "バックアップファイルのアップロードに失敗しました"
@@ -202,92 +145,52 @@ backup_database() {
     fi
 }
 
-# Kamalデプロイ
-kamal_deploy() {
-    echo_info "Kamalでデプロイを開始..."
-
-    if kamal deploy; then
-        echo_success "🎉 デプロイが正常に完了しました！"
-    else
-        echo_error "Kamalデプロイに失敗しました"
-        exit 1
-    fi
+# ヘルプ表示
+show_help() {
+    echo "使用方法: $0 [OPTIONS]"
+    echo ""
+    echo "BrightTalkのSQLite3データベースをS3にバックアップします"
+    echo ""
+    echo "OPTIONS:"
+    echo "  -h, --help      このヘルプを表示"
+    echo ""
+    echo "環境変数:"
+    echo "  SSH_KEY_PATH    SSH秘密鍵のパス (デフォルト: terraform/ssh-keys/mac-mini-2023.local-ed25519-key)"
+    echo ""
+    echo "例:"
+    echo "  $0                           # データベースバックアップを実行"
+    echo "  SSH_KEY_PATH=~/.ssh/id_rsa $0  # カスタムSSH鍵を使用"
 }
 
 # メイン処理
 main() {
-    echo_info "🚀 BrightTalk デプロイスクリプト開始"
-    echo_info "イメージタグ: $IMAGE_TAG"
-    echo_info "ECRリポジトリ: $ECR_REGISTRY/$ECR_REPOSITORY"
+    echo_info "🗄️  BrightTalk データベースバックアップスクリプト開始"
+    echo_info "S3バケット: $S3_BUCKET"
+    echo_info "リージョン: $AWS_REGION"
     echo ""
 
     # 引数の処理
-    SKIP_BUILD=false
-    SKIP_PUSH=false
-
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --skip-build)
-                SKIP_BUILD=true
-                shift
-                ;;
-            --skip-push)
-                SKIP_PUSH=true
-                shift
-                ;;
-            --deploy-only)
-                SKIP_BUILD=true
-                SKIP_PUSH=true
-                shift
-                ;;
             -h|--help)
-                echo "使用方法: $0 [IMAGE_TAG] [OPTIONS]"
-                echo ""
-                echo "OPTIONS:"
-                echo "  --skip-build    Dockerビルドをスキップ"
-                echo "  --skip-push     ECRプッシュをスキップ"
-                echo "  --deploy-only   ビルドとプッシュをスキップ、デプロイのみ実行"
-                echo "  -h, --help      このヘルプを表示"
-                echo ""
-                echo "例:"
-                echo "  $0                    # 最新版をビルド・プッシュ・デプロイ"
-                echo "  $0 v1.0.0             # v1.0.0タグでビルド・プッシュ・デプロイ"
-                echo "  $0 --deploy-only      # デプロイのみ実行"
-                echo "  $0 --skip-build       # ビルドをスキップしてプッシュ・デプロイ"
+                show_help
                 exit 0
                 ;;
             *)
-                IMAGE_TAG="$1"
-                shift
+                echo_error "不明なオプション: $1"
+                show_help
+                exit 1
                 ;;
         esac
     done
 
     # 処理実行
     check_prerequisites
-    ecr_login
-    setup_environment
-
-    if [ "$SKIP_BUILD" = false ]; then
-        build_and_push
-    elif [ "$SKIP_PUSH" = false ]; then
-        echo_info "ビルドをスキップして、プッシュを実行..."
-        local full_image_name="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-        docker tag $ECR_REPOSITORY:$IMAGE_TAG $full_image_name
-        docker push $full_image_name
-    else
-        echo_info "ビルドとプッシュをスキップします"
-    fi
-
-    # デプロイ前にデータベースをバックアップ
     backup_database
 
-    kamal_deploy
-
     echo ""
-    echo_success "✨ すべての処理が完了しました！"
-    echo_info "アプリケーションURL: https://www.brighttalk.jp"
-    echo_info "ログ確認: kamal app logs -f"
+    echo_success "✨ データベースバックアップが完了しました！"
+    echo_info "S3バケット: s3://$S3_BUCKET/"
 }
 
 # スクリプト実行
