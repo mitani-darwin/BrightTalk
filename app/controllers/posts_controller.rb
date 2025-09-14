@@ -1,8 +1,8 @@
 
 class PostsController < ApplicationController
   before_action :authenticate_user!, except: [ :index, :show ]
-  before_action :set_post, only: [ :show, :edit, :update, :destroy, :delete_image ]
-  before_action :check_post_owner, only: [ :edit, :update, :destroy, :delete_image ]
+  before_action :set_post, only: [ :show, :edit, :update, :destroy, :delete_image, :delete_video ]
+  before_action :check_post_owner, only: [ :edit, :update, :destroy, :delete_image, :delete_video ]
   before_action :log_user_status
 
   def index
@@ -131,6 +131,41 @@ class PostsController < ApplicationController
     }, status: :internal_server_error
   end
 
+  # 動画削除アクション
+  def delete_video
+    @post = current_user.posts.friendly.find(params[:id])
+    attachment_id = params[:attachment_id]
+
+    # 指定されたIDの動画を探して削除
+    attachment = @post.videos.find_by(id: attachment_id)
+
+    if attachment
+      filename = attachment.filename.to_s
+      attachment.purge
+
+      render json: {
+        success: true,
+        message: "動画「#{filename}」を削除しました"
+      }
+    else
+      render json: {
+        success: false,
+        message: "指定された動画が見つかりません"
+      }, status: :not_found
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: {
+      success: false,
+      message: "投稿が見つかりません"
+    }, status: :not_found
+  rescue => e
+    Rails.logger.error "Video deletion error: #{e.message}"
+    render json: {
+      success: false,
+      message: "動画の削除中にエラーが発生しました"
+    }, status: :internal_server_error
+  end
+
   private
 
   def set_post
@@ -147,7 +182,7 @@ class PostsController < ApplicationController
     attrs = params.require(:post).permit(
       :title, :content, :status, :category_id, :purpose, :target_audience,
       :post_type_id, :key_points, :expected_outcome,
-      images: [], videos: []
+      images: [], videos: [], video_signed_ids: []
     )
 
     # 空配列（新規選択なし）の場合はキーごと削除して既存添付を維持
@@ -200,6 +235,18 @@ class PostsController < ApplicationController
       if new_videos.any?
         @post.videos.purge # 既存動画を削除
         @post.videos.attach(new_videos.first) # 最初の動画のみ添付
+      end
+    end
+    
+    # Direct Uploadで送信されたsigned_idがある場合の処理
+    if params[:post][:video_signed_ids].present?
+      signed_ids = Array(params[:post][:video_signed_ids]).reject(&:blank?)
+      if signed_ids.any?
+        @post.videos.purge # 既存動画を削除
+        signed_ids.each do |signed_id|
+          blob = ActiveStorage::Blob.find_signed(signed_id)
+          @post.videos.attach(blob) if blob
+        end
       end
     end
     

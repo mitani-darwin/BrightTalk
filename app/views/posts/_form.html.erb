@@ -208,16 +208,24 @@
                 <small class="text-muted d-block mb-2">現在アップロード済みの動画:</small>
                 <div class="row g-2">
                   <% post.videos.each_with_index do |video, index| %>
-                    <div class="col-6 col-md-4">
+                    <div class="col-6 col-md-4" id="video-card-<%= video.id %>">
                       <div class="card">
                         <div class="card-body p-2 text-center">
                           <i class="fas fa-video fa-3x text-muted mb-2"></i>
                           <small class="text-muted d-block"><%= video.filename %></small>
-                          <button type="button" class="btn btn-outline-primary btn-sm mt-1 insert-existing-video" 
-                                  data-filename="<%= video.filename %>" 
-                                  data-url="attachment:<%= video.filename %>">
-                            <i class="fas fa-plus"></i> 内容に挿入
-                          </button>
+                          <div class="d-flex gap-1 mt-1">
+                            <button type="button" class="btn btn-outline-primary btn-sm flex-fill insert-existing-video" 
+                                    data-filename="<%= video.filename %>" 
+                                    data-url="attachment:<%= video.filename %>">
+                              <i class="fas fa-plus"></i> 挿入
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm delete-video-btn"
+                                    data-post-id="<%= post.id %>"
+                                    data-attachment-id="<%= video.id %>"
+                                    data-filename="<%= video.filename %>">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -230,7 +238,7 @@
               </div>
             <% end %>
             
-            <%= form.file_field :videos, accept: "video/*",
+            <%= form.file_field :videos, accept: "video/*", direct_upload: true,
                                 class: "form-control", id: "videoInput" %>
             <div class="form-text">
               動画は1つのみ選択できます（MP4, WebM など）。選択すると、内容欄のカーソル位置に動画のプレースホルダを自動で挿入します（プレビューは表示しません）。
@@ -286,6 +294,27 @@
             </div>
           </div>
 
+          <!-- アップロード進捗表示 -->
+          <div id="uploadProgressContainer" class="mb-3" style="display: none;">
+            <div class="alert alert-info mb-2">
+              <i class="fas fa-cloud-upload-alt me-2"></i>
+              <span id="uploadStatusText">アップロード中...</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div id="uploadProgressBar" 
+                   class="progress-bar progress-bar-striped progress-bar-animated" 
+                   role="progressbar" 
+                   style="width: 0%" 
+                   aria-valuenow="0" 
+                   aria-valuemin="0" 
+                   aria-valuemax="100">
+              </div>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted" id="uploadDetails">準備中...</small>
+            </div>
+          </div>
+
           <!-- 投稿・キャンセル（入力欄の下／2列レイアウト） -->
           <div class="mb-3 sticky-actions">
             <div class="row g-2">
@@ -293,6 +322,7 @@
                 <%= form.submit post.persisted? ? "更新" : "投稿",
                                 class: "btn btn-primary w-100",
                                 name: "commit",
+                                id: "submitButton",
                                 onclick: "document.getElementById('post_status').value = 'published';" %>
               </div>
               <div class="col-6">
@@ -1169,5 +1199,382 @@
         }
 
         document.addEventListener('turbo:load', initializeImageDeletion);
+
+        // 動画削除機能の初期化フラグ
+        let videoDeletionInitialized = false;
+
+        // 動画削除機能
+        function initializeVideoDeletion() {
+            if (videoDeletionInitialized) return;
+            
+            const deleteButtons = document.querySelectorAll('.delete-video-btn');
+
+            deleteButtons.forEach(button => {
+                // 既にイベントリスナーが追加されている場合はスキップ
+                if (button.dataset.initialized === 'true') return;
+                
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const postId = this.getAttribute('data-post-id');
+                    const attachmentId = this.getAttribute('data-attachment-id');
+                    const filename = this.getAttribute('data-filename');
+
+                    // 確認ダイアログ
+                    if (confirm(`動画「${filename}」を削除しますか？\n\n削除後は元に戻せません。`)) {
+                        deleteVideo(postId, attachmentId, filename);
+                    }
+                });
+                
+                // フラグを設定して重複を防止
+                button.dataset.initialized = 'true';
+            });
+            
+            videoDeletionInitialized = true;
+        }
+
+        async function deleteVideo(postId, attachmentId, filename) {
+            try {
+                const response = await fetch(`/posts/${postId}/delete_video`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCSRFToken(),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        attachment_id: attachmentId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 成功時は動画カードを削除
+                    const videoCard = document.getElementById(`video-card-${attachmentId}`);
+                    if (videoCard) {
+                        videoCard.style.opacity = '0.5';
+                        videoCard.style.transition = 'opacity 0.3s';
+
+                        setTimeout(() => {
+                            videoCard.remove();
+                            showVideoDeletionMessage(result.message, 'success');
+                        }, 300);
+                    }
+                } else {
+                    showVideoDeletionMessage(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Video deletion error:', error);
+                showVideoDeletionMessage('動画の削除中にエラーが発生しました', 'error');
+            }
+        }
+
+        function showVideoDeletionMessage(message, type) {
+            let messageDiv = document.getElementById('video-deletion-message');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'video-deletion-message';
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    padding: 12px 16px;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                    max-width: 300px;
+                `;
+                document.body.appendChild(messageDiv);
+            }
+
+            messageDiv.textContent = message;
+            messageDiv.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
+            messageDiv.style.opacity = '1';
+
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+            }, 3000);
+        }
+
+        // Turbo対応でリセット
+        document.addEventListener('turbo:before-visit', function() {
+            videoDeletionInitialized = false;
+        });
+
+        // 動画削除機能の初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeVideoDeletion);
+        } else {
+            initializeVideoDeletion();
+        }
+
+        document.addEventListener('turbo:load', initializeVideoDeletion);
+
+        // Direct Upload機能（動画専用）
+        function initializeVideoDirectUpload() {
+            const videoInput = document.getElementById('videoInput');
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const statusText = document.getElementById('uploadStatusText');
+            const uploadDetails = document.getElementById('uploadDetails');
+            const submitButton = document.getElementById('submitButton');
+            const form = document.querySelector('form[data-turbo="false"]');
+
+            if (!videoInput || !progressContainer) return;
+
+            // Direct Upload開始時
+            videoInput.addEventListener('direct-upload:initialize', function(event) {
+                const { target, detail } = event;
+                const { id, file } = detail;
+                
+                // プログレスバーを表示
+                progressContainer.style.display = 'block';
+                statusText.textContent = 'アップロード準備中...';
+                uploadDetails.textContent = `ファイル: ${file.name} (${formatFileSize(file.size)})`;
+                progressBar.style.width = '0%';
+                progressBar.setAttribute('aria-valuenow', 0);
+                
+                // フォームとボタンを無効化
+                disableFormElements(true);
+            });
+
+            // Direct Upload進捗更新時
+            videoInput.addEventListener('direct-upload:progress', function(event) {
+                const { detail } = event;
+                const { id, progress } = detail;
+                
+                const percent = Math.round(progress);
+                progressBar.style.width = percent + '%';
+                progressBar.setAttribute('aria-valuenow', percent);
+                statusText.textContent = `アップロード中... ${percent}%`;
+                
+                if (percent === 100) {
+                    progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                    progressBar.classList.add('bg-success');
+                    statusText.textContent = 'アップロード完了！';
+                    uploadDetails.textContent = 'サーバー処理を開始しています...';
+                }
+            });
+
+            // Direct Upload完了時
+            videoInput.addEventListener('direct-upload:end', function(event) {
+                const { detail } = event;
+                const { id } = detail;
+                
+                // フォームを有効化
+                setTimeout(() => {
+                    disableFormElements(false);
+                    progressContainer.style.display = 'none';
+                    progressBar.classList.remove('bg-success');
+                    progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+                    progressBar.style.width = '0%';
+                    statusText.textContent = 'アップロード中...';
+                    uploadDetails.textContent = '準備中...';
+                }, 2000);
+            });
+
+            // Direct Uploadエラー時
+            videoInput.addEventListener('direct-upload:error', function(event) {
+                const { detail } = event;
+                const { id, error } = detail;
+                
+                // エラー表示
+                progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                progressBar.classList.add('bg-danger');
+                statusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>アップロードエラー';
+                uploadDetails.textContent = error.message || 'アップロード中にエラーが発生しました';
+                
+                // フォームを有効化してエラー状態をリセット
+                setTimeout(() => {
+                    disableFormElements(false);
+                    progressContainer.style.display = 'none';
+                    progressBar.classList.remove('bg-danger');
+                    progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+                    progressBar.style.width = '0%';
+                    statusText.textContent = 'アップロード中...';
+                    uploadDetails.textContent = '準備中...';
+                }, 5000);
+            });
+
+            // フォーム要素の有効/無効化
+            function disableFormElements(disable) {
+                if (submitButton) {
+                    submitButton.disabled = disable;
+                    if (disable) {
+                        submitButton.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i>アップロード中...';
+                    } else {
+                        submitButton.innerHTML = form?.querySelector('[name="commit"]')?.value || '投稿';
+                    }
+                }
+                
+                // 他の入力フィールドも無効化
+                const inputs = form?.querySelectorAll('input, textarea, select, button');
+                if (inputs) {
+                    inputs.forEach(input => {
+                        if (input !== submitButton) {
+                            input.disabled = disable;
+                        }
+                    });
+                }
+            }
+
+            // ファイルサイズのフォーマット
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        }
+
+        // Direct Upload機能の初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeVideoDirectUpload);
+        } else {
+            initializeVideoDirectUpload();
+        }
+        document.addEventListener('turbo:load', initializeVideoDirectUpload);
+
+        // アップロード進捗表示機能
+        function initializeUploadProgress() {
+            const form = document.querySelector('form[data-turbo="false"]');
+            const submitButton = document.getElementById('submitButton');
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const statusText = document.getElementById('uploadStatusText');
+            const uploadDetails = document.getElementById('uploadDetails');
+
+            if (!form || !submitButton || !progressContainer) return;
+
+            form.addEventListener('submit', function(e) {
+                // フォームにファイルがない場合は通常の送信
+                const imageInput = document.getElementById('imageInput');
+                const videoInput = document.getElementById('videoInput');
+                const hasFiles = (imageInput && imageInput.files.length > 0) || 
+                                (videoInput && videoInput.files.length > 0);
+                
+                if (!hasFiles) return true; // 通常の送信を継続
+
+                // ファイルがある場合はカスタムアップロード処理
+                e.preventDefault();
+                
+                // プログレスバーを表示
+                progressContainer.style.display = 'block';
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>アップロード中...';
+                
+                // FormDataを作成
+                const formData = new FormData(form);
+                
+                // XMLHttpRequestでアップロード
+                const xhr = new XMLHttpRequest();
+                
+                // アップロード進捗の監視
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        updateProgress(percentComplete, `アップロード中... ${percentComplete}%`, 
+                                     `${formatBytes(e.loaded)} / ${formatBytes(e.total)}`);
+                    }
+                });
+                
+                // レスポンス処理
+                xhr.addEventListener('load', function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        updateProgress(100, 'アップロード完了!', '処理中...');
+                        
+                        setTimeout(() => {
+                            // リダイレクト処理（Rails標準の動作を模擬）
+                            if (xhr.responseURL) {
+                                window.location.href = xhr.responseURL;
+                            } else {
+                                // レスポンスからリダイレクト先を解析
+                                const response = xhr.responseText;
+                                const redirectMatch = response.match(/window\.location\.href\s*=\s*["']([^"']+)["']/);
+                                if (redirectMatch) {
+                                    window.location.href = redirectMatch[1];
+                                } else {
+                                    // デフォルトの処理
+                                    form.submit();
+                                }
+                            }
+                        }, 1000);
+                    } else {
+                        handleUploadError('サーバーエラーが発生しました');
+                    }
+                });
+                
+                xhr.addEventListener('error', function() {
+                    handleUploadError('ネットワークエラーが発生しました');
+                });
+                
+                xhr.addEventListener('timeout', function() {
+                    handleUploadError('アップロードがタイムアウトしました');
+                });
+                
+                // タイムアウト設定（5分）
+                xhr.timeout = 300000;
+                
+                // リクエスト送信
+                xhr.open('POST', form.action);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.send(formData);
+            });
+            
+            // 進捗バー更新関数
+            function updateProgress(percent, status, details) {
+                progressBar.style.width = percent + '%';
+                progressBar.setAttribute('aria-valuenow', percent);
+                statusText.textContent = status;
+                uploadDetails.textContent = details;
+                
+                if (percent === 100) {
+                    progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                    progressBar.classList.add('bg-success');
+                }
+            }
+            
+            // エラーハンドリング関数
+            function handleUploadError(message) {
+                progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                progressBar.classList.add('bg-danger');
+                statusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラー';
+                uploadDetails.textContent = message;
+                
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<%= post.persisted? ? "更新" : "投稿" %>';
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.classList.remove('bg-danger');
+                    progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+                    progressBar.style.width = '0%';
+                }, 5000);
+            }
+            
+            // ファイルサイズフォーマット関数
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+        }
+        
+        // アップロード進捗機能の初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeUploadProgress);
+        } else {
+            initializeUploadProgress();
+        }
+        
+        document.addEventListener('turbo:load', initializeUploadProgress);
+
     })();
 </script>

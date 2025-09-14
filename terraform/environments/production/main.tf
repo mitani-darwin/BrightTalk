@@ -65,16 +65,20 @@ module "ec2" {
   subnet_id          = module.vpc.public_subnet_ids[0]
 }
 
-# S3 module for image storage
+# s3 module for image storage
 module "s3" {
   source = "../../modules/s3"
 
-  bucket_name    = "brighttalk.jp-image"
-  environment    = "production"
-  ec2_role_name  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
+  bucket_name_production    = "brighttalk-prod-image-production"
+  environment_production    = "production"
+  ec2_role_name_production  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
+
+  bucket_name_development    = "brighttalk-prod-image-development"
+  environment_development    = "production_development"
+  ec2_role_name_development  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
 }
 
-# S3 module for database backup storage
+# s3 module for database backup storage
 module "s3_db_backup" {
   source = "../../modules/s3"
 
