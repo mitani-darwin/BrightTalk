@@ -192,10 +192,11 @@ class PostsController < ApplicationController
       Rails.logger.info "Filtered images count: #{new_images.count}"
       @post.images.attach(new_images) if new_images.any?
     end
-    
+
     # 新しい動画がある場合は置換（動画は1つのみ）
     if params[:post][:videos].present?
-      new_videos = params[:post][:videos].reject(&:blank?)
+      videos_param = Array(params[:post][:videos]) # 配列に変換
+      new_videos = videos_param.reject(&:blank?)
       if new_videos.any?
         @post.videos.purge # 既存動画を削除
         @post.videos.attach(new_videos.first) # 最初の動画のみ添付

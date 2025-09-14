@@ -34,7 +34,7 @@ gem "devise-i18n"
 gem "webauthn", "~> 3.0"
 
 # 画像処理
-gem "mini_magick"
+gem 'ruby-vips'
 
 # Active Storage バリデーション
 gem "active_storage_validations"

@@ -13,6 +13,8 @@ RUN apt-get update -qq && \
     libvips \
     sqlite3 \
     nodejs \
+    libvips \
+    ruby-vips \
     npm && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 

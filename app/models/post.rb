@@ -137,22 +137,79 @@ class Post < ApplicationRecord
     draft? && auto_save == true
   end
 
-  # 画像保存後にEXIF情報を削除（S3アップロード後に処理）
+  # 画像保存前の前処理（EXIF削除）
   def process_images_for_exif_removal
     return unless images.attached?
-    
-    # 添付された画像を処理してEXIF削除
-    images.each do |image|
-      next unless image.content_type&.start_with?('image/')
-      
+
+    images.each do |attachment|
+      next unless attachment.blob&.content_type&.start_with?('image/')
+      next if attachment.blob.metadata['exif_removed'] == true
+
       begin
-        Rails.logger.info "Processing image for EXIF removal: #{image.filename}"
+        Rails.logger.info "Processing image for EXIF removal: #{attachment.filename}"
         
-        # 非同期でEXIF削除処理を実行
-        RemoveExifJob.perform_later(image)
+        # 画像データをダウンロードしてEXIF削除を実行
+        attachment.blob.open do |tempfile|
+          require 'ruby-vips'
+          
+          # Vipsで画像を読み込み（EXIFは自動的に読み込まれる）
+          image = Vips::Image.new_from_file(tempfile.path, access: :sequential)
+          
+          # EXIFを完全に削除して新しい画像を作成
+          processed_tempfile = Tempfile.new(['vips_processed_', File.extname(attachment.filename.to_s)])
+          
+          # オプションでEXIFを削除してファイルに書き込み
+          write_options = { strip: true }
+          
+          # ファイル形式に応じて最適な書き込みオプションを設定
+          case attachment.content_type
+          when 'image/jpeg'
+            write_options.merge!({ Q: 95, optimize_coding: true, strip: true })
+          when 'image/png'
+            write_options.merge!({ compression: 6, strip: true })
+          when 'image/webp'
+            write_options.merge!({ Q: 95, strip: true })
+          end
+          
+          # 処理済み画像を書き込み
+          image.write_to_file(processed_tempfile.path, **write_options)
+          
+          # 元のblobを処理済み画像で置き換え
+          processed_data = File.read(processed_tempfile.path)
+          
+          # 新しいチェックサムを計算（base64形式でActive Storageが期待する形式）
+          new_checksum = Digest::MD5.file(processed_tempfile.path).base64digest
+          
+          # blobのメタデータを更新
+          attachment.blob.update!(
+            checksum: new_checksum,
+            byte_size: processed_data.bytesize,
+            metadata: attachment.blob.metadata.merge('exif_removed' => true, 'processed_by' => 'ruby-vips')
+          )
+          
+          # S3に処理済み画像をアップロード
+          if attachment.blob.service.respond_to?(:upload)
+            # ファイルIOを使用してS3にアップロード（StringIOよりも安全）
+            File.open(processed_tempfile.path, 'rb') do |file|
+              attachment.blob.service.upload(
+                attachment.blob.key,
+                file,
+                checksum: new_checksum,
+                content_type: attachment.content_type
+              )
+            end
+          end
+          
+          Rails.logger.info "EXIF情報をruby-vipsで削除完了: #{attachment.filename}"
+          
+          # 一時ファイルを削除
+          processed_tempfile.close!
+          processed_tempfile.unlink
+        end
         
       rescue => e
-        Rails.logger.error "EXIF removal job enqueue error: #{e.message}"
+        Rails.logger.error "ruby-vipsによるEXIF削除中にエラーが発生しました (#{attachment.blob&.filename}): #{e.class.name}: #{e.message}"
+        Rails.logger.error "Stack trace: #{e.backtrace.first(3).join(", ")}"
       end
     end
   end
