@@ -1,12 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
-// CodeMirrorはCDNから読み込み、グローバル変数として使用
 
 export default class extends Controller {
   static targets = ["textarea"]
 
   connect() {
-    // CodeMirrorが利用可能になるまで待つ（プリコンパイル環境対応）
-    this.waitForCodeMirror()
+    this.initializeCodeMirror()
   }
 
   disconnect() {
@@ -15,93 +13,111 @@ export default class extends Controller {
     }
   }
 
-  async waitForCodeMirror() {
-    // CodeMirrorがグローバルオブジェクトとして利用可能になるまで待つ
-    let attempts = 0
-    const maxAttempts = 50
+  async initializeCodeMirror() {
+    const textarea = this.textareaTarget
     
-    const checkCodeMirror = () => {
-      return new Promise((resolve) => {
-        const check = () => {
-          attempts++
-          if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
-            resolve(true)
-          } else if (attempts < maxAttempts) {
-            setTimeout(check, 100)
-          } else {
-            resolve(false)
+    try {
+      // CodeMirrorが読み込まれるまで待機
+      await this.waitForCodeMirror()
+      
+      // グローバルCodeMirrorオブジェクトを使用
+      const CM = window.CodeMirror
+      
+      // CodeMirrorエディターを初期化
+      this.editor = CM.fromTextArea(textarea, {
+        mode: "markdown",
+        theme: "default",
+        lineNumbers: true,
+        lineWrapping: true,
+        indentUnit: 2,
+        tabSize: 2,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        showCursorWhenSelecting: true,
+        styleActiveLine: true,
+        foldGutter: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+          "Ctrl-Space": "autocomplete",
+          "Tab": function(cm) {
+            if (cm.somethingSelected()) {
+              cm.indentSelection("add");
+            } else {
+              cm.replaceSelection("  ");
+            }
           }
         }
-        check()
       })
-    }
-    
-    const isAvailable = await checkCodeMirror()
-    if (isAvailable) {
-      this.initializeEditor()
-    } else {
-      console.warn('CodeMirror failed to load, falling back to plain textarea')
+
+      // エディターの同期とバリデーション設定
+      this.setupEditorSync()
+      this.editor.setSize(null, "400px")
+      
+      if (textarea.value) {
+        this.editor.setValue(textarea.value)
+      }
+      
+      console.log('CodeMirror editor initialized successfully')
+      
+    } catch (error) {
+      console.error('CodeMirror initialization failed:', error)
+      this.initializeFallbackMode()
     }
   }
 
-  initializeEditor() {
+  async waitForCodeMirror() {
+    let attempts = 0
+    const maxAttempts = 100  // 10秒間待機
+
+    return new Promise((resolve, reject) => {
+      const checkInterval = setInterval(() => {
+        attempts++
+        
+        if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+          clearInterval(checkInterval)
+          resolve(true)
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkInterval)
+          reject(new Error('CodeMirror failed to load'))
+        }
+      }, 100)
+    })
+  }
+
+  initializeFallbackMode() {
     const textarea = this.textareaTarget
     
-    // グローバルのCodeMirrorオブジェクトを使用
-    const CM = window.CodeMirror
+    // フォールバック時の視覚的改善
+    textarea.style.fontFamily = 'Monaco, "Lucida Console", monospace'
+    textarea.style.fontSize = '14px'
+    textarea.style.lineHeight = '1.5'
+    textarea.style.padding = '10px'
+    textarea.style.border = '1px solid #ddd'
+    textarea.style.borderRadius = '4px'
+    textarea.style.minHeight = '400px'
+    textarea.style.resize = 'vertical'
     
-    if (!CM || typeof CM.fromTextArea !== 'function') {
-      console.error('CodeMirror is not available or fromTextArea method is missing')
-      return
-    }
-    
-    this.editor = CM.fromTextArea(textarea, {
-      mode: "markdown",
-      theme: "default",
-      lineNumbers: true,
-      lineWrapping: true,
-      indentUnit: 2,
-      tabSize: 2,
-      autoCloseBrackets: true,
-      matchBrackets: true,
-      showCursorWhenSelecting: true,
-      styleActiveLine: true,
-      foldGutter: true,
-      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-      extraKeys: {
-        "Ctrl-Space": "autocomplete",
-        "Tab": function(cm) {
-          if (cm.somethingSelected()) {
-            cm.indentSelection("add");
-          } else {
-            cm.replaceSelection("  ");
-          }
-        }
-      }
-    })
+    console.log('Fallback mode initialized')
+  }
 
-    // Sync editor content with textarea for form submission and validation
+  setupEditorSync() {
+    const textarea = this.textareaTarget
+    
     this.editor.on("change", () => {
       textarea.value = this.editor.getValue()
-      // Clear custom validity when content changes
       textarea.setCustomValidity('')
-      // Trigger change and input events for validation
       textarea.dispatchEvent(new Event('change', { bubbles: true }))
       textarea.dispatchEvent(new Event('input', { bubbles: true }))
     })
 
-    // Handle form validation by making CodeMirror focusable
     const form = textarea.closest('form')
     if (form) {
       form.addEventListener('submit', (e) => {
-        // Sync content before validation
         textarea.value = this.editor.getValue()
         
-        // If textarea is invalid, focus the CodeMirror editor
         if (!textarea.checkValidity()) {
           e.preventDefault()
           this.editor.focus()
-          // Show custom validation message
           textarea.setCustomValidity('内容を入力してください')
           textarea.reportValidity()
           return false
@@ -109,38 +125,37 @@ export default class extends Controller {
       })
     }
 
-    // Handle HTML5 constraint validation API
     textarea.addEventListener('invalid', (e) => {
       e.preventDefault()
       this.editor.focus()
     })
 
-    // Set initial height
-    this.editor.setSize(null, "400px")
-    
-    // Focus the editor when clicked and clear validation state
     this.editor.on("focus", () => {
       this.editor.refresh()
       textarea.setCustomValidity('')
     })
-    
-    // Initialize with current content
-    if (textarea.value) {
-      this.editor.setValue(textarea.value)
-    }
   }
 
-  // Method to insert text at cursor position (for image/video insertion)
+  // 画像・動画挿入用のメソッド
   insertText(text) {
     if (this.editor) {
       const doc = this.editor.getDoc()
       const cursor = doc.getCursor()
       doc.replaceRange(text, cursor)
       this.editor.focus()
+    } else {
+      // フォールバックモード用
+      const textarea = this.textareaTarget
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const before = textarea.value.substring(0, start)
+      const after = textarea.value.substring(end)
+      textarea.value = before + text + after
+      textarea.selectionStart = textarea.selectionEnd = start + text.length
+      textarea.focus()
     }
   }
 
-  // Method to get current cursor position for external usage
   getCursorPosition() {
     if (this.editor) {
       return this.editor.getDoc().getCursor()
