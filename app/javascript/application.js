@@ -3,3 +3,6 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 
+// CodeMirrorをグローバルに読み込み
+import "codemirror"
+import "codemirror/mode/markdown/markdown"

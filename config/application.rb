@@ -30,5 +30,8 @@ module BrightTalk
     config.time_zone = "Tokyo"
     config.i18n.default_locale = :ja
     config.i18n.available_locales = [ :ja, :en ]
+
+    # 画像のEXIF削除対応
+    config.active_storage.variant_processor = :vips
   end
 end

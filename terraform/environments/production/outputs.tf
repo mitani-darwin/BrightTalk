@@ -52,7 +52,7 @@ output "ssh_connection_command" {
   value       = "ssh -p 47583 -i ${module.ec2.ssh_key_filename_for_kamal} ec2-user@${module.ec2.instance_public_ip}"
 }
 
-# S3 outputs
+# s3 outputs
 output "s3_bucket_name" {
   description = "Name of the S3 bucket for image storage"
   value       = module.s3.bucket_name
@@ -66,4 +66,20 @@ output "s3_bucket_arn" {
 output "ecr_repository_url" {
   description = "ECR repository URL"
   value       = module.ecr.repository_url
+}
+
+# CloudFront outputs
+output "cloudfront_distribution_domain_name" {
+  description = "CloudFront distribution domain name for video content"
+  value       = module.cloudfront.distribution_domain_name
+}
+
+output "cloudfront_distribution_url" {
+  description = "CloudFront distribution URL for video content"
+  value       = module.cloudfront.cloudfront_url
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID"
+  value       = module.cloudfront.distribution_id
 }

@@ -1,7 +1,7 @@
 module PostsHelper
   require "cgi"
 
-  # Convert Markdown image syntax to HTML img tags
+  # Convert Markdown content to HTML with support for images and videos
   def format_content_with_images(content, post = nil)
     return "" if content.blank?
 
@@ -17,8 +17,11 @@ module PostsHelper
       s
     end
 
+    # First, process attachment-style media links before Markdown processing
+    processed_content = content.dup
+
     # Convert Markdown image syntax ![alt](url) to HTML img tags
-    formatted_content = content.gsub(/!\[([^\]]*)\]\(([^)]+)\)/) do |match|
+    processed_content = processed_content.gsub(/!\[([^\]]*)\]\(([^)]+)\)/) do |match|
       alt_text = $1
       image_url = $2
 
@@ -51,8 +54,62 @@ module PostsHelper
       end
     end
 
-    # Apply simple_format to handle line breaks while preserving HTML
-    simple_format(formatted_content, {}, sanitize: false).html_safe
+    # Convert video links [動画 filename](attachment:filename) to HTML video tags
+    processed_content = processed_content.gsub(/\[\s*動画[^\]]*\]\(attachment:([^)]+)\)/) do |match|
+      attachment_filename = $1.strip
+      normalized_filename = normalize_name.call(attachment_filename)
+
+      # Try to find matching video in post's attachments
+      if post&.videos&.attached?
+        matching_video = post.videos.find do |vid|
+          normalize_name.call(vid.filename.to_s) == normalized_filename
+        end
+        
+        if matching_video
+          video_url = get_cloudfront_video_url(matching_video)
+          %Q(
+            <div class="video-container my-4">
+              <video controls preload="metadata" class="w-100" style="max-height: 500px;">
+                <source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}">
+                <p>お使いのブラウザは動画再生をサポートしていません。
+                <a href="#{ERB::Util.html_escape(video_url)}" download>動画をダウンロード</a>してください。</p>
+              </video>
+            </div>
+          ).strip
+        else
+          # Fallback: keep the original markdown text if video not found
+          match
+        end
+      else
+        # No post or no videos: keep original markdown
+        match
+      end
+    end
+
+    # Apply full Markdown processing using Redcarpet
+    renderer = Redcarpet::Render::HTML.new(
+      filter_html: false,
+      no_links: false,
+      no_images: false,
+      hard_wrap: true,
+      link_attributes: { target: "_blank", rel: "noopener" }
+    )
+
+    markdown = Redcarpet::Markdown.new(renderer,
+      autolink: true,
+      tables: true,
+      fenced_code_blocks: true,
+      strikethrough: true,
+      superscript: true,
+      underline: true,
+      quote: true,
+      footnotes: true,
+      space_after_headers: true
+    )
+
+    # Convert Markdown to HTML
+    html_content = markdown.render(processed_content)
+    html_content.html_safe
   end
 
   # Strip media placeholders (images/videos) from content for index excerpts
@@ -71,5 +128,22 @@ module PostsHelper
     # Collapse multiple spaces and newlines after removals
     text = text.gsub(/\n{3,}/, "\n\n").squeeze(" ")
     text.strip
+  end
+
+  private
+
+  # Get CloudFront URL for video if available, otherwise fallback to S3 URL
+  def get_cloudfront_video_url(video_attachment)
+    # Check if CloudFront distribution URL is configured
+    cloudfront_base_url = Rails.application.credentials.dig(:cloudfront, :distribution_url)
+    
+    if cloudfront_base_url.present?
+      # Use CloudFront URL for optimized video delivery
+      video_key = video_attachment.blob.key
+      "#{cloudfront_base_url.chomp('/')}/#{video_key}"
+    else
+      # Fallback to direct S3/Rails URL
+      Rails.application.routes.url_helpers.rails_blob_path(video_attachment, only_path: true)
+    end
   end
 end

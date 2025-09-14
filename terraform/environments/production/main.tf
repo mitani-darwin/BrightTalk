@@ -65,16 +65,20 @@ module "ec2" {
   subnet_id          = module.vpc.public_subnet_ids[0]
 }
 
-# S3 module for image storage
+# s3 module for image storage
 module "s3" {
   source = "../../modules/s3"
 
-  bucket_name    = "brighttalk.jp-image"
-  environment    = "production"
-  ec2_role_name  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
+  bucket_name_production    = "brighttalk-prod-image-production"
+  environment_production    = "production"
+  ec2_role_name_production  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
+
+  bucket_name_development    = "brighttalk-prod-image-development"
+  environment_development    = "production_development"
+  ec2_role_name_development  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
 }
 
-# S3 module for database backup storage
+# s3 module for database backup storage
 module "s3_db_backup" {
   source = "../../modules/s3"
 
@@ -91,4 +95,16 @@ module "ecr" {
   environment     = var.environment
   repository_name = "bright_talk"
   ec2_role_name   = module.ec2.iam_role_name
+}
+
+# CloudFront Module for video distribution
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  project_name           = var.project_name
+  environment            = var.environment
+  s3_bucket_domain_name  = module.s3.bucket_domain_name_production
+  s3_bucket_id           = module.s3.bucket_id_production
+  s3_bucket_arn          = module.s3.bucket_arn_production
+  price_class            = "PriceClass_100"
 }
