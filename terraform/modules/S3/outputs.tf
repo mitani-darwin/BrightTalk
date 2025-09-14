@@ -14,6 +14,16 @@ output "s3_access_policy_arn_production" {
   value       = var.bucket_name_production != null ? aws_iam_policy.s3_access_policy_production[0].arn : null
 }
 
+output "bucket_id_production" {
+  description = "ID of the S3 bucket (production)"
+  value       = var.bucket_name_production != null ? aws_s3_bucket.image_storage_production[0].id : null
+}
+
+output "bucket_domain_name_production" {
+  description = "Domain name of the S3 bucket (production)"
+  value       = var.bucket_name_production != null ? aws_s3_bucket.image_storage_production[0].bucket_domain_name : null
+}
+
 # Development environment outputs
 output "bucket_name_development" {
   description = "Name of the S3 bucket (development)"

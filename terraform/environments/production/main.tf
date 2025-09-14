@@ -96,3 +96,15 @@ module "ecr" {
   repository_name = "bright_talk"
   ec2_role_name   = module.ec2.iam_role_name
 }
+
+# CloudFront Module for video distribution
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  project_name           = var.project_name
+  environment            = var.environment
+  s3_bucket_domain_name  = module.s3.bucket_domain_name_production
+  s3_bucket_id           = module.s3.bucket_id_production
+  s3_bucket_arn          = module.s3.bucket_arn_production
+  price_class            = "PriceClass_100"
+}

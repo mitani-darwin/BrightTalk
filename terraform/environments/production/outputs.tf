@@ -67,3 +67,19 @@ output "ecr_repository_url" {
   description = "ECR repository URL"
   value       = module.ecr.repository_url
 }
+
+# CloudFront outputs
+output "cloudfront_distribution_domain_name" {
+  description = "CloudFront distribution domain name for video content"
+  value       = module.cloudfront.distribution_domain_name
+}
+
+output "cloudfront_distribution_url" {
+  description = "CloudFront distribution URL for video content"
+  value       = module.cloudfront.cloudfront_url
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID"
+  value       = module.cloudfront.distribution_id
+}
