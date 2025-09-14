@@ -4,6 +4,9 @@
 @import url("https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css");
 @import url("https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.css");
 
+// Video.js CSS (imported from CDN)
+@import url("https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video-js.css");
+
 // ナビゲーションバーのカスタマイズ
 .navbar {
   width: 100%; // 親要素の幅に合わせる
