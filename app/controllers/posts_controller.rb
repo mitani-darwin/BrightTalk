@@ -1,8 +1,8 @@
 
 class PostsController < ApplicationController
   before_action :authenticate_user!, except: [ :index, :show ]
-  before_action :set_post, only: [ :show, :edit, :update, :destroy ]
-  before_action :check_post_owner, only: [ :edit, :update, :destroy ]
+  before_action :set_post, only: [ :show, :edit, :update, :destroy, :delete_image ]
+  before_action :check_post_owner, only: [ :edit, :update, :destroy, :delete_image ]
   before_action :log_user_status
 
   def index
@@ -47,7 +47,7 @@ class PostsController < ApplicationController
   end
 
   def update
-    if @post.update(post_params)
+    if update_with_additional_images
       if @post.published?
         redirect_to @post, notice: "投稿が更新されました。"
       else
@@ -96,6 +96,41 @@ class PostsController < ApplicationController
     end
   end
 
+  # 画像削除アクション
+  def delete_image
+    @post = current_user.posts.friendly.find(params[:id])
+    attachment_id = params[:attachment_id]
+
+    # 指定されたIDの画像を探して削除
+    attachment = @post.images.find_by(id: attachment_id)
+
+    if attachment
+      filename = attachment.filename.to_s
+      attachment.purge
+
+      render json: {
+        success: true,
+        message: "画像「#{filename}」を削除しました"
+      }
+    else
+      render json: {
+        success: false,
+        message: "指定された画像が見つかりません"
+      }, status: :not_found
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: {
+      success: false,
+      message: "投稿が見つかりません"
+    }, status: :not_found
+  rescue => e
+    Rails.logger.error "Image deletion error: #{e.message}"
+    render json: {
+      success: false,
+      message: "画像の削除中にエラーが発生しました"
+    }, status: :internal_server_error
+  end
+
   private
 
   def set_post
@@ -136,6 +171,40 @@ class PostsController < ApplicationController
     end
 
     attrs
+  end
+
+  # 画像を既存に追加するためのカスタム更新メソッド
+  def update_with_additional_images
+    # デバッグ: 送信された画像データを確認
+    if params[:post][:images].present?
+      Rails.logger.info "=== Image Upload Debug ==="
+      Rails.logger.info "Raw images param: #{params[:post][:images].inspect}"
+      Rails.logger.info "Images count: #{params[:post][:images].count}"
+      params[:post][:images].each_with_index do |img, index|
+        Rails.logger.info "Image #{index}: #{img.inspect} (blank?: #{img.blank?})"
+        if img.respond_to?(:original_filename)
+          Rails.logger.info "  - Original filename: #{img.original_filename}"
+        end
+      end
+      Rails.logger.info "=========================="
+
+      new_images = params[:post][:images].reject(&:blank?)
+      Rails.logger.info "Filtered images count: #{new_images.count}"
+      @post.images.attach(new_images) if new_images.any?
+    end
+    
+    # 新しい動画がある場合は置換（動画は1つのみ）
+    if params[:post][:videos].present?
+      new_videos = params[:post][:videos].reject(&:blank?)
+      if new_videos.any?
+        @post.videos.purge # 既存動画を削除
+        @post.videos.attach(new_videos.first) # 最初の動画のみ添付
+      end
+    end
+    
+    # 画像・動画以外のフィールドを更新
+    other_params = post_params.except(:images, :videos)
+    @post.update(other_params)
   end
 
   def auto_save_params

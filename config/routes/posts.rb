@@ -8,6 +8,11 @@ Rails.application.routes.draw do
       post :auto_save
     end
 
+    # 画像削除機能を追加
+    member do
+      delete :delete_image
+    end
+
     # いいね機能を追加
     resources :likes, only: [ :create, :destroy ]
     resources :comments, only: [ :create, :destroy ]
