@@ -51,7 +51,7 @@ class Post < ApplicationRecord
   # Markdownを HTMLに変換（attachment:URLsを適切に処理）
   def content_as_html
     return "" if content.blank?
-    ApplicationController.helpers.format_content_with_images(content, self)
+    return ApplicationController.helpers.format_content_with_images(content, self)
 
     # # まずMarkdown処理を行う
     # renderer = Redcarpet::Render::HTML.new(

@@ -75,7 +75,7 @@ module PostsHelper
               <video id="#{video_id}" 
                      data-video-player-target="video" 
                      class="video-js vjs-default-skin w-100" 
-                     style="max-height: 500px;"
+                     style="height: 360px; max-width: 100%;"
                      preload="metadata">
                 <source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}">
                 <p class="vjs-no-js">
