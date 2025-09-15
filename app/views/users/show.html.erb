@@ -227,7 +227,7 @@
                   <i class="bi bi-chat"></i> <%= post.comments.count %>
                 </div>
                 <p class="mb-0 text-muted">
-                  <%= truncate(strip_tags(post.content), length: 100) %>
+                  <%= truncate(strip_tags(post.content_as_html), length: 100) %>
                 </p>
               </div>
             <% end %>

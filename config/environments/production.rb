@@ -110,4 +110,5 @@ Rails.application.configure do
                        secure: true,
                        httponly: true,
                        same_site: :lax
+  config.active_job.queue_adapter = :async
 end

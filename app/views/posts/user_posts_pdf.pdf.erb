@@ -22,7 +22,7 @@
 
             <!-- 内容プレビュー（省略なし） -->
             <div class="post-content-section">
-              <div class="post-excerpt"><%= simple_format(strip_tags(post.content)) %></div>
+              <div class="post-excerpt"><%= simple_format(strip_tags(post.content_as_html)) %></div>
             </div>
 
             <!-- 日時とカテゴリー -->

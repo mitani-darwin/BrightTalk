@@ -20,8 +20,8 @@ class Devise::PasskeysController < DeviseController
     @passkey_options = {
       challenge: challenge,
       rp: {
-        id: Rails.env.development? ? "localhost" : "www.brighttalk.jp",
-        name: "BrightTalk"
+        id: WebAuthn.configuration.rp_id,
+        name: WebAuthn.configuration.rp_name
       },
       user: {
         id: Base64.urlsafe_encode64("user_#{current_user.id}", padding: false),

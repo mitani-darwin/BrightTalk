@@ -9,6 +9,11 @@ export default class extends Controller {
   }
 
   connect() {
+    // Check if the video target element exists before initializing
+    if (!this.hasVideoTarget) {
+      console.warn('Video player controller connected but no video target found')
+      return
+    }
     this.initializeVideoJS()
   }
 
@@ -19,6 +24,12 @@ export default class extends Controller {
   }
 
   async initializeVideoJS() {
+    // Double-check that video target exists before initialization
+    if (!this.hasVideoTarget) {
+      console.error('Cannot initialize Video.js: video target element is missing')
+      return
+    }
+
     try {
       // Dynamically import Video.js
       const videojs = await import("video.js")
@@ -107,6 +118,12 @@ export default class extends Controller {
   }
 
   initializeFallback() {
+    // Check if video target exists before fallback initialization
+    if (!this.hasVideoTarget) {
+      console.error('Cannot initialize fallback video player: video target element is missing')
+      return
+    }
+
     // Enable native HTML5 video controls as fallback
     this.videoTarget.controls = true
     this.videoTarget.preload = 'metadata'

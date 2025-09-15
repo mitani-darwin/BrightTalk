@@ -20,4 +20,4 @@ pin "codemirror/mode/xml/xml", to: "codemirror/mode/xml/xml.js"
 pin "codemirror/mode/css/css", to: "codemirror/mode/css/css.js"
 
 # Video.js for enhanced video player
-pin "video.js", to: "https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video.min.js"
+pin "video.js", to: "video.min.js"
