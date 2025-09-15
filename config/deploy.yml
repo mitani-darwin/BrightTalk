@@ -8,7 +8,7 @@ image: bright_talk
 servers:
   web:
     hosts:
-      - 57.182.140.42
+      - 52.192.149.181
     options:
       # EC2メタデータサービスへのアクセスを確保
       add-host:
