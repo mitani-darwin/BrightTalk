@@ -18,3 +18,6 @@ pin "codemirror/mode/markdown/markdown", to: "codemirror/mode/markdown/markdown.
 pin "codemirror/mode/javascript/javascript", to: "codemirror/mode/javascript/javascript.js"
 pin "codemirror/mode/xml/xml", to: "codemirror/mode/xml/xml.js"
 pin "codemirror/mode/css/css", to: "codemirror/mode/css/css.js"
+
+# Video.js for enhanced video player
+pin "video.js", to: "video.min.js"

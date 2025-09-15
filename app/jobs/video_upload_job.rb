@@ -2,7 +2,8 @@ class VideoUploadJob < ApplicationJob
   queue_as :default
 
   def perform(video_attachment)
-    return unless video_attachment.attached?
+    # 添付ファイルが存在しない場合は何もしない（削除されている可能性）
+    return unless video_attachment.blob.present?
     return unless video_attachment.blob&.content_type&.start_with?('video/')
 
     # メタデータチェックで処理済みかを確認
@@ -25,9 +26,18 @@ class VideoUploadJob < ApplicationJob
         # （実際には、この状況は通常発生しないはず）
         Rails.logger.warn "Video not found in S3, this should not happen: #{video_attachment.filename}"
       end
+    rescue ActiveRecord::RecordNotFound => e
+      # 添付ファイルやblobが削除されている場合
+      Rails.logger.info "Video attachment or blob was deleted before job execution: #{e.message}"
     rescue => e
-      # エラーハンドリング
+      # その他のエラーハンドリング
+      Rails.logger.error "Error processing video upload job: #{e.message}"
     end
   end
 
+  # ActiveJob::DeserializationErrorをクラスレベルでキャッチ
+  rescue_from ActiveJob::DeserializationError do |exception|
+    Rails.logger.info "Video attachment was deleted before job execution: #{exception.message}"
+    # ジョブを正常終了させる（エラーとして扱わない）
+  end
 end

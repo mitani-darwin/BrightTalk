@@ -59,8 +59,6 @@ class PasskeyRegistrationsController < ApplicationController
     challenge = SecureRandom.urlsafe_base64(32)
     session[:passkey_registration_challenge] = challenge
 
-    rp_id = Rails.env.development? ? "localhost" : "www.brighttalk.jp"
-
     # 一意なユーザーIDを生成（メールアドレスをベースに）
     temp_user_id = Digest::SHA256.hexdigest(@pending_user_data["email"])
 
@@ -68,8 +66,8 @@ class PasskeyRegistrationsController < ApplicationController
     registration_options = {
       challenge: challenge,
       rp: {
-        id: rp_id,
-        name: "BrightTalk"
+        id: WebAuthn.configuration.rp_id,
+        name: WebAuthn.configuration.rp_name
       },
       user: {
         id: Base64.urlsafe_encode64(temp_user_id),
