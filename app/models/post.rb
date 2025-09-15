@@ -52,66 +52,6 @@ class Post < ApplicationRecord
   def content_as_html
     return "" if content.blank?
     return ApplicationController.helpers.format_content_with_images(content, self)
-
-    # # まずMarkdown処理を行う
-    # renderer = Redcarpet::Render::HTML.new(
-    #   filter_html: true,
-    #   no_links: false,
-    #   no_images: false,
-    #   hard_wrap: true,
-    #   link_attributes: { target: "_blank", rel: "noopener" }
-    # )
-    #
-    # markdown = Redcarpet::Markdown.new(renderer,
-    #   autolink: true,
-    #   tables: true,
-    #   fenced_code_blocks: true,
-    #   strikethrough: true,
-    #   superscript: true,
-    #   underline: true,
-    #   quote: true,
-    #   footnotes: true
-    # )
-    #
-    # # Markdownを適用
-    # html_content = markdown.render(content)
-    #
-    # # HTMLから attachment: URLsを見つけて置き換え
-    # processed_html = html_content.gsub(/src="attachment:([^"]+)"/) do |match|
-    #   filename = $1
-    #
-    #   # 正規化されたファイル名で検索
-    #   normalize_name = ->(name) do
-    #     s = name.to_s.strip
-    #     begin
-    #       s = CGI.unescape(s)
-    #     rescue
-    #       # ignore malformed escape sequences
-    #     end
-    #     s = s.unicode_normalize(:nfc) if s.respond_to?(:unicode_normalize)
-    #     s
-    #   end
-    #
-    #   placeholder_name = normalize_name.call(filename)
-    #
-    #   # 対応する画像を検索
-    #   if images.attached?
-    #     matching_image = images.find do |img|
-    #       normalize_name.call(img.filename.to_s) == placeholder_name
-    #     end
-    #
-    #     if matching_image
-    #       actual_url = Rails.application.routes.url_helpers.rails_blob_path(matching_image, only_path: true)
-    #       %Q(src="#{ERB::Util.html_escape(actual_url)}" alt="#{ERB::Util.html_escape(filename)}" class="img-fluid rounded my-3 clickable-image" style="max-width: 100%; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-image-src="#{ERB::Util.html_escape(actual_url)}")
-    #     else
-    #       match # 見つからない場合は元のまま
-    #     end
-    #   else
-    #     match # 画像がない場合は元のまま
-    #   end
-    # end
-    #
-    # processed_html.html_safe
   end
 
   # 同じ投稿者の前の投稿を取得
