@@ -3,7 +3,7 @@ class VideoUploadJob < ApplicationJob
 
   def perform(video_attachment)
     # 添付ファイルが存在しない場合は何もしない（削除されている可能性）
-    return unless video_attachment.attached?
+    return unless video_attachment.blob.present?
     return unless video_attachment.blob&.content_type&.start_with?('video/')
 
     # メタデータチェックで処理済みかを確認
