@@ -11,6 +11,7 @@ RUN apt-get update -qq && \
     curl \
     libjemalloc2 \
     libvips \
+    libvips-dev \
     sqlite3 \
     nodejs \
     libvips \

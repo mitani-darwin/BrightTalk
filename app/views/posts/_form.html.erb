@@ -1,7 +1,7 @@
 
 <div class="row">
   <div class="col-12">
-    <%= form_with model: post, local: true, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+    <%= form_with model: post, multipart: true, class: "needs-validation", novalidate: true do |form| %>
       <% if post.errors.any? %>
         <div class="alert alert-danger">
           <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
@@ -337,6 +337,16 @@
 </div>
 
 <script>
+    // DOMContentLoadedイベント後に確認
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            console.log('Delayed ActiveStorage check:', typeof window.ActiveStorage);
+            if (window.ActiveStorage) {
+                console.log('DirectUpload available:', typeof window.ActiveStorage.DirectUpload);
+            }
+        }, 1000);
+    });
+
     // JavaScriptコードを即座に実行するように修正
     (function() {
         // CSRFトークンを取得
@@ -512,12 +522,7 @@
         }
 
         // DOM読み込み完了時とTurboロード時に初期化
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeCategoryForm);
-        } else {
-            initializeCategoryForm();
-        }
-
+        document.addEventListener('DOMContentLoaded', initializeCategoryForm);
         document.addEventListener('turbo:load', initializeCategoryForm);
 
         // 投稿タイプフォームの初期化
@@ -1464,15 +1469,26 @@
             if (!form || !submitButton || !progressContainer) return;
 
             form.addEventListener('submit', function(e) {
-                // フォームにファイルがない場合は通常の送信
-                const imageInput = document.getElementById('imageInput');
+                // Direct Upload対応の動画入力をチェック
                 const videoInput = document.getElementById('videoInput');
-                const hasFiles = (imageInput && imageInput.files.length > 0) || 
-                                (videoInput && videoInput.files.length > 0);
+                const hasDirectUploadVideo = videoInput && 
+                                           videoInput.files.length > 0 && 
+                                           (videoInput.hasAttribute('data-direct-upload-url') || 
+                                            videoInput.hasAttribute('data-direct-uploads-url'));
                 
-                if (!hasFiles) return true; // 通常の送信を継続
+                // Direct Uploadが有効な場合は一切干渉しない
+                if (hasDirectUploadVideo) {
+                    console.log('Direct Upload enabled - letting Active Storage handle submission');
+                    return; // Active Storageに完全に委ねる
+                }
+                
+                // その他のファイル（画像など）の処理
+                const imageInput = document.getElementById('imageInput');
+                const hasImages = imageInput && imageInput.files.length > 0;
+                
+                if (!hasImages) return; // 通常の送信を継続
 
-                // ファイルがある場合はカスタムアップロード処理
+                // 画像がある場合はカスタムアップロード処理
                 e.preventDefault();
                 
                 // プログレスバーを表示

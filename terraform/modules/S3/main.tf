@@ -16,8 +16,10 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_production_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["PUT", "POST", "GET"]
-    allowed_origins = ["*"]
+    allowed_methods = ["PUT", "POST", "GET", "DELETE"]
+    allowed_origins = ["http://localhost:3000", "https://www.brighttalk.jp"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
   }
 }
 
@@ -64,8 +66,10 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_development_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["PUT", "POST", "GET"]
+    allowed_methods = ["PUT", "POST", "GET", "DELETE"]
     allowed_origins = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
   }
 }
 
@@ -113,8 +117,10 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["PUT", "POST", "GET"]
+    allowed_methods = ["PUT", "POST", "GET", "DELETE"]
     allowed_origins = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
   }
 }
 

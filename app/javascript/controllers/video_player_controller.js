@@ -31,9 +31,14 @@ export default class extends Controller {
     }
 
     try {
-      // Dynamically import Video.js
-      const videojs = await import("video.js")
-      const VideoJS = videojs.default
+      // Check if VideoJS is available globally
+      let VideoJS = window.videojs
+      
+      if (!VideoJS) {
+        // Try dynamic import as fallback
+        const videojs = await import("video.js")
+        VideoJS = videojs.default || videojs
+      }
 
       // Video.js configuration options
       const options = {
