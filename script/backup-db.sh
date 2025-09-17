@@ -76,18 +76,12 @@ backup_database() {
     local uploaded_files=()
     
     # 現在動作中のコンテナ名を取得
-    local container_name=$(ssh -p 47583 -i $SSH_KEY_PATH ec2-user@52.192.149.181 "docker ps --filter label=service=bright_talk --filter label=role=web --format '{{.Names}}' | head -1")
-
+    local container_name=$(ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker ps --filter label=service=bright_talk --filter label=role=web --format '{{.Names}}' | head -1")
+    
     if [ -z "$container_name" ]; then
         echo_error "コンテナが見つかりません"
         exit 1
     fi
-#    local container_name=$(ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker ps --filter label=service=bright_talk --filter label=role=web --format '{{.Names}}' | head -1")
-    
-#    if [ -z "$container_name" ]; then
-#        echo_error "コンテナが見つかりません"
-#        exit 1
-#    fi
     
     echo_info "使用するコンテナ: $container_name"
     

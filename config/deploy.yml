@@ -2,7 +2,7 @@
 service: bright_talk
 
 # Name of the container image
-image: bright_talk
+image: darwin2008/bright_talk
 
 # Deploy to these servers
 servers:

@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # 設定値
 REGISTRY="index.docker.io"
 # DOCKER_HUB_USERNAME should be set in environment (e.g., .env.production)
-REPOSITORY="${DOCKER_HUB_USERNAME}/bright_talk"
+REPOSITORY="bright_talk"
 AWS_REGION="ap-northeast-1"
 IP_ADDRESS="52.192.149.181"
 IMAGE_TAG=${1:-latest}
@@ -62,7 +62,7 @@ check_prerequisites() {
 dockerhub_login() {
     echo_info "Docker Hubにログイン中..."
 
-    if echo "$DOCKER_HUB_PASSWORD" | docker login "$REGISTRY" --username "$DOCKER_HUB_USERNAME" --password-stdin; then
+    if echo "$DOCKER_HUB_PASSWORD" | docker login index.docker.io ; then
         echo_success "Docker Hubログイン成功"
     else
         echo_error "Docker Hubログインに失敗しました。DOCKER_HUB_USERNAME / DOCKER_HUB_PASSWORD を確認してください。"
@@ -73,6 +73,7 @@ dockerhub_login() {
 # 環境変数の設定
 setup_environment() {
     echo_info "環境変数を設定中..."
+    . ./.env.production
 
     # 必要な環境変数のチェック
     if [ -z "$DOCKER_HUB_USERNAME" ] || [ -z "$DOCKER_HUB_PASSWORD" ]; then
@@ -90,11 +91,15 @@ setup_environment() {
 
 # Dockerイメージのビルドとプッシュ
 build_and_push() {
-    local full_image_name="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+    local full_image_name="$DOCKER_HUB_USERNAME/$REPOSITORY:$IMAGE_TAG"
 
     echo_info "Dockerイメージをビルド中: $full_image_name"
 
-    if docker build -t $REPOSITORY:$IMAGE_TAG .; then
+    echo "full_image_name" . $full_image_name
+    echo "REPOSITORY:" . $REPOSITORY
+    echo "IMAGE_TAG:" . $IMAGE_TAG
+
+    if docker build -t $REPOSITORY .; then
         echo_success "Dockerイメージのビルド完了"
     else
         echo_error "Dockerイメージのビルドに失敗しました"
