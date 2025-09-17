@@ -87,16 +87,6 @@ module "s3_db_backup" {
   ec2_role_name  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
 }
 
-# ECR Module
-module "ecr" {
-  source = "../../modules/ecr"
-
-  project_name    = var.project_name
-  environment     = var.environment
-  repository_name = "bright_talk"
-  ec2_role_name   = module.ec2.iam_role_name
-}
-
 # CloudFront Module for video distribution
 module "cloudfront" {
   source = "../../modules/cloudfront"

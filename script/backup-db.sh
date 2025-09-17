@@ -15,6 +15,7 @@ NC='\033[0m' # No Color
 # 設定値
 AWS_REGION="ap-northeast-1"
 S3_BUCKET="brighttalk-db-backup"
+IP_ADDRESS="52.192.149.181"
 
 echo_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -75,12 +76,18 @@ backup_database() {
     local uploaded_files=()
     
     # 現在動作中のコンテナ名を取得
-    local container_name=$(ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker ps --filter label=service=bright_talk --filter label=role=web --format '{{.Names}}' | head -1")
-    
+    local container_name=$(ssh -p 47583 -i $SSH_KEY_PATH ec2-user@52.192.149.181 "docker ps --filter label=service=bright_talk --filter label=role=web --format '{{.Names}}' | head -1")
+
     if [ -z "$container_name" ]; then
         echo_error "コンテナが見つかりません"
         exit 1
     fi
+#    local container_name=$(ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker ps --filter label=service=bright_talk --filter label=role=web --format '{{.Names}}' | head -1")
+    
+#    if [ -z "$container_name" ]; then
+#        echo_error "コンテナが見つかりません"
+#        exit 1
+#    fi
     
     echo_info "使用するコンテナ: $container_name"
     
@@ -92,22 +99,22 @@ backup_database() {
         echo_info "$db_file のバックアップを作成中..."
         
         # WALチェックポイントを実行（SQLiteのWALモード対応）
-        ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name sqlite3 $source_db 'PRAGMA wal_checkpoint(FULL);'" 2>/dev/null
+        ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker exec $container_name sqlite3 $source_db 'PRAGMA wal_checkpoint(FULL);'" 2>/dev/null
         
         # SQLite3 .backupを実行
-        if ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name sqlite3 $source_db '.backup /tmp/$backup_filename' && echo 'Backup created successfully'" 2>/dev/null | grep -q "Backup created successfully"; then
+        if ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker exec $container_name sqlite3 $source_db '.backup /tmp/$backup_filename' && echo 'Backup created successfully'" 2>/dev/null | grep -q "Backup created successfully"; then
             
             echo_info "バックアップ作成成功、圧縮とファイル転送を開始..."
             
             # gzipで圧縮してローカルに転送
-            if ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name test -f /tmp/$backup_filename && docker exec $container_name gzip -c /tmp/$backup_filename" > "$compressed_filename" 2>/dev/null; then
+            if ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker exec $container_name test -f /tmp/$backup_filename && docker exec $container_name gzip -c /tmp/$backup_filename" > "$compressed_filename" 2>/dev/null; then
                 
                 # 圧縮ファイルの存在とサイズを確認
                 if [ -s "$compressed_filename" ]; then
                     echo_info "圧縮ファイル転送成功 ($(wc -c < "$compressed_filename") bytes)"
                     
                     # コンテナ内の一時ファイルをクリーンアップ
-                    ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
+                    ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
                     
                     # S3に圧縮ファイルをアップロード
                     echo_info "S3に圧縮バックアップをアップロード中: s3://$S3_BUCKET/$date_dir/$compressed_filename"
@@ -123,11 +130,11 @@ backup_database() {
                 else
                     echo_warning "$db_file の圧縮ファイル転送に失敗しました（ファイルが空またはエラー）"
                     rm -f "$compressed_filename"
-                    ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
+                    ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
                 fi
             else
                 echo_warning "$db_file の圧縮処理に失敗しました"
-                ssh -p 47583 -i $SSH_KEY_PATH ec2-user@57.182.140.42 "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
+                ssh -p 47583 -i $SSH_KEY_PATH ec2-user@$IP_ADDRESS "docker exec $container_name rm -f /tmp/$backup_filename" 2>/dev/null
             fi
         else
             echo_warning "$db_file が見つからないか、バックアップの作成に失敗しました"

@@ -24,7 +24,7 @@ class VideoUploadJob < ApplicationJob
       else
         # 存在しない場合のみ、Active Storageの通常アップロード処理
         # （実際には、この状況は通常発生しないはず）
-        Rails.logger.warn "Video not found in S3, this should not happen: #{video_attachment.filename}"
+        Rails.logger.warn "Video not found in s3, this should not happen: #{video_attachment.filename}"
       end
     rescue ActiveRecord::RecordNotFound => e
       # 添付ファイルやblobが削除されている場合

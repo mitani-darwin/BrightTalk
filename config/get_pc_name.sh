@@ -24,12 +24,12 @@ else
 fi
 
 # Terraformでインフラを更新
-echo "Running terraform init -upgrade..."
-cd ../terraform/environments/production
-terraform init -upgrade
+#echo "Running terraform init -upgrade..."
+#cd ../terraform/environments/production
+#terraform init -upgrade
 
-echo "Running terraform apply..."
-terraform apply -auto-approve
+#echo "Running terraform apply..."
+#terraform apply -auto-approve
 
 # 結果を表示
 echo "===== 結果 ====="

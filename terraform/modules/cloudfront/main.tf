@@ -141,7 +141,7 @@ resource "aws_cloudfront_origin_request_policy" "video_origin_request_policy" {
   }
 }
 
-# Update S3 bucket policy to allow CloudFront OAC access
+# Update s3 bucket policy to allow CloudFront OAC access
 resource "aws_s3_bucket_policy" "cloudfront_oac_policy" {
   bucket = var.s3_bucket_id
 
