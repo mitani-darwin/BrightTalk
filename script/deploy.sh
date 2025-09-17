@@ -285,6 +285,7 @@ main() {
     # デプロイ前にデータベースをバックアップ
     backup_database
 
+    docker build --no-cache -t brighttalk .
     kamal_deploy
 
     echo ""
