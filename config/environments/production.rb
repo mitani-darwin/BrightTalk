@@ -111,4 +111,15 @@ Rails.application.configure do
                        httponly: true,
                        same_site: :lax
   config.active_job.queue_adapter = :async
+
+  # アセット配信の強化
+  config.public_file_server.enabled = true
+  config.public_file_server.headers = {
+    'Cache-Control' => 'public, max-age=31536000',
+    'Expires' => 1.year.from_now.to_formatted_s(:rfc822)
+  }
+
+  # importmap用の設定を明示的に有効化
+  config.importmap.sweep_cache = false if config.respond_to?(:importmap)
+
 end

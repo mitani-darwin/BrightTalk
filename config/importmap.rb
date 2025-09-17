@@ -22,4 +22,5 @@ pin "codemirror/mode/css/css", to: "codemirror/mode/css/css.js"
 # Video.js for enhanced video player
 pin "video.js", to: "video.min.js"
 
-pin "@rails/activestorage", to: "activestorage.esm.js"
+# Active Storage - より明示的な設定
+pin "@rails/activestorage", to: "activestorage.esm.js", preload: true
