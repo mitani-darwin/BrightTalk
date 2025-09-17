@@ -166,7 +166,7 @@ class Post < ApplicationRecord
       next if attachment.blob.metadata['async_upload_completed'] == true
 
       begin
-        Rails.logger.info "Processing video for async S3 upload: #{attachment.filename}"
+        Rails.logger.info "Processing video for async s3 upload: #{attachment.filename}"
         
         # 非同期ジョブをエンキュー
         VideoUploadJob.perform_later(attachment)

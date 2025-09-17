@@ -125,7 +125,7 @@ module PostsHelper
 
   private
 
-  # Get CloudFront URL for video if available, otherwise fallback to S3 URL
+  # Get CloudFront URL for video if available, otherwise fallback to s3 URL
   def get_cloudfront_video_url(video_attachment)
     # Check if CloudFront distribution URL is configured
     cloudfront_base_url = Rails.application.credentials.dig(:cloudfront, :distribution_url)
@@ -135,7 +135,7 @@ module PostsHelper
       video_key = video_attachment.blob.key
       "#{cloudfront_base_url.chomp('/')}/#{video_key}"
     else
-      # Fallback to direct S3/Rails URL
+      # Fallback to direct s3/Rails URL
       Rails.application.routes.url_helpers.rails_blob_path(video_attachment, only_path: true)
     end
   end

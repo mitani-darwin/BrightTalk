@@ -63,11 +63,6 @@ output "s3_bucket_arn" {
   value       = module.s3.bucket_arn
 }
 
-output "ecr_repository_url" {
-  description = "ECR repository URL"
-  value       = module.ecr.repository_url
-}
-
 # CloudFront outputs
 output "cloudfront_distribution_domain_name" {
   description = "CloudFront distribution domain name for video content"

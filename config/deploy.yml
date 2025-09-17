@@ -22,20 +22,20 @@ proxy:
 
 # Credentials for your image host (DockerHub)
 registry:
-  server: 017820660529.dkr.ecr.ap-northeast-1.amazonaws.com
-  username: AWS
+  server: index.docker.io
+  username: DOCKER_HUB_USERNAME
   password:
-    - ECR_PASSWORD
+    - DOCKER_HUB_PASSWORD
 
 # Inject ENV variables into containers
 env:
   secret:
     - RAILS_MASTER_KEY
-    - ECR_PASSWORD
-    - DOCKER_HUB_PASSWORD
     - SECRET_KEY_BASE
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
+    - DOCKER_HUB_USERNAME
+    - DOCKER_HUB_PASSWORD
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
@@ -43,9 +43,7 @@ env:
     RAILS_SERVE_STATIC_FILES: "true"
     RAILS_LOG_TO_STDOUT: "true"
     AWS_REGION: "ap-northeast-1"
-    # ここでローカルENVを参照（repoに平文を残さない）
-    # AWS_ACCESS_KEY_ID: "<%= ENV.fetch('AWS_ACCESS_KEY_ID') %>"
-    # AWS_SECRET_ACCESS_KEY: "<%= ENV.fetch('AWS_SECRET_ACCESS_KEY') %>"
+
 
 # SSH configuration - カスタムポート47583を使用
 ssh:
