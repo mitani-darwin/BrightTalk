@@ -58,14 +58,14 @@ check_prerequisites() {
     echo_success "前提条件のチェック完了"
 }
 
-# Docker Hubログイン
-dockerhub_login() {
-    echo_info "Docker Hubにログイン中..."
+# GitHub Container Registry ログイン関数を追加
+ghcr_login() {
+    echo_info "GitHub Container Registry にログイン中..."
 
-    if echo "$DOCKER_HUB_PASSWORD" | docker login index.docker.io ; then
-        echo_success "Docker Hubログイン成功"
+    if echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USERNAME" --password-stdin; then
+        echo_success "GitHub Container Registry ログイン成功"
     else
-        echo_error "Docker Hubログインに失敗しました。DOCKER_HUB_USERNAME / DOCKER_HUB_PASSWORD を確認してください。"
+        echo_error "GitHub Container Registry ログインに失敗しました。GITHUB_USERNAME / GITHUB_TOKEN を確認してください。"
         exit 1
     fi
 }
@@ -74,6 +74,10 @@ dockerhub_login() {
 setup_environment() {
     echo_info "環境変数を設定中..."
     . ./.env.production
+
+    echo "GITHUB_USERNAME:" . $GITHUB_USERNAME
+    echo "APP_NAME:" . $APP_NAME
+    echo "GITHUB_TOKEN" . $GITHUB_TOKEN
 
     if [ -z "$SSH_KEY_PATH" ]; then
         echo_warning "SSH_KEY_PATHが設定されていません。~/.ssh/id_rsaを使用します。"
@@ -265,7 +269,7 @@ main() {
     # 処理実行
     check_prerequisites
     setup_environment
-    dockerhub_login
+    ghcr_login
 
     if [ "$SKIP_BUILD" = false ]; then
         build_and_push
