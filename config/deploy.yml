@@ -2,7 +2,7 @@
 service: bright_talk
 
 # Name of the container image
-image: darwin2008/bright_talk
+image: ghcr.io/<%= ENV["GITHUB_USERNAME"] %>/<%= ENV["APP_NAME"] %>
 
 # Deploy to these servers
 servers:
@@ -19,13 +19,6 @@ servers:
 proxy:
   ssl: true
   host: www.brighttalk.jp
-
-# Credentials for your image host (DockerHub)
-registry:
-  server: index.docker.io
-  username: DOCKER_HUB_USERNAME
-  password:
-    - DOCKER_HUB_PASSWORD
 
 # Inject ENV variables into containers
 env:
