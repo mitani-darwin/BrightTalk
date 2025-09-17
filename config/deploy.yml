@@ -20,6 +20,11 @@ proxy:
   ssl: true
   host: www.brighttalk.jp
 
+registry:
+  server: ghcr.io
+  username: <%= ENV["GITHUB_USERNAME"] %>
+  password: <%= ENV["GITHUB_TOKEN"] %>
+
 # Inject ENV variables into containers
 env:
   secret:

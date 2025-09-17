@@ -75,11 +75,6 @@ setup_environment() {
     echo_info "環境変数を設定中..."
     . ./.env.production
 
-    # 必要な環境変数のチェック
-    if [ -z "$DOCKER_HUB_USERNAME" ] || [ -z "$DOCKER_HUB_PASSWORD" ]; then
-        echo_error "DOCKER_HUB_USERNAME または DOCKER_HUB_PASSWORD が未設定です (.env.production などを確認してください)"
-        exit 1
-    fi
     if [ -z "$SSH_KEY_PATH" ]; then
         echo_warning "SSH_KEY_PATHが設定されていません。~/.ssh/id_rsaを使用します。"
         export SSH_KEY_PATH="~/.ssh/id_rsa"
@@ -89,34 +84,36 @@ setup_environment() {
     echo_info "SSH_KEY_PATH: $SSH_KEY_PATH"
 }
 
-# Dockerイメージのビルドとプッシュ
+## Dockerイメージのビルドとプッシュ
 build_and_push() {
-    local full_image_name="$DOCKER_HUB_USERNAME/$REPOSITORY:$IMAGE_TAG"
-
-    echo_info "Dockerイメージをビルド中: $full_image_name"
-
-    echo "full_image_name" . $full_image_name
-    echo "REPOSITORY:" . $REPOSITORY
-    echo "IMAGE_TAG:" . $IMAGE_TAG
-
-    if docker build -t $REPOSITORY .; then
-        echo_success "Dockerイメージのビルド完了"
-    else
-        echo_error "Dockerイメージのビルドに失敗しました"
-        exit 1
-    fi
-
-    echo_info "イメージにタグを付与中..."
-    docker tag $REPOSITORY:$IMAGE_TAG $full_image_name
-
-    echo_info "Docker Hubにプッシュ中: $full_image_name"
-    if docker push $full_image_name; then
-        echo_success "Docker Hubへのプッシュ完了"
-    else
-        echo_error "Docker Hubへのプッシュに失敗しました"
-        exit 1
-    fi
+  echo_info "build_and_pushが呼び出されました"
 }
+#    local full_image_name="$DOCKER_HUB_USERNAME/$REPOSITORY:$IMAGE_TAG"
+#
+#    echo_info "Dockerイメージをビルド中: $full_image_name"
+#
+#    echo "full_image_name" . $full_image_name
+#    echo "REPOSITORY:" . $REPOSITORY
+#    echo "IMAGE_TAG:" . $IMAGE_TAG
+#
+#    if docker build -t $REPOSITORY .; then
+#        echo_success "Dockerイメージのビルド完了"
+#    else
+#        echo_error "Dockerイメージのビルドに失敗しました"
+#        exit 1
+#    fi
+#
+#    echo_info "イメージにタグを付与中..."
+#    docker tag $REPOSITORY:$IMAGE_TAG $full_image_name
+#
+#    echo_info "Docker Hubにプッシュ中: $full_image_name"
+#    if docker push $full_image_name; then
+#        echo_success "Docker Hubへのプッシュ完了"
+#    else
+#        echo_error "Docker Hubへのプッシュに失敗しました"
+#        exit 1
+#    fi
+#}
 
 # データベースバックアップ
 backup_database() {
