@@ -22,8 +22,8 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: mitani-darwin
-  password: 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
+  username: GITHUB_USERNAME
+  password: GITHUB_TOKEN
 
 # Inject ENV variables into containers
 env:
@@ -32,6 +32,8 @@ env:
     - SECRET_KEY_BASE
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
+    - GITHUB_USERNAME
+    - GITHUB_TOKEN
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
