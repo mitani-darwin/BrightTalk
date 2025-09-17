@@ -285,7 +285,6 @@ main() {
     # デプロイ前にデータベースをバックアップ
     backup_database
 
-    kamal build
     kamal_deploy
 
     echo ""
