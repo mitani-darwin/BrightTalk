@@ -2,7 +2,7 @@
 service: bright_talk
 
 # Name of the container image
-image: ghcr.io/<%= ENV["GITHUB_USERNAME"] %>/<%= ENV["APP_NAME"] %>
+image: mitani-darwin/brighttalk
 
 # Deploy to these servers
 servers:
@@ -22,8 +22,8 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: <%= ENV["GITHUB_USERNAME"] %>
-  password: <%= ENV["GITHUB_TOKEN"] %>
+  username: mitani-darwin
+  password: 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
 
 # Inject ENV variables into containers
 env:
@@ -32,8 +32,6 @@ env:
     - SECRET_KEY_BASE
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
-    - DOCKER_HUB_USERNAME
-    - DOCKER_HUB_PASSWORD
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"
