@@ -78,3 +78,20 @@ output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID"
   value       = module.cloudfront.distribution_id
 }
+
+# JavaScript CloudFront outputs
+output "cloudfront_javascript_distribution_domain_name" {
+  description = "CloudFront distribution domain name for JavaScript assets"
+  value       = module.cloudfront_javascript.distribution_domain_name
+}
+
+output "cloudfront_javascript_distribution_url" {
+  description = "CloudFront distribution URL for JavaScript assets"
+  value       = module.cloudfront_javascript.cloudfront_url
+}
+
+output "s3_javascript_bucket_name" {
+  description = "Name of the S3 bucket for JavaScript assets"
+  value       = module.s3_javascript_assets.javascript_bucket_name
+}
+

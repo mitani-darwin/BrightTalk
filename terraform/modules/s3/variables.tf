@@ -53,3 +53,10 @@ variable "ec2_role_name" {
   type        = string
   default     = null
 }
+
+# JavaScript assets bucket variables
+variable "javascript_bucket_name" {
+  description = "Name of the S3 bucket for JavaScript assets"
+  type        = string
+  default     = null
+}

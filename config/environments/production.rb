@@ -119,7 +119,13 @@ Rails.application.configure do
     'Expires' => 1.year.from_now.to_formatted_s(:rfc822)
   }
 
-  # importmap用の設定を明示的に有効化
+  # Add this to the end of the configure block, before the final 'end'
   config.importmap.sweep_cache = false if config.respond_to?(:importmap)
 
+  # Add Content Security Policy for importmaps
+  config.content_security_policy do |policy|
+    policy.connect_src :self, "https://www.brighttalk.jp"
+    policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net", "https://d38shd2bohv246.cloudfront.net"
+    policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net", "https://d38shd2bohv246.cloudfront.net"
+  end
 end

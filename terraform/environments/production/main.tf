@@ -87,6 +87,15 @@ module "s3_db_backup" {
   ec2_role_name  = module.ec2.iam_role_name  # Use the actual IAM role name from EC2 module
 }
 
+# s3 module for JavaScript assets storage
+module "s3_javascript_assets" {
+  source = "../../modules/s3"
+
+  javascript_bucket_name = "brighttalk-javascript-assets-prod"
+  environment            = "production"
+  ec2_role_name          = module.ec2.iam_role_name
+}
+
 # CloudFront Module for video distribution
 module "cloudfront" {
   source = "../../modules/cloudfront"
@@ -96,5 +105,17 @@ module "cloudfront" {
   s3_bucket_domain_name  = module.s3.bucket_domain_name_production
   s3_bucket_id           = module.s3.bucket_id_production
   s3_bucket_arn          = module.s3.bucket_arn_production
+  price_class            = "PriceClass_100"
+}
+
+# CloudFront Module for JavaScript assets distribution
+module "cloudfront_javascript" {
+  source = "../../modules/cloudfront"
+
+  project_name           = "${var.project_name}-js"
+  environment            = var.environment
+  s3_bucket_domain_name  = module.s3_javascript_assets.javascript_bucket_domain_name
+  s3_bucket_id           = module.s3_javascript_assets.javascript_bucket_id
+  s3_bucket_arn          = module.s3_javascript_assets.javascript_bucket_arn
   price_class            = "PriceClass_100"
 }

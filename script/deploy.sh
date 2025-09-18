@@ -92,32 +92,6 @@ setup_environment() {
 build_and_push() {
   echo_info "build_and_pushが呼び出されました"
 }
-#    local full_image_name="$DOCKER_HUB_USERNAME/$REPOSITORY:$IMAGE_TAG"
-#
-#    echo_info "Dockerイメージをビルド中: $full_image_name"
-#
-#    echo "full_image_name" . $full_image_name
-#    echo "REPOSITORY:" . $REPOSITORY
-#    echo "IMAGE_TAG:" . $IMAGE_TAG
-#
-#    if docker build -t $REPOSITORY .; then
-#        echo_success "Dockerイメージのビルド完了"
-#    else
-#        echo_error "Dockerイメージのビルドに失敗しました"
-#        exit 1
-#    fi
-#
-#    echo_info "イメージにタグを付与中..."
-#    docker tag $REPOSITORY:$IMAGE_TAG $full_image_name
-#
-#    echo_info "Docker Hubにプッシュ中: $full_image_name"
-#    if docker push $full_image_name; then
-#        echo_success "Docker Hubへのプッシュ完了"
-#    else
-#        echo_error "Docker Hubへのプッシュに失敗しました"
-#        exit 1
-#    fi
-#}
 
 # データベースバックアップ
 backup_database() {
@@ -209,12 +183,45 @@ backup_database() {
 kamal_deploy() {
     echo_info "Kamalでデプロイを開始..."
 
-    if kamal deploy; then
+    if dotenv -f .env.production kamal deploy; then
         echo_success "🎉 デプロイが正常に完了しました！"
     else
         echo_error "Kamalデプロイに失敗しました"
         exit 1
     fi
+}
+
+# JavaScript アセットをS3にアップロードする関数
+upload_javascript_assets_to_s3() {
+    echo_info "JavaScript アセットをS3バケットにアップロードしています..."
+
+    # S3バケット名を取得（Terraformの出力から）
+    local bucket_name="brighttalk-javascript-assets-prod"
+
+    # vendor/javascript/ 内のファイルをS3にアップロード
+    if [ -d "vendor/javascript" ]; then
+        echo_info "vendor/javascript/ からファイルをアップロード中..."
+        aws s3 sync vendor/javascript/ "s3://${bucket_name}/" \
+            --region ap-northeast-1 \
+            --cache-control "public, max-age=31536000" \
+            --content-type "application/javascript" \
+            --exclude "*.map"
+    else
+        echo_warning "vendor/javascript/ ディレクトリが見つかりません"
+    fi
+
+    # app/javascript/ のプリコンパイル済みファイルもアップロード（必要に応じて）
+    if [ -d "public/assets" ]; then
+        echo_info "プリコンパイル済みJavaScriptアセットをアップロード中..."
+        aws s3 sync public/assets/ "s3://${bucket_name}/assets/" \
+            --region ap-northeast-1 \
+            --cache-control "public, max-age=31536000" \
+            --exclude "*" \
+            --include "*.js" \
+            --include "*.js.gz"
+    fi
+
+    echo_success "JavaScript アセットのアップロードが完了しました"
 }
 
 # メイン処理
@@ -283,9 +290,16 @@ main() {
     fi
 
     # デプロイ前にデータベースをバックアップ
-    backup_database
+    # backup_database
 
-    docker build --no-cache -t brighttalk .
+    echo "アセットをプリコンパイルしています..."
+    RAILS_ENV=production rails assets:precompile --trace
+
+    echo "JavaScript ファイルをS3バケットにアップロードしています..."
+    upload_javascript_assets_to_s3
+
+    # docker build --no-cache -t brighttalk .
+    pwd
     kamal_deploy
 
     echo ""
