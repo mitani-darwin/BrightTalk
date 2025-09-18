@@ -39,7 +39,7 @@ env:
     RAILS_SERVE_STATIC_FILES: "true"
     RAILS_LOG_TO_STDOUT: "true"
     AWS_REGION: "ap-northeast-1"
-    CLOUDFRONT_JAVASCRIPT_URL: "https://d38shd2bohv246.cloudfront.net"  # 実際のCloudFrontドメインを設定
+    CLOUDFRONT_JAVASCRIPT_URL: <%= ENV['CLOUDFRONT_JAVASCRIPT_URL'] %>  # 実際のCloudFrontドメインを設定
 
 
 # SSH configuration - カスタムポート47583を使用
