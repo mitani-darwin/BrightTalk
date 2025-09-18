@@ -9,19 +9,15 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 # Passkey module（ローカルのまま）
 pin "passkey"
 
-# Active Storage - CloudFrontから配信
-pin "@rails/activestorage", to: "#{ENV['CLOUDFRONT_JAVASCRIPT_URL']}/activestorage.esm.js", preload: true
-
-# CloudFrontから配信するJavaScriptライブラリ
-base_url = ENV['CLOUDFRONT_JAVASCRIPT_URL'] || "/assets"
-
-pin "@hotwired/turbo", to: "#{base_url}/turbo.min.js"
-pin "@hotwired/stimulus", to: "#{base_url}/stimulus.min.js"
-pin "spark-md5", to: "#{base_url}/spark-md5.min.js"
-pin "codemirror", to: "#{base_url}/codemirror.js"
-pin "codemirror/mode/markdown/markdown", to: "#{base_url}/codemirror-markdown.js"
-pin "codemirror/mode/javascript/javascript", to: "#{base_url}/codemirror-javascript.js"
-pin "codemirror/mode/xml/xml", to: "#{base_url}/codemirror-xml.js"
-pin "codemirror/mode/css/css", to: "#{base_url}/codemirror-css.js"
-pin "video.js", to: "#{base_url}/video.min.js"
-pin "bootstrap", to: "#{base_url}/bootstrap.bundle.min.js"
+# CDN配信によるJavaScriptライブラリ（CloudFront廃止）
+pin "@hotwired/turbo", to: "https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-esm.js"
+pin "@hotwired/stimulus", to: "https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3.2.2/dist/stimulus.js"
+pin "@rails/activestorage", to: "https://cdn.jsdelivr.net/npm/@rails/activestorage@7.1.5/app/assets/javascripts/activestorage.esm.js", preload: true
+pin "spark-md5", to: "https://cdn.jsdelivr.net/npm/spark-md5@3.0.2/spark-md5.min.js"
+pin "codemirror", to: "https://cdn.jsdelivr.net/npm/codemirror@5.65.18/lib/codemirror.js"
+pin "codemirror/mode/markdown/markdown", to: "https://cdn.jsdelivr.net/npm/codemirror@5.65.18/mode/markdown/markdown.js"
+pin "codemirror/mode/javascript/javascript", to: "https://cdn.jsdelivr.net/npm/codemirror@5.65.18/mode/javascript/javascript.js"
+pin "codemirror/mode/xml/xml", to: "https://cdn.jsdelivr.net/npm/codemirror@5.65.18/mode/xml/xml.js"
+pin "codemirror/mode/css/css", to: "https://cdn.jsdelivr.net/npm/codemirror@5.65.18/mode/css/css.js"
+pin "video.js", to: "https://cdn.jsdelivr.net/npm/video.js@8.12.0/dist/video.min.js"
+pin "bootstrap", to: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

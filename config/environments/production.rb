@@ -122,10 +122,10 @@ Rails.application.configure do
   # Add this to the end of the configure block, before the final 'end'
   config.importmap.sweep_cache = false if config.respond_to?(:importmap)
 
-  # Add Content Security Policy for importmaps
+  # Add Content Security Policy for importmaps with CDN support
   config.content_security_policy do |policy|
     policy.connect_src :self, "https://www.brighttalk.jp"
-    policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net", "https://d38shd2bohv246.cloudfront.net"
-    policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net", "https://d38shd2bohv246.cloudfront.net"
+    policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
+    policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
   end
 end

@@ -191,39 +191,6 @@ kamal_deploy() {
     fi
 }
 
-# JavaScript アセットをS3にアップロードする関数
-upload_javascript_assets_to_s3() {
-    echo_info "JavaScript アセットをS3バケットにアップロードしています..."
-
-    # S3バケット名を取得（Terraformの出力から）
-    local bucket_name="brighttalk-javascript-assets-prod"
-
-    # vendor/javascript/ 内のファイルをS3にアップロード
-    if [ -d "vendor/javascript" ]; then
-        echo_info "vendor/javascript/ からファイルをアップロード中..."
-        aws s3 sync vendor/javascript/ "s3://${bucket_name}/" \
-            --region ap-northeast-1 \
-            --cache-control "public, max-age=31536000" \
-            --content-type "application/javascript" \
-            --exclude "*.map"
-    else
-        echo_warning "vendor/javascript/ ディレクトリが見つかりません"
-    fi
-
-    # app/javascript/ のプリコンパイル済みファイルもアップロード（必要に応じて）
-    if [ -d "public/assets" ]; then
-        echo_info "プリコンパイル済みJavaScriptアセットをアップロード中..."
-        aws s3 sync public/assets/ "s3://${bucket_name}/assets/" \
-            --region ap-northeast-1 \
-            --cache-control "public, max-age=31536000" \
-            --exclude "*" \
-            --include "*.js" \
-            --include "*.js.gz"
-    fi
-
-    echo_success "JavaScript アセットのアップロードが完了しました"
-}
-
 # メイン処理
 main() {
     echo_info "🚀 BrightTalk デプロイスクリプト開始"
@@ -291,12 +258,6 @@ main() {
 
     # デプロイ前にデータベースをバックアップ
     # backup_database
-
-    echo "アセットをプリコンパイルしています..."
-    RAILS_ENV=production rails assets:precompile --trace
-
-    echo "JavaScript ファイルをS3バケットにアップロードしています..."
-    upload_javascript_assets_to_s3
 
     # docker build --no-cache -t brighttalk .
     pwd
