@@ -43,15 +43,15 @@ class Post < ApplicationRecord
   after_initialize :set_default_status, if: :new_record?
 
   # 画像保存後にEXIF情報を削除（S3アップロード後に処理）
-  after_commit :process_images_for_exif_removal, on: [:create, :update]
-  
+  after_commit :process_images_for_exif_removal, on: [ :create, :update ]
+
   # 動画保存後に非同期でS3にアップロード
-  after_commit :process_videos_for_async_upload, on: [:create, :update]
+  after_commit :process_videos_for_async_upload, on: [ :create, :update ]
 
   # Markdownを HTMLに変換（attachment:URLsを適切に処理）
   def content_as_html
     return "" if content.blank?
-    return ApplicationController.helpers.format_content_with_images(content, self)
+    ApplicationController.helpers.format_content_with_images(content, self)
   end
 
   # 同じ投稿者の前の投稿を取得
@@ -86,50 +86,50 @@ class Post < ApplicationRecord
     return unless images.attached?
 
     images.each do |attachment|
-      next unless attachment.blob&.content_type&.start_with?('image/')
-      next if attachment.blob.metadata['exif_removed'] == true
+      next unless attachment.blob&.content_type&.start_with?("image/")
+      next if attachment.blob.metadata["exif_removed"] == true
 
       begin
         Rails.logger.info "Processing image for EXIF removal: #{attachment.filename}"
-        
+
         # 新しいblobを作成してEXIF削除を実行
-        Tempfile.create(['original_', File.extname(attachment.filename.to_s)], binmode: true) do |original_tempfile|
+        Tempfile.create([ "original_", File.extname(attachment.filename.to_s) ], binmode: true) do |original_tempfile|
           # S3から元の画像をダウンロード（直接ダウンロード）
           attachment.blob.service.download(attachment.blob.key) do |chunk|
             original_tempfile.write(chunk)
           end
           original_tempfile.rewind
-          
-          require 'ruby-vips'
-          
+
+          require "ruby-vips"
+
           # Vipsで画像を読み込み（EXIFは自動的に読み込まれる）
           image = Vips::Image.new_from_file(original_tempfile.path, access: :sequential)
-          
+
           # EXIFを完全に削除して新しい画像を作成
-          Tempfile.create(['vips_processed_', File.extname(attachment.filename.to_s)]) do |processed_tempfile|
+          Tempfile.create([ "vips_processed_", File.extname(attachment.filename.to_s) ]) do |processed_tempfile|
             # オプションでEXIFを削除してファイルに書き込み
             write_options = { strip: true }
-            
+
             # ファイル形式に応じて最適な書き込みオプションを設定
             case attachment.content_type
-            when 'image/jpeg'
+            when "image/jpeg"
               write_options.merge!({ Q: 95, optimize_coding: true, strip: true })
-            when 'image/png'
+            when "image/png"
               write_options.merge!({ compression: 6, strip: true })
-            when 'image/webp'
+            when "image/webp"
               write_options.merge!({ Q: 95, strip: true })
             end
-            
+
             # 処理済み画像を書き込み
             image.write_to_file(processed_tempfile.path, **write_options)
-            
+
             # 新しいチェックサムを計算（base64形式でActive Storageが期待する形式）
             new_checksum = Digest::MD5.file(processed_tempfile.path).base64digest
             processed_data_size = File.size(processed_tempfile.path)
-            
+
             # S3に処理済み画像をアップロード
             if attachment.blob.service.respond_to?(:upload)
-              File.open(processed_tempfile.path, 'rb') do |file|
+              File.open(processed_tempfile.path, "rb") do |file|
                 attachment.blob.service.upload(
                   attachment.blob.key,
                   file,
@@ -138,18 +138,18 @@ class Post < ApplicationRecord
                 )
               end
             end
-            
+
             # blobのメタデータを更新（S3アップロード後）
             attachment.blob.update!(
               checksum: new_checksum,
               byte_size: processed_data_size,
-              metadata: attachment.blob.metadata.merge('exif_removed' => true, 'processed_by' => 'ruby-vips')
+              metadata: attachment.blob.metadata.merge("exif_removed" => true, "processed_by" => "ruby-vips")
             )
-            
+
             Rails.logger.info "EXIF情報をruby-vipsで削除完了: #{attachment.filename}"
           end
         end
-        
+
       rescue => e
         Rails.logger.error "ruby-vipsによるEXIF削除中にエラーが発生しました (#{attachment.blob&.filename}): #{e.class.name}: #{e.message}"
         Rails.logger.error "Stack trace: #{e.backtrace.first(3).join(", ")}"
@@ -162,17 +162,17 @@ class Post < ApplicationRecord
     return unless videos.attached?
 
     videos.each do |attachment|
-      next unless attachment.blob&.content_type&.start_with?('video/')
-      next if attachment.blob.metadata['async_upload_completed'] == true
+      next unless attachment.blob&.content_type&.start_with?("video/")
+      next if attachment.blob.metadata["async_upload_completed"] == true
 
       begin
         Rails.logger.info "Processing video for async s3 upload: #{attachment.filename}"
-        
+
         # 非同期ジョブをエンキュー
         VideoUploadJob.perform_later(attachment)
-        
+
         Rails.logger.info "VideoUploadJob enqueued for: #{attachment.filename}"
-        
+
       rescue => e
         Rails.logger.error "動画の非同期アップロードジョブのエンキュー中にエラーが発生しました (#{attachment.blob&.filename}): #{e.class.name}: #{e.message}"
         Rails.logger.error "Stack trace: #{e.backtrace.first(3).join(", ")}"

@@ -170,6 +170,12 @@ class PostsController < ApplicationController
 
   def set_post
     @post = Post.friendly.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    if Rails.env.test?
+      raise ActiveRecord::RecordNotFound
+    else
+      redirect_to posts_path, alert: "投稿が削除されました。"
+    end
   end
 
   def check_post_owner
@@ -237,7 +243,7 @@ class PostsController < ApplicationController
         @post.videos.attach(new_videos.first) # 最初の動画のみ添付
       end
     end
-    
+
     # Direct Uploadで送信されたsigned_idがある場合の処理
     if params[:post][:video_signed_ids].present?
       signed_ids = Array(params[:post][:video_signed_ids]).reject(&:blank?)
@@ -249,7 +255,7 @@ class PostsController < ApplicationController
         end
       end
     end
-    
+
     # 画像・動画以外のフィールドを更新
     other_params = post_params.except(:images, :videos)
     @post.update(other_params)

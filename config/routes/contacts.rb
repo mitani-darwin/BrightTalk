@@ -3,9 +3,9 @@ Rails.application.routes.draw do
   # お問い合わせ機能のルーティング
   # Contact form routing
 
-  resources :contacts, only: [:new, :create] do
+  resources :contacts, only: [ :new, :create ] do
     collection do
-      get :success, path: 'success', as: :success
+      get :success, path: "success", as: :success
     end
   end
 

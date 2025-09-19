@@ -26,11 +26,11 @@ class User < ApplicationRecord
                                           message: "JPEG、JPG、PNG、GIF形式のファイルを選択してください" }
 
   # Social links validations
-  validates :twitter_url, format: { with: /\A(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/\w+\z/i, 
-                                   message: "正しいTwitterのURLを入力してください" }, 
+  validates :twitter_url, format: { with: /\A(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/\w+\z/i,
+                                   message: "正しいTwitterのURLを入力してください" },
             allow_blank: true
-  validates :github_url, format: { with: /\Ahttps?:\/\/(www\.)?github\.com\/\w+\z/i, 
-                                  message: "正しいGitHubのURLを入力してください" }, 
+  validates :github_url, format: { with: /\Ahttps?:\/\/(www\.)?github\.com\/\w+\z/i,
+                                  message: "正しいGitHubのURLを入力してください" },
             allow_blank: true
 
   scope :recent, -> { order(created_at: :desc) }
@@ -57,7 +57,7 @@ class User < ApplicationRecord
   end
 
   def has_social_links?
-    [twitter_url, github_url].any?(&:present?)
+    [ twitter_url, github_url ].any?(&:present?)
   end
 
   def extended_stats
@@ -68,7 +68,7 @@ class User < ApplicationRecord
       comments_count: comments.count,
       likes_given: likes.count,
       likes_received: Like.joins(:post).where(posts: { user: self }).count,
-      most_liked_post: posts.joins(:likes).group('posts.id').order('COUNT(likes.id) DESC').first
+      most_liked_post: posts.joins(:likes).group("posts.id").order("COUNT(likes.id) DESC").first
     }
   end
 

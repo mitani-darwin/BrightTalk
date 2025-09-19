@@ -17,7 +17,7 @@ class ContactsController < ApplicationController
       # メール送信
       # Send email
       ContactMailer.inquiry(@contact).deliver_now
-      redirect_to contact_success_path, notice: 'お問い合わせを送信しました。'
+      redirect_to contact_success_path, notice: "お問い合わせを送信しました。"
     else
       render :new, status: :unprocessable_entity
     end

@@ -2,7 +2,7 @@
 service: bright_talk
 
 # Name of the container image
-image: bright_talk
+image: mitani-darwin/brighttalk
 
 # Deploy to these servers
 servers:
@@ -20,12 +20,10 @@ proxy:
   ssl: true
   host: www.brighttalk.jp
 
-# Credentials for your image host (DockerHub)
 registry:
-  server: index.docker.io
-  username: DOCKER_HUB_USERNAME
-  password:
-    - DOCKER_HUB_PASSWORD
+  server: ghcr.io
+  username: <%= ENV['GITHUB_USERNAME'] %>
+  password: <%= ENV['GITHUB_TOKEN'] %>
 
 # Inject ENV variables into containers
 env:
@@ -34,8 +32,6 @@ env:
     - SECRET_KEY_BASE
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
-    - DOCKER_HUB_USERNAME
-    - DOCKER_HUB_PASSWORD
   clear:
     SOLID_QUEUE_IN_PUMA: "true"
     RAILS_ENV: "production"

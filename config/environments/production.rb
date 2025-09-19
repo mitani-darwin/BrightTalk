@@ -111,4 +111,21 @@ Rails.application.configure do
                        httponly: true,
                        same_site: :lax
   config.active_job.queue_adapter = :async
+
+  # アセット配信の強化
+  config.public_file_server.enabled = true
+  config.public_file_server.headers = {
+    "Cache-Control" => "public, max-age=31536000",
+    "Expires" => 1.year.from_now.to_formatted_s(:rfc822)
+  }
+
+  # Add this to the end of the configure block, before the final 'end'
+  config.importmap.sweep_cache = false if config.respond_to?(:importmap)
+
+  # Add Content Security Policy for importmaps with CDN support
+  config.content_security_policy do |policy|
+    policy.connect_src :self, "https://www.brighttalk.jp"
+    policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
+    policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
+  end
 end
