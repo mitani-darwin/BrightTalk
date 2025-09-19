@@ -1,30 +1,23 @@
-
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
-import * as ActiveStorage from "@rails/activestorage"
 import "@hotwired/stimulus-loading"
 import "controllers"
 
 // Passkey module
 import "passkey"
 
-// Import local JavaScript libraries
-import "@hotwired/turbo"
-import "@hotwired/stimulus"
-import "spark-md5"
-import "codemirror"
-import "codemirror/mode/markdown/markdown"
-import "codemirror/mode/javascript/javascript"
-import "codemirror/mode/xml/xml"
-import "codemirror/mode/css/css"
-import "video.js"
-import "bootstrap"
+// CDNライブラリのimport文をすべて削除（ImportMapに依存）
+// import "@hotwired/turbo"
+// import "@hotwired/stimulus"
+// import "spark-md5"
+// import "codemirror"
+// import "codemirror/mode/markdown/markdown"
+// import "codemirror/mode/javascript/javascript"
+// import "codemirror/mode/xml/xml"
+// import "codemirror/mode/css/css"
+// import "video.js"
+// import "bootstrap"
 
-// ActiveStorage をグローバルスコープに設定
-window.ActiveStorage = ActiveStorage
-
-// ActiveStorage を開始
-ActiveStorage.start()
-
+// すべてImportMapに依存
 // グローバルライブラリの初期化確認
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded - ActiveStorage check:', typeof window.ActiveStorage);
@@ -38,10 +31,14 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         console.log('Delayed ActiveStorage check:', typeof window.ActiveStorage);
         if (typeof window.ActiveStorage !== 'undefined') {
+            // CDNから読み込まれたActiveStorageを初期化
+            if (!window.ActiveStorage.started) {
+                window.ActiveStorage.start();
+            }
             console.log('ActiveStorage methods:', Object.keys(window.ActiveStorage));
             console.log('ActiveStorage started:', window.ActiveStorage.started);
         } else {
-            console.error('ActiveStorage failed to load');
+            console.error('ActiveStorage failed to load from CDN');
         }
     }, 2000);
 });

@@ -128,4 +128,5 @@ Rails.application.configure do
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
   end
+
 end
