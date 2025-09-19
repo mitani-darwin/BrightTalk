@@ -4,7 +4,7 @@ WebAuthn.configure do |config|
   # 本番環境とローカル環境でoriginを切り替え
   config.allowed_origins = if Rails.env.development?
                              [
-                               "http://localhost:3000",
+                               "http://localhost:3000"
                              ]
   else
                              [ "https://www.brighttalk.jp" ]

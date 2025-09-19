@@ -9,14 +9,14 @@ Rails.application.config.assets.version = "1.0"
 # CDNライブラリをプリコンパイル対象から除外
 Rails.application.config.assets.precompile = [
   # デフォルトのアプリケーションファイル
-  'application.js',
-  'application.css',
-  'application.scss',
+  "application.js",
+  "application.css",
+  "application.scss",
 
   # ローカルのStimulusファイルのみ
-  'stimulus-loading.js',
+  "stimulus-loading.js",
   /controllers\/.*\.js$/,
 
   # ローカルモジュール
-  'passkey.js'
+  "passkey.js"
 ]

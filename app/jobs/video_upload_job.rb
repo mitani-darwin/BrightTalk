@@ -4,10 +4,10 @@ class VideoUploadJob < ApplicationJob
   def perform(video_attachment)
     # 添付ファイルが存在しない場合は何もしない（削除されている可能性）
     return unless video_attachment.blob.present?
-    return unless video_attachment.blob&.content_type&.start_with?('video/')
+    return unless video_attachment.blob&.content_type&.start_with?("video/")
 
     # メタデータチェックで処理済みかを確認
-    return if video_attachment.blob.metadata['async_upload_completed'] == true
+    return if video_attachment.blob.metadata["async_upload_completed"] == true
 
     begin
       # S3での存在確認のみ
@@ -17,8 +17,8 @@ class VideoUploadJob < ApplicationJob
         # 存在する場合はメタデータ更新のみ
         video_attachment.blob.update!(
           metadata: video_attachment.blob.metadata.merge(
-            'async_upload_completed' => true,
-            'uploaded_by' => 'video_upload_job'
+            "async_upload_completed" => true,
+            "uploaded_by" => "video_upload_job"
           )
         )
       else

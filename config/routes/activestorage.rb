@@ -12,7 +12,6 @@ Rails.application.routes.draw do
     # Representation配信エンドポイント
     get "/representations/redirect/:signed_id/:variation_key/*filename", to: "active_storage/representations/redirect#show", as: :rails_blob_representation
     get "/representations/proxy/:signed_id/:variation_key/*filename", to: "active_storage/representations/proxy#show", as: :rails_blob_representation_proxy
-
   end
 
   # Direct helperも保持

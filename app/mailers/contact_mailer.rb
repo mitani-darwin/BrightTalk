@@ -4,9 +4,9 @@ class ContactMailer < ApplicationMailer
 
   def inquiry(contact)
     @contact = contact
-    
+
     mail(
-      to: 'info@brighttalk.jp',
+      to: "info@brighttalk.jp",
       reply_to: @contact.email,
       subject: "【お問い合わせ】#{@contact.subject}"
     )

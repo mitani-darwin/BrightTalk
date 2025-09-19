@@ -64,7 +64,7 @@ module PostsHelper
         matching_video = post.videos.find do |vid|
           normalize_name.call(vid.filename.to_s) == normalized_filename
         end
-        
+
         if matching_video
           video_url = get_cloudfront_video_url(matching_video)
           video_id = "video-#{SecureRandom.hex(8)}"
@@ -129,7 +129,7 @@ module PostsHelper
   def get_cloudfront_video_url(video_attachment)
     # Check if CloudFront distribution URL is configured
     cloudfront_base_url = Rails.application.credentials.dig(:cloudfront, :distribution_url)
-    
+
     if cloudfront_base_url.present?
       # Use CloudFront URL for optimized video delivery
       video_key = video_attachment.blob.key
