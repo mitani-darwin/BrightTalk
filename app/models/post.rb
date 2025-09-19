@@ -100,7 +100,12 @@ class Post < ApplicationRecord
           end
           original_tempfile.rewind
 
-          require "ruby-vips"
+          begin
+            require "ruby-vips"
+          rescue LoadError => e
+            Rails.logger.warn "ruby-vips not available, skipping EXIF removal for #{attachment.filename}: #{e.message}"
+            return
+          end
 
           # Vipsで画像を読み込み（EXIFは自動的に読み込まれる）
           image = Vips::Image.new_from_file(original_tempfile.path, access: :sequential)

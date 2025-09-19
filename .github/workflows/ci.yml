@@ -17,6 +17,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+
           ruby-version: 3.4.4
           bundler-cache: true
 
@@ -25,6 +26,8 @@ jobs:
           RAILS_ENV: test
           CI: true
         run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips
           bin/rails db:create
           bin/rails db:migrate
           bin/rails db:fixtures:load

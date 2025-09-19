@@ -33,8 +33,8 @@ gem "devise-i18n"
 # WebAuthn/Passkey認証
 gem "webauthn", "~> 3.0"
 
-# 画像処理
-gem "ruby-vips"
+# 画像処理 - オプショナル（システムにVIPSがインストールされていない場合はスキップ）
+gem "ruby-vips", require: false
 
 # Active Storage バリデーション
 gem "active_storage_validations"

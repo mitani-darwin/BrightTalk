@@ -43,7 +43,13 @@ module BrightTalk
     config.i18n.default_locale = :ja
     config.i18n.available_locales = [ :ja, :en ]
 
-    # 画像のEXIF削除対応
-    config.active_storage.variant_processor = :vips
+    # 画像のEXIF削除対応 - VIPS利用可能時のみ設定
+    begin
+      require "ruby-vips"
+      config.active_storage.variant_processor = :vips
+    rescue LoadError
+      Rails.logger.warn "ruby-vips not available, using default image processor"
+      config.active_storage.variant_processor = :mini_magick
+    end
   end
 end
