@@ -12,7 +12,7 @@ pin "passkey"
 # CDN配信によるJavaScriptライブラリ（ImportMapで管理）
 pin "@hotwired/turbo", to: "https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-esm.js", preload: true
 pin "@hotwired/stimulus", to: "https://cdn.skypack.dev/@hotwired/stimulus@3.2.2", preload: true
-pin "@rails/activestorage", to: "https://cdn.jsdelivr.net/npm/@rails/activestorage@7.1.5/app/assets/javascripts/activestorage.esm.js", preload: true
+pin "@rails/activestorage", to: "https://cdn.jsdelivr.net/npm/@rails/activestorage@7.1.502/app/assets/javascripts/activestorage.esm.js", preload: true
 pin "spark-md5", to: "https://cdn.skypack.dev/spark-md5@3.0.2", preload: true
 pin "codemirror", to: "https://cdn.skypack.dev/codemirror@5.65.18", preload: true
 pin "codemirror/mode/markdown/markdown", to: "https://cdn.skypack.dev/codemirror@5.65.18/mode/markdown/markdown", preload: true
