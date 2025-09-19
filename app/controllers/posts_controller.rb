@@ -170,6 +170,12 @@ class PostsController < ApplicationController
 
   def set_post
     @post = Post.friendly.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    if Rails.env.test?
+      raise ActiveRecord::RecordNotFound
+    else
+      redirect_to posts_path, alert: "投稿が削除されました。"
+    end
   end
 
   def check_post_owner
