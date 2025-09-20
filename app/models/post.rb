@@ -70,6 +70,54 @@ class Post < ApplicationRecord
         .first
   end
 
+  # 関連記事を取得（タグ、カテゴリ、投稿タイプで関連性を判定）
+  def related_posts(limit: 6)
+    # 自分の投稿は除外
+    scope = Post.published.where.not(id: id).includes(:user, :category, :tags)
+    
+    # 同じタグを持つ投稿を優先して取得
+    if tags.any?
+      tag_ids = tags.pluck(:id)
+      tagged_posts = scope.joins(:tags)
+                         .where(tags: { id: tag_ids })
+                         .group('posts.id')
+                         .order('COUNT(post_tags.id) DESC, posts.created_at DESC')
+                         .limit(limit)
+      
+      return tagged_posts if tagged_posts.count >= limit
+      
+      # タグで見つからない場合は残り分をカテゴリで補完
+      remaining_limit = limit - tagged_posts.count
+      category_posts = scope.where(category: category)
+                           .where.not(id: tagged_posts.pluck(:id))
+                           .order(created_at: :desc)
+                           .limit(remaining_limit)
+      
+      return (tagged_posts + category_posts).uniq
+    end
+    
+    # タグがない場合はカテゴリで検索
+    if category.present?
+      category_posts = scope.where(category: category)
+                           .order(created_at: :desc)
+                           .limit(limit)
+      
+      return category_posts if category_posts.count >= limit
+      
+      # カテゴリでも足りない場合は投稿タイプで補完
+      remaining_limit = limit - category_posts.count
+      type_posts = scope.where(post_type: post_type)
+                       .where.not(id: category_posts.pluck(:id))
+                       .order(created_at: :desc)
+                       .limit(remaining_limit)
+      
+      return (category_posts + type_posts).uniq
+    end
+    
+    # それでも足りない場合は最新の投稿を返す
+    scope.order(created_at: :desc).limit(limit)
+  end
+
   private
 
   def set_default_status
