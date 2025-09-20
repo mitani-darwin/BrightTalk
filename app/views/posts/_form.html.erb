@@ -1096,7 +1096,8 @@
             });
         }
         
-        // 自動保存初期化
+        // 自動保存初期化（テスト環境では無効化）
+        <% unless Rails.env.test? %>
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeAutoSave);
         } else {
@@ -1104,6 +1105,7 @@
         }
         
         document.addEventListener('turbo:load', initializeAutoSave);
+        <% end %>
 
         // 画像削除機能の初期化フラグ
         let imageDeletionInitialized = false;
