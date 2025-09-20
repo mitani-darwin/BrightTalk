@@ -192,7 +192,7 @@
               </div>
             <% end %>
             
-            <%= form.file_field :images, multiple: true, accept: "image/*",
+            <%= form.file_field :images, multiple: true, accept: "image/*", direct_upload: true,
                                 class: "form-control", id: "imageInput" %>
             <div class="form-text">
               複数の画像を選択できます（PNG, JPG, GIF形式）。選択すると、内容欄のカーソル位置に画像のマークダウンを自動で挿入します。
@@ -930,6 +930,22 @@
                     const url = btn.dataset.url;
                     const filename = btn.dataset.filename || 'image';
                     const md = `![${filename}](${url})`;
+                    
+                    // Check if the same image link already exists in the content
+                    if (content.value.includes(md)) {
+                        // Show a brief notification that the image is already inserted
+                        const originalText = btn.textContent;
+                        btn.textContent = '既に挿入済み';
+                        btn.classList.add('btn-secondary');
+                        btn.classList.remove('btn-outline-primary');
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.classList.remove('btn-secondary');
+                            btn.classList.add('btn-outline-primary');
+                        }, 1500);
+                        return;
+                    }
+                    
                     insertAtCursor(content, (content.value && !content.value.endsWith('\n') ? '\n' : '') + md + '\n');
                 });
             });
