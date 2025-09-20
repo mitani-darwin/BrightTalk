@@ -85,6 +85,18 @@ class User < ApplicationRecord
     webauthn_credentials.count
   end
 
+  # 重複する確認メール送信を防ぐメソッド
+  def send_confirmation_instructions_once
+    # 確認済みの場合は送信しない
+    return if confirmed?
+    
+    # 最近（5分以内）に確認メールが送信されている場合は送信しない
+    return if confirmation_sent_at.present? && confirmation_sent_at > 5.minutes.ago
+    
+    # 通常の確認メール送信処理を実行
+    send_confirmation_instructions
+  end
+
   private
 
   def password_complexity

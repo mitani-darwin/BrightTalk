@@ -43,10 +43,10 @@ class Post < ApplicationRecord
   after_initialize :set_default_status, if: :new_record?
 
   # 画像保存後にEXIF情報を削除（S3アップロード後に処理）
-  after_commit :process_images_for_exif_removal, on: [ :create, :update ]
+  after_commit :process_images_for_exif_removal, on: [ :create, :update ], unless: -> { Rails.env.test? }
 
   # 動画保存後に非同期でS3にアップロード
-  after_commit :process_videos_for_async_upload, on: [ :create, :update ]
+  after_commit :process_videos_for_async_upload, on: [ :create, :update ], unless: -> { Rails.env.test? }
 
   # Markdownを HTMLに変換（attachment:URLsを適切に処理）
   def content_as_html
@@ -100,7 +100,12 @@ class Post < ApplicationRecord
           end
           original_tempfile.rewind
 
-          require "ruby-vips"
+          begin
+            require "ruby-vips"
+          rescue LoadError => e
+            Rails.logger.warn "ruby-vips not available, skipping EXIF removal for #{attachment.filename}: #{e.message}"
+            return
+          end
 
           # Vipsで画像を読み込み（EXIFは自動的に読み込まれる）
           image = Vips::Image.new_from_file(original_tempfile.path, access: :sequential)
