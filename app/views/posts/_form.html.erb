@@ -1,7 +1,8 @@
 
 <div class="row">
   <div class="col-12">
-    <%= form_with model: post, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
+    <%= form_with model: post, multipart: true, class: "needs-validation", novalidate: true, local: true do |form| %>
+      <%= form.hidden_field :authenticity_token, value: form_authenticity_token %>
       <% if post.errors.any? %>
         <div class="alert alert-danger">
           <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
