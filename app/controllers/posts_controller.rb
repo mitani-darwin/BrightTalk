@@ -7,7 +7,15 @@ class PostsController < ApplicationController
 
   def index
     # 公開済みの投稿のみ表示
-    @posts = Post.published.includes(:user, :category).recent.page(params[:page]).per(10)
+    @posts = Post.published.includes(:user, :category, :tags).recent
+    
+    # カテゴリーフィルタリング
+    if params[:category_id].present?
+      @category = Category.find(params[:category_id])
+      @posts = @posts.where(category: @category)
+    end
+    
+    @posts = @posts.page(params[:page]).per(10)
   end
 
   def show
@@ -20,6 +28,9 @@ class PostsController < ApplicationController
     # 同じ投稿者の前・次の投稿を取得
     @previous_post = @post.previous_post_by_author
     @next_post = @post.next_post_by_author
+
+    # 関連記事を取得
+    @related_posts = @post.related_posts(limit: 6)
 
     # コメント投稿フォーム用の新しいコメントインスタンスを作成
     @comment = Comment.new
@@ -195,7 +206,8 @@ class PostsController < ApplicationController
   def post_params
     attrs = params.require(:post).permit(
       :title, :content, :status, :category_id, :purpose, :target_audience,
-      :post_type_id, :key_points, :expected_outcome,
+      :post_type_id, :key_points, :expected_outcome, :meta_description,
+      :og_title, :og_description, :og_image,
       images: [], videos: [], video_signed_ids: []
     )
 

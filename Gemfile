@@ -48,6 +48,9 @@ gem "redcarpet"
 # URL slug generation
 gem "friendly_id"
 
+# Sitemap generation
+gem "sitemap_generator"
+
 # PDF生成
 gem "grover" # ChromeベースのPDF生成
 

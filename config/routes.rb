@@ -31,4 +31,13 @@ Rails.application.routes.draw do
 
   # お問い合わせ機能
   draw(:contacts)
+
+  # Sitemap
+  get '/sitemap.xml', to: 'sitemaps#index', defaults: { format: 'xml' }
+
+  # RSS/Atom feeds
+  get '/feeds/rss', to: 'feeds#rss', defaults: { format: 'rss' }
+  get '/feeds/atom', to: 'feeds#atom', defaults: { format: 'atom' }
+  get '/rss.xml', to: 'feeds#rss', defaults: { format: 'rss' }
+  get '/atom.xml', to: 'feeds#atom', defaults: { format: 'atom' }
 end

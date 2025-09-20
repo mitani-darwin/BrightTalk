@@ -155,6 +155,7 @@ GEM
     erubi (1.13.1)
     et-orbi (1.3.0)
       tzinfo
+    exifr (1.4.1)
     ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-aarch64-linux-musl)
     ffi (1.17.2-arm-linux-gnu)
@@ -417,6 +418,8 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
+    sitemap_generator (6.3.0)
+      builder (~> 3.0)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -518,6 +521,7 @@ DEPENDENCIES
   debug
   devise
   devise-i18n
+  exifr
   friendly_id
   grover
   image_processing (~> 1.2)
@@ -533,6 +537,7 @@ DEPENDENCIES
   rubocop-rails-omakase
   ruby-vips
   selenium-webdriver
+  sitemap_generator
   solid_cable
   solid_cache
   solid_queue
