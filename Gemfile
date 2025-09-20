@@ -36,6 +36,9 @@ gem "webauthn", "~> 3.0"
 # 画像処理 - オプショナル（システムにVIPSがインストールされていない場合はスキップ）
 gem "ruby-vips", require: false
 
+# EXIF data manipulation
+gem "exifr"
+
 # Active Storage バリデーション
 gem "active_storage_validations"
 
