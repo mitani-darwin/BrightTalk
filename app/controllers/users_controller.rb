@@ -11,8 +11,8 @@ class UsersController < ApplicationController
 
     if @user.save
       # ユーザーは仮登録状態（confirmed_at が nil）
-      # 確認メールを自動で送信
-      @user.send_confirmation_instructions
+      # 確認メールを自動で送信（重複防止付き）
+      @user.send_confirmation_instructions_once
 
       # セッションに仮登録ユーザーの情報を保存
       session[:pending_user_id] = @user.id

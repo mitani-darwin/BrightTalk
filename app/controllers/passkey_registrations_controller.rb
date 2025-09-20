@@ -214,9 +214,9 @@ class PasskeyRegistrationsController < ApplicationController
         Rails.logger.info "Password removed without notification email for passkey-only user: #{@user.email}"
       end
 
-      # 確認メールを送信（仮登録状態なので確認が必要）
+      # 確認メールを送信（仮登録状態なので確認が必要）（重複防止付き）
       begin
-        @user.send_confirmation_instructions
+        @user.send_confirmation_instructions_once
         Rails.logger.info "Confirmation instructions sent to: #{@user.email}"
       rescue => mail_error
         Rails.logger.error "Failed to send confirmation instructions: #{mail_error.message}"
