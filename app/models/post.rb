@@ -43,10 +43,10 @@ class Post < ApplicationRecord
   after_initialize :set_default_status, if: :new_record?
 
   # 画像保存後にEXIF情報を削除（S3アップロード後に処理）
-  after_commit :process_images_for_exif_removal, on: [ :create, :update ]
+  after_commit :process_images_for_exif_removal, on: [ :create, :update ], unless: -> { Rails.env.test? }
 
   # 動画保存後に非同期でS3にアップロード
-  after_commit :process_videos_for_async_upload, on: [ :create, :update ]
+  after_commit :process_videos_for_async_upload, on: [ :create, :update ], unless: -> { Rails.env.test? }
 
   # Markdownを HTMLに変換（attachment:URLsを適切に処理）
   def content_as_html

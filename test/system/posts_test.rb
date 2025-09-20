@@ -46,16 +46,16 @@ class PostsTest < ApplicationSystemTestCase
 
     # 利用可能なフィールドを確認
     puts "Available form fields:"
-    field_info = page.all("input, textarea, select").map do |field|
-      {
-        tag_name: field.tag_name,
-        name: field[:name],
-        id: field[:id],
-        type: field[:type]
-      }
-    end
-    field_info.each do |field|
-      puts "- #{field[:tag_name]}: name=#{field[:name]}, id=#{field[:id]}, type=#{field[:type]}"
+    begin
+      page.all("input, textarea, select").each do |field|
+        begin
+          puts "- #{field.tag_name}: name=#{field[:name]}, id=#{field[:id]}, type=#{field[:type]}"
+        rescue Selenium::WebDriver::Error::StaleElementReferenceError
+          puts "- [stale element]"
+        end
+      end
+    rescue => e
+      puts "Error enumerating fields: #{e.message}"
     end
 
     # タイトルフィールドを複数パターンで試行

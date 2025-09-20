@@ -1,7 +1,7 @@
 
 <div class="row">
   <div class="col-12">
-    <%= form_with model: post, multipart: true, class: "needs-validation", novalidate: true do |form| %>
+    <%= form_with model: post, multipart: true, class: "needs-validation", novalidate: true, data: { turbo: false } do |form| %>
       <% if post.errors.any? %>
         <div class="alert alert-danger">
           <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>

@@ -32,6 +32,13 @@ class PostsController < ApplicationController
   def create
     @post = current_user.posts.build(post_params)
 
+    Rails.logger.info "=== Post Creation Debug ==="
+    Rails.logger.info "Post params: #{post_params.inspect}"
+    Rails.logger.info "Post attributes: #{@post.attributes.inspect}"
+    Rails.logger.info "Post valid?: #{@post.valid?}"
+    Rails.logger.info "Post errors: #{@post.errors.full_messages.inspect}"
+    Rails.logger.info "=========================="
+
     if @post.save
       if @post.published?
         redirect_to @post, notice: "投稿が作成されました。"
@@ -39,6 +46,7 @@ class PostsController < ApplicationController
         redirect_to drafts_posts_path, notice: "下書きが保存されました。"
       end
     else
+      Rails.logger.error "Post save failed: #{@post.errors.full_messages.join(', ')}"
       render :new, status: :unprocessable_content
     end
   end
