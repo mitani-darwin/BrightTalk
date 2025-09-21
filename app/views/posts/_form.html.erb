@@ -155,11 +155,16 @@
           <!-- 画像アップロード（複数対応） -->
           <div class="mb-3">
             <%= form.label :images, "画像", class: "form-label" %>
-            
+            <%= form.file_field :images, multiple: true, accept: "image/*", direct_upload: true,
+                                class: "form-control", id: "imageInput" %>
+            <div class="form-text">
+              複数の画像を選択できます（PNG, JPG, GIF形式）。選択すると、内容欄のカーソル位置に画像のマークダウンを自動で挿入します。
+            </div>
+
             <!-- 既存の画像を表示（編集時のみ） -->
             <% if post.persisted? && post.images.attached? %>
               <div class="mb-3">
-                <small class="text-muted d-block mb-2">現在アップロード済みの画像:</small>
+                <small class="text-muted d-block mb-2"><br />現在アップロード済みの画像:</small>
                 <div class="row g-2">
                   <% post.images.each_with_index do |image, index| %>
                     <div class="col-6 col-md-4" id="image-card-<%= image.id %>">
@@ -192,11 +197,6 @@
               </div>
             <% end %>
             
-            <%= form.file_field :images, multiple: true, accept: "image/*", direct_upload: true,
-                                class: "form-control", id: "imageInput" %>
-            <div class="form-text">
-              複数の画像を選択できます（PNG, JPG, GIF形式）。選択すると、内容欄のカーソル位置に画像のマークダウンを自動で挿入します。
-            </div>
           </div>
 
           <!-- 動画アップロード（複数対応） -->
