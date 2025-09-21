@@ -8,7 +8,7 @@
     </div>
     <div class="card-body">
       <%= form_with url: posts_path, method: :get, local: true, class: "mb-0" do |form| %>
-        <%= form.collection_select :category_id, Category.all, :id, :name,
+        <%= form.collection_select :category_id, Category.all, :id, :full_name,
                                    { prompt: "すべてのカテゴリー", selected: params[:category_id] },
                                    { class: "form-select", onchange: "this.form.submit();" } %>
       <% end %>

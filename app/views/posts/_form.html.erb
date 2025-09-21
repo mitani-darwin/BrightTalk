@@ -779,6 +779,8 @@
                     // 新しく選択されたファイルを取得
                     const newFiles = Array.from(this.files)
                         .filter(f => f.type && f.type.startsWith('image/'));
+
+                    console.log('New files:', newFiles);
                     
                     if (newFiles.length === 0) return;
 
@@ -816,16 +818,76 @@
             const imageInput = document.getElementById('imageInput');
             if (!imageInput || accumulatedFiles.length === 0) return;
             
+            console.log('=== Chrome Debug: updateFileInput ===');
+            console.log('Browser:', navigator.userAgent);
+            console.log('AccumulatedFiles:', accumulatedFiles);
+            console.log('DataTransfer support:', typeof DataTransfer !== 'undefined');
+            
             try {
-                // DataTransferを使用してFileListを作成
-                const dataTransfer = new DataTransfer();
-                accumulatedFiles.forEach(file => {
-                    dataTransfer.items.add(file);
-                });
-                imageInput.files = dataTransfer.files;
+                // Chrome requires different handling for DataTransfer
+                const isChrome = /Chrome/.test(navigator.userAgent) && !/Safari/.test(navigator.userAgent);
+                console.log('Is Chrome:', isChrome);
+                
+                if (isChrome) {
+                    // Chrome-specific implementation
+                    console.log('Using Chrome-specific DataTransfer handling');
+                    const dataTransfer = new DataTransfer();
+                    
+                    // Chrome may require files to be added in a specific way
+                    for (let i = 0; i < accumulatedFiles.length; i++) {
+                        const file = accumulatedFiles[i];
+                        console.log(`Adding file ${i + 1}:`, file.name, file.type, file.size);
+                        
+                        try {
+                            dataTransfer.items.add(file);
+                            console.log(`File ${i + 1} added successfully`);
+                        } catch (fileError) {
+                            console.error(`Error adding file ${i + 1}:`, fileError);
+                            // Continue with other files
+                        }
+                    }
+                    
+                    console.log('DataTransfer files count:', dataTransfer.files.length);
+                    imageInput.files = dataTransfer.files;
+                    console.log('Updated imageInput.files count:', imageInput.files.length);
+                } else {
+                    // Safari and other browsers
+                    console.log('Using standard DataTransfer handling');
+                    const dataTransfer = new DataTransfer();
+                    accumulatedFiles.forEach(file => {
+                        dataTransfer.items.add(file);
+                    });
+                    imageInput.files = dataTransfer.files;
+                }
+                
+                console.log('Final imageInput.files:', Array.from(imageInput.files).map(f => f.name));
+                
             } catch (error) {
+                console.error('DataTransfer error:', error);
                 console.warn('File input update not supported in this browser:', error);
+                
+                // Fallback: Clear and recreate the input if DataTransfer fails
+                if (error.message.includes('DataTransfer') || error.message.includes('files')) {
+                    console.log('Attempting fallback: recreating input element');
+                    try {
+                        const newInput = imageInput.cloneNode(true);
+                        newInput.value = ''; // Clear the cloned input
+                        imageInput.parentNode.replaceChild(newInput, imageInput);
+                        
+                        // Re-initialize event listeners on the new input
+                        setTimeout(() => {
+                            imageInsertionInitialized = false;
+                            initializeImagePreview();
+                        }, 10);
+                        
+                        console.log('Input element recreated successfully');
+                    } catch (fallbackError) {
+                        console.error('Fallback failed:', fallbackError);
+                    }
+                }
             }
+            
+            console.log('=== Chrome Debug: updateFileInput End ===');
         }
         
         // 画像プレビューの表示更新
@@ -869,9 +931,52 @@
                 accumulatedFiles = [];
                 imageInput.value = '';
                 updateImagePreview();
+                // 既存画像セクションの通知をクリア
+                clearNewImageNotification();
             });
             
             imageInput.parentNode.appendChild(resetButton);
+        }
+        
+        // 新しい画像追加の通知を表示
+        function showNewImageNotification(count) {
+            // 既存画像セクションを探す
+            const existingImagesSection = document.querySelector('.row.g-2');
+            if (!existingImagesSection) return;
+            
+            // 既存の通知を削除
+            clearNewImageNotification();
+            
+            // 通知要素を作成
+            const notification = document.createElement('div');
+            notification.id = 'new-image-notification';
+            notification.className = 'alert alert-info mt-2';
+            notification.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <strong>${count}個の新しい画像が追加されました。</strong><br>
+                <small>フォームを保存すると、既存の画像一覧が更新されます。新しい画像のマークダウンは既に内容欄に挿入されています。</small>
+            `;
+            
+            // 既存画像セクションの後に通知を挿入
+            existingImagesSection.parentNode.insertBefore(notification, existingImagesSection.nextSibling);
+            
+            // 既存画像セクションを少し薄く表示
+            existingImagesSection.style.opacity = '0.6';
+            existingImagesSection.style.transition = 'opacity 0.3s';
+        }
+        
+        // 新しい画像追加の通知をクリア
+        function clearNewImageNotification() {
+            const notification = document.getElementById('new-image-notification');
+            if (notification) {
+                notification.remove();
+            }
+            
+            // 既存画像セクションの透明度をリセット
+            const existingImagesSection = document.querySelector('.row.g-2');
+            if (existingImagesSection) {
+                existingImagesSection.style.opacity = '1';
+            }
         }
 
         // Turbo対応でリセット
