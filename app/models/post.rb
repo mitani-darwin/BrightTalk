@@ -155,8 +155,46 @@ class Post < ApplicationRecord
             return
           end
 
-          # Vipsで画像を読み込み（EXIFは自動的に読み込まれる）
-          image = Vips::Image.new_from_file(original_tempfile.path, access: :sequential)
+          # ファイルの検証
+          unless File.exist?(original_tempfile.path) && File.size(original_tempfile.path) > 0
+            Rails.logger.error "Downloaded file is empty or missing for #{attachment.filename}"
+            return
+          end
+
+          # ファイルの先頭バイトを確認してフォーマットを検証
+          File.open(original_tempfile.path, 'rb') do |file|
+            header = file.read(8)
+            if header.nil? || header.length < 4
+              Rails.logger.error "File header is too short or empty for #{attachment.filename}"
+              return
+            end
+
+            # PNG, JPEG, WebP のマジックバイトを確認
+            is_png = header[0, 8] == "\x89PNG\r\n\x1A\n".b
+            is_jpeg = header[0, 3] == "\xFF\xD8\xFF".b
+            is_webp = header[0, 4] == "RIFF".b && header[8, 4] == "WEBP".b
+
+            unless is_png || is_jpeg || is_webp
+              Rails.logger.error "File format not supported or corrupted for #{attachment.filename}. Header: #{header.unpack('H*').first}"
+              return
+            end
+          end
+
+          begin
+            # Vipsで画像を読み込み（EXIFは自動的に読み込まれる）
+            image = Vips::Image.new_from_file(original_tempfile.path, access: :sequential)
+          rescue Vips::Error => e
+            Rails.logger.error "Failed to load image with ruby-vips for #{attachment.filename}: #{e.message}"
+            Rails.logger.error "File size: #{File.size(original_tempfile.path)} bytes"
+            Rails.logger.error "File path: #{original_tempfile.path}"
+            
+            # ファイルの最初の数バイトをログに出力してデバッグ
+            File.open(original_tempfile.path, 'rb') do |file|
+              sample = file.read(32)
+              Rails.logger.error "File sample (hex): #{sample.unpack('H*').first}"
+            end
+            return
+          end
 
           # EXIFを完全に削除して新しい画像を作成
           Tempfile.create([ "vips_processed_", File.extname(attachment.filename.to_s) ]) do |processed_tempfile|
