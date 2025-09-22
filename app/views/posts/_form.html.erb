@@ -26,7 +26,7 @@
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
             <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 1,
-                               placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
+                               placeholder: "例: ○○○に分かりやすく説明したい" %>
             <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
           </div>
 
@@ -146,8 +146,8 @@
           <div class="mb-3">
             <%= form.label :expected_outcome, "期待する成果", class: "form-label" %>
             <%= form.text_area :expected_outcome, class: "form-control", rows: 1,
-                               placeholder: "例: 読者がRailsの基本的な開発環境を構築できるようになる" %>
-            <div class="form-text">この投稿を読んだ後、読者にどうなってほしいかを記入してください。</div>
+                               placeholder: "例: 読者が○○○を知った、理解して欲しい" %>
+            <div class="form-text">読者にどうなってほしいかを記入してください。</div>
           </div>
 
 
@@ -763,236 +763,418 @@
             textarea.dispatchEvent(new Event('input'));
         }
 
-        // 画像選択時にプレビューなしでMarkdownを自動挿入
-        let imageInsertionInitialized = false;
-        let accumulatedFiles = []; // 累積選択されたファイルを保存
-
-        function initializeImagePreview() {
-            if (imageInsertionInitialized) return;
-
-            const imageInput = document.getElementById('imageInput');
-            const content = document.getElementById('contentTextarea');
-            if (imageInput && content) {
-                imageInput.addEventListener('change', function(e) {
-                    if (!this.files || this.files.length === 0) return;
-
-                    // 新しく選択されたファイルを取得
-                    const newFiles = Array.from(this.files)
-                        .filter(f => f.type && f.type.startsWith('image/'));
-
-                    console.log('New files:', newFiles);
-                    
-                    if (newFiles.length === 0) return;
-
-                    // 既存の累積ファイルと新しいファイルを結合（重複削除）
-                    const existingNames = accumulatedFiles.map(f => f.name);
-                    const uniqueNewFiles = newFiles.filter(f => !existingNames.includes(f.name));
-                    
-                    if (uniqueNewFiles.length > 0) {
-                        accumulatedFiles = accumulatedFiles.concat(uniqueNewFiles);
-                        
-                        // ファイル入力を更新して累積ファイルを反映
-                        updateFileInput();
-                        
-                        // 新しいファイルのMarkdownを挿入
-                        const parts = uniqueNewFiles.map(file => `![${file.name}](attachment:${file.name})`);
-                        if (parts.length > 0) {
-                            const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
-                            insertAtCursor(content, prefix + parts.join('\n') + '\n');
-                        }
-                        
-                        // プレビュー表示を更新
-                        updateImagePreview();
-                    }
-                });
-                
-                // リセットボタンの追加
-                addResetButton();
-                
-                imageInsertionInitialized = true;
-            }
-        }
+        // === 恒久的解決策：画像管理システム完全版 ===
         
-        // ファイル入力を累積ファイルで更新
-        function updateFileInput() {
-            const imageInput = document.getElementById('imageInput');
-            if (!imageInput || accumulatedFiles.length === 0) return;
-            
-            console.log('=== Chrome Debug: updateFileInput ===');
-            console.log('Browser:', navigator.userAgent);
-            console.log('AccumulatedFiles:', accumulatedFiles);
-            console.log('DataTransfer support:', typeof DataTransfer !== 'undefined');
-            
-            try {
-                // Chrome requires different handling for DataTransfer
-                const isChrome = /Chrome/.test(navigator.userAgent) && !/Safari/.test(navigator.userAgent);
-                console.log('Is Chrome:', isChrome);
+        class ImageManager {
+            constructor() {
+                this.selectedFiles = [];
+                this.initialized = false;
+                this.isProcessing = false; // 重複実行防止フラグ
+                this.setupEventListeners();
+            }
+
+            // 編集モード判定（単一責任）
+            isEditMode() {
+                const form = document.querySelector('form');
+                if (!form) return false;
                 
-                if (isChrome) {
-                    // Chrome-specific implementation
-                    console.log('Using Chrome-specific DataTransfer handling');
-                    const dataTransfer = new DataTransfer();
-                    
-                    // Chrome may require files to be added in a specific way
-                    for (let i = 0; i < accumulatedFiles.length; i++) {
-                        const file = accumulatedFiles[i];
-                        console.log(`Adding file ${i + 1}:`, file.name, file.type, file.size);
-                        
-                        try {
-                            dataTransfer.items.add(file);
-                            console.log(`File ${i + 1} added successfully`);
-                        } catch (fileError) {
-                            console.error(`Error adding file ${i + 1}:`, fileError);
-                            // Continue with other files
-                        }
-                    }
-                    
-                    console.log('DataTransfer files count:', dataTransfer.files.length);
-                    imageInput.files = dataTransfer.files;
-                    console.log('Updated imageInput.files count:', imageInput.files.length);
+                const hasEditInAction = form.action.includes('/edit');
+                const hasPostIdInAction = /\/posts\/\d+/.test(form.action);
+                const hasPostIdElement = document.querySelector('[data-post-id]') !== null;
+                const hasExistingImages = document.querySelector('.row.g-2') !== null;
+                
+                // デバッグログ追加
+                console.log('=== Edit Mode Check ===');
+                console.log('Form action:', form.action);
+                console.log('Has edit in action:', hasEditInAction);
+                console.log('Has post ID in action:', hasPostIdInAction);
+                console.log('Has post ID element:', hasPostIdElement);
+                console.log('Has existing images:', hasExistingImages);
+                
+                // 既存画像の存在だけでは編集モードと判定しない
+                const isEdit = hasEditInAction || hasPostIdInAction || hasPostIdElement;
+                console.log('Final edit mode result:', isEdit);
+                console.log('======================');
+                
+                return isEdit;
+            }
+
+            // イベントリスナー設定
+            setupEventListeners() {
+                if (this.initialized) return;
+                
+                this.setupImageInput();
+                this.setupExistingImageButtons();
+                this.setupResetButton();
+                this.setupPageResets();
+                
+                this.initialized = true;
+            }
+
+            // 画像入力の設定
+            setupImageInput() {
+                const imageInput = document.getElementById('imageInput');
+                const content = document.getElementById('contentTextarea');
+                
+                if (!imageInput || !content) return;
+
+                // 既存のイベントリスナーを削除してから新しいリスナーを追加
+                if (this.imageInputHandler) {
+                    imageInput.removeEventListener('change', this.imageInputHandler);
+                }
+                
+                this.imageInputHandler = (e) => {
+                    this.handleImageSelection(e.target.files);
+                };
+                
+                imageInput.addEventListener('change', this.imageInputHandler);
+            }
+
+            // 画像選択処理（統一ロジック）
+            handleImageSelection(files) {
+                // 重複処理を防止
+                if (this.isProcessing) {
+                    console.log('=== handleImageSelection Debug ===');
+                    console.log('Already processing, skipping...');
+                    console.log('===================================');
+                    return;
+                }
+                
+                this.isProcessing = true;
+                
+                console.log('=== handleImageSelection Debug ===');
+                console.log('Starting image selection processing...');
+                console.log('Files received:', files ? files.length : 0);
+                
+                if (!files || files.length === 0) {
+                    this.clearSelection();
+                    this.isProcessing = false;
+                    return;
+                }
+
+                // 画像ファイルのみフィルタ
+                const imageFiles = Array.from(files).filter(f => 
+                    f.type && f.type.startsWith('image/')
+                );
+
+                console.log('Image files filtered:', imageFiles.length);
+
+                if (imageFiles.length === 0) {
+                    this.clearSelection();
+                    this.isProcessing = false;
+                    return;
+                }
+
+                // モードに関係なく選択は置換（シンプル化）
+                this.selectedFiles = imageFiles;
+                this.updateFileInput();
+                this.updatePreview();
+
+                // 新規投稿の場合のみ自動挿入
+                if (!this.isEditMode()) {
+                    console.log('Not in edit mode, calling autoInsertMarkdown...');
+                    this.autoInsertMarkdown();
                 } else {
-                    // Safari and other browsers
-                    console.log('Using standard DataTransfer handling');
+                    this.autoInsertMarkdown();
+                    console.log('In edit mode, skipping autoInsertMarkdown');
+                }
+                
+                // 処理完了後にフラグをリセット
+                setTimeout(() => {
+                    this.isProcessing = false;
+                    console.log('Processing flag reset');
+                }, 100);
+                
+                console.log('===================================');
+            }
+
+            // ファイル入力の更新（信頼性向上）
+            updateFileInput() {
+                const imageInput = document.getElementById('imageInput');
+                if (!imageInput) return;
+
+                try {
                     const dataTransfer = new DataTransfer();
-                    accumulatedFiles.forEach(file => {
+                    this.selectedFiles.forEach(file => {
                         dataTransfer.items.add(file);
                     });
                     imageInput.files = dataTransfer.files;
+                } catch (error) {
+                    console.warn('File input update failed:', error);
+                    // フォールバック：input要素をリセット
+                    this.recreateInput();
+                }
+            }
+
+            // 入力要素の再作成（フォールバック）
+            recreateInput() {
+                const imageInput = document.getElementById('imageInput');
+                if (!imageInput) return;
+
+                const newInput = imageInput.cloneNode(true);
+                newInput.value = '';
+                imageInput.parentNode.replaceChild(newInput, imageInput);
+                
+                // 新しい要素にイベントリスナーを再設定
+                setTimeout(() => {
+                    this.initialized = false;
+                    this.setupImageInput();
+                }, 10);
+            }
+
+            // 自動Markdown挿入
+            autoInsertMarkdown() {
+                const content = document.getElementById('contentTextarea');
+                if (!content || this.selectedFiles.length === 0) return;
+
+                console.log('=== autoInsertMarkdown Debug ===');
+                console.log('Call timestamp:', new Date().toLocaleTimeString());
+                console.log('Content length before:', content.value.length);
+                console.log('Selected files count:', this.selectedFiles.length);
+                console.log('Selected files:', this.selectedFiles.map(f => f.name));
+
+                const parts = this.selectedFiles.map(file => 
+                    `![${file.name}](attachment:${file.name})`
+                );
+                
+                console.log('Generated markdown parts:', parts);
+                
+                const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
+                const textToInsert = prefix + parts.join('\n') + '\n';
+                
+                console.log('Text to insert:', JSON.stringify(textToInsert));
+                console.log('===============================');
+                
+                this.insertAtCursor(content, textToInsert);
+                
+                console.log('Content length after:', content.value.length);
+            }
+
+            // プレビュー表示の更新
+            updatePreview() {
+                let previewContainer = document.getElementById('imagePreviewContainer');
+                
+                if (!previewContainer) {
+                    previewContainer = this.createPreviewContainer();
+                }
+
+                if (this.selectedFiles.length === 0) {
+                    previewContainer.innerHTML = '';
+                    return;
+                }
+
+                previewContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>選択された画像 (${this.selectedFiles.length}件):</strong>
+                        <ul class="mb-0 mt-1">
+                            ${this.selectedFiles.map(file => `<li>${file.name}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // プレビューコンテナの作成
+            createPreviewContainer() {
+                const imageInput = document.getElementById('imageInput');
+                const container = document.createElement('div');
+                container.id = 'imagePreviewContainer';
+                container.className = 'mt-2';
+                imageInput.parentNode.insertBefore(container, imageInput.nextSibling);
+                return container;
+            }
+
+            // 既存画像ボタンの設定
+            setupExistingImageButtons() {
+                const buttons = document.querySelectorAll('.insert-existing-image');
+                const content = document.getElementById('contentTextarea');
+                
+                if (!buttons.length || !content) return;
+
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.handleExistingImageInsert(btn, content);
+                    });
+                });
+            }
+
+            // 既存画像挿入処理（重複チェック付き）
+            handleExistingImageInsert(btn, content) {
+                const filename = btn.dataset.filename || 'image';
+                const url = btn.dataset.url;
+
+                // 厳密な重複チェック
+                if (this.isDuplicateImage(content.value, filename)) {
+                    this.showDuplicateNotification(btn);
+                    return;
+                }
+
+                // 挿入実行
+                const md = `![${filename}](${url})`;
+                const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
+                this.insertAtCursor(content, prefix + md + '\n');
+                
+                this.showInsertSuccess(btn);
+            }
+
+            // 重複チェック
+            isDuplicateImage(content, filename) {
+                const escapedFilename = filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const pattern = new RegExp(`!\\[.*?\\]\\(attachment:${escapedFilename}\\)`, 'g');
+                return pattern.test(content);
+            }
+
+            // 重複通知表示
+            showDuplicateNotification(btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> 既に挿入済み';
+                btn.classList.add('btn-warning');
+                btn.classList.remove('btn-outline-primary');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('btn-warning');
+                    btn.classList.add('btn-outline-primary');
+                }, 2000);
+            }
+
+            // 成功通知表示
+            showInsertSuccess(btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> 挿入完了';
+                btn.classList.add('btn-success');
+                btn.classList.remove('btn-outline-primary');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-primary');
+                }, 1000);
+            }
+
+            // リセットボタン設定
+            setupResetButton() {
+                const imageInput = document.getElementById('imageInput');
+                if (!imageInput || document.getElementById('resetImagesBtn')) return;
+
+                const resetButton = document.createElement('button');
+                resetButton.type = 'button';
+                resetButton.id = 'resetImagesBtn';
+                resetButton.className = 'btn btn-outline-warning btn-sm mt-2';
+                resetButton.innerHTML = '<i class="fas fa-undo"></i> 選択をリセット';
+                resetButton.addEventListener('click', () => this.resetSelection());
+
+                imageInput.parentNode.appendChild(resetButton);
+            }
+
+            // 選択リセット
+            resetSelection() {
+                this.selectedFiles = [];
+                const imageInput = document.getElementById('imageInput');
+                if (imageInput) imageInput.value = '';
+                this.updatePreview();
+            }
+
+            // 選択クリア
+            clearSelection() {
+                this.resetSelection();
+            }
+
+            // ページ遷移時のリセット設定
+            setupPageResets() {
+                document.addEventListener('turbo:before-visit', () => {
+                    this.selectedFiles = [];
+                    this.initialized = false;
+                });
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.selectedFiles = [];
+                });
+
+                document.addEventListener('turbo:load', () => {
+                    this.selectedFiles = [];
+                    this.initialized = false;
+                    this.setupEventListeners();
+                });
+            }
+
+            // カーソル位置への挿入
+            insertAtCursor(textarea, text) {
+                if (!textarea) return;
+                
+                // 重複挿入防止のための一意性チェック
+                const insertId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                
+                console.log('=== insertAtCursor Debug ===');
+                console.log('Insert ID:', insertId);
+                console.log('Insert timestamp:', new Date().toLocaleTimeString());
+                console.log('Text to insert:', JSON.stringify(text));
+                console.log('Textarea value length before:', textarea.value.length);
+                
+                // 既に同じテキストが最後に挿入されていないかチェック
+                const currentValue = textarea.value;
+                if (currentValue.endsWith(text.trim())) {
+                    console.log('Same text already at the end, skipping insertion');
+                    console.log('============================');
+                    return;
                 }
                 
-                console.log('Final imageInput.files:', Array.from(imageInput.files).map(f => f.name));
-                
-            } catch (error) {
-                console.error('DataTransfer error:', error);
-                console.warn('File input update not supported in this browser:', error);
-                
-                // Fallback: Clear and recreate the input if DataTransfer fails
-                if (error.message.includes('DataTransfer') || error.message.includes('files')) {
-                    console.log('Attempting fallback: recreating input element');
-                    try {
-                        const newInput = imageInput.cloneNode(true);
-                        newInput.value = ''; // Clear the cloned input
-                        imageInput.parentNode.replaceChild(newInput, imageInput);
+                // CodeMirrorエディター対応
+                const codeEditorController = textarea.closest('[data-controller*="code-editor"]');
+                if (codeEditorController) {
+                    console.log('Using CodeMirror editor');
+                    const controller = Stimulus.controllers.find(c => 
+                        c.element === codeEditorController && 
+                        c.identifier === 'code-editor'
+                    );
+                    if (controller && controller.insertText) {
+                        console.log('Found CodeMirror controller, calling insertText');
                         
-                        // Re-initialize event listeners on the new input
-                        setTimeout(() => {
-                            imageInsertionInitialized = false;
-                            initializeImagePreview();
-                        }, 10);
+                        // CodeMirrorでも重複チェック
+                        const codeMirrorValue = controller.getValue ? controller.getValue() : '';
+                        if (codeMirrorValue.endsWith(text.trim())) {
+                            console.log('Same text already in CodeMirror, skipping insertion');
+                            console.log('============================');
+                            return;
+                        }
                         
-                        console.log('Input element recreated successfully');
-                    } catch (fallbackError) {
-                        console.error('Fallback failed:', fallbackError);
+                        controller.insertText(text);
+                        console.log('CodeMirror insertText completed');
+                        console.log('============================');
+                        return;
+                    } else {
+                        console.log('CodeMirror controller not found or no insertText method');
                     }
                 }
-            }
-            
-            console.log('=== Chrome Debug: updateFileInput End ===');
-        }
-        
-        // 画像プレビューの表示更新
-        function updateImagePreview() {
-            let previewContainer = document.getElementById('imagePreviewContainer');
-            if (!previewContainer) {
-                const imageInput = document.getElementById('imageInput');
-                previewContainer = document.createElement('div');
-                previewContainer.id = 'imagePreviewContainer';
-                previewContainer.className = 'mt-2';
-                imageInput.parentNode.insertBefore(previewContainer, imageInput.nextSibling);
-            }
-            
-            if (accumulatedFiles.length === 0) {
-                previewContainer.innerHTML = '';
-                return;
-            }
-            
-            const previewHtml = `
-                <div class="alert alert-info">
-                    <strong>選択された画像 (${accumulatedFiles.length}件):</strong>
-                    <ul class="mb-0 mt-1">
-                        ${accumulatedFiles.map(file => `<li>${file.name}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
-            previewContainer.innerHTML = previewHtml;
-        }
-        
-        // リセットボタンの追加
-        function addResetButton() {
-            const imageInput = document.getElementById('imageInput');
-            if (!imageInput || document.getElementById('resetImagesBtn')) return;
-            
-            const resetButton = document.createElement('button');
-            resetButton.type = 'button';
-            resetButton.id = 'resetImagesBtn';
-            resetButton.className = 'btn btn-outline-warning btn-sm mt-2';
-            resetButton.innerHTML = '<i class="fas fa-undo"></i> 選択をリセット';
-            resetButton.addEventListener('click', function() {
-                accumulatedFiles = [];
-                imageInput.value = '';
-                updateImagePreview();
-                // 既存画像セクションの通知をクリア
-                clearNewImageNotification();
-            });
-            
-            imageInput.parentNode.appendChild(resetButton);
-        }
-        
-        // 新しい画像追加の通知を表示
-        function showNewImageNotification(count) {
-            // 既存画像セクションを探す
-            const existingImagesSection = document.querySelector('.row.g-2');
-            if (!existingImagesSection) return;
-            
-            // 既存の通知を削除
-            clearNewImageNotification();
-            
-            // 通知要素を作成
-            const notification = document.createElement('div');
-            notification.id = 'new-image-notification';
-            notification.className = 'alert alert-info mt-2';
-            notification.innerHTML = `
-                <i class="fas fa-info-circle"></i>
-                <strong>${count}個の新しい画像が追加されました。</strong><br>
-                <small>フォームを保存すると、既存の画像一覧が更新されます。新しい画像のマークダウンは既に内容欄に挿入されています。</small>
-            `;
-            
-            // 既存画像セクションの後に通知を挿入
-            existingImagesSection.parentNode.insertBefore(notification, existingImagesSection.nextSibling);
-            
-            // 既存画像セクションを少し薄く表示
-            existingImagesSection.style.opacity = '0.6';
-            existingImagesSection.style.transition = 'opacity 0.3s';
-        }
-        
-        // 新しい画像追加の通知をクリア
-        function clearNewImageNotification() {
-            const notification = document.getElementById('new-image-notification');
-            if (notification) {
-                notification.remove();
-            }
-            
-            // 既存画像セクションの透明度をリセット
-            const existingImagesSection = document.querySelector('.row.g-2');
-            if (existingImagesSection) {
-                existingImagesSection.style.opacity = '1';
+                
+                console.log('Using standard textarea insertion');
+                // 通常のテキストエリア処理
+                const start = textarea.selectionStart ?? textarea.value.length;
+                const end = textarea.selectionEnd ?? textarea.value.length;
+                const before = textarea.value.substring(0, start);
+                const after = textarea.value.substring(end);
+                textarea.value = before + text + after;
+                const newPos = start + text.length;
+                textarea.selectionStart = textarea.selectionEnd = newPos;
+                textarea.focus();
+                textarea.dispatchEvent(new Event('input'));
+                
+                console.log('Textarea value length after:', textarea.value.length);
+                console.log('============================');
             }
         }
 
-        // Turbo対応でリセット
-        document.addEventListener('turbo:before-visit', function() {
-            imageInsertionInitialized = false;
-        });
+        // グローバル変数を削除し、クラスベースに統一
+        let imageManager = null;
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeImagePreview);
-        } else {
-            initializeImagePreview();
+        // 初期化関数
+        function initializeImageSystem() {
+            if (!imageManager) {
+                imageManager = new ImageManager();
+            }
         }
 
-        document.addEventListener('turbo:load', initializeImagePreview);
-
-        // 動画選択時にプレビューなしでMarkdownを自動挿入
+        // 動画処理（既存のまま維持）
         let videoInsertionInitialized = false;
         function initializeVideoInput() {
             if (videoInsertionInitialized) return;
@@ -1005,63 +1187,127 @@
                         .find(f => f.type && f.type.startsWith('video/'));
                     if (!first) return;
                     const name = first.name;
-                    // 重複挿入防止
                     if (this.dataset.lastSig === name) return;
                     this.dataset.lastSig = name;
-                    // 動画は1つのみのため、1つだけ挿入
                     const md = `[動画 ${name}](attachment:${name})`;
                     const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
-                    insertAtCursor(content, prefix + md + '\n');
+                    imageManager.insertAtCursor(content, prefix + md + '\n');
                 });
                 videoInsertionInitialized = true;
             }
         }
-        document.addEventListener('turbo:before-visit', function() { videoInsertionInitialized = false; });
+
+        // イベントリスナー設定
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeVideoInput);
+            document.addEventListener('DOMContentLoaded', () => {
+                initializeImageSystem();
+                initializeVideoInput();
+            });
         } else {
+            initializeImageSystem();
             initializeVideoInput();
         }
-        document.addEventListener('turbo:load', initializeVideoInput);
 
-        // 既存画像の「内容に挿入」ボタン初期化
-        function initializeExistingImageButtons() {
-            const buttons = document.querySelectorAll('.insert-existing-image');
-            const content = document.getElementById('contentTextarea');
-            if (!buttons.length || !content) return;
-            buttons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const url = btn.dataset.url;
-                    const filename = btn.dataset.filename || 'image';
-                    const md = `![${filename}](${url})`;
-                    
-                    // Check if the same image link already exists in the content
-                    if (content.value.includes(md)) {
-                        // Show a brief notification that the image is already inserted
-                        const originalText = btn.textContent;
-                        btn.textContent = '既に挿入済み';
-                        btn.classList.add('btn-secondary');
-                        btn.classList.remove('btn-outline-primary');
+        document.addEventListener('turbo:load', () => {
+            initializeImageSystem();
+            initializeVideoInput();
+        });
+
+        document.addEventListener('turbo:before-visit', () => {
+            videoInsertionInitialized = false;
+        });
+
+        // フォーム送信時のプログレスバー表示機能
+        function initializeFormSubmissionProgress() {
+            const form = document.querySelector('form');
+            const submitButton = document.getElementById('submitButton');
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const statusText = document.getElementById('uploadStatusText');
+            const uploadDetails = document.getElementById('uploadDetails');
+
+            if (!form || !submitButton || !progressContainer) return;
+
+            // フォーム送信時の処理
+            form.addEventListener('submit', function(e) {
+                console.log('Form submission started');
+                
+                // プログレスバーを表示
+                progressContainer.style.display = 'block';
+                statusText.innerHTML = '<i class="fas fa-paper-plane me-2"></i>投稿を処理中...';
+                uploadDetails.textContent = 'サーバーに送信しています...';
+                progressBar.style.width = '30%';
+                progressBar.setAttribute('aria-valuenow', 30);
+                progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+                progressBar.classList.remove('bg-success', 'bg-danger');
+
+                // フォーム要素を無効化
+                disableFormElements(true);
+
+                // プログレスバーのアニメーション
+                setTimeout(() => {
+                    progressBar.style.width = '60%';
+                    progressBar.setAttribute('aria-valuenow', 60);
+                    statusText.innerHTML = '<i class="fas fa-cogs me-2"></i>データを処理中...';
+                }, 1000);
+
+                setTimeout(() => {
+                    progressBar.style.width = '90%';
+                    progressBar.setAttribute('aria-valuenow', 90);
+                    statusText.innerHTML = '<i class="fas fa-check-circle me-2"></i>処理を完了中...';
+                }, 2000);
+            });
+
+            // Turbo navigation完了時の処理
+            document.addEventListener('turbo:load', function() {
+                // ページ遷移後はプログレスバーを非表示にする
+                if (progressContainer) {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    progressBar.setAttribute('aria-valuenow', 0);
+                    statusText.textContent = 'アップロード中...';
+                    uploadDetails.textContent = '準備中...';
+                }
+                
+                // フォーム要素を有効化
+                disableFormElements(false);
+            });
+
+            // フォーム送信エラー時の処理
+            document.addEventListener('turbo:submit-end', function(event) {
+                const { success } = event.detail;
+                
+                if (!success) {
+                    // エラー時の処理
+                    setTimeout(() => {
+                        progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                        progressBar.classList.add('bg-danger');
+                        statusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラーが発生しました';
+                        uploadDetails.textContent = 'フォームを確認して再送信してください';
+                        
+                        // 5秒後にプログレスバーを非表示にしてフォームを有効化
                         setTimeout(() => {
-                            btn.textContent = originalText;
-                            btn.classList.remove('btn-secondary');
-                            btn.classList.add('btn-outline-primary');
-                        }, 1500);
-                        return;
-                    }
-                    
-                    insertAtCursor(content, (content.value && !content.value.endsWith('\n') ? '\n' : '') + md + '\n');
-                });
+                            progressContainer.style.display = 'none';
+                            progressBar.classList.remove('bg-danger');
+                            progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+                            progressBar.style.width = '0%';
+                            statusText.textContent = 'アップロード中...';
+                            uploadDetails.textContent = '準備中...';
+                            disableFormElements(false);
+                        }, 5000);
+                    }, 500);
+                }
             });
         }
 
+        // フォーム送信プログレス機能の初期化
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeExistingImageButtons);
+            document.addEventListener('DOMContentLoaded', initializeFormSubmissionProgress);
         } else {
-            initializeExistingImageButtons();
+            initializeFormSubmissionProgress();
         }
-        document.addEventListener('turbo:load', initializeExistingImageButtons);
+
+        document.addEventListener('turbo:load', initializeFormSubmissionProgress);
 
         // 既存動画の「内容に挿入」ボタン初期化
         function initializeExistingVideoButtons() {
@@ -1558,12 +1804,20 @@
                     }
                 }
                 
-                // 他の入力フィールドも無効化
-                const inputs = form?.querySelectorAll('input, textarea, select, button');
+                // 入力フィールドのみ無効化（ボタンは個別制御）
+                const inputs = form?.querySelectorAll('input, textarea, select');
                 if (inputs) {
                     inputs.forEach(input => {
-                        if (input !== submitButton) {
-                            input.disabled = disable;
+                        input.disabled = disable;
+                    });
+                }
+                
+                // キャンセルボタン以外のボタンを無効化
+                const buttons = form?.querySelectorAll('button:not(.btn-secondary)');
+                if (buttons) {
+                    buttons.forEach(button => {
+                        if (button !== submitButton) {
+                            button.disabled = disable;
                         }
                     });
                 }
