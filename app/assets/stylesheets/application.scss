@@ -1000,3 +1000,290 @@ main {
     font-style: italic;
   }
 }
+
+// カテゴリーバッジのレスポンシブ対応
+.badge {
+  // 基本スタイル
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.2;
+  
+  // レスポンシブ対応
+  @media (max-width: 575.98px) {
+    // スマートフォン（xs）
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.5rem !important;
+    
+    // 長いテキストの場合の調整
+    &.badge-category {
+      max-width: 100%;
+      display: inline-block;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+  
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    // タブレット（sm）
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.6rem !important;
+  }
+  
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    // タブレット大（md）
+    font-size: 0.8rem !important;
+    padding: 0.35rem 0.7rem !important;
+  }
+  
+  @media (min-width: 992px) {
+    // デスクトップ（lg以上）
+    font-size: 0.875rem !important;
+    padding: 0.4rem 0.8rem !important;
+  }
+  
+  // アイコンとテキストの間隔調整
+  i {
+    margin-right: 0.25rem;
+    
+    @media (max-width: 575.98px) {
+      margin-right: 0.15rem;
+    }
+  }
+}
+
+// 特定のカテゴリーバッジ用スタイル
+.badge.bg-primary {
+  // ホバー効果
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: #0056b3 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  // アクティブ状態
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 複数行カテゴリーバッジのスタイル
+.category-badge-multiline {
+  // 基本設定
+  line-height: 1.3;
+  text-align: center;
+  display: inline-block;
+  max-width: 100%;
+  
+  // スマートフォン対応（xs）
+  @media (max-width: 575.98px) {
+    // より小さなパディングと文字サイズ
+    font-size: 0.65rem !important;
+    padding: 0.3rem 0.4rem !important;
+    line-height: 1.2;
+    
+    // カード幅を超えないよう制限
+    max-width: calc(100% - 1rem);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  // タブレット対応（sm）
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    font-size: 0.7rem !important;
+    padding: 0.35rem 0.5rem !important;
+    line-height: 1.25;
+  }
+  
+  // 中画面対応（md）
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.6rem !important;
+    line-height: 1.3;
+  }
+  
+  // 大画面対応（lg以上）
+  @media (min-width: 992px) {
+    font-size: 0.8rem !important;
+    padding: 0.45rem 0.7rem !important;
+    line-height: 1.3;
+  }
+}
+
+// 区切り文字「>」のスタイル
+.category-separator {
+  // 基本スタイル
+  font-weight: bold;
+  opacity: 0.8;
+  margin: 0 0.2rem;
+  display: inline-block;
+  
+  // スマートフォンでは少し小さく
+  @media (max-width: 575.98px) {
+    font-size: 0.9em;
+    margin: 0 0.1rem;
+  }
+  
+  // 各行の間隔を調整
+  &::before {
+    content: '';
+    display: block;
+    height: 0.1rem;
+  }
+}
+
+// 投稿タイプバッジのレスポンシブ対応
+.badge.bg-info {
+  // 基本設定
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.2;
+  max-width: 100%;
+  
+  // レスポンシブサイズ調整
+  @media (max-width: 575.98px) {
+    // スマートフォン（xs）
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.5rem !important;
+    
+    // 長いテキストの省略表示
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    // タブレット（sm）
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.6rem !important;
+    max-width: 150px;
+  }
+  
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    // タブレット大（md）
+    font-size: 0.8rem !important;
+    padding: 0.35rem 0.7rem !important;
+    max-width: 180px;
+  }
+  
+  @media (min-width: 992px) {
+    // デスクトップ（lg以上）
+    font-size: 0.875rem !important;
+    padding: 0.4rem 0.8rem !important;
+    max-width: none;
+  }
+  
+  // アイコンとテキストの間隔調整
+  i {
+    margin-right: 0.25rem;
+    
+    @media (max-width: 575.98px) {
+      margin-right: 0.15rem;
+    }
+  }
+  
+  // ホバー効果
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: #17a2b8 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  // アクティブ状態
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 投稿者情報のレスポンシブ対応
+.post-author-info {
+  // 基本設定
+  white-space: nowrap;
+  
+  @media (max-width: 575.98px) {
+    // スマートフォンでは省略表示
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    small {
+      font-size: 0.7rem !important;
+    }
+    
+    img {
+      width: 16px !important;
+      height: 16px !important;
+    }
+  }
+  
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    // タブレット
+    max-width: 150px;
+    
+    small {
+      font-size: 0.75rem !important;
+    }
+    
+    img {
+      width: 18px !important;
+      height: 18px !important;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    // デスクトップ
+    max-width: none;
+    
+    small {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// ヘッダー部分のレスポンシブレイアウト調整
+.post-header {
+  @media (max-width: 575.98px) {
+    // スマートフォンでは全要素を縦並びに
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.4rem !important;
+
+    .post-header-left {
+      width: 100%;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.4rem !important;
+    }
+
+    .post-header-right {
+      width: 100%;
+      justify-content: flex-start !important;
+    }
+  }
+
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    // タブレットでは全要素を縦並びに
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.4rem !important;
+
+    .post-header-left {
+      width: 100%;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.4rem !important;
+    }
+
+    .post-header-right {
+      width: 100%;
+      justify-content: flex-start !important;
+    }
+  }
+}

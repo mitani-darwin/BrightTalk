@@ -46,8 +46,19 @@
 
             <!-- カテゴリーバッジ -->
             <%= link_to posts_path(category_id: @post.category.id),
-                        class: "badge bg-primary text-decoration-none" do %>
-              <i class="fas fa-tag"></i> <%= @post.category.full_name %>
+                        class: "badge bg-primary text-decoration-none category-badge-multiline" do %>
+              <i class="fas fa-tag me-1"></i>
+              <% category_parts = @post.category.full_name.split(' > ') %>
+              <% if category_parts.length > 1 %>
+                <% category_parts.each_with_index do |part, index| %>
+                  <%= part.strip %>
+                  <% if index < category_parts.length - 1 %>
+                    <br><span class="category-separator">></span>
+                  <% end %>
+                <% end %>
+              <% else %>
+                <%= @post.category.full_name %>
+              <% end %>
             <% end %>
           </div>
 
