@@ -29,6 +29,32 @@
   }
 }
 
+// レスポンシブ時のハンバーガーメニュー内容を右寄せ
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    text-align: right;
+    
+    .navbar-nav {
+      align-items: flex-end;
+      
+      .nav-item {
+        text-align: right;
+      }
+    }
+    
+    // 検索フォームも右寄せ
+    .d-flex {
+      justify-content: flex-end;
+    }
+    
+    // ドロップダウンメニューも右寄せ
+    .dropdown-menu {
+      right: 0;
+      left: auto;
+    }
+  }
+}
+
 .dropdown-menu {
   z-index: 1050;
   border: none;
