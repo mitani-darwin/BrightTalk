@@ -8,13 +8,14 @@ class PostsController < ApplicationController
   def index
     # 公開済みの投稿のみ表示
     @posts = Post.published.includes(:user, :category, :tags).recent
-    
-    # カテゴリーフィルタリング
-    if params[:category_id].present?
-      @category = Category.find(params[:category_id])
-      @posts = @posts.where(category: @category)
+
+    # 検索タイプ
+    if params[:category_id].present? || (params[:post_type_id]).present?
+      @category = Category.find(params[:category_id]) if params[:category_id].present?
+      @post_type = PostType.find(params[:post_type_id]) if params[:post_type_id].present?
+      @posts = @posts.where(category: @category, post_type: @post_type)
     end
-    
+
     @posts = @posts.page(params[:page]).per(10)
   end
 
