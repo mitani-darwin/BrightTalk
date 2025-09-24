@@ -51,5 +51,8 @@ module BrightTalk
       Rails.logger.warn "ruby-vips not available, using default image processor"
       config.active_storage.variant_processor = :mini_magick
     end
+
+    # esbuild用の設定
+    config.assets.paths << Rails.root.join("app/assets/builds")
   end
 end

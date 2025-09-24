@@ -30,7 +30,6 @@
             <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
           </div>
 
-
           <!-- 投稿タイプ（対象読者の上） -->
           <div class="mb-3">
             <%= form.label :post_type_id, class: "form-label" do %>
@@ -137,7 +136,7 @@
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
             <%= form.text_field :target_audience, class: "form-control #{'is-invalid' if post.errors[:target_audience].any?}", required: true,
-                                placeholder: "例: プログラミング初心者、Rails学習者" %>
+                                placeholder: "例: このサイトに訪れた人" %>
             <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
           </div>
 
@@ -340,6 +339,25 @@
 <script>
     // DOMContentLoadedイベント後に確認
     document.addEventListener('DOMContentLoaded', function() {
+        // required属性を持つフィールドに背景色を適用
+        const requiredFields = document.querySelectorAll('#formContainer [required]');
+        requiredFields.forEach(field => {
+            if (field.classList.contains('form-control') || field.classList.contains('form-select')) {
+                field.style.backgroundColor = '#f7d6e6';
+            }
+        });
+
+        // アスタリスクマーカーがあるフィールドに背景色を適用
+        const asteriskLabels = document.querySelectorAll('#formContainer label .text-danger');
+        asteriskLabels.forEach(asterisk => {
+            const container = asterisk.closest('.mb-3');
+            if (container) {
+                const field = container.querySelector('.form-control, .form-select');
+                if (field) {
+                    field.style.backgroundColor = '#f7d6e6';
+                }
+            }
+        });
         setTimeout(() => {
             console.log('Delayed ActiveStorage check:', typeof window.ActiveStorage);
             if (window.ActiveStorage) {
@@ -764,7 +782,7 @@
         }
 
         // === 恒久的解決策：画像管理システム完全版 ===
-        
+
         class ImageManager {
             constructor() {
                 this.selectedFiles = [];
@@ -777,12 +795,12 @@
             isEditMode() {
                 const form = document.querySelector('form');
                 if (!form) return false;
-                
+
                 const hasEditInAction = form.action.includes('/edit');
                 const hasPostIdInAction = /\/posts\/\d+/.test(form.action);
                 const hasPostIdElement = document.querySelector('[data-post-id]') !== null;
                 const hasExistingImages = document.querySelector('.row.g-2') !== null;
-                
+
                 // デバッグログ追加
                 console.log('=== Edit Mode Check ===');
                 console.log('Form action:', form.action);
@@ -790,24 +808,24 @@
                 console.log('Has post ID in action:', hasPostIdInAction);
                 console.log('Has post ID element:', hasPostIdElement);
                 console.log('Has existing images:', hasExistingImages);
-                
+
                 // 既存画像の存在だけでは編集モードと判定しない
                 const isEdit = hasEditInAction || hasPostIdInAction || hasPostIdElement;
                 console.log('Final edit mode result:', isEdit);
                 console.log('======================');
-                
+
                 return isEdit;
             }
 
             // イベントリスナー設定
             setupEventListeners() {
                 if (this.initialized) return;
-                
+
                 this.setupImageInput();
                 this.setupExistingImageButtons();
                 this.setupResetButton();
                 this.setupPageResets();
-                
+
                 this.initialized = true;
             }
 
@@ -815,18 +833,18 @@
             setupImageInput() {
                 const imageInput = document.getElementById('imageInput');
                 const content = document.getElementById('contentTextarea');
-                
+
                 if (!imageInput || !content) return;
 
                 // 既存のイベントリスナーを削除してから新しいリスナーを追加
                 if (this.imageInputHandler) {
                     imageInput.removeEventListener('change', this.imageInputHandler);
                 }
-                
+
                 this.imageInputHandler = (e) => {
                     this.handleImageSelection(e.target.files);
                 };
-                
+
                 imageInput.addEventListener('change', this.imageInputHandler);
             }
 
@@ -839,13 +857,13 @@
                     console.log('===================================');
                     return;
                 }
-                
+
                 this.isProcessing = true;
-                
+
                 console.log('=== handleImageSelection Debug ===');
                 console.log('Starting image selection processing...');
                 console.log('Files received:', files ? files.length : 0);
-                
+
                 if (!files || files.length === 0) {
                     this.clearSelection();
                     this.isProcessing = false;
@@ -853,7 +871,7 @@
                 }
 
                 // 画像ファイルのみフィルタ
-                const imageFiles = Array.from(files).filter(f => 
+                const imageFiles = Array.from(files).filter(f =>
                     f.type && f.type.startsWith('image/')
                 );
 
@@ -878,13 +896,13 @@
                     this.autoInsertMarkdown();
                     console.log('In edit mode, skipping autoInsertMarkdown');
                 }
-                
+
                 // 処理完了後にフラグをリセット
                 setTimeout(() => {
                     this.isProcessing = false;
                     console.log('Processing flag reset');
                 }, 100);
-                
+
                 console.log('===================================');
             }
 
@@ -914,7 +932,7 @@
                 const newInput = imageInput.cloneNode(true);
                 newInput.value = '';
                 imageInput.parentNode.replaceChild(newInput, imageInput);
-                
+
                 // 新しい要素にイベントリスナーを再設定
                 setTimeout(() => {
                     this.initialized = false;
@@ -933,27 +951,27 @@
                 console.log('Selected files count:', this.selectedFiles.length);
                 console.log('Selected files:', this.selectedFiles.map(f => f.name));
 
-                const parts = this.selectedFiles.map(file => 
+                const parts = this.selectedFiles.map(file =>
                     `![${file.name}](attachment:${file.name})`
                 );
-                
+
                 console.log('Generated markdown parts:', parts);
-                
+
                 const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
                 const textToInsert = prefix + parts.join('\n') + '\n';
-                
+
                 console.log('Text to insert:', JSON.stringify(textToInsert));
                 console.log('===============================');
-                
+
                 this.insertAtCursor(content, textToInsert);
-                
+
                 console.log('Content length after:', content.value.length);
             }
 
             // プレビュー表示の更新
             updatePreview() {
                 let previewContainer = document.getElementById('imagePreviewContainer');
-                
+
                 if (!previewContainer) {
                     previewContainer = this.createPreviewContainer();
                 }
@@ -987,7 +1005,7 @@
             setupExistingImageButtons() {
                 const buttons = document.querySelectorAll('.insert-existing-image');
                 const content = document.getElementById('contentTextarea');
-                
+
                 if (!buttons.length || !content) return;
 
                 buttons.forEach(btn => {
@@ -1013,7 +1031,7 @@
                 const md = `![${filename}](${url})`;
                 const prefix = (content.value && !content.value.endsWith('\n')) ? '\n' : '';
                 this.insertAtCursor(content, prefix + md + '\n');
-                
+
                 this.showInsertSuccess(btn);
             }
 
@@ -1044,7 +1062,7 @@
                 btn.innerHTML = '<i class="fas fa-check"></i> 挿入完了';
                 btn.classList.add('btn-success');
                 btn.classList.remove('btn-outline-primary');
-                
+
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                     btn.classList.remove('btn-success');
@@ -1101,16 +1119,16 @@
             // カーソル位置への挿入
             insertAtCursor(textarea, text) {
                 if (!textarea) return;
-                
+
                 // 重複挿入防止のための一意性チェック
                 const insertId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                
+
                 console.log('=== insertAtCursor Debug ===');
                 console.log('Insert ID:', insertId);
                 console.log('Insert timestamp:', new Date().toLocaleTimeString());
                 console.log('Text to insert:', JSON.stringify(text));
                 console.log('Textarea value length before:', textarea.value.length);
-                
+
                 // 既に同じテキストが最後に挿入されていないかチェック
                 const currentValue = textarea.value;
                 if (currentValue.endsWith(text.trim())) {
@@ -1118,18 +1136,18 @@
                     console.log('============================');
                     return;
                 }
-                
+
                 // CodeMirrorエディター対応
                 const codeEditorController = textarea.closest('[data-controller*="code-editor"]');
                 if (codeEditorController) {
                     console.log('Using CodeMirror editor');
-                    const controller = Stimulus.controllers.find(c => 
-                        c.element === codeEditorController && 
+                    const controller = Stimulus.controllers.find(c =>
+                        c.element === codeEditorController &&
                         c.identifier === 'code-editor'
                     );
                     if (controller && controller.insertText) {
                         console.log('Found CodeMirror controller, calling insertText');
-                        
+
                         // CodeMirrorでも重複チェック
                         const codeMirrorValue = controller.getValue ? controller.getValue() : '';
                         if (codeMirrorValue.endsWith(text.trim())) {
@@ -1137,7 +1155,7 @@
                             console.log('============================');
                             return;
                         }
-                        
+
                         controller.insertText(text);
                         console.log('CodeMirror insertText completed');
                         console.log('============================');
@@ -1146,7 +1164,7 @@
                         console.log('CodeMirror controller not found or no insertText method');
                     }
                 }
-                
+
                 console.log('Using standard textarea insertion');
                 // 通常のテキストエリア処理
                 const start = textarea.selectionStart ?? textarea.value.length;
@@ -1158,7 +1176,7 @@
                 textarea.selectionStart = textarea.selectionEnd = newPos;
                 textarea.focus();
                 textarea.dispatchEvent(new Event('input'));
-                
+
                 console.log('Textarea value length after:', textarea.value.length);
                 console.log('============================');
             }
@@ -1231,7 +1249,7 @@
             // フォーム送信時の処理
             form.addEventListener('submit', function(e) {
                 console.log('Form submission started');
-                
+
                 // プログレスバーを表示
                 progressContainer.style.display = 'block';
                 statusText.innerHTML = '<i class="fas fa-paper-plane me-2"></i>投稿を処理中...';
@@ -1268,7 +1286,7 @@
                     statusText.textContent = 'アップロード中...';
                     uploadDetails.textContent = '準備中...';
                 }
-                
+
                 // フォーム要素を有効化
                 disableFormElements(false);
             });
@@ -1276,7 +1294,7 @@
             // フォーム送信エラー時の処理
             document.addEventListener('turbo:submit-end', function(event) {
                 const { success } = event.detail;
-                
+
                 if (!success) {
                     // エラー時の処理
                     setTimeout(() => {
@@ -1284,7 +1302,7 @@
                         progressBar.classList.add('bg-danger');
                         statusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラーが発生しました';
                         uploadDetails.textContent = 'フォームを確認して再送信してください';
-                        
+
                         // 5秒後にプログレスバーを非表示にしてフォームを有効化
                         setTimeout(() => {
                             progressContainer.style.display = 'none';
@@ -1811,7 +1829,7 @@
                         input.disabled = disable;
                     });
                 }
-                
+
                 // キャンセルボタン以外のボタンを無効化
                 const buttons = form?.querySelectorAll('button:not(.btn-secondary)');
                 if (buttons) {

@@ -36,8 +36,6 @@ Rails.application.configure do
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [
     ->(_req) { Time.current.strftime("%Y-%m-%d %H:%M:%S") }, # 日時
-    :request_id,  # リクエストID
-    :remote_ip    # クライアントIP
   ]
   config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
 
