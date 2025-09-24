@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild app/javascript/application.js --bundle --sourcemap --outdir=app/assets/builds --public-path=assets",
+    "build": "esbuild app/javascript/application.js --bundle --sourcemap --outdir=app/assets/builds --public-path=assets --format=iife --global-name=App",
     "build:css": "esbuild app/assets/stylesheets/application.scss --bundle --loader:.scss=css --outdir=app/assets/builds --public-path=assets",
     "watch": "esbuild app/javascript/*.js --bundle --sourcemap --outdir=app/assets/builds --public-path=assets --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,6 +17,7 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@hotwired/turbo": "^8.0.13",
+    "@rails/activestorage": "^8.0.300",
     "codemirror": "^5.65.20",
     "flatpickr": "^4.6.13",
     "video.js": "^8.10.0"

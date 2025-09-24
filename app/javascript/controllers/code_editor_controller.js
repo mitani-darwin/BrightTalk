@@ -13,76 +13,107 @@ export default class extends Controller {
     }
   }
 
-  async initializeCodeMirror() {
-    const textarea = this.textareaTarget
-    
-    try {
-      // CodeMirrorが読み込まれるまで待機
-      await this.waitForCodeMirror()
-      
-      // グローバルCodeMirrorオブジェクトを使用
-      const CM = window.CodeMirror
-      
-      // CodeMirrorエディターを初期化
-      this.editor = CM.fromTextArea(textarea, {
-        mode: "markdown",
-        theme: "default",
-        lineNumbers: true,
-        lineWrapping: true,
-        indentUnit: 2,
-        tabSize: 2,
-        autoCloseBrackets: true,
-        matchBrackets: true,
-        showCursorWhenSelecting: true,
-        styleActiveLine: true,
-        foldGutter: true,
-        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-        extraKeys: {
-          "Ctrl-Space": "autocomplete",
-          "Tab": function(cm) {
-            if (cm.somethingSelected()) {
-              cm.indentSelection("add");
-            } else {
-              cm.replaceSelection("  ");
+    async initializeCodeMirror() {
+        const textarea = this.textareaTarget
+
+        try {
+            console.log('Starting CodeMirror initialization...');
+
+            // CodeMirrorが読み込まれるまで待機（タイムアウト処理付き）
+            await this.waitForCodeMirror()
+
+            // グローバルCodeMirrorオブジェクトを使用
+            const CM = window.CodeMirror
+
+            if (!CM || typeof CM.fromTextArea !== 'function') {
+                throw new Error('CodeMirror.fromTextArea is not available');
             }
-          }
-        }
-      })
 
-      // エディターの同期とバリデーション設定
-      this.setupEditorSync()
-      this.editor.setSize(null, "400px")
-      
-      if (textarea.value) {
-        this.editor.setValue(textarea.value)
-      }
-      
-      console.log('CodeMirror editor initialized successfully')
-      
-    } catch (error) {
-      console.error('CodeMirror initialization failed:', error)
-      this.initializeFallbackMode()
+            console.log('Initializing CodeMirror editor...');
+
+            // CodeMirrorエディターを初期化
+            this.editor = CM.fromTextArea(textarea, {
+                mode: "markdown",
+                theme: "default",
+                lineNumbers: true,
+                lineWrapping: true,
+                indentUnit: 2,
+                tabSize: 2,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                showCursorWhenSelecting: true,
+                styleActiveLine: true,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                extraKeys: {
+                    "Ctrl-Space": "autocomplete",
+                    "Tab": function(cm) {
+                        if (cm.somethingSelected()) {
+                            cm.indentSelection("add");
+                        } else {
+                            cm.replaceSelection("  ");
+                        }
+                    }
+                }
+            })
+
+            // エディターの同期とバリデーション設定
+            this.setupEditorSync()
+            this.editor.setSize(null, "400px")
+
+            if (textarea.value) {
+                this.editor.setValue(textarea.value)
+            }
+
+            console.log('CodeMirror editor initialized successfully')
+
+        } catch (error) {
+            console.error('CodeMirror initialization failed:', error)
+            this.initializeFallbackMode()
+        }
     }
-  }
 
-  async waitForCodeMirror() {
-    let attempts = 0
-    const maxAttempts = 100  // 10秒間待機
-
-    return new Promise((resolve, reject) => {
-      const checkInterval = setInterval(() => {
-        attempts++
-        
-        if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
-          clearInterval(checkInterval)
-          resolve(true)
-        } else if (attempts >= maxAttempts) {
-          clearInterval(checkInterval)
-          reject(new Error('CodeMirror failed to load'))
+    async waitForCodeMirror() {
+        // 動的読み込みを確実に実行
+        if (!window.CodeMirror || !window.CodeMirror.fromTextArea) {
+            try {
+                console.log('Attempting to load CodeMirror...');
+                const result = await window.loadCodeMirror();
+                if (result && result.fromTextArea) {
+                    console.log('CodeMirror loaded successfully via dynamic import');
+                    return Promise.resolve(true);
+                }
+            } catch (error) {
+                console.error('Failed to load CodeMirror dynamically:', error);
+            }
         }
-      }, 100)
-    })
-  }
+
+        // 既に利用可能な場合は即座に返す
+        if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+            console.log('CodeMirror already available');
+            return Promise.resolve(true);
+        }
+
+        // ポーリングによる待機処理
+        let attempts = 0
+        const maxAttempts = 50  // 5秒間待機（100ms × 50回）
+
+        return new Promise((resolve, reject) => {
+            const checkInterval = setInterval(() => {
+                attempts++
+
+                if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+                    clearInterval(checkInterval)
+                    console.log('CodeMirror confirmed available after', attempts, 'attempts');
+                    resolve(true)
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval)
+                    console.error('CodeMirror not available after', attempts, 'attempts');
+                    reject(new Error('CodeMirror failed to load'))
+                }
+            }, 100)
+        })
+    }
 
   initializeFallbackMode() {
     const textarea = this.textareaTarget

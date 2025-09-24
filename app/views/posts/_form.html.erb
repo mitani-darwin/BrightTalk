@@ -358,13 +358,57 @@
                 }
             }
         });
-        setTimeout(() => {
-            console.log('Delayed ActiveStorage check:', typeof window.ActiveStorage);
-            if (window.ActiveStorage) {
-                console.log('DirectUpload available:', typeof window.ActiveStorage.DirectUpload);
+        function waitForActiveStorage() {
+            return new Promise((resolve) => {
+                // 既に利用可能な場合は即座に解決
+                if (window.ActiveStorage && typeof window.ActiveStorage.DirectUpload === 'function') {
+                    resolve(window.ActiveStorage);
+                    return;
+                }
+
+                // カスタムイベントを待機
+                const handler = (event) => {
+                    console.log('ActiveStorage initialization event received');
+                    document.removeEventListener('activestorage:initialized', handler);
+                    resolve(event.detail.ActiveStorage);
+                };
+
+                document.addEventListener('activestorage:initialized', handler);
+
+                // タイムアウト処理（10秒後）
+                setTimeout(() => {
+                    document.removeEventListener('activestorage:initialized', handler);
+                    console.warn('ActiveStorage initialization timeout');
+                    resolve(null);
+                }, 10000);
+            });
+        }
+        // ActiveStorage確認の実行
+        waitForActiveStorage().then((activeStorage) => {
+            if (activeStorage) {
+                console.log('ActiveStorage confirmed available:', typeof activeStorage);
+                console.log('DirectUpload available:', typeof activeStorage.DirectUpload);
+
+                // ステータス表示要素があれば更新
+                const statusElement = document.getElementById('activestorage-status');
+                if (statusElement) {
+                    statusElement.textContent = 'ActiveStorage Ready';
+                    statusElement.className = 'badge bg-success';
+                }
+            } else {
+                console.error('ActiveStorage initialization failed or timed out');
+
+                // ステータス表示要素があれば更新
+                const statusElement = document.getElementById('activestorage-status');
+                if (statusElement) {
+                    statusElement.textContent = 'ActiveStorage Failed';
+                    statusElement.className = 'badge bg-danger';
+                }
             }
-        }, 1000);
+        });
     });
+
+
 
     // JavaScriptコードを即座に実行するように修正
     (function() {
@@ -1537,14 +1581,30 @@
         
         // 自動保存初期化（テスト環境では無効化）
         <% unless Rails.env.test? %>
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeAutoSave);
-        } else {
-            initializeAutoSave();
-        }
-        
-        document.addEventListener('turbo:load', initializeAutoSave);
-        <% end %>
+          function ensureAutoSaveInit() {
+              if (document.querySelector('form[data-turbo="false"]')) {
+                  initializeAutoSave();
+              } else {
+                  setTimeout(ensureAutoSaveInit, 100);
+              }
+          }
+
+          if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', ensureAutoSaveInit);
+          } else {
+              ensureAutoSaveInit();
+          }
+
+          document.addEventListener('turbo:load', ensureAutoSaveInit);
+          document.addEventListener('turbo:render', ensureAutoSaveInit);
+          // ページ読み込み後に少し遅れて初期化
+          setTimeout(() => {
+              if (document.querySelector('form[data-turbo="false"]')) {
+                  initializeAutoSave();
+                  console.log('自動保存機能を遅延初期化しました');
+              }
+          }, 1000);
+          <% end %>
 
         // 画像削除機能の初期化フラグ
         let imageDeletionInitialized = false;
