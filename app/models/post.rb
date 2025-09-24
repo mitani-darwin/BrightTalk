@@ -59,7 +59,7 @@ class Post < ApplicationRecord
     user.posts.published
         .where("created_at < ?", created_at)
         .order(created_at: :desc)
-        .first
+        .first if user.present?
   end
 
   # 同じ投稿者の次の投稿を取得
@@ -67,7 +67,7 @@ class Post < ApplicationRecord
     user.posts.published
         .where("created_at > ?", created_at)
         .order(created_at: :asc)
-        .first
+        .first if user.present?
   end
 
   # 関連記事を取得（タグ、カテゴリ、投稿タイプで関連性を判定）
