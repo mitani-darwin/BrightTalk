@@ -1351,6 +1351,39 @@
         }
         document.addEventListener('turbo:load', initializeExistingVideoButtons);
 
+        // フォーム要素の有効/無効化（グローバル関数として定義）
+        function disableFormElements(disable) {
+            const form = document.querySelector('form[data-turbo="false"]');
+            const submitButton = document.getElementById('submitButton');
+            
+            if (submitButton) {
+                submitButton.disabled = disable;
+                if (disable) {
+                    submitButton.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i>アップロード中...';
+                } else {
+                    submitButton.innerHTML = form?.querySelector('[name="commit"]')?.value || '投稿';
+                }
+            }
+            
+            // 入力フィールドのみ無効化（ボタンは個別制御）
+            const inputs = form?.querySelectorAll('input, textarea, select');
+            if (inputs) {
+                inputs.forEach(input => {
+                    input.disabled = disable;
+                });
+            }
+
+            // キャンセルボタン以外のボタンを無効化
+            const buttons = form?.querySelectorAll('button:not(.btn-secondary)');
+            if (buttons) {
+                buttons.forEach(button => {
+                    if (button !== submitButton) {
+                        button.disabled = disable;
+                    }
+                });
+            }
+        }
+
         // グローバル関数として定義
         window.removeImage = function(index) {
             alert('画像削除機能は後で実装します');
@@ -1811,35 +1844,6 @@
                 }, 5000);
             });
 
-            // フォーム要素の有効/無効化
-            function disableFormElements(disable) {
-                if (submitButton) {
-                    submitButton.disabled = disable;
-                    if (disable) {
-                        submitButton.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i>アップロード中...';
-                    } else {
-                        submitButton.innerHTML = form?.querySelector('[name="commit"]')?.value || '投稿';
-                    }
-                }
-                
-                // 入力フィールドのみ無効化（ボタンは個別制御）
-                const inputs = form?.querySelectorAll('input, textarea, select');
-                if (inputs) {
-                    inputs.forEach(input => {
-                        input.disabled = disable;
-                    });
-                }
-
-                // キャンセルボタン以外のボタンを無効化
-                const buttons = form?.querySelectorAll('button:not(.btn-secondary)');
-                if (buttons) {
-                    buttons.forEach(button => {
-                        if (button !== submitButton) {
-                            button.disabled = disable;
-                        }
-                    });
-                }
-            }
 
             // ファイルサイズのフォーマット
             function formatFileSize(bytes) {
