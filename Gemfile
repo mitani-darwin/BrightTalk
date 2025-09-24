@@ -31,7 +31,7 @@ gem "devise"
 gem "devise-i18n"
 
 # WebAuthn/Passkey認証
-gem "webauthn", "~> 3.0"
+gem "webauthn", "~> 3.4"
 
 # 画像処理 - オプショナル（システムにVIPSがインストールされていない場合はスキップ）
 gem "ruby-vips", require: false
