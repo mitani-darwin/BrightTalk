@@ -26,10 +26,9 @@
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
             <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 1,
-                               placeholder: "例: Railsの基本的な使い方を初心者に分かりやすく説明したい" %>
+                               placeholder: "例: このサイトを説明したい", :required => true%>
             <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
           </div>
-
 
           <!-- 投稿タイプ（対象読者の上） -->
           <div class="mb-3">
@@ -137,7 +136,7 @@
               <small class="text-muted">(公開時は必須)</small>
             <% end %>
             <%= form.text_field :target_audience, class: "form-control #{'is-invalid' if post.errors[:target_audience].any?}", required: true,
-                                placeholder: "例: プログラミング初心者、Rails学習者" %>
+                                placeholder: "例: このサイトに訪れた人" %>
             <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
           </div>
 
@@ -146,7 +145,7 @@
           <div class="mb-3">
             <%= form.label :expected_outcome, "期待する成果", class: "form-label" %>
             <%= form.text_area :expected_outcome, class: "form-control", rows: 1,
-                               placeholder: "例: 読者がRailsの基本的な開発環境を構築できるようになる" %>
+                               placeholder: "例: 読者がこのサイトで出来ることを理解する" %>
             <div class="form-text">この投稿を読んだ後、読者にどうなってほしいかを記入してください。</div>
           </div>
 
@@ -340,6 +339,25 @@
 <script>
     // DOMContentLoadedイベント後に確認
     document.addEventListener('DOMContentLoaded', function() {
+        // required属性を持つフィールドに背景色を適用
+        const requiredFields = document.querySelectorAll('#formContainer [required]');
+        requiredFields.forEach(field => {
+            if (field.classList.contains('form-control') || field.classList.contains('form-select')) {
+                field.style.backgroundColor = '#f7d6e6';
+            }
+        });
+
+        // アスタリスクマーカーがあるフィールドに背景色を適用
+        const asteriskLabels = document.querySelectorAll('#formContainer label .text-danger');
+        asteriskLabels.forEach(asterisk => {
+            const container = asterisk.closest('.mb-3');
+            if (container) {
+                const field = container.querySelector('.form-control, .form-select');
+                if (field) {
+                    field.style.backgroundColor = '#f7d6e6';
+                }
+            }
+        });
         setTimeout(() => {
             console.log('Delayed ActiveStorage check:', typeof window.ActiveStorage);
             if (window.ActiveStorage) {

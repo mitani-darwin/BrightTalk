@@ -9,11 +9,26 @@ class PostsController < ApplicationController
     # 公開済みの投稿のみ表示
     @posts = Post.published.includes(:user, :category, :tags).recent
 
-    # 検索タイプ
+    # カテゴリー・投稿タイプでの検索
     if params[:category_id].present? || (params[:post_type_id]).present?
       @category = Category.find(params[:category_id]) if params[:category_id].present?
       @post_type = PostType.find(params[:post_type_id]) if params[:post_type_id].present?
       @posts = @posts.where(category: @category, post_type: @post_type)
+    end
+
+    # 投稿期間での検索
+    if params[:date_range].present?
+      date_range = params[:date_range].split(' から ')
+      if date_range.length == 2
+        begin
+          start_date = Date.parse(date_range[0].strip)
+          end_date = Date.parse(date_range[1].strip)
+          @posts = @posts.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+        rescue Date::Error
+          # 日付のパースに失敗した場合は無視
+          Rails.logger.warn "Invalid date range format: #{params[:date_range]}"
+        end
+      end
     end
 
     @posts = @posts.page(params[:page]).per(10)

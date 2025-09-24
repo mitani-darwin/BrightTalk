@@ -21,8 +21,34 @@
         <%= form.collection_select :post_type_id, PostType.all, :id, :description,
                                    { prompt: "すべての投稿タイプ", selected: params[:post_type_id] },
                                    { class: "form-select", onchange: "this.form.submit();" } %>
-      <% end %>
-    </div>
-  </div>
+      </div>
 
+      <div class="card-header">
+        <h5 class="mb-0">投稿期間検索</h5>
+      </div>
+
+      <div class="card-body">
+        <%= form.text_field :date_range, 
+                            placeholder: "期間を選択してください",
+                            value: params[:date_range],
+                            class: "form-control",
+                            id: "date_range_picker",
+                            readonly: true,
+                            data: {
+                              controller: "flatpickr",
+                              flatpickr_target: "input",
+                              flatpickr_mode_value: "range",
+                              flatpickr_date_format_value: "Y/m/d",
+                              flatpickr_locale_value: "ja"
+                            } %>
+        <div class="mt-2">
+          <%= form.submit "検索", class: "btn btn-primary btn-sm" %>
+          <% if params[:date_range].present? %>
+            <%= link_to "クリア", posts_path(category_id: params[:category_id], post_type_id: params[:post_type_id]), class: "btn btn-outline-secondary btn-sm ms-1" %>
+          <% end %>
+        </div>
+      </div>
+
+    <% end %>
+  </div>
 </div>

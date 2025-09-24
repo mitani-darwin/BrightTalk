@@ -7,6 +7,9 @@
 // Video.js CSS (imported from CDN)
 @import url("https://cdn.jsdelivr.net/npm/video.js@8.17.4/dist/video-js.css");
 
+// Flatpickr CSS (imported from CDN)
+@import url("https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css");
+
 // ナビゲーションバーのカスタマイズ
 .navbar {
   width: 100%; // 親要素の幅に合わせる
@@ -677,20 +680,23 @@ main {
 // 投稿入力画面: 必須項目の背景色を $pink-100 に設定
 #formContainer {
   .mb-3 {
-    // ラベルに必須(*)表示があるフィールド
-    &:has(> label .text-danger) {
+    // ラベルに必須(*)表示があるフィールド（より具体的に）
+    &:has(label .text-danger) {
       input.form-control,
       textarea.form-control,
       select.form-select {
-        background-color: #f7d6e6; // Bootstrap $pink-100
+        background-color: #f7d6e6 !important; // Bootstrap $pink-100
       }
     }
 
-    // HTML の required 属性が付いているフィールド
+    // HTML の required 属性が付いているフィールド（より具体的に）
+    input.form-control[required="required"],
+    textarea.form-control[required="required"],
+    select.form-select[required="required"],
     input.form-control[required],
     textarea.form-control[required],
     select.form-select[required] {
-      background-color: #f7d6e6; // Bootstrap $pink-100
+      background-color: #f7d6e6 !important; // Bootstrap $pink-100
     }
   }
 }
