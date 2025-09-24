@@ -1,7 +1,8 @@
 
 <div class="row">
   <div class="col-12">
-    <%= form_with model: post, multipart: true, class: "needs-validation", novalidate: true, local: true do |form| %>
+    <%= form_with model: post, multipart: true, class: "needs-validation",
+                  novalidate: true, local: true, data: { turbo: false } do |form| %>
       <%= form.hidden_field :authenticity_token, value: form_authenticity_token %>
       <% if post.errors.any? %>
         <div class="alert alert-danger">
@@ -1461,8 +1462,16 @@
             
             // フォームデータを取得
             function getFormData() {
-                const form = document.querySelector('form[data-turbo="false"]');
-                if (!form) return null;
+                // 複数のセレクタでフォームを検索
+                let form = document.querySelector('form[data-turbo="false"]') ||
+                          document.querySelector('form.needs-validation') ||
+                          document.querySelector('form[action*="posts"]') ||
+                          document.querySelector('form');
+                
+                if (!form) {
+                    console.log('フォーム要素が見つかりません');
+                    return null;
+                }
                 
                 const formData = new FormData();
                 
@@ -2096,6 +2105,34 @@
         }
         
         document.addEventListener('turbo:load', initializeUploadProgress);
+
+        // グローバルスコープに必要な関数を公開（デバッグ・手動実行用）
+        window.initializeAutoSave = initializeAutoSave;
+        window.getCSRFToken = getCSRFToken;
+        
+        // 自動保存機能の診断用関数
+        window.diagnoseAutoSave = function() {
+            console.log('=== 自動保存診断 ===');
+            console.log('環境:', '<%= Rails.env %>');
+            
+            // フォーム要素の検出
+            const selectors = [
+                'form[data-turbo="false"]',
+                'form.needs-validation', 
+                'form[action*="posts"]',
+                'form'
+            ];
+            
+            selectors.forEach(selector => {
+                const form = document.querySelector(selector);
+                console.log(`${selector}:`, !!form);
+            });
+            
+            console.log('initializeAutoSave関数:', typeof initializeAutoSave);
+            console.log('CSRFトークン:', getCSRFToken());
+            console.log('現在のURL:', window.location.pathname);
+            console.log('================');
+        };
 
     })();
 </script>

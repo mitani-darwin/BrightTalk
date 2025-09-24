@@ -1,11 +1,3 @@
-// Controllers の登録前に追加
-console.log('Pre-loading CodeMirror...')
-loadCodeMirror().then(() => {
-    console.log('CodeMirror pre-loaded successfully')
-}).catch(error => {
-    console.warn('CodeMirror pre-loading failed:', error)
-})
-
 // esbuild用のapplication.js（CodeMirror完全修正版）
 import { Application } from "@hotwired/stimulus"
 import "@hotwired/turbo"
@@ -96,6 +88,14 @@ async function loadVideoJS() {
 // グローバル読み込み関数をエクスポート
 window.loadCodeMirror = loadCodeMirror;
 window.loadVideoJS = loadVideoJS;
+
+// CodeMirrorをプリロード（関数定義後に実行）
+console.log('Pre-loading CodeMirror...')
+loadCodeMirror().then(() => {
+    console.log('CodeMirror pre-loaded successfully')
+}).catch(error => {
+    console.warn('CodeMirror pre-loading failed:', error)
+})
 
 // Stimulusアプリケーションを開始
 const application = Application.start()
