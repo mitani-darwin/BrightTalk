@@ -35,9 +35,9 @@ export default class extends Controller {
       let VideoJS = window.videojs
       
       if (!VideoJS) {
-        // Try dynamic import as fallback
-        const videojs = await import("video.js")
-        VideoJS = videojs.default || videojs
+        console.error('Video.js is not available globally')
+        this.initializeFallback()
+        return
       }
 
       // Video.js configuration options

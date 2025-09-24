@@ -377,28 +377,48 @@
         // カテゴリー管理機能
         function initializeCategoryForm() {
             console.log('Initializing category form...'); // デバッグ用
+            
+            // 要素の存在を確認してから初期化
+            const checkElements = () => {
+                const addCategoryBtn = document.getElementById('addCategoryBtn');
+                const newCategoryForm = document.getElementById('newCategoryForm');
+                const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+                const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+                
+                console.log('Elements found:', {
+                    addCategoryBtn: !!addCategoryBtn,
+                    newCategoryForm: !!newCategoryForm,
+                    saveCategoryBtn: !!saveCategoryBtn,
+                    cancelCategoryBtn: !!cancelCategoryBtn
+                });
+                
+                // 必要な要素が全て存在する場合のみ初期化
+                if (addCategoryBtn && newCategoryForm && saveCategoryBtn && cancelCategoryBtn) {
+                    // イベントリスナーの設定
+                    setupCategoryFormEvents(addCategoryBtn, newCategoryForm, saveCategoryBtn, cancelCategoryBtn);
+                    return true;
+                }
+                
+                return false;
+            };
+            
+            // 即座にチェック
+            if (!checkElements()) {
+                // 少し待ってから再試行
+                setTimeout(() => {
+                    if (!checkElements()) {
+                        console.warn('Category form elements not found after retry');
+                    }
+                }, 100);
+            }
+        }
 
-            const addCategoryBtn = document.getElementById('addCategoryBtn');
-            const newCategoryForm = document.getElementById('newCategoryForm');
-            const saveCategoryBtn = document.getElementById('saveCategoryBtn');
-            const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+        function setupCategoryFormEvents(addCategoryBtn, newCategoryForm, saveCategoryBtn, cancelCategoryBtn) {
             const categorySelect = document.getElementById('categorySelect');
             const newCategoryName = document.getElementById('newCategoryName');
             const newCategoryDescription = document.getElementById('newCategoryDescription');
             const categoryError = document.getElementById('categoryError');
             const categorySuccess = document.getElementById('categorySuccess');
-
-            console.log('Elements found:', {
-                addCategoryBtn: !!addCategoryBtn,
-                newCategoryForm: !!newCategoryForm,
-                saveCategoryBtn: !!saveCategoryBtn,
-                cancelCategoryBtn: !!cancelCategoryBtn
-            }); // デバッグ用
-
-            if (!addCategoryBtn) {
-                console.error('addCategoryBtn not found');
-                return;
-            }
 
             // 新しいカテゴリー追加フォームを表示
             addCategoryBtn.addEventListener('click', function(e) {

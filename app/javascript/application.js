@@ -13,6 +13,10 @@ import "codemirror/addon/fold/foldgutter"
 import "codemirror/addon/fold/brace-fold"
 import "codemirror/addon/fold/markdown-fold"
 
+// Video.jsをインポートしてグローバルに設定
+import videojs from "video.js"
+window.videojs = videojs
+
 // CodeMirrorをグローバルに設定
 window.CodeMirror = CodeMirror
 
@@ -25,8 +29,10 @@ window.Stimulus = application
 // Controllers の登録
 import FlatpickrController from "./controllers/flatpickr_controller"
 import CodeEditorController from "./controllers/code_editor_controller"
+import VideoPlayerController from "./controllers/video_player_controller"
 
 application.register("flatpickr", FlatpickrController)
 application.register("code-editor", CodeEditorController)
+application.register("video-player", VideoPlayerController)
 
-console.log('Application loaded with esbuild and CodeMirror')
+console.log('Application loaded with esbuild, CodeMirror, and Video.js')

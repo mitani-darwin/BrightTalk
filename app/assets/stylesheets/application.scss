@@ -404,6 +404,28 @@ main {
 // 記事コンテンツ
 .post-content {
   line-height: 1.6;
+
+  // Markdown tables styling
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 0.75rem;
+      text-align: left;
+    }
+    
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+  }
 }
 
 // カスタムボタンスタイル
