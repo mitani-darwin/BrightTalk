@@ -66,9 +66,12 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_development_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["PUT", "POST", "GET", "DELETE"]
-    allowed_origins = ["*"]
-    expose_headers  = ["ETag"]
+    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]  # HEADを追加
+    allowed_origins = [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ]  # セキュリティ向上のため特定のオリジンに制限
+    expose_headers  = ["ETag", "x-amz-meta-custom-header"]  # カスタムヘッダーを追加
     max_age_seconds = 3600
   }
 }
