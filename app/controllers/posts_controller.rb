@@ -57,7 +57,24 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post = current_user.posts.build(post_params)
+    # 隠しフィールドからpost_idが送信されている場合は更新処理
+    if params[:post_id].present?
+      begin
+        @post = current_user.posts.friendly.find(params[:post_id])
+        @post.assign_attributes(post_params)
+        @post.status = "published" # 公開状態に設定
+      rescue ActiveRecord::RecordNotFound
+        # 投稿が見つからない場合は新規作成
+        @post = current_user.posts.build(post_params)
+        @post.status = "published"
+      end
+    else
+      @post = current_user.posts.build(post_params)
+      @post.status = "published"
+    end
+
+    # 投稿ボタンがクリックされた場合は公開状態に設定
+    @post.status = "published"
 
     Rails.logger.info "=== Post Creation Debug ==="
     Rails.logger.info "Post params: #{post_params.inspect}"
@@ -66,15 +83,71 @@ class PostsController < ApplicationController
     Rails.logger.info "Post errors: #{@post.errors.full_messages.inspect}"
     Rails.logger.info "=========================="
 
-    if @post.save
-      if @post.published?
-        redirect_to @post, notice: "投稿が作成されました。"
-      else
-        redirect_to drafts_posts_path, notice: "下書きが保存されました。"
+    # 修正：videosパラメータからsigned_idを処理
+    if params[:post][:videos].present?
+      video_param = params[:post][:videos]
+      Rails.logger.info "Processing video parameter: #{video_param.inspect}"
+
+      if video_param.is_a?(String) && video_param.present?
+        # signed_idの場合の処理
+        begin
+          blob = ActiveStorage::Blob.find_signed(video_param)
+          if blob
+            @post.videos.attach(blob)
+            Rails.logger.info "Successfully attached video: #{blob.filename} to new post"
+          else
+            Rails.logger.warn "Could not find blob for signed_id: #{video_param}"
+          end
+        rescue => e
+          Rails.logger.error "Failed to attach video: #{e.message}"
+        end
+      elsif video_param.respond_to?(:each)
+        # 配列の場合の処理
+        Array(video_param).reject(&:blank?).each do |signed_id|
+          begin
+            blob = ActiveStorage::Blob.find_signed(signed_id)
+            if blob
+              @post.videos.attach(blob)
+              Rails.logger.info "Successfully attached video: #{blob.filename} to new post"
+            else
+              Rails.logger.warn "Could not find blob for signed_id: #{signed_id}"
+            end
+          rescue => e
+            Rails.logger.error "Failed to attach video: #{e.message}"
+          end
+        end
       end
-    else
-      Rails.logger.error "Post save failed: #{@post.errors.full_messages.join(', ')}"
-      render :new, status: :unprocessable_content
+
+      # 既存のvideo_signed_ids処理も維持（後方互換性のため）
+      if params[:post][:video_signed_ids].present?
+        signed_ids = Array(params[:post][:video_signed_ids]).reject(&:blank?)
+        if signed_ids.any?
+          signed_ids.each do |signed_id|
+            begin
+              blob = ActiveStorage::Blob.find_signed(signed_id)
+              if blob
+                @post.videos.attach(blob)
+                Rails.logger.info "Successfully attached video: #{blob.filename} to new post"
+              else
+                Rails.logger.warn "Could not find blob for signed_id: #{signed_id}"
+              end
+            rescue => e
+              Rails.logger.error "Failed to attach video: #{e.message}"
+            end
+          end
+        end
+      end
+
+      if @post.save
+        if @post.published?
+          redirect_to @post, notice: "投稿が作成されました。"
+        else
+          redirect_to drafts_posts_path, notice: "下書きが保存されました。"
+        end
+      else
+        Rails.logger.error "Post save failed: #{@post.errors.full_messages.join(', ')}"
+        render :new, status: :unprocessable_content
+      end
     end
   end
 
@@ -82,12 +155,14 @@ class PostsController < ApplicationController
   end
 
   def update
+    Rails.logger.info "=== Post Update Debug ==="
+    Rails.logger.info "All params: #{params.inspect}"
+    Rails.logger.info "authenticity_token present: #{params[:authenticity_token].present?}"
+    Rails.logger.info "authenticity_token value: #{params[:authenticity_token]}"
+    Rails.logger.info "=========================="
+
     if update_with_additional_images
-      if @post.published?
-        redirect_to @post, notice: "投稿が更新されました。"
-      else
-        redirect_to drafts_posts_path, notice: "下書きが更新されました。"
-      end
+      redirect_to @post, notice: "投稿が更新されました。"
     else
       render :edit, status: :unprocessable_content
     end
@@ -106,20 +181,43 @@ class PostsController < ApplicationController
   # 自動保存（5秒間隔での下書き保存）
   def auto_save
     @post = if params[:id].present?
+              # slugまたは数値IDでの検索
               current_user.posts.friendly.find(params[:id])
-    else
+            else
               current_user.posts.build
-    end
+            end
 
-    # バリデーションをスキップして強制保存
-    @post.assign_attributes(auto_save_params)
+    # idパラメータを除外してからassign_attributes（ID破壊を防止）
+    safe_params = auto_save_params.except(:id, :video_signed_ids)
+    @post.assign_attributes(safe_params)
     @post.status = "draft"
     @post.auto_save = true  # 自動保存フラグを設定
+
+    # Direct Uploadで送信されたsigned_idがある場合の処理
+    if params[:video_signed_ids].present?
+      signed_ids = Array(params[:video_signed_ids]).reject(&:blank?)
+      if signed_ids.any?
+        @post.videos.purge # 既存動画を削除
+        signed_ids.each do |signed_id|
+          begin
+            blob = ActiveStorage::Blob.find_signed(signed_id)
+            if blob
+              @post.videos.attach(blob)
+              Rails.logger.info "Auto-save: Successfully attached video: #{blob.filename} to post #{@post.id}"
+            else
+              Rails.logger.warn "Auto-save: Could not find blob for signed_id: #{signed_id}"
+            end
+          rescue => e
+            Rails.logger.error "Auto-save: Failed to attach video: #{e.message}"
+          end
+        end
+      end
+    end
 
     if @post.save(validate: false)
       render json: {
         success: true,
-        post_id: @post.id,
+        post_id: @post.friendly_id || @post.id, # slugを優先して返す
         message: "自動保存されました",
         saved_at: Time.current.strftime("%H:%M:%S")
       }
@@ -278,6 +376,15 @@ class PostsController < ApplicationController
         @post.videos.purge # 既存動画を削除
         @post.videos.attach(new_videos.first) # 最初の動画のみ添付
       end
+
+      # メソッドの最後に追加
+      Rails.logger.info "=== Video Attachment Debug ==="
+      Rails.logger.info "Videos attached: #{@post.videos.attached?}"
+      Rails.logger.info "Video count: #{@post.videos.count}"
+      @post.videos.each_with_index do |video, index|
+        Rails.logger.info "Video #{index}: #{video.filename} (content_type: #{video.content_type})"
+      end
+      Rails.logger.info "=============================="
     end
 
     # Direct Uploadで送信されたsigned_idがある場合の処理
@@ -286,19 +393,36 @@ class PostsController < ApplicationController
       if signed_ids.any?
         @post.videos.purge # 既存動画を削除
         signed_ids.each do |signed_id|
-          blob = ActiveStorage::Blob.find_signed(signed_id)
-          @post.videos.attach(blob) if blob
+          begin
+            blob = ActiveStorage::Blob.find_signed(signed_id)
+            if blob
+              @post.videos.attach(blob)
+              Rails.logger.info "Successfully attached video: #{blob.filename} to post #{@post.id}"
+            else
+              Rails.logger.warn "Could not find blob for signed_id: #{signed_id}"
+            end
+          rescue ActiveStorage::InvariableError => e
+            Rails.logger.error "Failed to attach video with signed_id #{signed_id}: #{e.message}"
+          end
         end
       end
     end
 
-    # 画像・動画以外のフィールドを更新
-    other_params = post_params.except(:images, :videos)
+    Rails.logger.info "=== Parameters Debug ==="
+    Rails.logger.info "video_signed_ids present: #{params[:post][:video_signed_ids].present?}"
+    Rails.logger.info "video_signed_ids value: #{params[:post][:video_signed_ids].inspect}"
+    Rails.logger.info "videos present: #{params[:post][:videos].present?}"
+    Rails.logger.info "videos value: #{params[:post][:videos].inspect}"
+    Rails.logger.info "========================="
+
+    # 画像・動画・signed_ids以外のフィールドを更新
+    other_params = post_params.except(:images, :videos, :video_signed_ids)
     @post.update(other_params)
   end
 
   def auto_save_params
-    params.permit(:title, :content, :purpose, :target_audience, :category_id, :post_type_id, :key_points, :expected_outcome)
+    # idを含めず、安全なパラメータのみ許可
+    params.permit(:title, :content, :purpose, :target_audience, :category_id, :post_type_id, :key_points, :expected_outcome, video_signed_ids: [])
   end
 
   def log_user_status

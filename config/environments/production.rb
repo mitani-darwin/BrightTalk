@@ -100,12 +100,6 @@ Rails.application.configure do
     end
   end if defined?(Rack::Cors)
 
-  # Content Security Policy for WebAuthn
-  config.content_security_policy do |policy|
-    policy.connect_src :self, "https://www.brighttalk.jp"
-    policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp"
-  end
-
   # セッション設定
   config.session_store :cookie_store,
                        key: "_bright_talk_session",
@@ -129,5 +123,10 @@ Rails.application.configure do
     policy.connect_src :self, "https://www.brighttalk.jp"
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
+    policy.img_src :self, :https, :data, :blob, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
   end
+
+  config.assets.js_compressor = :uglifier
+  config.assets.compile = true
+  config.assets.digest = true
 end

@@ -1,17 +1,17 @@
-import { Controller } from "@hotwired/stimulus"
+import {Controller} from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["textarea"]
+    static targets = ["textarea"]
 
-  connect() {
-    this.initializeCodeMirror()
-  }
-
-  disconnect() {
-    if (this.editor) {
-      this.editor.toTextArea()
+    connect() {
+        this.initializeCodeMirror()
     }
-  }
+
+    disconnect() {
+        if (this.editor) {
+            this.editor.toTextArea()
+        }
+    }
 
     async initializeCodeMirror() {
         const textarea = this.textareaTarget
@@ -47,7 +47,7 @@ export default class extends Controller {
                 gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                 extraKeys: {
                     "Ctrl-Space": "autocomplete",
-                    "Tab": function(cm) {
+                    "Tab": function (cm) {
                         if (cm.somethingSelected()) {
                             cm.indentSelection("add");
                         } else {
@@ -115,82 +115,110 @@ export default class extends Controller {
         })
     }
 
-  initializeFallbackMode() {
-    const textarea = this.textareaTarget
-    
-    // フォールバック時の視覚的改善
-    textarea.style.fontFamily = 'Monaco, "Lucida Console", monospace'
-    textarea.style.fontSize = '14px'
-    textarea.style.lineHeight = '1.5'
-    textarea.style.padding = '10px'
-    textarea.style.border = '1px solid #ddd'
-    textarea.style.borderRadius = '4px'
-    textarea.style.minHeight = '400px'
-    textarea.style.resize = 'vertical'
-    
-    console.log('Fallback mode initialized')
-  }
+    initializeFallbackMode() {
+        const textarea = this.textareaTarget
 
-  setupEditorSync() {
-    const textarea = this.textareaTarget
-    
-    this.editor.on("change", () => {
-      textarea.value = this.editor.getValue()
-      textarea.setCustomValidity('')
-      textarea.dispatchEvent(new Event('change', { bubbles: true }))
-      textarea.dispatchEvent(new Event('input', { bubbles: true }))
-    })
+        // フォールバック時の視覚的改善
+        textarea.style.fontFamily = 'Monaco, "Lucida Console", monospace'
+        textarea.style.fontSize = '14px'
+        textarea.style.lineHeight = '1.5'
+        textarea.style.padding = '10px'
+        textarea.style.border = '1px solid #ddd'
+        textarea.style.borderRadius = '4px'
+        textarea.style.minHeight = '400px'
+        textarea.style.resize = 'vertical'
 
-    const form = textarea.closest('form')
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        textarea.value = this.editor.getValue()
-        
-        if (!textarea.checkValidity()) {
-          e.preventDefault()
-          this.editor.focus()
-          textarea.setCustomValidity('内容を入力してください')
-          textarea.reportValidity()
-          return false
+        console.log('Fallback mode initialized')
+    }
+
+    setupEditorSync() {
+        const textarea = this.textareaTarget
+
+        this.editor.on("change", () => {
+            textarea.value = this.editor.getValue()
+            textarea.setCustomValidity('')
+            textarea.dispatchEvent(new Event('change', {bubbles: true}))
+            textarea.dispatchEvent(new Event('input', {bubbles: true}))
+        })
+
+        const form = textarea.closest('form')
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                textarea.value = this.editor.getValue()
+
+                if (!textarea.checkValidity()) {
+                    e.preventDefault()
+                    this.editor.focus()
+                    textarea.setCustomValidity('内容を入力してください')
+                    textarea.reportValidity()
+                    return false
+                }
+            })
         }
-      })
+
+        textarea.addEventListener('invalid', (e) => {
+            e.preventDefault()
+            this.editor.focus()
+        })
+
+        this.editor.on("focus", () => {
+            this.editor.refresh()
+            textarea.setCustomValidity('')
+        })
     }
 
-    textarea.addEventListener('invalid', (e) => {
-      e.preventDefault()
-      this.editor.focus()
-    })
-
-    this.editor.on("focus", () => {
-      this.editor.refresh()
-      textarea.setCustomValidity('')
-    })
-  }
-
-  // 画像・動画挿入用のメソッド
-  insertText(text) {
-    if (this.editor) {
-      const doc = this.editor.getDoc()
-      const cursor = doc.getCursor()
-      doc.replaceRange(text, cursor)
-      this.editor.focus()
-    } else {
-      // フォールバックモード用
-      const textarea = this.textareaTarget
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const before = textarea.value.substring(0, start)
-      const after = textarea.value.substring(end)
-      textarea.value = before + text + after
-      textarea.selectionStart = textarea.selectionEnd = start + text.length
-      textarea.focus()
+    // 画像・動画挿入用のメソッド
+    insertText(text) {
+        if (this.editor) {
+            const doc = this.editor.getDoc()
+            const cursor = doc.getCursor()
+            doc.replaceRange(text, cursor)
+            this.editor.focus()
+        } else {
+            // フォールバックモード用
+            const textarea = this.textareaTarget
+            const start = textarea.selectionStart
+            const end = textarea.selectionEnd
+            const before = textarea.value.substring(0, start)
+            const after = textarea.value.substring(end)
+            textarea.value = before + text + after
+            textarea.selectionStart = textarea.selectionEnd = start + text.length
+            textarea.focus()
+        }
     }
-  }
 
-  getCursorPosition() {
-    if (this.editor) {
-      return this.editor.getDoc().getCursor()
+    getCursorPosition() {
+        if (this.editor) {
+            return this.editor.getDoc().getCursor()
+        }
+        return null
     }
-    return null
-  }
+
+    // 現在の値を取得するメソッドを追加
+    getValue() {
+        if (this.editor) {
+            return this.editor.getValue()
+        } else {
+            return this.textareaTarget.value
+        }
+    }
+
+    // フォーカス状態を確認するメソッドを追加
+    hasFocus() {
+        if (this.editor) {
+            return this.editor.hasFocus()
+        } else {
+            return document.activeElement === this.textareaTarget
+        }
+    }
+
+    // エディタを安全にリフレッシュするメソッドを追加
+    refreshEditor() {
+        if (this.editor) {
+            setTimeout(() => {
+                this.editor.refresh()
+                this.editor.focus()
+            }, 100)
+        }
+    }
 }

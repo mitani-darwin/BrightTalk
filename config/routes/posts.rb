@@ -18,4 +18,8 @@ Rails.application.routes.draw do
     resources :likes, only: [ :create, :destroy ]
     resources :comments, only: [ :create, :destroy ]
   end
+
+  # Handle POST requests to /posts/:id (which should be PATCH/PUT for updates)
+  # This fixes forms that incorrectly use POST method for updating existing posts
+  post '/posts/:id', to: 'posts#update', constraints: { id: /[^\/]+/ }
 end

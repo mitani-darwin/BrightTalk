@@ -151,4 +151,12 @@ window.checkActiveStorageStatus = function() {
     return status;
 };
 
+// CSRF token handling for Turbo
+document.addEventListener('turbo:before-fetch-request', (event) => {
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    if (token) {
+        event.detail.fetchOptions.headers['X-CSRF-Token'] = token;
+    }
+});
+
 console.log('ActiveStorage initialized and ready')
