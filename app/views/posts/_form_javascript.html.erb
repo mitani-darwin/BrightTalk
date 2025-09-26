@@ -1,0 +1,466 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize form functionality
+  initializeFormFeatures();
+  initializeUploadHandlers();
+  initializeAutoSave();
+  initializeFormValidation();
+});
+
+// Form features initialization
+function initializeFormFeatures() {
+  // Post type and category management
+  initializePostTypeManagement();
+  initializeCategoryManagement();
+  
+  // File upload UI
+  initializeFileUploadUI();
+  
+  // Content editing features
+  initializeContentEditor();
+}
+
+// Upload handlers
+function initializeUploadHandlers() {
+  const imageInput = document.getElementById('imageInput');
+  const videoInput = document.getElementById('videoInput');
+  
+  if (imageInput) {
+    imageInput.addEventListener('change', handleImageUpload);
+    imageInput.addEventListener('direct-upload:start', handleDirectUploadStart);
+    imageInput.addEventListener('direct-upload:end', handleDirectUploadEnd);
+    imageInput.addEventListener('direct-upload:error', handleDirectUploadError);
+  }
+  
+  if (videoInput) {
+    videoInput.addEventListener('change', handleVideoUpload);
+    videoInput.addEventListener('direct-upload:start', handleDirectUploadStart);
+    videoInput.addEventListener('direct-upload:end', handleDirectUploadEnd);
+    videoInput.addEventListener('direct-upload:error', handleDirectUploadError);
+  }
+}
+
+// Auto-save functionality
+function initializeAutoSave() {
+  if (typeof window.autoSaveEnabled !== 'undefined' && window.autoSaveEnabled) {
+    const form = document.querySelector('form[data-turbo="false"]');
+    if (form) {
+      setInterval(performAutoSave, 5000); // Auto-save every 5 seconds
+    }
+  }
+}
+
+// Form validation
+function initializeFormValidation() {
+  const form = document.querySelector('.needs-validation');
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+  }
+}
+
+// Post type management
+function initializePostTypeManagement() {
+  const addBtn = document.getElementById('addPostTypeBtn');
+  const saveBtn = document.getElementById('savePostTypeBtn');
+  const cancelBtn = document.getElementById('cancelPostTypeBtn');
+  const form = document.getElementById('newPostTypeForm');
+  
+  if (addBtn) {
+    addBtn.addEventListener('click', () => toggleForm(form, true));
+  }
+  
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => toggleForm(form, false));
+  }
+  
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveNewPostType);
+  }
+}
+
+// Category management
+function initializeCategoryManagement() {
+  const addBtn = document.getElementById('addCategoryBtn');
+  const saveBtn = document.getElementById('saveCategoryBtn');
+  const cancelBtn = document.getElementById('cancelCategoryBtn');
+  const form = document.getElementById('newCategoryForm');
+  
+  if (addBtn) {
+    addBtn.addEventListener('click', () => toggleForm(form, true));
+  }
+  
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => toggleForm(form, false));
+  }
+  
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveNewCategory);
+  }
+}
+
+// File upload UI
+function initializeFileUploadUI() {
+  // Image and video deletion buttons
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('.delete-image-btn')) {
+      handleImageDelete(e);
+    }
+    
+    if (e.target.matches('.delete-video-btn')) {
+      handleVideoDelete(e);
+    }
+    
+    if (e.target.matches('.insert-existing-image')) {
+      insertExistingMedia(e, 'image');
+    }
+    
+    if (e.target.matches('.insert-existing-video')) {
+      insertExistingMedia(e, 'video');
+    }
+  });
+}
+
+// Content editor features
+function initializeContentEditor() {
+  const textarea = document.getElementById('contentTextarea');
+  if (textarea) {
+    // Add markdown shortcuts or editor features here
+    addMarkdownShortcuts(textarea);
+  }
+}
+
+// Helper functions
+function toggleForm(form, show) {
+  if (form) {
+    form.style.display = show ? 'block' : 'none';
+  }
+}
+
+function handleImageUpload(event) {
+  const files = event.target.files;
+  const textarea = document.getElementById('contentTextarea');
+  
+  for (let file of files) {
+    console.log('Image selected:', file.name);
+    
+    // Insert Markdown format link into content textarea
+    if (textarea) {
+      const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
+      insertMarkdownAtCursor(textarea, markdownLink);
+    }
+  }
+}
+
+function handleVideoUpload(event) {
+  const file = event.target.files[0];
+  const textarea = document.getElementById('contentTextarea');
+  
+  if (file) {
+    console.log('Video selected:', file.name);
+    
+    // Insert Markdown format link into content textarea
+    if (textarea) {
+      const markdownLink = `[${file.name}](attachment:${file.name})\n\n`;
+      insertMarkdownAtCursor(textarea, markdownLink);
+    }
+  }
+}
+
+function handleDirectUploadStart(event) {
+  showUploadProgress();
+  updateUploadStatus('アップロード開始中...', 0);
+}
+
+function handleDirectUploadEnd(event) {
+  updateUploadStatus('アップロード完了', 100);
+  setTimeout(hideUploadProgress, 2000);
+}
+
+function handleDirectUploadError(event) {
+  updateUploadStatus('アップロードエラー', 0);
+  showError('ファイルのアップロードに失敗しました。');
+}
+
+function showUploadProgress() {
+  const container = document.getElementById('uploadProgressContainer');
+  if (container) {
+    container.style.display = 'block';
+  }
+}
+
+function hideUploadProgress() {
+  const container = document.getElementById('uploadProgressContainer');
+  if (container) {
+    container.style.display = 'none';
+  }
+}
+
+function updateUploadStatus(text, progress) {
+  const statusText = document.getElementById('uploadStatusText');
+  const progressBar = document.getElementById('uploadProgressBar');
+  
+  if (statusText) statusText.textContent = text;
+  if (progressBar) {
+    progressBar.style.width = progress + '%';
+    progressBar.setAttribute('aria-valuenow', progress);
+  }
+}
+
+function performAutoSave() {
+  // Auto-save implementation
+  const form = document.querySelector('form[data-turbo="false"]');
+  if (form) {
+    const formData = new FormData(form);
+    
+    fetch('/posts/auto_save', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': getCSRFToken()
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAutoSaveSuccess(data.message);
+        updatePostId(data.post_id);
+      }
+    })
+    .catch(error => {
+      console.error('Auto-save error:', error);
+    });
+  }
+}
+
+function showAutoSaveSuccess(message) {
+  const alert = document.getElementById('autoSaveAlert');
+  const messageSpan = document.getElementById('autoSaveMessage');
+  
+  if (alert && messageSpan) {
+    messageSpan.textContent = message;
+    alert.style.display = 'block';
+    alert.classList.add('show');
+    
+    setTimeout(() => {
+      alert.classList.remove('show');
+      setTimeout(() => {
+        alert.style.display = 'none';
+      }, 300);
+    }, 3000);
+  }
+}
+
+function updatePostId(postId) {
+  const hiddenInput = document.getElementById('post_id');
+  if (hiddenInput && postId) {
+    hiddenInput.value = postId;
+  }
+}
+
+function getCSRFToken() {
+  const token = document.querySelector('meta[name="csrf-token"]');
+  return token ? token.getAttribute('content') : '';
+}
+
+function saveNewPostType() {
+  // Implementation for saving new post type
+  console.log('Save new post type');
+}
+
+function saveNewCategory() {
+  // Implementation for saving new category
+  console.log('Save new category');
+}
+
+function handleImageDelete(event) {
+  const button = event.target.closest('.delete-image-btn');
+  if (!button) return;
+  
+  const postId = button.dataset.postId;
+  const attachmentId = button.dataset.attachmentId;
+  const filename = button.dataset.filename;
+  
+  if (!confirm(`画像「${filename}」を削除しますか？`)) {
+    return;
+  }
+  
+  fetch(`/posts/${postId}/delete_image`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': getCSRFToken(),
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({ attachment_id: attachmentId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Remove the image card from DOM
+      const imageCard = document.getElementById(`image-card-${attachmentId}`);
+      if (imageCard) {
+        imageCard.remove();
+      }
+      showSuccess(data.message);
+    } else {
+      showError(data.message || '画像の削除に失敗しました');
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    showError('画像の削除中にエラーが発生しました');
+  });
+}
+
+function handleVideoDelete(event) {
+  const button = event.target.closest('.delete-video-btn');
+  if (!button) return;
+  
+  const postId = button.dataset.postId;
+  const attachmentId = button.dataset.attachmentId;
+  const filename = button.dataset.filename;
+  
+  if (!confirm(`動画「${filename}」を削除しますか？`)) {
+    return;
+  }
+  
+  fetch(`/posts/${postId}/delete_video`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': getCSRFToken(),
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({ attachment_id: attachmentId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Remove the video card from DOM
+      const videoCard = document.getElementById(`video-card-${attachmentId}`);
+      if (videoCard) {
+        videoCard.remove();
+      }
+      showSuccess(data.message);
+    } else {
+      showError(data.message || '動画の削除に失敗しました');
+    }
+  })
+  .catch(error => {
+    console.error('Delete error:', error);
+    showError('動画の削除中にエラーが発生しました');
+  });
+}
+
+function insertExistingMedia(event, type) {
+  const button = event.target.closest('.insert-existing-image, .insert-existing-video');
+  if (!button) return;
+  
+  const filename = button.dataset.filename;
+  const url = button.dataset.url;
+  const textarea = document.getElementById('contentTextarea');
+  
+  if (!textarea || !filename) return;
+  
+  let markdownLink;
+  if (type === 'image' || button.classList.contains('insert-existing-image')) {
+    markdownLink = `![${filename}](${url})\n\n`;
+  } else {
+    markdownLink = `[${filename}](${url})\n\n`;
+  }
+  
+  insertMarkdownAtCursor(textarea, markdownLink);
+  showSuccess(`${type === 'image' ? '画像' : '動画'}「${filename}」を挿入しました`);
+}
+
+function addMarkdownShortcuts(textarea) {
+  // Implementation for markdown shortcuts
+  console.log('Add markdown shortcuts to textarea');
+}
+
+function insertMarkdownAtCursor(textarea, text) {
+  if (!textarea) return;
+
+  // CodeMirrorエディターが存在する場合はそちらを使用
+  const codeEditorController = textarea.closest('[data-controller*="code-editor"]');
+  if (codeEditorController) {
+    const controller = Stimulus.controllers.find(c =>
+      c.element === codeEditorController &&
+      c.identifier === 'code-editor'
+    );
+    if (controller && controller.insertText) {
+      controller.insertText(text);
+      return;
+    }
+  }
+
+  // フォールバック: 通常のテキストエリア処理
+  const start = textarea.selectionStart ?? textarea.value.length;
+  const end = textarea.selectionEnd ?? textarea.value.length;
+  const currentValue = textarea.value;
+  
+  // Insert text at cursor position
+  textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+  
+  // Set cursor position after inserted text
+  const newPos = start + text.length;
+  textarea.selectionStart = textarea.selectionEnd = newPos;
+  
+  // Focus back to textarea
+  textarea.focus();
+  
+  // 高さの自動調整があればイベントを発火
+  textarea.dispatchEvent(new Event('input'));
+}
+
+function showError(message) {
+  console.error(message);
+  showAlert(message, 'danger');
+}
+
+function showSuccess(message) {
+  console.log(message);
+  showAlert(message, 'success');
+}
+
+function showAlert(message, type) {
+  // Create or update alert element
+  let alertContainer = document.getElementById('dynamicAlerts');
+  if (!alertContainer) {
+    alertContainer = document.createElement('div');
+    alertContainer.id = 'dynamicAlerts';
+    alertContainer.className = 'position-fixed top-0 start-50 translate-middle-x';
+    alertContainer.style.zIndex = '1060';
+    alertContainer.style.marginTop = '20px';
+    document.body.appendChild(alertContainer);
+  }
+  
+  const alertElement = document.createElement('div');
+  alertElement.className = `alert alert-${type} alert-dismissible fade show`;
+  alertElement.innerHTML = `
+    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  alertContainer.appendChild(alertElement);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (alertElement.parentNode) {
+      alertElement.remove();
+    }
+  }, 5000);
+}
+
+// Global functions for compatibility
+window.initializeFormFeatures = initializeFormFeatures;
+window.performAutoSave = performAutoSave;
+</script>

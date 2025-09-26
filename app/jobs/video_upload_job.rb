@@ -2,42 +2,58 @@ class VideoUploadJob < ApplicationJob
   queue_as :default
 
   def perform(video_attachment)
-    # 添付ファイルが存在しない場合は何もしない（削除されている可能性）
-    return unless video_attachment.blob.present?
-    return unless video_attachment.blob&.content_type&.start_with?("video/")
+    unless video_attachment&.persisted?
+      Rails.logger.info "Video attachment no longer exists, skipping job"
+      return
+    end
 
-    # メタデータチェックで処理済みかを確認
+    unless video_attachment.blob&.persisted?
+      Rails.logger.info "Video blob no longer exists, skipping job"
+      return
+    end
+
+    return unless video_attachment.blob&.content_type&.start_with?("video/")
     return if video_attachment.blob.metadata["async_upload_completed"] == true
 
     begin
-      # S3での存在確認のみ
+      # S3での存在確認と整合性チェック
       if video_attachment.blob.service.respond_to?(:exist?) &&
          video_attachment.blob.service.exist?(video_attachment.blob.key)
 
-        # 存在する場合はメタデータ更新のみ
+        # ファイルサイズの整合性チェック（オプション）
+        begin
+          actual_size = video_attachment.blob.service.open(video_attachment.blob.key) { |file| file.size }
+          expected_size = video_attachment.blob.byte_size
+
+          if actual_size != expected_size
+            Rails.logger.warn "File size mismatch for #{video_attachment.blob.filename}: expected #{expected_size}, got #{actual_size}"
+          end
+        rescue => size_check_error
+          Rails.logger.warn "Could not verify file size: #{size_check_error.message}"
+        end
+
+        # メタデータ更新
         video_attachment.blob.update!(
           metadata: video_attachment.blob.metadata.merge(
             "async_upload_completed" => true,
-            "uploaded_by" => "video_upload_job"
+            "uploaded_by" => "video_upload_job",
+            "verified_at" => Time.current.iso8601
           )
         )
+        Rails.logger.info "VideoUploadJob completed successfully for: #{video_attachment.blob.filename}"
       else
-        # 存在しない場合のみ、Active Storageの通常アップロード処理
-        # （実際には、この状況は通常発生しないはず）
-        Rails.logger.warn "Video not found in s3, this should not happen: #{video_attachment.filename}"
+        Rails.logger.error "Video file not found in S3: #{video_attachment.blob.filename}"
+        # 必要に応じて再アップロードロジックをここに追加
       end
     rescue ActiveRecord::RecordNotFound => e
-      # 添付ファイルやblobが削除されている場合
       Rails.logger.info "Video attachment or blob was deleted before job execution: #{e.message}"
     rescue => e
-      # その他のエラーハンドリング
       Rails.logger.error "Error processing video upload job: #{e.message}"
+      raise # エラーを再発生させて再試行可能にする
     end
   end
 
-  # ActiveJob::DeserializationErrorをクラスレベルでキャッチ
   rescue_from ActiveJob::DeserializationError do |exception|
     Rails.logger.info "Video attachment was deleted before job execution: #{exception.message}"
-    # ジョブを正常終了させる（エラーとして扱わない）
   end
 end

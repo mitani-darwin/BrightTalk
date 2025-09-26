@@ -1,0 +1,20 @@
+<!-- アップロード進捗表示 -->
+<div id="uploadProgressContainer" class="mb-3" style="display: none;">
+  <div class="alert alert-info mb-2">
+    <i class="fas fa-cloud-upload-alt me-2"></i>
+    <span id="uploadStatusText">アップロード中...</span>
+  </div>
+  <div class="progress" style="height: 8px;">
+    <div id="uploadProgressBar"
+         class="progress-bar progress-bar-striped progress-bar-animated"
+         role="progressbar"
+         style="width: 0%"
+         aria-valuenow="0"
+         aria-valuemin="0"
+         aria-valuemax="100">
+    </div>
+  </div>
+  <div class="mt-2">
+    <small class="text-muted" id="uploadDetails">準備中...</small>
+  </div>
+</div>

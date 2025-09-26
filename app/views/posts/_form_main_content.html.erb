@@ -1,0 +1,54 @@
+<!-- 要点・ポイント -->
+<div class="mb-3">
+  <%= form.label :key_points, "要点・ポイント", class: "form-label" %>
+  <%= form.text_area :key_points, class: "form-control", rows: 4,
+                     placeholder: "例：\n1. 環境構築の手順\n2. 基本的なコマンドの使い方\n3. よくあるエラーとその対処法" %>
+  <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
+</div>
+
+<!-- タイトル -->
+<div class="mb-3">
+  <%= form.label :title, class: "form-label" do %>
+    タイトル
+    <span class="text-danger">*</span>
+    <small class="text-muted">(常に必須)</small>
+  <% end %>
+  <%= form.text_field :title, class: "form-control #{'is-invalid' if post.errors[:title].any?}", required: true, placeholder: "投稿タイトル" %>
+  <div class="invalid-feedback">
+    タイトルを入力してください。
+  </div>
+</div>
+
+<!-- 内容 -->
+<div class="mb-3 flex-grow-1 d-flex flex-column">
+  <%= form.label :content, class: "form-label" do %>
+    内容
+    <span class="text-danger">*</span>
+    <small class="text-muted">(常に必須)</small>
+    <small class="text-muted d-block">
+      <%= link_to markdown_guide_path,
+                  target: "_blank",
+                  class: "text-decoration-none" do %>
+        <i class="fas fa-book me-1"></i>Markdown記法ガイド（日本語）
+      <% end %>
+    </small>
+  <% end %>
+  <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
+                     id: "contentTextarea", required: true, style: "overflow:auto; resize:vertical; min-height: 400px; font-family: Monaco, 'Lucida Console', monospace;",
+                     placeholder: "内容を入力してください", data: Rails.env.test? ? {} : { controller: "code-editor", "code-editor-target": "textarea" } %>
+  <div class="invalid-feedback">
+    内容を入力してください。
+  </div>
+</div>
+
+<!-- 送信ボタンエリア（内容欄に2列で表示） -->
+<div class="mb-3">
+  <div class="row">
+    <div class="col-6">
+      <%= form.submit "投稿", class: "btn btn-primary w-100", data: { disable_with: "投稿中..." } %>
+    </div>
+    <div class="col-6">
+      <%= link_to "キャンセル", post.persisted? ? post : posts_path, class: "btn btn-outline-secondary w-100" %>
+    </div>
+  </div>
+</div>

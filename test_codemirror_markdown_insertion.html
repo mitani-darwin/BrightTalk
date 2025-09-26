@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMirror Markdown Insertion Test</title>
+    <script src="https://unpkg.com/@hotwired/stimulus/dist/stimulus.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        button { margin: 5px; padding: 10px; }
+        .result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>CodeMirror Markdown Insertion Test</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Regular Textarea</h2>
+        <textarea id="regularTextarea" placeholder="カーソルを置いてテストしてください...">既存のコンテンツ</textarea>
+        <div>
+            <button onclick="testImageInsert('regularTextarea')">画像挿入テスト</button>
+            <button onclick="testVideoInsert('regularTextarea')">動画挿入テスト</button>
+        </div>
+        <div class="result" id="regular-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: CodeMirror Editor (Simulated)</h2>
+        <div data-controller="code-editor">
+            <textarea id="codemirrorTextarea" placeholder="CodeMirror シミュレート...">既存のCodeMirrorコンテンツ</textarea>
+        </div>
+        <div>
+            <button onclick="testImageInsert('codemirrorTextarea')">画像挿入テスト</button>
+            <button onclick="testVideoInsert('codemirrorTextarea')">動画挿入テスト</button>
+        </div>
+        <div class="result" id="codemirror-result"></div>
+    </div>
+
+    <script>
+        // Mock Stimulus for testing
+        window.Stimulus = {
+            controllers: []
+        };
+
+        // Mock CodeMirror controller for testing
+        const mockCodeMirrorController = {
+            element: document.querySelector('[data-controller="code-editor"]'),
+            identifier: 'code-editor',
+            insertText: function(text) {
+                const textarea = this.element.querySelector('textarea');
+                const start = textarea.selectionStart ?? textarea.value.length;
+                const end = textarea.selectionEnd ?? textarea.value.length;
+                const currentValue = textarea.value;
+                
+                textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+                const newPos = start + text.length;
+                textarea.selectionStart = textarea.selectionEnd = newPos;
+                textarea.focus();
+                
+                console.log('CodeMirror controller insertText called with:', text);
+                document.getElementById('codemirror-result').innerHTML = 
+                    `<strong>CodeMirror挿入成功:</strong> "${text}" をカーソル位置に挿入しました`;
+            }
+        };
+
+        // Add mock controller to Stimulus
+        Stimulus.controllers.push(mockCodeMirrorController);
+
+        // The updated insertMarkdownAtCursor function
+        function insertMarkdownAtCursor(textarea, text) {
+            if (!textarea) return;
+
+            // CodeMirrorエディターが存在する場合はそちらを使用
+            const codeEditorController = textarea.closest('[data-controller*="code-editor"]');
+            if (codeEditorController) {
+                const controller = Stimulus.controllers.find(c =>
+                    c.element === codeEditorController &&
+                    c.identifier === 'code-editor'
+                );
+                if (controller && controller.insertText) {
+                    controller.insertText(text);
+                    return;
+                }
+            }
+
+            // フォールバック: 通常のテキストエリア処理
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const currentValue = textarea.value;
+            
+            // Insert text at cursor position
+            textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+            
+            // Set cursor position after inserted text
+            const newPos = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newPos;
+            
+            // Focus back to textarea
+            textarea.focus();
+            
+            // 高さの自動調整があればイベントを発火
+            textarea.dispatchEvent(new Event('input'));
+            
+            console.log('Regular textarea insertion completed');
+            document.getElementById('regular-result').innerHTML = 
+                `<strong>通常のテキストエリア挿入成功:</strong> "${text}" をカーソル位置に挿入しました`;
+        }
+
+        function testImageInsert(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            const markdownLink = `![テスト画像.jpg](attachment:テスト画像.jpg)\n\n`;
+            insertMarkdownAtCursor(textarea, markdownLink);
+        }
+
+        function testVideoInsert(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            const markdownLink = `[テスト動画.mp4](attachment:テスト動画.mp4)\n\n`;
+            insertMarkdownAtCursor(textarea, markdownLink);
+        }
+
+        // Test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded successfully');
+            console.log('Mock Stimulus controllers:', Stimulus.controllers.length);
+        });
+    </script>
+</body>
+</html>
