@@ -187,6 +187,11 @@ class PostsController < ApplicationController
 
   # 自動保存（5秒間隔での下書き保存）
   def auto_save
+    Rails.logger.info "Auto-save action called with params: #{params.inspect}"
+    Rails.logger.info "Auto-save request headers: #{request.headers.to_h}"
+    Rails.logger.info "Auto-save request format: #{request.format}"
+    Rails.logger.info "Auto-save xhr?: #{request.xhr?}"
+
     @post = if params[:id].present?
               # slugまたは数値IDでの検索
               current_user.posts.friendly.find(params[:id])
@@ -259,18 +264,28 @@ class PostsController < ApplicationController
       end
     end
 
-    if @post.save(validate: false)
-      render json: {
-        success: true,
-        post_id: @post.friendly_id || @post.id, # slugを優先して返す
-        message: "自動保存されました",
-        saved_at: Time.current.strftime("%H:%M:%S")
-      }
-    else
-      render json: {
-        success: false,
-        message: "自動保存に失敗しました"
-      }
+    # Ajax リクエストかどうかを明示的にチェック
+    unless request.xhr? || request.format.json?
+      render json: { success: false, message: "Ajax request required" }, status: :bad_request
+      return
+    end
+
+    respond_to do |format|
+      format.json do
+        if @post.save(validate: false)
+          render json: {
+            success: true,
+            post_id: @post.friendly_id || @post.id,
+            message: "自動保存されました",
+            saved_at: Time.current.strftime("%H:%M:%S")
+          }
+        else
+          render json: {
+            success: false,
+            message: "自動保存に失敗しました"
+          }
+        end
+      end
     end
   end
 
@@ -421,8 +436,8 @@ class PostsController < ApplicationController
   end
 
   def auto_save_params
-    # auto_save用のパラメータを許可（idも含める - URLからのIDとは別物）
-    params.permit(:id, :title, :content, :purpose, :target_audience, :category_id, :post_type_id, :key_points, :expected_outcome, video_signed_ids: [])
+    # auto_save用のパラメータを許可（idは除外してURLパラメータとの混同を避ける）
+    params.permit(:title, :content, :purpose, :target_audience, :category_id, :post_type_id, :key_points, :expected_outcome, video_signed_ids: [])
   end
 
   def log_user_status

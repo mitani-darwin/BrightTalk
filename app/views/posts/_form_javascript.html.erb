@@ -52,11 +52,13 @@
 
     // Auto-save functionality
     function initializeAutoSave() {
-        if (typeof window.autoSaveEnabled !== 'undefined' && window.autoSaveEnabled) {
-            const form = document.querySelector('form[data-turbo="false"]');
-            if (form) {
-                setInterval(performAutoSave, 5000); // Auto-save every 5 seconds
-            }
+        // 新規作成または編集の場合のみ自動保存を有効にする
+        const form = document.querySelector('form[data-turbo="false"]');
+        const isNewOrEdit = form && (window.location.pathname.includes('/new') || window.location.pathname.includes('/edit'));
+
+        if (isNewOrEdit) {
+            window.autoSaveEnabled = true;
+            setInterval(performAutoSave, 5000);
         }
     }
 
@@ -234,35 +236,111 @@
         if (form) {
             const formData = new FormData(form);
 
+            console.log('Auto-save: Starting request to /posts/auto_save');
+
             fetch('/posts/auto_save', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-Token': getCSRFToken()
+                    'X-CSRF-Token': getCSRFToken(),
+                    'Accept': 'application/json',           // 追加
+                    'Content-Type': 'application/x-www-form-urlencoded' // 追加
                 },
                 body: formData
             })
-                .then(response => response.json())
+                .then(response => {
+                    // デバッグ情報を詳細にログ出力
+                    console.log('Auto-save: Response received');
+                    console.log('Auto-save: Status:', response.status);
+                    console.log('Auto-save: Status text:', response.statusText);
+                    console.log('Auto-save: OK:', response.ok);
+
+                    const contentType = response.headers.get('content-type');
+                    console.log('Auto-save: Content-Type:', contentType);
+
+                    if (!response.ok) {
+                        // エラーレスポンスの内容も確認
+                        return response.text().then(text => {
+                            console.error('Auto-save: Server error response:', text);
+                            throw new Error(`Server error: ${response.status} - ${text.substring(0, 200)}`);
+                        });
+                    }
+
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // 実際のレスポンス内容を確認
+                        return response.text().then(text => {
+                            console.error('Auto-save: Invalid response format, received:', text.substring(0, 500));
+                            console.error('Auto-save: Expected JSON, got Content-Type:', contentType);
+                            throw new Error(`Invalid response format. Expected JSON, got: ${contentType}`);
+                        });
+                    }
+                })
                 .then(data => {
-                    if (data.success) {
+                    console.log('Auto-save: Success response:', data);
+                    if (data && data.success) {
                         showAutoSaveSuccess(data.message);
                         updatePostId(data.post_id);
+                    } else {
+                        console.warn('Auto-save failed:', data?.message || 'Unknown error');
                     }
                 })
                 .catch(error => {
-                    console.error('Auto-save error:', error);
+                    console.error('Auto-save error details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        name: error.name
+                    });
+                    // 開発時のみエラーメッセージを表示
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        showAutoSaveError(`自動保存エラー: ${error.message}`);
+                    }
                 });
         }
     }
 
-    function showAutoSaveSuccess(message) {
+    function showAutoSaveError(message) {
         const alert = document.getElementById('autoSaveAlert');
         const messageSpan = document.getElementById('autoSaveMessage');
 
         if (alert && messageSpan) {
             messageSpan.textContent = message;
+            alert.className = 'alert alert-danger alert-dismissible fade show'; // エラー用スタイル
             alert.style.display = 'block';
-            alert.classList.add('show');
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                    alert.className = 'alert alert-success alert-dismissible fade'; // 元に戻す
+                }, 300);
+            }, 8000); // エラーは少し長めに表示
+        }
+    }
+
+    function showAutoSaveSuccess(message) {
+        console.log('showAutoSaveSuccess called with:', message);
+
+        const alert = document.getElementById('autoSaveAlert');
+        const messageSpan = document.getElementById('autoSaveMessage');
+
+        console.log('Elements found:', {
+            alert: !!alert,
+            messageSpan: !!messageSpan,
+            alertDisplay: alert?.style.display,
+            alertClass: alert?.className
+        });
+
+        if (alert && messageSpan) {
+            messageSpan.textContent = message + ' ' + new Date().toLocaleTimeString();
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.style.display = 'block';
+
+            console.log('After setting:', {
+                display: alert.style.display,
+                className: alert.className
+            });
 
             setTimeout(() => {
                 alert.classList.remove('show');

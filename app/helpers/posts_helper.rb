@@ -55,7 +55,7 @@ module PostsHelper
     end
 
     # Convert video links [動画 filename](attachment:filename) to HTML video tags
-    processed_content = processed_content.gsub(/\[([^\]]*\.(?:mp4|avi|mov|wmv|flv|webm|mkv|m4v))\]\(attachment:([^)]+)\)/i) do
+    processed_content = processed_content.gsub(/\[([^\]]*\.(?:mp4|avi|mov|wmv|flv|webm|mkv|m4v))\]\(attachment:([^)]+)\)/i) do |match|
       attachment_filename = $1.strip
       normalized_filename = normalize_name.call(attachment_filename)
 
