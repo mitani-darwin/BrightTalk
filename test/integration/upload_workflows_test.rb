@@ -243,7 +243,11 @@ class UploadWorkflowsTest < ActionDispatch::IntegrationTest
     assert existing_post.images.attached?, "画像が追加されていません"
     assert_equal "画像が追加された投稿", existing_post.title
 
-    # 更新後の表示確認
+    # 更新後はリダイレクトされる
+    assert_response :redirect
+    
+    # リダイレクト先を追跡
+    follow_redirect!
     assert_response :success
     assert_match "投稿が更新されました", flash[:notice]
   end

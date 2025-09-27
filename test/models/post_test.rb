@@ -223,18 +223,33 @@ class PostTest < ActiveSupport::TestCase
   end
 
   test "previous_post_by_authorメソッドが正しく動作すること" do
-    # 最初の投稿
-    first_post = create_valid_post
-    first_post.created_at = 1.day.ago
-    first_post.save!
+    # 専用のテストユーザーを作成（fixtureとの競合を避ける）
+    test_user = User.create!(
+      name: "Previous Post Test User",
+      email: "previous_post_test@example.com",
+      confirmed_at: Time.current
+    )
 
-    # 2番目の投稿
+    # 最初の投稿（1日前）
+    first_post = Post.create!(
+      title: "Previous Test First Post",
+      content: "Previous test first post content",
+      purpose: "Previous test purpose",
+      target_audience: "Previous test audience",
+      user: test_user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :published,
+      created_at: 1.day.ago
+    )
+
+    # 2番目の投稿（現在時刻）
     second_post = Post.create!(
-      title: "2番目の投稿",
-      content: "2番目の投稿内容",
-      purpose: "テスト目的",
-      target_audience: "テストユーザー",
-      user: @user,
+      title: "Previous Test Second Post",
+      content: "Previous test second post content",
+      purpose: "Previous test purpose 2",
+      target_audience: "Previous test audience 2",
+      user: test_user,
       category: @category,
       post_type: post_types(:tutorial),
       status: :published,
@@ -247,18 +262,33 @@ class PostTest < ActiveSupport::TestCase
   end
 
   test "next_post_by_authorメソッドが正しく動作すること" do
-    # 最初の投稿
-    first_post = create_valid_post
-    first_post.created_at = 1.day.ago
-    first_post.save!
+    # 専用のテストユーザーを作成（fixtureとの競合を避ける）
+    test_user = User.create!(
+      name: "Next Post Test User",
+      email: "next_post_test@example.com",
+      confirmed_at: Time.current
+    )
 
-    # 2番目の投稿
+    # 最初の投稿（1日前）
+    first_post = Post.create!(
+      title: "Next Test First Post",
+      content: "Next test first post content",
+      purpose: "Next test purpose",
+      target_audience: "Next test audience",
+      user: test_user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :published,
+      created_at: 1.day.ago
+    )
+
+    # 2番目の投稿（現在時刻）
     second_post = Post.create!(
-      title: "2番目の投稿",
-      content: "2番目の投稿内容",
-      purpose: "テスト目的",
-      target_audience: "テストユーザー",
-      user: @user,
+      title: "Next Test Second Post",
+      content: "Next test second post content",
+      purpose: "Next test purpose 2",
+      target_audience: "Next test audience 2",
+      user: test_user,
       category: @category,
       post_type: post_types(:tutorial),
       status: :published,

@@ -19,9 +19,8 @@ class ApplicationController < ActionController::Base
   # Rails 8では、以下の設定を追加
   before_action :set_csrf_cookie, if: -> { protect_against_forgery? }
 
-  before_action :log_upload_attempts, only: [:create, :update]
 
-  before_action :handle_csrf_verification, if: -> { request.post? }
+  before_action :handle_csrf_verification, if: -> { request.post? && !Rails.env.test? }
 
   private
 

@@ -18,6 +18,8 @@
 
         // Content editing features
         initializeContentEditor();
+
+        initializeUpdateProgressModal();
     }
 
     // Upload handlers
@@ -120,19 +122,19 @@
     function initializeFileUploadUI() {
         // Image and video deletion buttons
         document.addEventListener('click', function (e) {
-            if (e.target.matches('.delete-image-btn')) {
+            if (e.target.closest('.delete-image-btn')) {
                 handleImageDelete(e);
             }
 
-            if (e.target.matches('.delete-video-btn')) {
+            if (e.target.closest('.delete-video-btn')) {
                 handleVideoDelete(e);
             }
 
-            if (e.target.matches('.insert-existing-image')) {
+            if (e.target.closest('.insert-existing-image')) {
                 insertExistingMedia(e, 'image');
             }
 
-            if (e.target.matches('.insert-existing-video')) {
+            if (e.target.closest('.insert-existing-video')) {
                 insertExistingMedia(e, 'video');
             }
         });
@@ -484,28 +486,70 @@
     function insertMarkdownAtCursor(textarea, text) {
         if (!textarea) return;
 
-        // より確実なCodeMirrorエディターコントローラーの取得
+        console.log('insertMarkdownAtCursor called with text:', text);
+
+        // CodeMirrorエディターコントローラーの取得
         const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
         if (codeEditorElement) {
-            // Stimulusアプリケーションから直接コントローラーを取得
-            const controller = window.Stimulus.getControllerForElementAndIdentifier(
-                codeEditorElement,
-                'code-editor'
-            );
+            console.log('Found code-editor element:', codeEditorElement);
 
-            if (controller && controller.insertText) {
-                controller.insertText(text);
+            // Stimulus 3.x の正しいコントローラー取得方法
+            const application = window.Stimulus || window.Application;
+            if (application) {
+                try {
+                    // Stimulus application からコントローラーを取得
+                    const controller = application.getControllerForElementAndIdentifier(codeEditorElement, 'code-editor');
+                    if (controller && controller.insertText) {
+                        console.log('Using Stimulus controller insertText method');
+                        controller.insertText(text);
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Failed to get controller via Stimulus application:', error);
+                }
+            }
+
+            // 代替方法：要素に直接格納されているコントローラーを参照
+            if (codeEditorElement.controller && codeEditorElement.controller.insertText) {
+                console.log('Using element.controller insertText method');
+                codeEditorElement.controller.insertText(text);
                 return;
             }
 
-            // フォールバック：要素のStimulusコントローラーを直接参照
-            if (codeEditorElement.codeEditorController && codeEditorElement.codeEditorController.insertText) {
-                codeEditorElement.codeEditorController.insertText(text);
-                return;
+            // 代替方法2：Stimulus内部のコントローラーマップを参照
+            if (codeEditorElement._stimulus_controllers) {
+                const codeEditorController = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor');
+                if (codeEditorController && codeEditorController.insertText) {
+                    console.log('Using _stimulus_controllers insertText method');
+                    codeEditorController.insertText(text);
+                    return;
+                }
             }
+
+            // 代替方法3：data属性を使ったイベント発火
+            const customEvent = new CustomEvent('code-editor:insert-text', {
+                detail: { text: text }
+            });
+            codeEditorElement.dispatchEvent(customEvent);
+            console.log('Dispatched code-editor:insert-text event');
+
+            // イベントが処理されたかを確認するため、少し待機してからフォールバックを実行
+            setTimeout(() => {
+                // まだテキストが挿入されていない場合のみフォールバック実行
+                if (!textarea.value.includes(text.trim())) {
+                    console.log('Event insertion failed, using fallback method');
+                    fallbackTextInsertion(textarea, text);
+                }
+            }, 100);
+            return;
         }
 
         // 最終フォールバック: 通常のテキストエリア処理
+        console.log('Using fallback text insertion method');
+        fallbackTextInsertion(textarea, text);
+    }
+
+    function fallbackTextInsertion(textarea, text) {
         const start = textarea.selectionStart ?? textarea.value.length;
         const end = textarea.selectionEnd ?? textarea.value.length;
         const currentValue = textarea.value;
@@ -515,6 +559,7 @@
         textarea.selectionStart = textarea.selectionEnd = newPos;
         textarea.focus();
         textarea.dispatchEvent(new Event('input'));
+        console.log('Fallback text insertion completed');
     }
 
     function showError(message) {
@@ -557,7 +602,174 @@
         }, 5000);
     }
 
+    // 更新進捗モーダル管理
+    function initializeUpdateProgressModal() {
+        console.log('Initializing update progress modal...');
+        
+        const form = document.querySelector('form[data-turbo="false"]');
+        const submitBtn = document.getElementById('updateSubmitBtn');
+        const progressModal = document.getElementById('updateProgressModal');
+
+        console.log('Elements found:', {
+            form: !!form,
+            submitBtn: !!submitBtn,
+            progressModal: !!progressModal,
+            bootstrap: typeof bootstrap !== 'undefined'
+        });
+
+        if (form && submitBtn && progressModal) {
+            // Bootstrap 5の確認
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap is not loaded. Modal will not work.');
+                return;
+            }
+
+            // 既存のイベントリスナーを削除
+            submitBtn.removeEventListener('click', handleUpdateSubmit);
+            
+            // 新しいイベントリスナーを追加
+            submitBtn.addEventListener('click', handleUpdateSubmit);
+            console.log('Update progress modal initialized successfully');
+        } else {
+            console.warn('Required elements not found for update progress modal');
+        }
+    }
+
+    // フォーム送信ハンドラー
+    function handleUpdateSubmit(event) {
+        console.log('Update submit button clicked');
+        
+        // デフォルトの送信を一時停止
+        event.preventDefault();
+        
+        const progressModal = document.getElementById('updateProgressModal');
+        const form = document.querySelector('form[data-turbo="false"]');
+        
+        if (!progressModal || !form) {
+            console.error('Required elements not found');
+            // フォールバック: 通常の送信
+            form?.submit();
+            return;
+        }
+
+        try {
+            // モーダルを表示
+            const modal = new bootstrap.Modal(progressModal, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            console.log('Modal shown, starting progress animation');
+            
+            // 進捗アニメーション開始
+            startUpdateProgress();
+
+            // 少し遅延してからフォーム送信（モーダル表示を確実にするため）
+            setTimeout(() => {
+                console.log('Submitting form...');
+                form.submit();
+            }, 100);
+
+        } catch (error) {
+            console.error('Error showing modal:', error);
+            // エラー時は通常の送信にフォールバック
+            form.submit();
+        }
+    }
+
+    // 更新進捗アニメーション
+    function startUpdateProgress() {
+        const progressBar = document.getElementById('updateProgressBar');
+        const progressText = document.getElementById('updateProgressText');
+        const statusText = document.getElementById('updateStatusText');
+        const details = document.getElementById('updateDetails');
+
+        let progress = 0;
+        const steps = [
+            { progress: 20, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
+            { progress: 40, status: 'ファイルをアップロード中...', detail: '画像・動画ファイルを処理しています' },
+            { progress: 60, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
+            { progress: 80, status: '最終処理中...', detail: 'インデックスを更新しています' },
+            { progress: 100, status: '完了', detail: '更新が完了しました' }
+        ];
+
+        let currentStep = 0;
+
+        const updateProgress = () => {
+            if (currentStep < steps.length) {
+                const step = steps[currentStep];
+
+                // プログレスバー更新
+                progressBar.style.width = step.progress + '%';
+                progressBar.setAttribute('aria-valuenow', step.progress);
+                progressText.textContent = step.progress + '%';
+
+                // ステータス更新
+                statusText.textContent = step.status;
+                details.textContent = step.detail;
+
+                currentStep++;
+
+                // 次のステップまでの待機時間（実際の処理時間に応じて調整）
+                setTimeout(updateProgress, 800);
+            }
+        };
+
+        // 最初のステップ実行
+        setTimeout(updateProgress, 200);
+    }
+
+    // フォーム送信完了時の処理
+    function handleUpdateComplete(success = true) {
+        const progressModal = document.getElementById('updateProgressModal');
+        const modal = bootstrap.Modal.getInstance(progressModal);
+
+        if (success) {
+            // 成功時は自動的にモーダルを閉じる
+            setTimeout(() => {
+                modal.hide();
+            }, 1000);
+        } else {
+            // エラー時はエラー表示に変更
+            showUpdateError();
+        }
+    }
+
+    // エラー時の表示変更
+    function showUpdateError() {
+        const progressBar = document.getElementById('updateProgressBar');
+        const progressText = document.getElementById('updateProgressText');
+        const statusText = document.getElementById('updateStatusText');
+        const details = document.getElementById('updateDetails');
+        const modalTitle = document.getElementById('updateProgressModalLabel');
+
+        // エラー表示に変更
+        progressBar.className = 'progress-bar bg-danger';
+        progressBar.style.width = '100%';
+        progressText.textContent = 'エラー';
+        statusText.textContent = '更新に失敗しました';
+        details.textContent = 'もう一度お試しください';
+        modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラーが発生しました';
+
+        // 閉じるボタンを追加
+        const modalBody = progressModal.querySelector('.modal-body');
+        const closeButton = document.createElement('button');
+        closeButton.className = 'btn btn-secondary mt-3';
+        closeButton.textContent = '閉じる';
+        closeButton.onclick = () => {
+            const modal = bootstrap.Modal.getInstance(progressModal);
+            modal.hide();
+        };
+        modalBody.appendChild(closeButton);
+    }
+
     // Global functions for compatibility
     window.initializeFormFeatures = initializeFormFeatures;
     window.performAutoSave = performAutoSave;
+
+    // Initialize all features when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeUpdateProgressModal();
+    });
 </script>

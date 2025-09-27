@@ -118,16 +118,17 @@ class Post < ApplicationRecord
     scope.order(created_at: :desc).limit(limit)
   end
 
+  # 自動保存されたドラフトかどうかを判定
+  def auto_saved_draft?
+    draft? && auto_save == true
+  end
+
   private
 
   def set_default_status
     self.status ||= :published
   end
 
-  # 自動保存されたドラフトかどうかを判定
-  def auto_saved_draft?
-    draft? && auto_save == true
-  end
 
   # 画像保存前の前処理（EXIF削除）
   def process_images_for_exif_removal

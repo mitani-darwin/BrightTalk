@@ -5,6 +5,7 @@ export default class extends Controller {
 
     connect() {
         this.initializeCodeMirror()
+        this.setupCustomEventListeners()
     }
 
     disconnect() {
@@ -168,6 +169,20 @@ export default class extends Controller {
             this.editor.refresh()
             textarea.setCustomValidity('')
         })
+    }
+
+    // カスタムイベントリスナーのセットアップ
+    setupCustomEventListeners() {
+        // code-editor:insert-text イベントのリスナーを追加
+        this.element.addEventListener('code-editor:insert-text', (event) => {
+            const text = event.detail.text;
+            if (text) {
+                console.log('Received code-editor:insert-text event with text:', text);
+                this.insertText(text);
+            }
+        });
+
+        console.log('Custom event listeners setup completed');
     }
 
     // 画像・動画挿入用のメソッド
