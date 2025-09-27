@@ -2,6 +2,9 @@
 import { Application } from "@hotwired/stimulus"
 import "@hotwired/turbo"
 import * as ActiveStorage from "@rails/activestorage"
+import videojs from 'video.js';
+
+window.videojs = videojs;
 
 // ActiveStorageの簡単な初期化
 if (!window.ActiveStorage) {
@@ -59,20 +62,6 @@ async function loadCodeMirror() {
     }
 }
 
-// VideoJS動的読み込み
-async function loadVideoJS() {
-    if (window.videojs) return window.videojs;
-
-    try {
-        const videojs = await import('video.js');
-        window.videojs = videojs.default;
-        return videojs.default;
-    } catch (error) {
-        console.error('Video.js loading failed:', error);
-        return null;
-    }
-}
-
 // グローバル読み込み関数をエクスポート
 window.loadCodeMirror = loadCodeMirror;
 window.loadVideoJS = loadVideoJS;
@@ -84,6 +73,15 @@ loadCodeMirror().then(() => {
 }).catch(error => {
     console.warn('CodeMirror pre-loading failed:', error)
 })
+
+// Video.jsをプリロード（追加）
+console.log('Pre-loading Video.js...')
+loadVideoJS().then(() => {
+    console.log('Video.js pre-loaded successfully, window.videojs available:', !!window.videojs)
+}).catch(error => {
+    console.warn('Video.js pre-loading failed:', error)
+})
+
 
 // Stimulusアプリケーションを開始
 const application = Application.start()

@@ -22,7 +22,11 @@ class VideoUploadJob < ApplicationJob
 
         # ファイルサイズの整合性チェック（オプション）
         begin
-          actual_size = video_attachment.blob.service.open(video_attachment.blob.key) { |file| file.size }
+          # より安全なファイルサイズ取得方法
+          actual_size = video_attachment.blob.service.service.head_object(
+            bucket: video_attachment.blob.service.bucket.name,
+            key: video_attachment.blob.key
+          ).content_length
           expected_size = video_attachment.blob.byte_size
 
           if actual_size != expected_size

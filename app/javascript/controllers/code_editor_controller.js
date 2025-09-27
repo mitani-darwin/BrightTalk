@@ -67,6 +67,9 @@ export default class extends Controller {
 
             console.log('CodeMirror editor initialized successfully')
 
+            // 初期化完了イベントを発火
+            this.element.dispatchEvent(new CustomEvent('code-editor:initialized'));
+
         } catch (error) {
             console.error('CodeMirror initialization failed:', error)
             this.initializeFallbackMode()
