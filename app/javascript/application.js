@@ -3,6 +3,7 @@ import { Application } from "@hotwired/stimulus"
 import "@hotwired/turbo"
 import * as ActiveStorage from "@rails/activestorage"
 import videojs from 'video.js';
+import 'video.js/dist/video-js.css';  // CSS追加
 
 window.videojs = videojs;
 
@@ -64,6 +65,19 @@ async function loadCodeMirror() {
 
 // グローバル読み込み関数をエクスポート
 window.loadCodeMirror = loadCodeMirror;
+
+// Video.jsの読み込み関数（修正版 - 動的インポートを削除）
+async function loadVideoJS() {
+    // 既に静的にインポートされているVideo.jsを返す
+    if (window.videojs) {
+        console.log('Video.js already available:', !!window.videojs);
+        return window.videojs;
+    }
+
+    console.warn('Video.js not found on window object');
+    return null;
+}
+
 window.loadVideoJS = loadVideoJS;
 
 // CodeMirrorをプリロード（関数定義後に実行）
@@ -74,14 +88,13 @@ loadCodeMirror().then(() => {
     console.warn('CodeMirror pre-loading failed:', error)
 })
 
-// Video.jsをプリロード（追加）
+// Video.jsをプリロード（修正版）
 console.log('Pre-loading Video.js...')
 loadVideoJS().then(() => {
     console.log('Video.js pre-loaded successfully, window.videojs available:', !!window.videojs)
 }).catch(error => {
     console.warn('Video.js pre-loading failed:', error)
 })
-
 
 // Stimulusアプリケーションを開始
 const application = Application.start()
@@ -97,7 +110,6 @@ application.register("code-editor", CodeEditorController)
 application.register("video-player", VideoPlayerController)
 
 console.log('Application loaded with esbuild (CodeMirror dynamic)')
-
 
 // ActiveStorage確認用のグローバル関数
 window.checkActiveStorageStatus = function() {
