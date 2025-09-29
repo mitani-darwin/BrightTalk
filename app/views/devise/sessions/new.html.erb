@@ -44,73 +44,167 @@
 </div>
 
 <!-- パスキー認証用JavaScript -->
-<%= javascript_import_module_tag "passkey" %>
+<!-- JavaScript is already loaded in the application layout head section -->
+
 <script>
-(function() {
-  function setupPasskeyLogin() {
-    const emailInput = document.getElementById('email');
-    const passkeyLoginBtn = document.getElementById('passkey-login-btn');
-    const statusMessage = document.getElementById('status-message');
-    if (!emailInput || !passkeyLoginBtn || !statusMessage) return;
+    (function() {
+        function setupPasskeyLogin() {
+            const emailInput = document.getElementById('email');
+            const passkeyLoginBtn = document.getElementById('passkey-login-btn');
+            const statusMessage = document.getElementById('status-message');
+            if (!emailInput || !passkeyLoginBtn || !statusMessage) return;
 
-    function showStatus(message, type = 'info') {
-      statusMessage.textContent = message;
-      statusMessage.className = `alert alert-${type}`;
-      statusMessage.style.display = 'block';
-      if (type === 'success') {
-        setTimeout(() => { statusMessage.style.display = 'none'; }, 3000);
-      }
-    }
+            function showStatus(message, type = 'info') {
+                statusMessage.textContent = message;
+                statusMessage.className = `alert alert-${type}`;
+                statusMessage.style.display = 'block';
+                if (type === 'success') {
+                    setTimeout(() => { statusMessage.style.display = 'none'; }, 3000);
+                }
+            }
 
-    async function performPasskeyAuth() {
-      const email = emailInput.value.trim();
-      if (!email) { showStatus('メールアドレスを入力してください', 'danger'); return; }
-      try {
-        showStatus('パスキー認証を開始しています...', 'info');
-        passkeyLoginBtn.disabled = true;
-        const response = await fetch('/passkey_authentications/auth_options', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          },
-          body: JSON.stringify({ email })
-        });
-        if (!response.ok) {
-          let msg = '認証オプションの取得に失敗しました';
-          try { const err = await response.json(); msg = err.error || msg; } catch(e) {}
-          throw new Error(msg);
+            async function performPasskeyAuth(event) {
+                // ユーザーイベントコンテキストを保持するため、同期処理を先に実行
+                const email = emailInput.value.trim();
+                if (!email) { 
+                    showStatus('メールアドレスを入力してください', 'danger'); 
+                    return; 
+                }
+
+                // ボタンを即座に無効化してユーザーインタラクションを明確にする
+                passkeyLoginBtn.disabled = true;
+                showStatus('パスキー認証を開始しています...', 'info');
+
+                // プラットフォーム認証器の対応状況をチェック
+                try {
+                    const platformSupport = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                    console.log('Platform authenticator available:', platformSupport);
+
+                    if (!platformSupport) {
+                        showStatus('このデバイスはTouchID認証に対応していません', 'warning');
+                        passkeyLoginBtn.disabled = false;
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Platform authenticator check failed:', error);
+                }
+
+                // グローバル関数が利用可能になるまで待機
+                if (!window.startPasskeyAuthentication) {
+                    showStatus('パスキーモジュールの読み込み中...', 'info');
+                    // 最大3秒間待機
+                    for (let i = 0; i < 30; i++) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        if (window.startPasskeyAuthentication) break;
+                    }
+                }
+
+                if (!window.startPasskeyAuthentication) {
+                    showStatus('パスキーモジュールの読み込みに失敗しました', 'danger');
+                    passkeyLoginBtn.disabled = false;
+                    return;
+                }
+
+                try {
+                    // 認証オプションの取得
+                    const response = await fetch('/passkey_authentications/auth_options', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ email })
+                    });
+                    
+                    if (!response.ok) {
+                        let msg = '認証オプションの取得に失敗しました';
+                        try { const err = await response.json(); msg = err.error || msg; } catch(e) {}
+                        throw new Error(msg);
+                    }
+                    
+                    const authData = await response.json();
+                    if (!authData.passkey_options) throw new Error('このメールアドレスにはパスキーが登録されていません');
+
+                    // 認証オプションをデバッグ出力
+                    console.log('Authentication options from server:', authData.passkey_options);
+                    console.log('AuthenticatorSelection:', authData.passkey_options.authenticatorSelection);
+
+                    // TouchIDプロンプトの表示を明確にする
+                    showStatus('TouchIDでの認証を求められています...', 'info');
+
+                    // ここで即座にWebAuthn APIを呼び出す（ユーザーイベント内で実行）
+                    const credentialData = await window.startPasskeyAuthentication(authData.passkey_options);
+                    
+                    // 認証成功後にサーバーに送信
+                    const verifyResponse = await fetch('/passkey_authentications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ credential: credentialData })
+                    });
+
+                    if (!verifyResponse.ok) {
+                        throw new Error('認証の検証に失敗しました');
+                    }
+
+                    const result = await verifyResponse.json();
+                    showStatus('認証に成功しました。リダイレクトしています...', 'success');
+                    
+                    // リダイレクト
+                    window.location.href = result.redirect_url || '/';
+
+                } catch (error) {
+                    console.error('Passkey authentication failed:', error);
+                    showStatus(`パスキー認証に失敗しました: ${error.message}`, 'danger');
+                } finally {
+                    passkeyLoginBtn.disabled = false;
+                }
+            }
+
+            // 二重登録防止のため、ボタンをクローンして置き換え
+            const btnClone = passkeyLoginBtn.cloneNode(true);
+            passkeyLoginBtn.parentNode.replaceChild(btnClone, passkeyLoginBtn);
+
+            btnClone.addEventListener('click', performPasskeyAuth);
+            emailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); performPasskeyAuth(); }
+            });
         }
-        const authData = await response.json();
-        if (!authData.passkey_options) throw new Error('このメールアドレスにはパスキーが登録されていません');
-        await startPasskeyAuthentication(authData.passkey_options);
-      } catch (error) {
-        console.error('Passkey authentication failed:', error);
-        showStatus(`パスキー認証に失敗しました: ${error.message}`, 'danger');
-      } finally {
-        passkeyLoginBtn.disabled = false;
-      }
-    }
 
-    // 二重登録防止のため、ボタンをクローンして置き換え
-    const btnClone = passkeyLoginBtn.cloneNode(true);
-    passkeyLoginBtn.parentNode.replaceChild(btnClone, passkeyLoginBtn);
+        // Turbo 遷移対応
+        document.addEventListener('turbo:load', setupPasskeyLogin);
+        document.addEventListener('turbo:render', setupPasskeyLogin);
 
-    btnClone.addEventListener('click', performPasskeyAuth);
-    emailInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') { e.preventDefault(); performPasskeyAuth(); }
-    });
-  }
+        // 非Turboロードにも対応
+        if (document.readyState !== 'loading') {
+            setupPasskeyLogin();
+        } else {
+            document.addEventListener('DOMContentLoaded', setupPasskeyLogin);
+        }
 
-  // Turbo 遷移対応
-  document.addEventListener('turbo:load', setupPasskeyLogin);
-  document.addEventListener('turbo:render', setupPasskeyLogin);
+        // より詳細な認証器情報を取得
+        async function checkAuthenticatorCapabilities() {
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                console.log('Platform authenticator available:', available);
 
-  // 非Turboロードにも対応
-  if (document.readyState !== 'loading') {
-    setupPasskeyLogin();
-  } else {
-    document.addEventListener('DOMContentLoaded', setupPasskeyLogin);
-  }
-})();
+                if (available) {
+                    console.log('Touch ID should be available');
+                } else {
+                    console.log('Touch ID is not available on this device/browser');
+                }
+
+                // 認証器の詳細情報を取得
+                if (navigator.credentials && navigator.credentials.get) {
+                    console.log('WebAuthn API is supported');
+                } else {
+                    console.log('WebAuthn API is not supported');
+                }
+            } catch (error) {
+                console.error('Error checking authenticator capabilities:', error);
+            }
+        }
+    })();
 </script>

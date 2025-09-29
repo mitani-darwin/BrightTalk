@@ -1,8 +1,8 @@
-
 class PostsController < ApplicationController
-  before_action :authenticate_user!, except: [ :index, :show ]
-  before_action :set_post, only: [ :show, :edit, :update, :destroy, :delete_image, :delete_video ]
-  before_action :check_post_owner, only: [ :edit, :update, :destroy, :delete_image, :delete_video ]
+  before_action :authenticate_user!, except: [:index, :show, :auto_save]
+  before_action :set_post, only: [:show, :edit, :update, :destroy, :delete_image, :delete_video]
+  before_action :set_post_for_auto_save, only: [:auto_save]
+  before_action :check_post_owner, only: [:edit, :update, :destroy, :delete_image, :delete_video]
   before_action :log_user_status
 
   def index
@@ -152,7 +152,7 @@ class PostsController < ApplicationController
     if update_with_additional_images
       respond_to do |format|
         format.html {
-          redirect_to @post, notice: "投稿が更新されました。"  # render :edit から redirect に変更
+          redirect_to @post, notice: "投稿が更新されました。" # render :edit から redirect に変更
         }
         format.json {
           render json: {
@@ -188,104 +188,81 @@ class PostsController < ApplicationController
   # 自動保存（5秒間隔での下書き保存）
   def auto_save
     Rails.logger.info "Auto-save action called with params: #{params.inspect}"
-    Rails.logger.info "Auto-save request headers: #{request.headers.to_h}"
+    Rails.logger.info "Auto-save request headers: #{request.headers.to_h.select { |k, v| k.start_with?('HTTP_') }}"
     Rails.logger.info "Auto-save request format: #{request.format}"
     Rails.logger.info "Auto-save xhr?: #{request.xhr?}"
 
-    @post = if params[:id].present?
-              # slugまたは数値IDでの検索
-              current_user.posts.friendly.find(params[:id])
-            else
-              current_user.posts.build
-            end
-
-    # idパラメータを除外してからassign_attributes（ID破壊を防止）
-    safe_params = auto_save_params.except(:id, :video_signed_ids)
-    @post.assign_attributes(safe_params)
-    @post.status = "draft"
-    @post.auto_save = true  # 自動保存フラグを設定
-
-    # Direct Uploadで送信されたsigned_idがある場合の処理（競合回避版）
-    if params[:video_signed_ids].present?
-      signed_ids = Array(params[:video_signed_ids]).reject(&:blank?)
-      if signed_ids.any?
-        Rails.logger.info "Auto-save: Processing #{signed_ids.length} signed_ids"
-
-        # 既存の動画のsigned_idを取得
-        existing_signed_ids = @post.videos.map do |video|
-          begin
-            video.blob.signed_id
-          rescue
-            nil
-          end
-        end.compact
-
-        # 新しいsigned_idのみを処理（既存のものは保持）
-        new_signed_ids = signed_ids - existing_signed_ids
-        Rails.logger.info "Auto-save: New signed_ids to process: #{new_signed_ids}"
-
-        # 新しいsigned_idがある場合のみ処理
-        if new_signed_ids.any?
-          new_signed_ids.each do |signed_id|
-            # 数値の場合はスキップ（invalid signed_id）
-            if signed_id.to_s.match(/^\d+$/)
-              Rails.logger.warn "Auto-save: Skipping invalid numeric signed_id: #{signed_id}"
-              next
-            end
-
-            # signed_idの形式チェック（最低限の長さと文字列チェック）
-            if signed_id.length < 10 || !signed_id.is_a?(String)
-              Rails.logger.warn "Auto-save: Invalid signed_id format: #{signed_id}"
-              next
-            end
-
-            begin
-              blob = ActiveStorage::Blob.find_signed(signed_id)
-              if blob
-                # 既存の同じblobがないかチェック
-                unless @post.videos.any? { |v| v.blob_id == blob.id }
-                  @post.videos.attach(blob)
-                  Rails.logger.info "Auto-save: Successfully attached new video: #{blob.filename} to post #{@post.id}"
-                else
-                  Rails.logger.info "Auto-save: Video already attached: #{blob.filename}"
-                end
-              else
-                Rails.logger.warn "Auto-save: Could not find blob for signed_id: #{signed_id}"
-              end
-            rescue ActiveStorage::InvariableError => e
-              Rails.logger.error "Auto-save: Invalid signed_id: #{signed_id}, error: #{e.message}"
-            rescue => e
-              Rails.logger.error "Auto-save: Failed to attach video: #{e.message}"
-            end
-          end
-        else
-          Rails.logger.info "Auto-save: No new videos to attach, keeping existing ones"
-        end
-      end
-    end
-
-    # Ajax リクエストかどうかを明示的にチェック
+    # Ajax リクエストかどうかを最初にチェック
     unless request.xhr? || request.format.json?
+      Rails.logger.error "Auto-save: Not an Ajax request"
       render json: { success: false, message: "Ajax request required" }, status: :bad_request
       return
     end
 
-    respond_to do |format|
-      format.json do
-        if @post.save(validate: false)
-          render json: {
-            success: true,
-            post_id: @post.friendly_id || @post.id,
-            message: "自動保存されました",
-            saved_at: Time.current.strftime("%H:%M:%S")
-          }
-        else
-          render json: {
-            success: false,
-            message: "自動保存に失敗しました"
-          }
-        end
+    # set_post_for_auto_saveで@postは既に設定されているが、念のためチェック
+    unless @post
+      Rails.logger.error "Auto-save: @post is nil after set_post_for_auto_save"
+      render json: { success: false, message: "投稿の初期化に失敗しました" }, status: :internal_server_error
+      return
+    end
+
+    # 認証チェック（新規追加）
+    unless user_signed_in?
+      Rails.logger.error "Auto-save: User not authenticated"
+      render json: { success: false, message: "認証が必要です" }, status: :unauthorized
+      return
+    end
+
+    Rails.logger.info "Auto-save: @post initialized - ID: #{@post.id}, persisted: #{@post.persisted?}"
+
+    begin
+      safe_params = auto_save_params.except(:id, :video_signed_ids, :images, :post_id)
+      Rails.logger.info "Auto-save: Safe params: #{safe_params.inspect}"
+
+      @post.assign_attributes(safe_params)
+      @post.status = "draft"
+      @post.auto_save = true # 自動保存フラグを設定
+
+      Rails.logger.info "Auto-save: Post attributes after assignment: #{@post.attributes.slice(*safe_params.keys).inspect}"
+
+      # === 追加部分：実際の保存処理とレスポンス ===
+      if @post.save
+        Rails.logger.info "Auto-save: Post saved successfully - ID: #{@post.id}, slug: #{@post.slug}"
+
+        render json: {
+          success: true,
+          message: "自動保存が完了しました",
+          post_id: @post.slug,
+          saved_at: Time.current.strftime("%H:%M:%S")
+        }
+      else
+        Rails.logger.error "Auto-save: Failed to save post - Errors: #{@post.errors.full_messages.join(', ')}"
+
+        render json: {
+          success: false,
+          message: "自動保存に失敗しました",
+          errors: @post.errors.full_messages
+        }, status: :unprocessable_entity
       end
+      # === 追加部分終了 ===
+
+    rescue ActionController::UnpermittedParameters => e
+      Rails.logger.error "Auto-save: Unpermitted parameters: #{e.params.inspect}"
+      render json: {
+        success: false,
+        message: "送信されたパラメータに問題があります。サポートされていないフィールドが含まれています。"
+      }, status: :bad_request
+      return
+    rescue ActionController::ParameterMissing => e
+      Rails.logger.error "Auto-save: Required parameter missing: #{e.message}"
+      render json: { success: false, message: "必須パラメータが不足しています: #{e.param}" }, status: :bad_request
+      return
+    rescue => e
+      Rails.logger.error "Auto-save: Error during attribute assignment: #{e.message}"
+      Rails.logger.error "Auto-save: Error class: #{e.class}"
+      Rails.logger.error "Auto-save: Error backtrace: #{e.backtrace.first(5).join('\n')}"
+      render json: { success: false, message: "パラメータの処理中にエラーが発生しました: #{e.message}" }, status: :internal_server_error
+      return
     end
   end
 
@@ -360,6 +337,22 @@ class PostsController < ApplicationController
   end
 
   private
+
+  def set_post_for_auto_save
+    if params[:post_id].present?
+      # フォームから送信されたpost_idを使用
+      @post = current_user.posts.friendly.find(params[:post_id])
+    elsif params[:id].present?
+      # URLパラメータのidを使用
+      @post = current_user.posts.friendly.find(params[:id])
+    else
+      # 新規投稿の場合
+      @post = current_user.posts.build
+    end
+  rescue ActiveRecord::RecordNotFound
+    # 投稿が見つからない場合は新規作成
+    @post = current_user.posts.build
+  end
 
   def set_post
     @post = Post.friendly.find(params[:id])
@@ -436,8 +429,53 @@ class PostsController < ApplicationController
   end
 
   def auto_save_params
-    # auto_save用のパラメータを許可（idは除外してURLパラメータとの混同を避ける）
-    params.permit(:title, :content, :purpose, :target_audience, :category_id, :post_type_id, :key_points, :expected_outcome, video_signed_ids: [])
+    Rails.logger.info "Auto-save: Processing params structure: #{params.keys.inspect}"
+    Rails.logger.info "Auto-save: Post params present: #{params[:post].present?}"
+
+    begin
+      # ネストされたpost パラメータを正しく処理
+      if params[:post].present?
+        Rails.logger.info "Auto-save: Processing nested post params"
+        allowed_params = params.require(:post).permit(
+          :title, :content, :purpose, :target_audience, :category_id,
+          :post_type_id, :key_points, :expected_outcome,
+          video_signed_ids: [],
+          images: []
+        )
+
+        # post_idのマージ処理を削除（post_idはPostモデルの属性ではない）
+        Rails.logger.info "Auto-save: Nested params processed successfully: #{allowed_params.keys.inspect}"
+        return allowed_params
+      else
+        # 従来の平坦な構造もサポート（後方互換性のため）
+        Rails.logger.info "Auto-save: Processing flat params structure"
+        allowed_params = params.permit(
+          :title, :content, :purpose, :target_audience, # post_idを削除
+          :category_id, :post_type_id, :key_points, :expected_outcome,
+          video_signed_ids: [],
+          images: []
+        )
+
+        Rails.logger.info "Auto-save: Flat params processed successfully: #{allowed_params.keys.inspect}"
+        return allowed_params
+      end
+
+    rescue ActionController::ParameterMissing => e
+      Rails.logger.error "Auto-save: Parameter missing error: #{e.message}"
+      Rails.logger.error "Auto-save: Available params: #{params.keys.inspect}"
+      raise e
+    rescue ActionController::UnpermittedParameters => e
+      Rails.logger.error "Auto-save: Unpermitted parameters error: #{e.message}"
+      Rails.logger.error "Auto-save: Unpermitted params: #{e.params.inspect}"
+      Rails.logger.error "Auto-save: Available params: #{params.keys.inspect}"
+      raise e
+    rescue => e
+      Rails.logger.error "Auto-save: Unexpected error during params processing: #{e.message}"
+      Rails.logger.error "Auto-save: Error class: #{e.class}"
+      Rails.logger.error "Auto-save: Error backtrace: #{e.backtrace.first(5).join('\n')}"
+      Rails.logger.error "Auto-save: Full params structure: #{params.inspect}"
+      raise e
+    end
   end
 
   def log_user_status
@@ -452,32 +490,32 @@ class PostsController < ApplicationController
   # 統合された動画処理メソッド（videosとvideo_signed_idsの両方を処理）
   def process_video_uploads
     Rails.logger.info "=== Video Upload Processing Started ==="
-    
+
     # 両方のパラメータをチェック
     videos_present = params[:post][:videos].present?
     signed_ids_present = params[:post][:video_signed_ids].present?
-    
+
     Rails.logger.info "Videos parameter present: #{videos_present}"
     Rails.logger.info "Video signed_ids parameter present: #{signed_ids_present}"
-    
+
     return unless videos_present || signed_ids_present
-    
+
     # 既存の動画を削除（新しい動画で置換）
     if @post.persisted? && (@post.videos.attached? && (videos_present || signed_ids_present))
       Rails.logger.info "Purging existing videos before attaching new ones"
       @post.videos.purge
     end
-    
+
     # videosパラメータの処理（通常のファイルアップロード）
     if videos_present
       process_direct_video_files
     end
-    
+
     # video_signed_idsパラメータの処理（Direct Upload）
     if signed_ids_present
       process_video_signed_ids_unified
     end
-    
+
     Rails.logger.info "=== Video Upload Processing Completed ==="
     Rails.logger.info "Final video count: #{@post.videos.count}"
   end
@@ -577,12 +615,12 @@ class PostsController < ApplicationController
     signed_ids = Array(params[:post][:video_signed_ids]).reject(&:blank?)
     Rails.logger.info "Processing signed IDs: #{signed_ids.inspect}"
     Rails.logger.info "Signed_ids count: #{signed_ids.length}"
-    
+
     return unless signed_ids.any?
 
     signed_ids.each_with_index do |signed_id, index|
       Rails.logger.info "Processing signed_id #{index + 1}: #{signed_id.inspect} (length: #{signed_id.length})"
-      
+
       # バリデーション: 数値のみの場合はスキップ
       if signed_id.to_s.match(/^\d+$/)
         Rails.logger.warn "Skipping invalid numeric signed_id: #{signed_id}"
@@ -603,7 +641,7 @@ class PostsController < ApplicationController
           if filename.present?
             Rails.logger.info "Found blob: #{blob.id} (filename: #{filename})"
           end
-          
+
           # 重複チェック（同じblobが既に添付されていないか）
           unless @post.videos.any? { |v| v.blob_id == blob.id }
             @post.videos.attach(blob)
@@ -614,7 +652,7 @@ class PostsController < ApplicationController
         else
           Rails.logger.warn "Could not find blob for signed_id: #{signed_id}"
         end
-        
+
       rescue ActiveStorage::InvariableError => e
         Rails.logger.error "Invalid signed_id: #{signed_id} - #{e.message}"
       rescue => e

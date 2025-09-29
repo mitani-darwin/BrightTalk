@@ -4,8 +4,17 @@ import "@hotwired/turbo"
 import * as ActiveStorage from "@rails/activestorage"
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';  // CSS追加
+import { startPasskeyAuthentication, startPasskeyRegistration } from './passkey.js';
 
 window.videojs = videojs;
+
+window.startPasskeyAuthentication = startPasskeyAuthentication;
+window.startPasskeyRegistration = startPasskeyRegistration;
+
+console.log('Passkey functions loaded globally:', {
+    auth: !!window.startPasskeyAuthentication,
+    reg: !!window.startPasskeyRegistration
+});
 
 // ActiveStorageの簡単な初期化
 if (!window.ActiveStorage) {
@@ -101,11 +110,9 @@ const application = Application.start()
 window.Stimulus = application
 
 // Controllers の登録
-import FlatpickrController from "./controllers/flatpickr_controller"
 import CodeEditorController from "./controllers/code_editor_controller"
 import VideoPlayerController from "./controllers/video_player_controller"
 
-application.register("flatpickr", FlatpickrController)
 application.register("code-editor", CodeEditorController)
 application.register("video-player", VideoPlayerController)
 

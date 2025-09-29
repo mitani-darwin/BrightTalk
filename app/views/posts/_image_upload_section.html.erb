@@ -1,8 +1,16 @@
 <%= form.label :images, "画像", class: "form-label" %>
-<%= form.file_field :images, multiple: true, accept: "image/*", direct_upload: true,
+<%= form.file_field :images, multiple: true, accept: "image/*",
                     class: "form-control", id: "imageInput" %>
 <div class="form-text">
   複数の画像を選択できます（PNG, JPG, GIF形式）。選択すると、内容欄のカーソル位置に画像のマークダウンを自動で挿入します。
+</div>
+
+<!-- 選択されたファイル名を表示するエリア（新規追加） -->
+<div id="selectedFilesDisplay" class="mt-2" style="display: none;">
+  <small class="text-muted d-block mb-1">選択されたファイル:</small>
+  <div id="selectedFilesList" class="border rounded p-2 bg-light">
+    <!-- ファイル名がここに動的に追加されます -->
+  </div>
 </div>
 
 <!-- 既存の画像を表示（編集時のみ） -->

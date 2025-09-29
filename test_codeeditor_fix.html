@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditor テスト - 日本語入力対応確認</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/default.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>CodeEditor 機能テスト - 日本語入力対応確認</h2>
+        
+        <!-- テスト結果表示エリア -->
+        <div id="testResults" class="alert alert-info mb-4">
+            <h5>テスト結果:</h5>
+            <ul id="resultsList">
+                <li>テスト実行中...</li>
+            </ul>
+        </div>
+        
+        <!-- フォーム -->
+        <div class="row">
+            <div class="col-12">
+                <form class="needs-validation" novalidate>
+                    <!-- 内容 -->
+                    <div class="mb-3 flex-grow-1 d-flex flex-column">
+                        <label for="contentTextarea" class="form-label">
+                            内容
+                            <span class="text-danger">*</span>
+                            <small class="text-muted">(常に必須)</small>
+                            <small class="text-muted d-block">
+                                <i class="fas fa-book me-1"></i>Markdown記法ガイド（日本語）
+                            </small>
+                        </label>
+                        <textarea 
+                            name="content" 
+                            class="form-control flex-grow-1"
+                            id="contentTextarea" 
+                            required 
+                            style="overflow:auto; resize:vertical; min-height: 400px; font-family: Monaco, 'Lucida Console', monospace;"
+                            placeholder="内容を入力してください" 
+                            data-controller="code-editor" 
+                            data-code-editor-target="textarea">日本語テキストを入力してください。
+
+# サンプル Markdown
+
+これは**日本語**のテストです。
+
+- リスト項目 1
+- リスト項目 2
+- リスト項目 3
+
+```javascript
+console.log('Hello, 世界!');
+```
+</textarea>
+                        <div class="invalid-feedback">
+                            内容を入力してください。
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <button id="testInsertBtn" class="btn btn-primary me-2">日本語テキスト挿入テスト</button>
+            <button id="refreshTestBtn" class="btn btn-secondary">テスト再実行</button>
+        </div>
+    </div>
+
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/markdown/markdown.js"></script>
+    
+    <!-- Stimulus JavaScript -->
+    <script type="module">
+        import { Application } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
+        
+        // CodeEditor Controller
+        class CodeEditorController {
+            static targets = ["textarea"]
+            
+            connect() {
+                console.log("CodeEditor controller connected")
+                this.addTestResult("✓ CodeEditor コントローラーが接続されました")
+                this.initializeCodeMirror()
+            }
+            
+            async initializeCodeMirror() {
+                // CodeMirrorがロード済みかチェック
+                if (!window.CodeMirror) {
+                    console.error("CodeMirror is not loaded")
+                    this.addTestResult("✗ CodeMirror がロードされていません")
+                    return
+                }
+                this.addTestResult("✓ CodeMirror がロードされています")
+                
+                const textarea = this.textareaTarget || this.element.querySelector('textarea')
+                if (!textarea) {
+                    console.error("Textarea not found")
+                    this.addTestResult("✗ Textarea が見つかりません")
+                    return
+                }
+                this.addTestResult("✓ Textarea が見つかりました")
+                
+                // CodeMirrorエディタを初期化
+                try {
+                    this.editor = window.CodeMirror.fromTextArea(textarea, {
+                        mode: 'markdown',
+                        theme: 'default',
+                        lineNumbers: true,
+                        lineWrapping: true,
+                    })
+                    
+                    // 初期化完了イベントを発火
+                    this.dispatch('initialized', { detail: { editor: this.editor } })
+                    this.addTestResult("✓ CodeMirror エディタが初期化されました")
+                    
+                    console.log('CodeMirror initialized successfully')
+                    
+                    // 日本語入力テスト
+                    setTimeout(() => {
+                        this.testJapaneseInput()
+                    }, 500)
+                    
+                } catch (error) {
+                    console.error('CodeMirror initialization failed:', error)
+                    this.addTestResult("✗ CodeMirror 初期化エラー: " + error.message)
+                }
+            }
+            
+            testJapaneseInput() {
+                if (this.editor) {
+                    const testText = "\n\n## 日本語入力テスト\n\nこれは日本語のテストです。ひらがな、カタカナ、漢字が正しく表示されることを確認します。"
+                    this.editor.replaceRange(testText, this.editor.getCursor())
+                    this.addTestResult("✓ 日本語テキストが正常に挿入されました")
+                } else {
+                    this.addTestResult("✗ エディタが利用できません")
+                }
+            }
+            
+            insertText(text) {
+                if (this.editor) {
+                    const cursor = this.editor.getCursor()
+                    this.editor.replaceRange(text, cursor)
+                    this.editor.focus()
+                    this.addTestResult("✓ テキストが挿入されました: " + text.substring(0, 20) + "...")
+                }
+            }
+            
+            addTestResult(message) {
+                const resultsList = document.getElementById('resultsList')
+                const li = document.createElement('li')
+                li.textContent = message
+                if (message.startsWith('✓')) {
+                    li.className = 'text-success'
+                } else if (message.startsWith('✗')) {
+                    li.className = 'text-danger'
+                } else {
+                    li.className = 'text-info'
+                }
+                resultsList.appendChild(li)
+            }
+            
+            disconnect() {
+                if (this.editor) {
+                    this.editor.toTextArea()
+                    this.editor = null
+                    this.addTestResult("CodeEditor が切断されました")
+                }
+            }
+        }
+        
+        // Stimulus アプリケーション設定
+        const application = Application.start()
+        application.register("code-editor", class extends EventTarget {
+            constructor() {
+                super()
+                this.controller = new CodeEditorController()
+                this.element = null
+            }
+            
+            static get targets() {
+                return CodeEditorController.targets
+            }
+            
+            connect() {
+                this.element = document.querySelector('[data-controller="code-editor"]')
+                this.controller.element = this.element
+                this.controller.textareaTarget = this.element.querySelector('textarea')
+                this.controller.connect()
+                this.controller.dispatch = (eventName, options) => {
+                    const event = new CustomEvent('code-editor:' + eventName, options)
+                    this.element.dispatchEvent(event)
+                }
+            }
+        })
+        
+        // テストボタンのイベントリスナー
+        document.addEventListener('DOMContentLoaded', function() {
+            const testInsertBtn = document.getElementById('testInsertBtn')
+            const refreshTestBtn = document.getElementById('refreshTestBtn')
+            
+            testInsertBtn.addEventListener('click', function() {
+                const codeEditorElement = document.querySelector('[data-controller="code-editor"]')
+                if (codeEditorElement && codeEditorElement._stimulus_controllers) {
+                    const controller = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor')
+                    if (controller) {
+                        controller.insertText("\n\n**追加テスト**: ボタンから日本語テキストを挿入しました。")
+                    }
+                }
+            })
+            
+            refreshTestBtn.addEventListener('click', function() {
+                location.reload()
+            })
+            
+            // Clear initial test message
+            setTimeout(() => {
+                const initialMsg = document.querySelector('#resultsList li:first-child')
+                if (initialMsg && initialMsg.textContent === 'テスト実行中...') {
+                    initialMsg.remove()
+                }
+            }, 100)
+        })
+    </script>
+</body>
+</html>

@@ -22,13 +22,15 @@
         initializeUpdateProgressModal();
     }
 
+    // グローバル変数（ファイルを一時保存）
+    let selectedFiles = [];
+
     // Upload handlers
     function initializeUploadHandlers() {
         const imageInput = document.getElementById('imageInput');
         const videoInput = document.getElementById('videoInput');
         const textarea = document.getElementById('contentTextarea');
 
-        // 正しい方法でcodeEditorElementを取得
         const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
 
         if (codeEditorElement) {
@@ -39,16 +41,12 @@
 
         if (imageInput) {
             imageInput.addEventListener('change', handleImageUpload);
-            imageInput.addEventListener('direct-upload:start', handleDirectUploadStart);
-            imageInput.addEventListener('direct-upload:end', handleDirectUploadEnd);
-            imageInput.addEventListener('direct-upload:error', handleDirectUploadError);
+            // direct-uploadイベントリスナーを削除（即座にアップロードしないため）
         }
 
         if (videoInput) {
             videoInput.addEventListener('change', handleVideoUpload);
-            videoInput.addEventListener('direct-upload:start', handleDirectUploadStart);
-            videoInput.addEventListener('direct-upload:end', handleDirectUploadEnd);
-            videoInput.addEventListener('direct-upload:error', handleDirectUploadError);
+            // direct-uploadイベントリスナーを削除（即座にアップロードしないため）
         }
     }
 
@@ -157,8 +155,14 @@
     }
 
     function handleImageUpload(event) {
-        const files = event.target.files;
+        const files = Array.from(event.target.files);
         const textarea = document.getElementById('contentTextarea');
+
+        // 選択されたファイルを保存
+        selectedFiles = files;
+
+        // ファイル名表示を更新
+        displaySelectedFiles(files);
 
         for (let file of files) {
             console.log('Image selected:', file.name);
@@ -166,7 +170,6 @@
             if (textarea) {
                 const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
 
-                // CodeMirrorの初期化を少し待つ
                 setTimeout(() => {
                     insertMarkdownAtCursor(textarea, markdownLink);
                 }, 500);
@@ -233,73 +236,121 @@
     }
 
     function performAutoSave() {
+        // 自動保存が有効かチェック
+        if (!window.autoSaveEnabled) {
+            console.log('Auto-save is disabled');
+            return;
+        }
+
         // Auto-save implementation
         const form = document.querySelector('form[data-turbo="false"]');
-        if (form) {
-            const formData = new FormData(form);
-
-            console.log('Auto-save: Starting request to /posts/auto_save');
-
-            fetch('/posts/auto_save', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-Token': getCSRFToken(),
-                    'Accept': 'application/json',           // 追加
-                    'Content-Type': 'application/x-www-form-urlencoded' // 追加
-                },
-                body: formData
-            })
-                .then(response => {
-                    // デバッグ情報を詳細にログ出力
-                    console.log('Auto-save: Response received');
-                    console.log('Auto-save: Status:', response.status);
-                    console.log('Auto-save: Status text:', response.statusText);
-                    console.log('Auto-save: OK:', response.ok);
-
-                    const contentType = response.headers.get('content-type');
-                    console.log('Auto-save: Content-Type:', contentType);
-
-                    if (!response.ok) {
-                        // エラーレスポンスの内容も確認
-                        return response.text().then(text => {
-                            console.error('Auto-save: Server error response:', text);
-                            throw new Error(`Server error: ${response.status} - ${text.substring(0, 200)}`);
-                        });
-                    }
-
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json();
-                    } else {
-                        // 実際のレスポンス内容を確認
-                        return response.text().then(text => {
-                            console.error('Auto-save: Invalid response format, received:', text.substring(0, 500));
-                            console.error('Auto-save: Expected JSON, got Content-Type:', contentType);
-                            throw new Error(`Invalid response format. Expected JSON, got: ${contentType}`);
-                        });
-                    }
-                })
-                .then(data => {
-                    console.log('Auto-save: Success response:', data);
-                    if (data && data.success) {
-                        showAutoSaveSuccess(data.message);
-                        updatePostId(data.post_id);
-                    } else {
-                        console.warn('Auto-save failed:', data?.message || 'Unknown error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Auto-save error details:', {
-                        message: error.message,
-                        stack: error.stack,
-                        name: error.name
-                    });
-                    // 開発時のみエラーメッセージを表示
-                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                        showAutoSaveError(`自動保存エラー: ${error.message}`);
-                    }
-                });
+        if (!form) {
+            console.log('Form not found for auto-save');
+            return;
         }
+
+        // 画像ファイルを除外したFormDataを作成
+        const formData = new FormData();
+
+        // 必須パラメータを確実に設定
+        const postIdInput = document.getElementById('post_id');
+        if (postIdInput && postIdInput.value) {
+            formData.append('post_id', postIdInput.value);
+            console.log('Auto-save: Using existing post_id:', postIdInput.value);
+        }
+
+        // テキストフィールドのみを取得
+        const formElements = form.elements;
+        let fieldCount = 0;
+
+        for (let i = 0; i < formElements.length; i++) {
+            const element = formElements[i];
+
+            // ファイルフィールドは除外
+            if (element.type === 'file') {
+                continue;
+            }
+
+            // その他のフィールドは追加
+            if (element.name && element.value !== undefined) {
+                if (element.type === 'checkbox' || element.type === 'radio') {
+                    if (element.checked) {
+                        formData.append(element.name, element.value);
+                        fieldCount++;
+                    }
+                } else if (element.type !== 'submit' && element.type !== 'button') {
+                    // 空の値でも送信（サーバーサイドで処理）
+                    formData.append(element.name, element.value);
+                    fieldCount++;
+                }
+            }
+        }
+
+        console.log(`Auto-save: Sending ${fieldCount} fields to /posts/auto_save`);
+
+        // デバッグ用：送信するフィールドをログ出力
+        console.log('Auto-save: Sending fields:', Array.from(formData.entries()).map(([key, value]) => `${key}: ${value}`));
+
+        fetch('/posts/auto_save', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': getCSRFToken(),
+                'Accept': 'application/json'
+                // Content-Typeは削除（FormData使用時は自動設定される）
+            },
+            body: formData
+        })
+            .then(response => {
+                // デバッグ情報を詳細にログ出力
+                console.log('Auto-save: Response received');
+                console.log('Auto-save: Status:', response.status);
+                console.log('Auto-save: Status text:', response.statusText);
+                console.log('Auto-save: OK:', response.ok);
+                console.log('Auto-save: URL:', response.url);
+
+                const contentType = response.headers.get('content-type');
+                console.log('Auto-save: Content-Type:', contentType);
+
+                if (!response.ok) {
+                    // エラーレスポンスの内容も確認
+                    return response.text().then(text => {
+                        console.error('Auto-save: Server error response:', text);
+                        throw new Error(`Server error: ${response.status} - ${text.substring(0, 200)}`);
+                    });
+                }
+
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // 実際のレスポンス内容を確認
+                    return response.text().then(text => {
+                        console.error('Auto-save: Invalid response format, received:', text.substring(0, 500));
+                        console.error('Auto-save: Expected JSON, got Content-Type:', contentType);
+                        throw new Error(`Invalid response format. Expected JSON, got: ${contentType}`);
+                    });
+                }
+            })
+            .then(data => {
+                console.log('Auto-save: Success response:', data);
+                if (data && data.success) {
+                    showAutoSaveSuccess(data.message);
+                    updatePostId(data.post_id);
+                } else {
+                    console.warn('Auto-save failed:', data?.message || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Auto-save error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                // 開発時のみエラーメッセージを表示
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    showAutoSaveError(`自動保存エラー: ${error.message}`);
+                }
+            });
     }
 
     function showAutoSaveError(message) {
@@ -635,19 +686,18 @@
         }
     }
 
-    // フォーム送信ハンドラー
-    function handleUpdateSubmit(event) {
+    // フォーム送信ハンドラーを修正
+    async function handleUpdateSubmit(event) {
         console.log('Update submit button clicked');
-        
+
         // デフォルトの送信を一時停止
         event.preventDefault();
-        
+
         const progressModal = document.getElementById('updateProgressModal');
         const form = document.querySelector('form[data-turbo="false"]');
-        
+
         if (!progressModal || !form) {
             console.error('Required elements not found');
-            // フォールバック: 通常の送信
             form?.submit();
             return;
         }
@@ -660,21 +710,23 @@
             });
             modal.show();
 
-            console.log('Modal shown, starting progress animation');
-            
+            console.log('Modal shown, starting file upload and form submission');
+
             // 進捗アニメーション開始
             startUpdateProgress();
 
-            // 少し遅延してからフォーム送信（モーダル表示を確実にするため）
+            // ファイルアップロードを実行してからフォーム送信
+            await uploadFilesToS3();
+
+            // 少し遅延してからフォーム送信
             setTimeout(() => {
                 console.log('Submitting form...');
                 form.submit();
             }, 100);
 
         } catch (error) {
-            console.error('Error showing modal:', error);
-            // エラー時は通常の送信にフォールバック
-            form.submit();
+            console.error('Error during upload or form submission:', error);
+            showUpdateError();
         }
     }
 
@@ -687,10 +739,11 @@
 
         let progress = 0;
         const steps = [
-            { progress: 20, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
-            { progress: 40, status: 'ファイルをアップロード中...', detail: '画像・動画ファイルを処理しています' },
-            { progress: 60, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
-            { progress: 80, status: '最終処理中...', detail: 'インデックスを更新しています' },
+            { progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
+            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${selectedFiles.length}個のファイルを処理しています` },
+            { progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました' },
+            { progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
+            { progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています' },
             { progress: 100, status: '完了', detail: '更新が完了しました' }
         ];
 
@@ -700,23 +753,19 @@
             if (currentStep < steps.length) {
                 const step = steps[currentStep];
 
-                // プログレスバー更新
                 progressBar.style.width = step.progress + '%';
                 progressBar.setAttribute('aria-valuenow', step.progress);
                 progressText.textContent = step.progress + '%';
 
-                // ステータス更新
                 statusText.textContent = step.status;
                 details.textContent = step.detail;
 
                 currentStep++;
 
-                // 次のステップまでの待機時間（実際の処理時間に応じて調整）
                 setTimeout(updateProgress, 800);
             }
         };
 
-        // 最初のステップ実行
         setTimeout(updateProgress, 200);
     }
 
@@ -772,4 +821,106 @@
     document.addEventListener('DOMContentLoaded', function() {
         initializeUpdateProgressModal();
     });
+
+    // 選択されたファイル名を表示する関数（新規追加）
+    function displaySelectedFiles(files) {
+        const displayArea = document.getElementById('selectedFilesDisplay');
+        const filesList = document.getElementById('selectedFilesList');
+
+        if (files.length > 0) {
+            displayArea.style.display = 'block';
+            filesList.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'mb-1 d-flex align-items-center justify-content-between';
+                fileItem.innerHTML = `
+                <span class="small">
+                    <i class="fas fa-image text-primary me-1"></i>
+                    ${file.name} <span class="text-muted">(${formatFileSize(file.size)})</span>
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="removeSelectedFile(${index})" title="削除">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+                filesList.appendChild(fileItem);
+            });
+        } else {
+            displayArea.style.display = 'none';
+        }
+    }
+
+    // ファイルサイズをフォーマットする関数（新規追加）
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 選択されたファイルを削除する関数（新規追加）
+    function removeSelectedFile(index) {
+        selectedFiles.splice(index, 1);
+        displaySelectedFiles(selectedFiles);
+
+        // ファイル入力フィールドをリセット
+        const imageInput = document.getElementById('imageInput');
+        if (imageInput) {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
+        }
+    }
+
+    // S3にファイルをアップロードする関数（新規追加）
+    async function uploadFilesToS3() {
+        if (selectedFiles.length === 0) {
+            console.log('No files to upload');
+            return;
+        }
+
+        console.log('Starting file upload to S3...');
+
+        // Rails.application.config.active_storage.variant_processor を使用
+        const uploadPromises = selectedFiles.map(async (file) => {
+            const formData = new FormData();
+            formData.append('blob', file);
+            formData.append('filename', file.name);
+
+            try {
+                const response = await fetch('/rails/active_storage/direct_uploads', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': getCSRFToken(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed for ${file.name}`);
+                }
+
+                const result = await response.json();
+                console.log(`Upload completed for ${file.name}:`, result);
+                return result;
+
+            } catch (error) {
+                console.error(`Error uploading ${file.name}:`, error);
+                throw error;
+            }
+        });
+
+        try {
+            await Promise.all(uploadPromises);
+            console.log('All files uploaded successfully');
+        } catch (error) {
+            console.error('Error during file upload:', error);
+            throw error;
+        }
+    }
+
+
 </script>
