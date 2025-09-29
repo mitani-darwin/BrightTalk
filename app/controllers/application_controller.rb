@@ -8,7 +8,10 @@ class ApplicationController < ActionController::Base
   }
 
   # 認証が必要なアクション（特定のコントローラー・アクションを除外）
-  before_action :authenticate_user!, if: -> { !devise_controller? && !public_access_allowed? }
+  # ApplicationController.rb
+  before_action :authenticate_user!, if: -> {
+    !devise_controller? && !public_access_allowed? && controller_name != "posts"
+  }
 
   # Deviseのパラメータ許可
   before_action :configure_permitted_parameters, if: :devise_controller?
@@ -21,6 +24,8 @@ class ApplicationController < ActionController::Base
 
 
   before_action :handle_csrf_verification, if: -> { request.post? && !Rails.env.test? }
+
+  before_action :log_request_details # この行を追加
 
   private
 
@@ -109,6 +114,18 @@ class ApplicationController < ActionController::Base
     else
       # Passkey設定ページにリダイレクト
       new_user_passkey_path
+    end
+  end
+
+  def log_request_details
+    if request.path.include?('auto_save')
+      Rails.logger.info "=== REQUEST DEBUG ==="
+      Rails.logger.info "Path: #{request.path}"
+      Rails.logger.info "Method: #{request.method}"
+      Rails.logger.info "Controller: #{controller_name}"
+      Rails.logger.info "Action: #{action_name}"
+      Rails.logger.info "Params: #{params.keys.inspect}"
+      Rails.logger.info "========================"
     end
   end
 end

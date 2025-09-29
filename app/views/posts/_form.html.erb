@@ -4,7 +4,7 @@
                   novalidate: true, local: false, data: { turbo: false } do |form| %>
       
       <!-- 自動保存済み投稿IDを保持する隠しフィールド -->
-      <input type="hidden" name="post_id" id="post_id" value="">
+      <input type="hidden" name="post_id" id="post_id" value="<%= post.persisted? ? post.slug : '' %>">
       
       <!-- エラーメッセージ表示 -->
       <%= render 'form_errors', post: post %>

@@ -33,9 +33,11 @@
       <% end %>
     </small>
   <% end %>
-  <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
-                     id: "contentTextarea", required: true, style: "overflow:auto; resize:vertical; min-height: 400px; font-family: Monaco, 'Lucida Console', monospace;",
-                     placeholder: "内容を入力してください", data: { controller: "code-editor", code_editor_target: "textarea" } %>
+  <div data-controller="code-editor">
+    <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
+                       id: "contentTextarea", required: true, style: "overflow:auto; resize:vertical; min-height: 400px; font-family: Monaco, 'Lucida Console', monospace;",
+                       placeholder: "内容を入力してください", data: { code_editor_target: "textarea" } %>
+  </div>
   <div class="invalid-feedback">
     内容を入力してください。
   </div>

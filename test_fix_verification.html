@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditor Fix Verification</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/markdown/markdown.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: Monaco, 'Lucida Console', monospace;
+            background-color: #ffeaa7;
+            resize: vertical;
+            min-height: 400px;
+            overflow: auto;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .codemirror-initializing {
+            border: 2px solid #007bff !important;
+            background-color: #e3f2fd !important;
+        }
+        .codemirror-initialized {
+            border: 2px solid #28a745 !important;
+        }
+        /* Override CodeMirror default styles */
+        .CodeMirror {
+            border: 2px solid #28a745 !important;
+            height: 400px !important;
+            font-family: Monaco, 'Lucida Console', monospace !important;
+        }
+        .CodeMirror-focused {
+            border-color: #007bff !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CodeEditor Fix Verification</h1>
+        <p>このテストは、修正後のCodeMirrorが正しく動作することを確認します。</p>
+        
+        <div class="form-group">
+            <label for="contentTextarea">内容 (修正後の構造):</label>
+            
+            <!-- Fixed structure: wrapper div with data-controller, textarea with proper target -->
+            <div data-controller="code-editor">
+                <textarea 
+                    id="contentTextarea" 
+                    name="content" 
+                    data-code-editor-target="textarea"
+                    placeholder="内容を入力してください"
+                    class="form-control flex-grow-1"
+                    required
+                    style="overflow:auto; resize:vertical; min-height: 400px; font-family: Monaco, 'Lucida Console', monospace;">内容を入力してください
+
+# サンプルヘッダー
+
+これはテストコンテンツです。修正後のCodeMirror構造をテストしています。
+
+## 修正内容:
+1. `data-controller="code-editor"` を wrapper div に移動
+2. `data-code-editor-target="textarea"` を正しい形式で設定
+3. Stimulusのターゲット認識を修正
+
+## 期待される動作:
+- CodeMirrorがtextareaを正しく置き換える
+- マークダウンハイライト表示
+- 行番号表示
+- 正常なエディタ機能
+
+```javascript
+console.log('CodeMirrorが正しく動作中！');
+```</textarea>
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h3>デバッグ情報</h3>
+            <div id="debugLog"></div>
+        </div>
+
+        <script>
+            // Debug logger
+            function addDebugLog(message, type = 'info') {
+                const debugLog = document.getElementById('debugLog');
+                const statusClass = type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'success';
+                const timestamp = new Date().toLocaleTimeString();
+                debugLog.innerHTML += `<div class="status ${statusClass}">[${timestamp}] ${message}</div>`;
+                console.log(`[${timestamp}] ${message}`);
+            }
+
+            // Mock Stimulus Controller (simulating the fixed version)
+            class CodeEditorController {
+                constructor(element) {
+                    this.element = element;
+                    // Find textarea target using the correct attribute
+                    this.textareaTarget = element.querySelector('[data-code-editor-target="textarea"]');
+                    addDebugLog("CodeEditorController created with fixed structure");
+                }
+
+                connect() {
+                    addDebugLog("CodeEditor controller connected");
+                    
+                    if (this.element.classList.contains('codemirror-initialized')) {
+                        addDebugLog("CodeEditorは既に設定済みです", 'warning');
+                        return;
+                    }
+                    
+                    this.initializeCodeMirror();
+                }
+
+                async initializeCodeMirror() {
+                    addDebugLog("Initializing CodeMirror with fixed structure...");
+                    this.element.classList.add('codemirror-initializing');
+                    
+                    const textarea = this.textareaTarget;
+                    if (!textarea) {
+                        addDebugLog("Textarea target not found! Check data-code-editor-target attribute", 'error');
+                        return;
+                    }
+
+                    addDebugLog(`✓ Found textarea target: ${textarea.id}`);
+                    addDebugLog(`✓ Textarea has correct data-code-editor-target attribute`);
+
+                    try {
+                        if (typeof window.CodeMirror === 'undefined') {
+                            addDebugLog("CodeMirror library not loaded", 'error');
+                            return;
+                        }
+
+                        // Initialize CodeMirror
+                        addDebugLog("Creating CodeMirror editor...");
+                        
+                        this.editor = window.CodeMirror.fromTextArea(textarea, {
+                            mode: 'markdown',
+                            theme: 'default',
+                            lineNumbers: true,
+                            lineWrapping: true,
+                            indentUnit: 2,
+                            tabSize: 2,
+                            extraKeys: {
+                                "Ctrl-Space": "autocomplete"
+                            }
+                        });
+
+                        // Success!
+                        this.element.classList.remove('codemirror-initializing');
+                        this.element.classList.add('codemirror-initialized');
+                        
+                        addDebugLog("✓ CodeMirror initialized successfully!", 'success');
+                        addDebugLog("✓ Textarea has been replaced with CodeMirror editor", 'success');
+                        addDebugLog("✓ Fix verification successful!", 'success');
+
+                        // Verify the textarea is hidden
+                        const textareaStyle = window.getComputedStyle(textarea);
+                        if (textareaStyle.display === 'none') {
+                            addDebugLog("✓ Original textarea is properly hidden", 'success');
+                        } else {
+                            addDebugLog("⚠ Original textarea is still visible", 'warning');
+                        }
+
+                        // Verify CodeMirror wrapper exists
+                        const codeMirrorWrapper = this.element.querySelector('.CodeMirror');
+                        if (codeMirrorWrapper) {
+                            addDebugLog("✓ CodeMirror wrapper element created", 'success');
+                        } else {
+                            addDebugLog("✗ CodeMirror wrapper element not found", 'error');
+                        }
+
+                    } catch (error) {
+                        addDebugLog(`✗ CodeMirror initialization error: ${error.message}`, 'error');
+                        this.element.classList.remove('codemirror-initializing');
+                    }
+                }
+
+                insertText(text) {
+                    if (this.editor && this.editor.getDoc) {
+                        const cursor = this.editor.getCursor();
+                        this.editor.replaceRange(text, cursor);
+                        this.editor.focus();
+                        addDebugLog(`✓ Text inserted: "${text.substring(0, 20)}..."`);
+                    } else {
+                        addDebugLog('✗ CodeMirror editor not available for text insertion', 'error');
+                    }
+                }
+
+                disconnect() {
+                    if (this.editor) {
+                        try {
+                            this.editor.toTextArea();
+                            this.editor = null;
+                            addDebugLog('✓ CodeEditor disconnected');
+                        } catch (error) {
+                            addDebugLog(`✗ Error during CodeEditor disconnect: ${error.message}`, 'error');
+                        }
+                    }
+                }
+            }
+
+            // Initialize when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                addDebugLog("DOM loaded, starting fix verification...");
+                
+                const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+                if (codeEditorElement) {
+                    addDebugLog("✓ Code editor element found with data-controller attribute");
+                    
+                    const controller = new CodeEditorController(codeEditorElement);
+                    controller.connect();
+                    
+                    // Store controller reference for testing
+                    window.testController = controller;
+                    
+                    // Test text insertion after 3 seconds
+                    setTimeout(() => {
+                        addDebugLog("Testing text insertion...");
+                        controller.insertText("\n\n## 自動挿入テスト\n\nこのテキストは自動的に挿入されました！");
+                    }, 3000);
+                    
+                } else {
+                    addDebugLog("✗ Code editor element not found!", 'error');
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

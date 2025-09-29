@@ -21,5 +21,5 @@ Rails.application.routes.draw do
 
   # Handle POST requests to /posts/:id (which should be PATCH/PUT for updates)
   # This fixes forms that incorrectly use POST method for updating existing posts
-  post '/posts/:id', to: 'posts#update', constraints: { id: /[^\/]+/ }
+  #  post '/posts/:id', to: 'posts#update', constraints: { id: /(?!auto_save)[^\/]+/ }
 end

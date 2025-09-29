@@ -5,8 +5,15 @@ import * as ActiveStorage from "@rails/activestorage"
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';  // CSS追加
 import { startPasskeyAuthentication, startPasskeyRegistration } from './passkey.js';
+import CodeMirror from 'codemirror';
+import 'codemirror/mode/markdown/markdown';
+import 'codemirror/addon/fold/foldcode';
+import 'codemirror/addon/fold/foldgutter';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/default.css';
 
 window.videojs = videojs;
+window.CodeMirror = CodeMirror;
 
 window.startPasskeyAuthentication = startPasskeyAuthentication;
 window.startPasskeyRegistration = startPasskeyRegistration;
@@ -23,51 +30,50 @@ if (!window.ActiveStorage) {
     console.log('ActiveStorage initialized');
 }
 
-// CodeMirrorの動的読み込み（修正版）
+// CodeMirrorの確実な読み込み（修正版）
 async function loadCodeMirror() {
-    if (window.CodeMirror && window.CodeMirror.fromTextArea) {
+    // 既に window.CodeMirror が正しく設定されている場合はそれを返す
+    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+        console.log('CodeMirror already available');
         return window.CodeMirror;
     }
 
     try {
-        console.log('Loading CodeMirror dynamically...');
+        console.log('Ensuring CodeMirror is available...');
 
-        // 動的インポートでモジュール全体を取得
-        const CodeMirrorModule = await import('codemirror');
-
-        // モジュールから直接CodeMirrorオブジェクトを取得
-        let CM = CodeMirrorModule.default || CodeMirrorModule || window.CodeMirror;
-
-        // CommonJS形式の場合の対処
-        if (!CM && typeof CodeMirrorModule === 'object') {
-            // モジュールオブジェクトのプロパティを確認
-            CM = Object.values(CodeMirrorModule).find(val =>
-                val && typeof val === 'function' && val.fromTextArea
-            ) || CodeMirrorModule;
-        }
-
+        // 静的インポートで既に読み込まれているCodeMirrorを使用
+        const CM = CodeMirror;
+        
         if (!CM || typeof CM.fromTextArea !== 'function') {
-            throw new Error('CodeMirror.fromTextArea not found');
+            throw new Error('CodeMirror.fromTextArea not available');
         }
 
-        // モードとアドオンを動的に読み込み
-        await Promise.all([
-            import('codemirror/mode/markdown/markdown'),
-            import('codemirror/mode/javascript/javascript'),
-            import('codemirror/mode/xml/xml'),
-            import('codemirror/mode/css/css'),
-            import('codemirror/addon/fold/foldcode'),
-            import('codemirror/addon/fold/foldgutter'),
-            import('codemirror/addon/fold/brace-fold'),
-            import('codemirror/addon/fold/markdown-fold')
-        ]);
+        // window.CodeMirrorが未設定の場合は設定
+        if (!window.CodeMirror) {
+            window.CodeMirror = CM;
+        }
 
-        window.CodeMirror = CM;
-        console.log('CodeMirror loaded successfully:', !!CM.fromTextArea);
+        console.log('CodeMirror confirmed available:', !!CM.fromTextArea);
         return CM;
 
     } catch (error) {
-        console.error('CodeMirror loading failed:', error);
+        console.error('CodeMirror setup failed:', error);
+        
+        // フォールバック: 動的インポートを試行
+        try {
+            console.log('Attempting dynamic CodeMirror import...');
+            const CodeMirrorModule = await import('codemirror');
+            const CM = CodeMirrorModule.default || CodeMirrorModule;
+            
+            if (CM && typeof CM.fromTextArea === 'function') {
+                window.CodeMirror = CM;
+                console.log('CodeMirror loaded via dynamic import');
+                return CM;
+            }
+        } catch (dynamicError) {
+            console.error('Dynamic CodeMirror import also failed:', dynamicError);
+        }
+        
         return null;
     }
 }

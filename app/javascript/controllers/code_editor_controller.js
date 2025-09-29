@@ -5,26 +5,45 @@ export default class extends Controller {
 
     connect() {
         console.log("CodeEditor controller connected")
+        // 既に初期化済みかチェック
+        if (this.element.classList.contains('codemirror-initialized')) {
+            console.log("CodeEditorは既に設定済みです")
+            return
+        }
         this.initializeCodeMirror()
     }
 
     async initializeCodeMirror() {
-        // CodeMirrorが利用可能になるまで待機
-        let retryCount = 0
-        const maxRetries = 10
-
-        while (retryCount < maxRetries) {
-            if (window.CodeMirror && window.CodeMirror.fromTextArea) {
-                break
+        // 初期化フラグを設定
+        this.element.classList.add('codemirror-initializing')
+        
+        // CodeMirrorの確実な読み込みを試行
+        try {
+            // loadCodeMirror関数を使用してCodeMirrorを取得
+            const CodeMirror = await window.loadCodeMirror?.() || window.CodeMirror;
+            
+            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
+                // 追加の待機ロジック
+                console.log("CodeMirror not immediately available, waiting...")
+                let retryCount = 0
+                const maxRetries = 15
+                
+                while (retryCount < maxRetries) {
+                    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+                        break
+                    }
+                    console.log(`Waiting for CodeMirror... (attempt ${retryCount + 1}/${maxRetries})`)
+                    await new Promise(resolve => setTimeout(resolve, 200))
+                    retryCount++
+                }
             }
-
-            console.log(`Waiting for CodeMirror... (attempt ${retryCount + 1})`)
-            await new Promise(resolve => setTimeout(resolve, 100))
-            retryCount++
-        }
-
-        if (!window.CodeMirror || !window.CodeMirror.fromTextArea) {
-            console.error("CodeMirror is not available after waiting")
+            
+            if (!window.CodeMirror || typeof window.CodeMirror.fromTextArea !== 'function') {
+                throw new Error("CodeMirror is not available after waiting")
+            }
+            
+        } catch (error) {
+            console.error("Failed to initialize CodeMirror:", error)
             return
         }
 
@@ -60,6 +79,9 @@ export default class extends Controller {
             // エディターが正常に作成されたかを確認
             if (this.editor && this.editor.getDoc) {
                 console.log('CodeMirror editor is functional')
+
+                this.element.classList.remove('codemirror-initializing')
+                this.element.classList.add('codemirror-initialized')
             } else {
                 console.error('CodeMirror editor creation failed')
             }
