@@ -1087,15 +1087,15 @@ main {
 }
 
 /* 最強制的なCodeMirrorサイズ設定 */
-[data-controller="code_editor"] .CodeMirror,
-[data-controller*="code_editor"] .CodeMirror {
+[data-controller="code-editor"] .CodeMirror,
+[data-controller*="code-editor"] .CodeMirror {
   height: 600px !important;
   min-height: 600px !important;
   max-height: 800px !important;
 }
 
-[data-controller="code_editor"] .CodeMirror-scroll,
-[data-controller*="code_editor"] .CodeMirror-scroll {
+[data-controller="code-editor"] .CodeMirror-scroll,
+[data-controller*="code-editor"] .CodeMirror-scroll {
   height: 600px !important;
   min-height: 600px !important;
   max-height: 800px !important;
