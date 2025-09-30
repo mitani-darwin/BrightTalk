@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Alignment Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px; /* Space for fixed buttons */
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .content {
+            height: 150vh; /* Make content tall to test scrolling */
+        }
+        .content-field {
+            background-color: #f0f8ff;
+            border: 2px dashed #007bff;
+            min-height: 400px;
+            padding: 10px;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            min-height: 200px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Button Alignment Test</h1>
+        <p>This test verifies that the buttons align horizontally with the content field (right column).</p>
+        
+        <!-- Simulated form layout -->
+        <div class="row" id="formContainer">
+            <!-- サイドバー（左側） -->
+            <div class="col-md-4" style="height: 100%;">
+                <div class="sidebar">
+                    <h5>Sidebar (col-md-4)</h5>
+                    <p>This represents the sidebar area</p>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ（右側） -->
+            <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+                <div class="content-field">
+                    <h5>Content Field (col-md-8)</h5>
+                    <p>This represents the content textarea area.</p>
+                    <p>The buttons below should align horizontally with this content field.</p>
+                    <div style="height: 100vh; background: linear-gradient(to bottom, #e3f2fd, #bbdefb);">
+                        <p style="padding-top: 50vh; text-align: center;">Scroll to see fixed buttons alignment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed buttons aligned with content field -->
+    <div class="container" style="position: fixed; bottom: 60px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div> <!-- サイドバー分のスペース -->
+            <div class="col-md-8">
+                <div class="row mt-4 mb-3">
+                    <div class="col-6">
+                        <button class="btn btn-primary w-100">投稿</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-secondary w-100">キャンセル</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulated footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-center mb-0">Footer content</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

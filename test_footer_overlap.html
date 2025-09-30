@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer Overlap Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+        .content {
+            height: 150vh;
+        }
+        /* Measure footer height */
+        .footer-height-indicator {
+            position: fixed;
+            right: 10px;
+            bottom: 0;
+            background: yellow;
+            color: black;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Footer Overlap Test</h1>
+        <p>This test reproduces the footer overlap issue with the buttons.</p>
+        <div class="content">
+            <p>Scroll down to see the overlap between buttons and footer.</p>
+            <div style="height: 100vh; background: linear-gradient(to bottom, #e3f2fd, #bbdefb);">
+                <p style="padding-top: 50vh; text-align: center;">Check footer overlap at bottom</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current button positioning (from the Rails form) -->
+    <div class="container" style="position: fixed; bottom: 60px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-8">
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Replicated footer from shared/_footer.html.erb -->
+    <footer class="bg-dark text-light py-3 mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>BrightTalk</h5>
+                    <p class="mb-0">コミュニティ投稿プラットフォーム</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        &copy; 2025 BrightTalk. All rights reserved.
+                    </p>
+                    <small class="text-muted">
+                        Powered by Ruby on Rails |
+                        <a href="#" class="text-light text-decoration-none">利用規約</a> |
+                        <a href="#" class="text-light text-decoration-none">プライバシーポリシー</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Height indicator -->
+    <div class="footer-height-indicator">
+        Footer height measurement
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Measure footer height on load
+        window.addEventListener('load', function() {
+            const footer = document.querySelector('footer');
+            const footerHeight = footer.offsetHeight;
+            const indicator = document.querySelector('.footer-height-indicator');
+            indicator.textContent = `Footer height: ${footerHeight}px`;
+        });
+    </script>
+</body>
+</html>

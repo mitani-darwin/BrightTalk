@@ -10,7 +10,10 @@ export default class extends Controller {
             console.log("CodeEditorは既に設定済みです")
             return
         }
-        this.initializeCodeMirror()
+        this.initializeCodeMirror();
+        
+        // 動的サイズ調整の初期化を追加
+        this.initializeDynamicSizing();
         
         // カスタムイベントリスナーを追加
         this.element.addEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
@@ -71,7 +74,8 @@ export default class extends Controller {
                 tabSize: 2,
                 extraKeys: {
                     "Ctrl-Space": "autocomplete"
-                }
+                },
+                resize: true,
             })
 
             // 初期化完了イベントを発火
@@ -89,9 +93,83 @@ export default class extends Controller {
                 console.error('CodeMirror editor creation failed')
             }
 
+            // 初期化直後に強制サイズ設定
+            setTimeout(() => {
+                this.adjustEditorSize();
+            }, 100);
+
+            // さらに確実にするため、500ms後にも実行
+            setTimeout(() => {
+                this.adjustEditorSize();
+            }, 500);
+
         } catch (error) {
             console.error('CodeMirror initialization error:', error)
         }
+    }
+
+    initializeDynamicSizing() {
+        console.log('動的サイズ調整を初期化中...');
+        
+        // 初期サイズ調整
+        this.adjustEditorSize();
+        
+        // リサイズイベントリスナー
+        this.resizeHandler = this.debounce(() => this.adjustEditorSize(), 250);
+        window.addEventListener('resize', this.resizeHandler);
+        
+        // デバイス向き変更イベント
+        this.orientationHandler = () => setTimeout(() => this.adjustEditorSize(), 500);
+        window.addEventListener('orientationchange', this.orientationHandler);
+        
+        console.log('動的サイズ調整が有効になりました');
+    }
+
+    adjustEditorSize() {
+        if (!this.editor) return;
+
+        // より大きなサイズ設定
+        const minHeight = 600; // 400px → 600px
+        const maxHeight = 800; // 600px → 800px
+        const targetHeight = Math.min(maxHeight, Math.max(minHeight, window.innerHeight * 0.6));
+
+        // CodeMirrorの各要素に確実に大きなサイズを適用
+        const wrapper = this.editor.getWrapperElement();
+        const scrollElement = this.editor.getScrollerElement();
+
+        if (wrapper) {
+            // wrapperに直接大きなサイズ設定
+            wrapper.style.height = `${targetHeight}px`;
+            wrapper.style.minHeight = `${minHeight}px`;
+            wrapper.style.maxHeight = `${maxHeight}px`;
+            wrapper.style.overflow = 'hidden';
+
+            // CSSクラスも追加
+            wrapper.classList.add('codemirror-sized');
+        }
+
+        if (scrollElement) {
+            // scrollElementにも同じ大きなサイズ設定
+            scrollElement.style.height = `${targetHeight}px`;
+            scrollElement.style.minHeight = `${minHeight}px`;
+            scrollElement.style.maxHeight = `${maxHeight}px`;
+            scrollElement.style.overflowY = 'auto';
+        }
+
+        // 強制的にリフレッシュ
+        setTimeout(() => {
+            this.editor.refresh();
+        }, 100);
+
+        console.log(`✅ CodeMirrorサイズをより大きく設定: ${targetHeight}px (${minHeight}px-${maxHeight}px)`);
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
     }
 
     insertText(text) {
@@ -113,7 +191,15 @@ export default class extends Controller {
     }
 
     disconnect() {
-        // イベントリスナーを削除
+        // 動的サイズ調整のイベントリスナーを削除
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+        }
+        if (this.orientationHandler) {
+            window.removeEventListener('orientationchange', this.orientationHandler);
+        }
+        
+        // カスタムイベントリスナーを削除
         this.element.removeEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
         
         if (this.editor) {

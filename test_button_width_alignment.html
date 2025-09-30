@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Width Alignment Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px; /* Space for fixed buttons */
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .content {
+            height: 150vh; /* Make content tall to test scrolling */
+        }
+        .content-field {
+            background-color: #f0f8ff;
+            border: 2px dashed #007bff;
+            min-height: 400px;
+            padding: 10px;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            min-height: 200px;
+            padding: 10px;
+        }
+        /* Visual indicators for width comparison */
+        .width-indicator {
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid red;
+            height: 20px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Button Width Alignment Test</h1>
+        <p>This test verifies that the buttons span the full width of the content field (内容欄) in 2 equal columns.</p>
+        
+        <!-- Simulated form layout -->
+        <div class="row" id="formContainer">
+            <!-- サイドバー（左側） -->
+            <div class="col-md-4" style="height: 100%;">
+                <div class="sidebar">
+                    <h5>Sidebar (col-md-4)</h5>
+                    <p>This represents the sidebar area</p>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ（右側） -->
+            <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+                <div class="content-field">
+                    <h5>Content Field (col-md-8)</h5>
+                    <p>This represents the content textarea area (内容欄).</p>
+                    <div class="width-indicator">Width reference for content field</div>
+                    <p>The buttons below should match this exact width and be arranged in 2 equal columns.</p>
+                    <div style="height: 100vh; background: linear-gradient(to bottom, #e3f2fd, #bbdefb);">
+                        <p style="padding-top: 50vh; text-align: center;">Scroll to see button width alignment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed buttons with full content field width in 2 columns -->
+    <div class="container" style="position: fixed; bottom: 60px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div> <!-- サイドバー分のスペース -->
+            <div class="col-md-8">
+                <!-- Width indicator to show content field boundary -->
+                <div class="width-indicator mb-2">Content field width reference</div>
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulated footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-center mb-0">Footer content</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

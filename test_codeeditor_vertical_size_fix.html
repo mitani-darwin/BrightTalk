@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditor Vertical Size Fix Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+        }
+        .measurement-text {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            z-index: 1001;
+            max-width: 400px;
+            font-size: 12px;
+        }
+        .status-indicator {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .size-indicator {
+            position: absolute;
+            right: -30px;
+            width: 25px;
+            background: rgba(0, 123, 255, 0.3);
+            border: 2px solid #007bff;
+            z-index: 998;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>CodeEditor縦サイズ修正検証テスト</h1>
+        <p>修正されたCodeMirrorエディターの縦サイズ調整機能をテストします。</p>
+        
+        <div id="testStatus" class="status-indicator status-error">
+            CodeMirror初期化中...
+        </div>
+        
+        <!-- Form layout matching Rails structure -->
+        <div class="row" id="formContainer" style="height: calc(100vh - 140px);">
+            <!-- サイドバー（左側） -->
+            <div class="col-md-4" style="height: 100%;">
+                <div class="sidebar" style="height: 100%;">
+                    <h5>Sidebar</h5>
+                    <div class="mb-3">
+                        <label class="form-label">要点・ポイント</label>
+                        <textarea class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">タイトル <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="投稿タイトル">
+                    </div>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ（右側） -->
+            <div class="col-md-8 d-flex flex-column" style="height: 100%; position: relative;">
+                <!-- Key points field -->
+                <div class="mb-3">
+                    <label class="form-label">要点・ポイント</label>
+                    <textarea class="form-control" rows="4" placeholder="例：&#10;1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法"></textarea>
+                    <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
+                </div>
+
+                <!-- Title field -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        タイトル
+                        <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                    </label>
+                    <input type="text" class="form-control" required placeholder="投稿タイトル">
+                </div>
+
+                <!-- Content field with CodeMirror -->
+                <div class="mb-3 flex-grow-1 d-flex flex-column">
+                    <label class="form-label">
+                        内容 (CodeMirror修正版)
+                        <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                    </label>
+                    <div class="flex-grow-1 d-flex flex-column" style="position: relative;">
+                        <textarea 
+                            class="form-control flex-grow-1" 
+                            id="contentTextarea"
+                            required
+                            style="overflow-y: scroll; resize:none; height: 100%; max-height: 600px; font-family: Monaco, 'Lucida Console', monospace;" 
+                            placeholder="内容を入力してください&#10;&#10;🔧 CodeMirror修正内容:&#10;1. 未定義変数maxHeightをeffectiveMaxHeightに修正&#10;2. setSize()直接呼び出しを削除&#10;3. CSS max-heightで制御するアプローチに変更&#10;4. HTMLの600px設定を尊重&#10;&#10;✅ 期待される動作:&#10;- 最大600pxまで縦に拡張&#10;- ビューポートサイズに応じて動的調整&#10;- スクロール機能付き&#10;- レスポンシブ対応&#10;&#10;このテキストエリアはCodeMirrorエディターに変換されます。&#10;長いテキストを入力してスクロール機能をテストしてください。&#10;&#10;## 追加テストコンテンツ&#10;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.&#10;&#10;Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.&#10;&#10;Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."></textarea>
+                        <div class="size-indicator" id="sizeIndicator">
+                            <small style="writing-mode: vertical-lr; transform: rotate(180deg); font-size: 10px; color: #007bff; font-weight: bold;">SIZE</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed buttons -->
+    <div class="container" style="bottom: 100px; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-8">
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-center mb-0">Footer content</p>
+        </div>
+    </footer>
+
+    <!-- Measurement display -->
+    <div class="measurement-text" id="measurements">
+        初期化中...
+    </div>
+
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/markdown/markdown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let editor;
+        let resizeHandler;
+        let orientationHandler;
+        
+        // Modified code_editor_controller.js logic implementation
+        function initializeCodeMirror() {
+            const textarea = document.getElementById('contentTextarea');
+            const measurements = document.getElementById('measurements');
+            const testStatus = document.getElementById('testStatus');
+            
+            if (textarea && window.CodeMirror) {
+                try {
+                    // Initialize CodeMirror
+                    editor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'markdown',
+                        theme: 'default',
+                        lineNumbers: true,
+                        lineWrapping: true,
+                        indentUnit: 2,
+                        tabSize: 2,
+                        extraKeys: {
+                            "Ctrl-Space": "autocomplete"
+                        }
+                    });
+                    
+                    console.log('CodeMirror initialized successfully');
+                    testStatus.textContent = '✅ CodeMirror初期化成功';
+                    testStatus.className = 'status-indicator status-success';
+                    
+                    // Initialize dynamic sizing (fixed version)
+                    initializeDynamicSizing();
+                    
+                    // Update measurements when editor changes
+                    editor.on('refresh', updateMeasurements);
+                    editor.on('change', updateMeasurements);
+                    
+                } catch (error) {
+                    console.error('CodeMirror initialization failed:', error);
+                    testStatus.textContent = '❌ CodeMirror初期化失敗: ' + error.message;
+                    testStatus.className = 'status-indicator status-error';
+                }
+                
+            } else {
+                console.error('CodeMirror or textarea not found');
+                testStatus.textContent = '❌ CodeMirrorまたはtextareaが見つかりません';
+                testStatus.className = 'status-indicator status-error';
+            }
+        }
+        
+        function initializeDynamicSizing() {
+            console.log('動的サイズ調整を初期化中...');
+            
+            // Initial size adjustment
+            adjustEditorSize();
+            
+            // Resize event listener with debounce
+            resizeHandler = debounce(() => adjustEditorSize(), 250);
+            window.addEventListener('resize', resizeHandler);
+            
+            // Device orientation change event
+            orientationHandler = () => setTimeout(() => adjustEditorSize(), 500);
+            window.addEventListener('orientationchange', orientationHandler);
+            
+            console.log('動的サイズ調整が有効になりました');
+        }
+        
+        function adjustEditorSize() {
+            if (!editor) return;
+
+            // HTMLで設定された最大高さを尊重（600px）
+            const desiredMaxHeight = 600;
+            const minHeight = 300;
+
+            const viewportHeight = window.innerHeight;
+            const buttonAreaHeight = 100; // ボタンエリア
+            const headerHeight = getEstimatedHeaderHeight();
+            const safetyMargin = getDeviceSpecificAdjustments().safetyMargin;
+            const availableHeight = viewportHeight - buttonAreaHeight - headerHeight - safetyMargin;
+            
+            // 最終的な高さを決定（600px以下、かつ利用可能高さ以下）
+            const effectiveMaxHeight = Math.max(minHeight, Math.min(desiredMaxHeight, availableHeight));
+            
+            // wrapper要素のmax-heightを設定（直接サイズ設定は行わない）
+            const wrapper = editor.getWrapperElement();
+            if (wrapper) {
+                wrapper.style.maxHeight = `${effectiveMaxHeight}px`;
+                wrapper.style.height = 'auto';
+                wrapper.style.overflow = 'hidden';
+            }
+            
+            // スクロールコンテナの設定
+            const scrollElement = editor.getScrollerElement();
+            if (scrollElement) {
+                scrollElement.style.maxHeight = `${effectiveMaxHeight}px`;
+                scrollElement.style.overflowY = 'auto';
+            }
+            
+            editor.refresh();
+            
+            console.log(`動的サイズ調整完了: max-height ${effectiveMaxHeight}px (目標: ${desiredMaxHeight}px)`);
+            
+            // Update measurements
+            updateMeasurements();
+        }
+        
+        function getEstimatedHeaderHeight() {
+            const navbar = document.querySelector('.navbar, nav, header');
+            return navbar ? navbar.offsetHeight + 20 : 80;
+        }
+        
+        function getDeviceSpecificAdjustments() {
+            const userAgent = navigator.userAgent;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+            
+            return {
+                isMobile,
+                isIOS,
+                safetyMargin: isMobile ? 40 : 20,
+                maxContentRatio: isMobile ? 0.5 : 0.6
+            };
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+        
+        function updateMeasurements() {
+            const measurements = document.getElementById('measurements');
+            const sizeIndicator = document.getElementById('sizeIndicator');
+            
+            if (editor && measurements) {
+                const editorWrapper = editor.getWrapperElement();
+                const editorScrollElement = editor.getScrollerElement();
+                
+                const editorHeight = editorWrapper.offsetHeight;
+                const editorMaxHeight = window.getComputedStyle(editorWrapper).maxHeight;
+                const scrollMaxHeight = window.getComputedStyle(editorScrollElement).maxHeight;
+                
+                const viewportHeight = window.innerHeight;
+                const deviceInfo = getDeviceSpecificAdjustments();
+                
+                // Position size indicator
+                if (sizeIndicator && editorWrapper) {
+                    const rect = editorWrapper.getBoundingClientRect();
+                    const container = document.querySelector('.col-md-8');
+                    const containerRect = container.getBoundingClientRect();
+                    sizeIndicator.style.top = (rect.top - containerRect.top) + 'px';
+                    sizeIndicator.style.height = editorHeight + 'px';
+                }
+                
+                measurements.innerHTML = `
+                    <strong>🔧 CodeMirror縦サイズ修正検証</strong><br><br>
+                    
+                    <strong>修正内容:</strong><br>
+                    ✅ 未定義変数maxHeightを修正<br>
+                    ✅ setSize()直接呼び出しを削除<br>
+                    ✅ CSS max-heightで制御<br>
+                    ✅ 600px設定を尊重<br><br>
+                    
+                    <strong>現在の測定値:</strong><br>
+                    ビューポート: ${viewportHeight}px<br>
+                    エディター高さ: ${editorHeight}px<br>
+                    最大高さ設定: ${editorMaxHeight}<br>
+                    スクロール制限: ${scrollMaxHeight}<br><br>
+                    
+                    <strong>デバイス情報:</strong><br>
+                    タイプ: ${deviceInfo.isMobile ? 'モバイル' : 'デスクトップ'}<br>
+                    安全余白: ${deviceInfo.safetyMargin}px<br><br>
+                    
+                    <strong>動作状況:</strong><br>
+                    ${editorHeight > 0 ? '✅' : '❌'} エディター表示<br>
+                    ${editorMaxHeight.includes('600') ? '✅' : '❌'} 600px制限適用<br>
+                    ${editorWrapper.scrollHeight > editorHeight ? '✅' : '⚠️'} スクロール${editorWrapper.scrollHeight > editorHeight ? '可能' : 'なし'}<br>
+                    ${editorHeight <= 600 ? '✅' : '❌'} 高さ制限内<br>
+                    
+                    <br><strong>縦サイズ問題: ${editorHeight >= 400 ? '✅ 解決済み' : '❌ 未解決'}</strong>
+                `;
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            setTimeout(initializeCodeMirror, 100);
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (resizeHandler) {
+                window.removeEventListener('resize', resizeHandler);
+            }
+            if (orientationHandler) {
+                window.removeEventListener('orientationchange', orientationHandler);
+            }
+        });
+        
+        // Update measurements periodically
+        setInterval(function() {
+            if (editor) {
+                updateMeasurements();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
