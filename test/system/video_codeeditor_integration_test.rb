@@ -70,11 +70,11 @@ class VideoCodeeditorIntegrationTest < ApplicationSystemTestCase
 
     # カスタムイベントでテキスト挿入をテスト
     page.execute_script(<<~JS
-      const textarea = document.getElementById('contentTextarea');
-      const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+      var textarea = document.getElementById('contentTextarea');
+      var codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
       
       if (codeEditorElement) {
-        const customEvent = new CustomEvent('code-editor:insert-text', {
+        var customEvent = new CustomEvent('code-editor:insert-text', {
           detail: { text: 'Custom event test: [custom_video.mp4](attachment:custom_video.mp4)\\n\\n' }
         });
         codeEditorElement.dispatchEvent(customEvent);
@@ -87,11 +87,11 @@ class VideoCodeeditorIntegrationTest < ApplicationSystemTestCase
 
     # テキストが挿入されたことを確認
     final_content = page.evaluate_script(<<~JS
-      const textarea = document.getElementById('contentTextarea');
-      const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+      var textarea = document.getElementById('contentTextarea');
+      var codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
       
       if (window.CodeMirror && codeEditorElement) {
-        const editor = codeEditorElement.querySelector('.CodeMirror');
+        var editor = codeEditorElement.querySelector('.CodeMirror');
         if (editor && editor.CodeMirror) {
           return editor.CodeMirror.getValue();
         }
@@ -113,7 +113,7 @@ class VideoCodeeditorIntegrationTest < ApplicationSystemTestCase
 
     # フォールバック関数を直接テスト
     page.execute_script(<<~JS
-      const textarea = document.getElementById('contentTextarea');
+      var textarea = document.getElementById('contentTextarea');
       if (typeof fallbackTextInsertion === 'function') {
         fallbackTextInsertion(textarea, '[fallback_video.mp4](attachment:fallback_video.mp4)\\n\\n');
       }
@@ -134,7 +134,7 @@ class VideoCodeeditorIntegrationTest < ApplicationSystemTestCase
     # 既存メディア挿入ボタンをシミュレート
     page.execute_script(<<~JS
       // 既存動画挿入ボタンを作成
-      const button = document.createElement('button');
+      var button = document.createElement('button');
       button.className = 'insert-existing-video';
       button.setAttribute('data-filename', 'existing_test.mp4');
       button.setAttribute('data-url', 'attachment:existing_test.mp4');
@@ -151,11 +151,11 @@ class VideoCodeeditorIntegrationTest < ApplicationSystemTestCase
 
     # エディターに動画リンクが挿入されたことを確認
     content_value = page.evaluate_script(<<~JS
-      const textarea = document.getElementById('contentTextarea');
-      const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+      var textarea = document.getElementById('contentTextarea');
+      var codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
       
       if (window.CodeMirror && codeEditorElement) {
-        const editor = codeEditorElement.querySelector('.CodeMirror');
+        var editor = codeEditorElement.querySelector('.CodeMirror');
         if (editor && editor.CodeMirror) {
           return editor.CodeMirror.getValue();
         }
