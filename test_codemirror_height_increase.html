@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMirror Height Increase Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+        }
+        .measurement-text {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            z-index: 1001;
+            max-width: 350px;
+            font-size: 13px;
+        }
+        .height-indicator {
+            background-color: rgba(0, 255, 0, 0.2);
+            border: 2px solid green;
+            margin: 5px 0;
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>CodeMirror Height Increase Test</h1>
+        <p>Testing CodeMirror with increased vertical size (+100px: 300px → 400px max-height).</p>
+        
+        <!-- Form layout matching Rails structure -->
+        <div class="row" id="formContainer" style="height: calc(100vh - 140px);">
+            <!-- サイドバー（左側） -->
+            <div class="col-md-4" style="height: 100%;">
+                <div class="sidebar" style="height: 100%;">
+                    <h5>Sidebar</h5>
+                    <div class="mb-3">
+                        <label class="form-label">要点・ポイント</label>
+                        <textarea class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">タイトル <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="投稿タイトル">
+                    </div>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ（右側） -->
+            <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+                <!-- Key points field -->
+                <div class="mb-3">
+                    <label class="form-label">要点・ポイント</label>
+                    <textarea class="form-control" rows="4" placeholder="例：&#10;1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法"></textarea>
+                    <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
+                </div>
+
+                <!-- Title field -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        タイトル
+                        <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                    </label>
+                    <input type="text" class="form-control" required placeholder="投稿タイトル">
+                </div>
+
+                <!-- Content field with increased max-height (300px → 400px) -->
+                <div class="mb-3 flex-grow-1 d-flex flex-column">
+                    <label class="form-label">
+                        内容 (CodeMirror)
+                        <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                    </label>
+                    <div class="height-indicator">
+                        Before: max-height: 300px | After: max-height: 400px (+100px)
+                    </div>
+                    <div class="flex-grow-1 d-flex flex-column">
+                        <textarea 
+                            class="form-control flex-grow-1" 
+                            id="contentTextarea"
+                            required
+                            style="overflow-y: scroll; resize:none; height: 100%; max-height: 400px; font-family: Monaco, 'Lucida Console', monospace;" 
+                            placeholder="内容を入力してください&#10;&#10;✅ CodeMirror高さ変更テスト:&#10;- 旧: max-height: 300px&#10;- 新: max-height: 400px&#10;- 増加: +100px&#10;&#10;この内容欄はCodeMirrorエディターに変換されます。&#10;縦のスクロールバーが表示され、400pxの最大高さまで拡張できます。&#10;&#10;長いテキストを入力してスクロール機能をテストしてください。&#10;&#10;## テスト内容&#10;1. CodeMirror初期化確認&#10;2. 最大高さ400px確認&#10;3. スクロール機能確認&#10;4. レイアウト破綻なし確認&#10;&#10;## 追加テキスト&#10;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.&#10;&#10;Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.&#10;&#10;Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed buttons -->
+    <div class="container" style="position: fixed; bottom: 100px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-8">
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-center mb-0">Footer content</p>
+        </div>
+    </footer>
+
+    <!-- Measurement display -->
+    <div class="measurement-text" id="measurements">
+        CodeMirror読み込み中...
+    </div>
+
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/markdown/markdown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let editor;
+        
+        function initializeCodeMirror() {
+            const textarea = document.getElementById('contentTextarea');
+            const measurements = document.getElementById('measurements');
+            
+            if (textarea && window.CodeMirror) {
+                // Initialize CodeMirror
+                editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 2,
+                    tabSize: 2,
+                    extraKeys: {
+                        "Ctrl-Space": "autocomplete"
+                    }
+                });
+                
+                console.log('CodeMirror initialized successfully');
+                updateMeasurements();
+                
+                // Update measurements when editor size changes
+                editor.on('refresh', updateMeasurements);
+                
+            } else {
+                console.error('CodeMirror or textarea not found');
+                measurements.innerHTML = '❌ CodeMirror初期化失敗';
+            }
+        }
+        
+        function updateMeasurements() {
+            const measurements = document.getElementById('measurements');
+            
+            if (editor && measurements) {
+                const editorWrapper = editor.getWrapperElement();
+                const editorHeight = editorWrapper.offsetHeight;
+                const editorMaxHeight = window.getComputedStyle(editorWrapper).maxHeight;
+                
+                measurements.innerHTML = `
+                    <strong>📏 CodeMirror高さ測定</strong><br><br>
+                    
+                    <strong>変更内容:</strong><br>
+                    旧 max-height: 300px<br>
+                    新 max-height: 400px<br>
+                    増加: +100px<br><br>
+                    
+                    <strong>現在の測定値:</strong><br>
+                    エディター高さ: ${editorHeight}px<br>
+                    最大高さ設定: ${editorMaxHeight}<br>
+                    <br>
+                    
+                    <strong>テスト状況:</strong><br>
+                    ✅ CodeMirror初期化済み<br>
+                    ${editorHeight <= 400 ? '✅' : '❌'} 最大高さ制限内<br>
+                    ${editorWrapper.scrollHeight > editorHeight ? '✅' : '⚠️'} スクロール${editorWrapper.scrollHeight > editorHeight ? '可能' : 'なし'}<br>
+                    <br>
+                    
+                    <small>長いテキストを入力してスクロールをテスト</small>
+                `;
+            }
+        }
+        
+        // Initialize CodeMirror when page loads
+        window.addEventListener('load', function() {
+            setTimeout(initializeCodeMirror, 100);
+        });
+        
+        // Update measurements periodically
+        setInterval(function() {
+            if (editor) {
+                updateMeasurements();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

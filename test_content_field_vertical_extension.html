@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Field Vertical Extension Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px; /* Space for fixed buttons */
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+        }
+        /* Visual indicators */
+        .measurement-text {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            z-index: 1001;
+            max-width: 300px;
+        }
+        .button-area-indicator {
+            position: fixed;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: red;
+            z-index: 999;
+        }
+        .content-bottom-indicator {
+            background: blue;
+            height: 2px;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Content Field Vertical Extension Test</h1>
+        <p>Testing if the content field (内容欄) extends properly up to the button area without overlap.</p>
+        
+        <!-- Current form layout from Rails -->
+        <div class="row" id="formContainer" style="height: calc(100vh - 160px);">
+            <!-- サイドバー（左側） -->
+            <div class="col-md-4" style="height: 100%;">
+                <div class="sidebar" style="height: 100%;">
+                    <h5>Sidebar (col-md-4)</h5>
+                    <div class="mb-3">
+                        <label class="form-label">要点・ポイント</label>
+                        <textarea class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">タイトル <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="投稿タイトル">
+                    </div>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ（右側） -->
+            <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+                <!-- Key points field -->
+                <div class="mb-3">
+                    <label class="form-label">要点・ポイント</label>
+                    <textarea class="form-control" rows="4" placeholder="例：&#10;1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法"></textarea>
+                    <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
+                </div>
+
+                <!-- Title field -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        タイトル
+                        <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                    </label>
+                    <input type="text" class="form-control" required placeholder="投稿タイトル">
+                </div>
+
+                <!-- Content field - this should extend to fill remaining space -->
+                <div class="mb-3 flex-grow-1 d-flex flex-column">
+                    <label class="form-label">
+                        内容
+                        <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                        <small class="text-muted d-block">
+                            <i class="fas fa-book me-1"></i>Markdown記法ガイド（日本語）
+                        </small>
+                    </label>
+                    <div class="flex-grow-1 d-flex flex-column">
+                        <textarea 
+                            class="form-control flex-grow-1" 
+                            id="contentTextarea"
+                            required
+                            style="overflow:auto; resize:none; height: 100%; min-height: 400px; font-family: Monaco, 'Lucida Console', monospace;" 
+                            placeholder="内容を入力してください&#10;&#10;この内容欄は投稿・キャンセルボタンに被らないように最大まで伸ばされるはずです。&#10;&#10;現在の設定:&#10;- Form container: calc(100vh - 160px)&#10;- Buttons: bottom: 100px&#10;- Content field: flex-grow-1, height: 100%"></textarea>
+                        <div class="content-bottom-indicator" id="contentBottomIndicator"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Button area indicator line -->
+    <div class="button-area-indicator"></div>
+
+    <!-- Fixed buttons matching the Rails form -->
+    <div class="container" style="position: fixed; bottom: 100px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div> <!-- サイドバー分のスペース -->
+            <div class="col-md-8">
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulated footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-center mb-0">Footer content (fixed at bottom)</p>
+        </div>
+    </footer>
+
+    <!-- Measurement display -->
+    <div class="measurement-text" id="measurements">
+        Loading measurements...
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateMeasurements() {
+            const container = document.getElementById('formContainer');
+            const textarea = document.getElementById('contentTextarea');
+            const measurements = document.getElementById('measurements');
+            
+            if (container && textarea && measurements) {
+                const containerHeight = container.offsetHeight;
+                const textareaHeight = textarea.offsetHeight;
+                const containerRect = container.getBoundingClientRect();
+                const textareaRect = textarea.getBoundingClientRect();
+                
+                // Calculate distances
+                const viewportHeight = window.innerHeight;
+                const buttonAreaTop = viewportHeight - 100; // bottom: 100px
+                const contentBottom = textareaRect.bottom;
+                const gapToButtons = buttonAreaTop - contentBottom;
+                
+                // Calculate form container bottom
+                const containerBottom = containerRect.bottom;
+                const containerToButtonGap = buttonAreaTop - containerBottom;
+                
+                measurements.innerHTML = `
+                    <strong>Vertical Extension Analysis:</strong><br>
+                    Viewport Height: ${viewportHeight}px<br>
+                    Form Container: calc(100vh - 160px) = ${containerHeight}px<br>
+                    <br>
+                    Button Area Top: ${buttonAreaTop}px (100px from bottom)<br>
+                    Content Bottom: ${Math.round(contentBottom)}px<br>
+                    Gap to Buttons: ${Math.round(gapToButtons)}px<br>
+                    <br>
+                    Container Bottom: ${Math.round(containerBottom)}px<br>
+                    Container-Button Gap: ${Math.round(containerToButtonGap)}px<br>
+                    <br>
+                    Content Field Height: ${textareaHeight}px<br>
+                    <br>
+                    ${gapToButtons > 20 ? '⚠️ Content field could extend further' : 
+                      gapToButtons < 0 ? '❌ Content overlaps with buttons!' : 
+                      '✅ Optimal spacing achieved'}
+                `;
+            }
+        }
+        
+        // Update measurements on load and resize
+        window.addEventListener('load', updateMeasurements);
+        window.addEventListener('resize', updateMeasurements);
+        
+        // Update periodically to catch dynamic changes
+        setInterval(updateMeasurements, 1000);
+    </script>
+</body>
+</html>

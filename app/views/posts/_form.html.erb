@@ -8,8 +8,8 @@
       
       <!-- エラーメッセージ表示 -->
       <%= render 'form_errors', post: post %>
-      
-      <div class="row" id="formContainer">
+
+      <div class="row" id="formContainer" style="min-height: calc(100vh - 140px);">
         <!-- サイドバー（左側） -->
         <div class="col-md-4" style="height: 100%;">
           <%= render 'form_sidebar', form: form, post: post %>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer Fix Verification Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+        .content {
+            height: 150vh;
+        }
+        /* Visual indicators */
+        .footer-height-indicator {
+            position: fixed;
+            right: 10px;
+            bottom: 0;
+            background: yellow;
+            color: black;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 2000;
+        }
+        .button-position-indicator {
+            position: fixed;
+            left: 10px;
+            bottom: 100px;
+            background: lime;
+            color: black;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 2000;
+        }
+        /* Highlight areas to show clearance */
+        .clearance-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: rgba(255, 0, 0, 0.1);
+            border-top: 2px dashed red;
+            z-index: 500;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Footer Fix Verification Test</h1>
+        <p>This test verifies that the buttons no longer overlap with the footer after moving to bottom: 100px.</p>
+        <div class="content">
+            <p>The buttons should now have proper clearance from the footer.</p>
+            <div style="height: 100vh; background: linear-gradient(to bottom, #e3f2fd, #bbdefb);">
+                <p style="padding-top: 50vh; text-align: center;">Check footer clearance at bottom</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual indicator for footer area -->
+    <div class="clearance-area"></div>
+
+    <!-- Updated button positioning (bottom: 100px) -->
+    <div class="container" style="position: fixed; bottom: 100px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-8">
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Replicated footer from shared/_footer.html.erb -->
+    <footer class="bg-dark text-light py-3 mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>BrightTalk</h5>
+                    <p class="mb-0">コミュニティ投稿プラットフォーム</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        &copy; 2025 BrightTalk. All rights reserved.
+                    </p>
+                    <small class="text-muted">
+                        Powered by Ruby on Rails |
+                        <a href="#" class="text-light text-decoration-none">利用規約</a> |
+                        <a href="#" class="text-light text-decoration-none">プライバシーポリシー</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Position indicators -->
+    <div class="footer-height-indicator">
+        Footer measurement
+    </div>
+    <div class="button-position-indicator">
+        Buttons at 100px
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Measure footer height and button clearance
+        window.addEventListener('load', function() {
+            const footer = document.querySelector('footer');
+            const footerHeight = footer.offsetHeight;
+            const footerIndicator = document.querySelector('.footer-height-indicator');
+            const buttonIndicator = document.querySelector('.button-position-indicator');
+            
+            footerIndicator.textContent = `Footer: ${footerHeight}px`;
+            buttonIndicator.textContent = `Buttons: 100px clearance`;
+            
+            // Check if there's overlap
+            const clearance = 100 - footerHeight;
+            if (clearance > 0) {
+                console.log(`✅ No overlap! ${clearance}px clearance`);
+            } else {
+                console.log(`❌ Still overlapping by ${Math.abs(clearance)}px`);
+            }
+        });
+    </script>
+</body>
+</html>

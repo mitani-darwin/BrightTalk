@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Max-Height Scroll Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding-bottom: 120px; /* Space for fixed buttons */
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .sidebar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            min-height: 200px;
+            padding: 10px;
+        }
+        /* Visual indicators */
+        .height-indicator {
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid red;
+            position: absolute;
+            right: -10px;
+            width: 5px;
+            z-index: 999;
+        }
+        .measurement-text {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            z-index: 1001;
+            max-width: 300px;
+        }
+        .max-height-indicator {
+            position: absolute;
+            right: -30px;
+            width: 25px;
+            height: 600px;
+            background: rgba(255, 255, 0, 0.3);
+            border: 2px solid orange;
+            z-index: 998;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Content Max-Height Scroll Test</h1>
+        <p>This test verifies that the content field (内容欄) uses max-height: 600px with overflow-y: scroll.</p>
+        
+        <!-- Simulated form layout matching the Rails structure -->
+        <div class="row" id="formContainer" style="height: calc(100vh - 140px);">
+            <!-- サイドバー（左側） -->
+            <div class="col-md-4" style="height: 100%;">
+                <div class="sidebar">
+                    <h5>Sidebar (col-md-4)</h5>
+                    <div class="mb-3">
+                        <label class="form-label">要点・ポイント</label>
+                        <textarea class="form-control" rows="4" placeholder="例：&#10;1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">タイトル <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" placeholder="投稿タイトル">
+                    </div>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ（右側） -->
+            <div class="col-md-8 d-flex flex-column" style="height: 100%; position: relative;">
+                <!-- Key points field -->
+                <div class="mb-3">
+                    <label class="form-label">要点・ポイント</label>
+                    <textarea class="form-control" rows="4" placeholder="例：&#10;1. 環境構築の手順&#10;2. 基本的なコマンドの使い方&#10;3. よくあるエラーとその対処法"></textarea>
+                </div>
+
+                <!-- Title field -->
+                <div class="mb-3">
+                    <label class="form-label">タイトル <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" placeholder="投稿タイトル">
+                </div>
+
+                <!-- Content field with max-height and scroll -->
+                <div class="mb-3 flex-grow-1 d-flex flex-column">
+                    <label class="form-label">
+                        内容 <span class="text-danger">*</span>
+                        <small class="text-muted">(常に必須)</small>
+                        <small class="text-muted d-block">
+                            <i class="fas fa-book me-1"></i>Markdown記法ガイド（日本語）
+                        </small>
+                    </label>
+                    <div class="flex-grow-1 d-flex flex-column">
+                        <textarea 
+                            class="form-control flex-grow-1" 
+                            id="contentTextarea"
+                            style="overflow-y: scroll; resize:none; height: 100%; max-height: 600px; font-family: Monaco, 'Lucida Console', monospace;" 
+                            placeholder="内容を入力してください
+
+この内容欄は最大600pxの高さに制限されています。
+この高さを超える場合はスクロールが表示されます。
+
+以下に長いテキストを入力して、スクロール機能をテストしてください：
+
+1. 環境構築について
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+2. 基本的な使用方法
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+3. トラブルシューティング
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+
+4. 応用例
+Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+5. まとめ
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+
+--- 追加のテキスト ---
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+
+さらに多くのテキストを追加してスクロール機能をテストします..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Height indicators -->
+                <div class="height-indicator" id="heightIndicator"></div>
+                <div class="max-height-indicator" id="maxHeightIndicator">
+                    <small style="writing-mode: vertical-lr; transform: rotate(180deg); font-size: 10px; color: orange; font-weight: bold;">600px MAX</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed buttons matching the Rails form -->
+    <div class="container" style="position: fixed; bottom: 100px; z-index: 1000; left: 0; right: 0;">
+        <div class="row">
+            <div class="col-md-4"></div> <!-- サイドバー分のスペース -->
+            <div class="col-md-8">
+                <div style="background-color: rgba(0, 255, 0, 0.1); border: 1px solid green; padding: 2px; margin-bottom: 5px;">
+                    Button area starts here
+                </div>
+                <div class="d-flex gap-2 mt-4 mb-3">
+                    <button class="btn btn-primary flex-fill">投稿</button>
+                    <button class="btn btn-outline-secondary flex-fill">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulated footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-center mb-0">Footer content (fixed at bottom)</p>
+        </div>
+    </footer>
+
+    <!-- Measurement display -->
+    <div class="measurement-text" id="measurements">
+        Loading measurements...
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateMeasurements() {
+            const container = document.getElementById('formContainer');
+            const textarea = document.getElementById('contentTextarea');
+            const indicator = document.getElementById('heightIndicator');
+            const maxIndicator = document.getElementById('maxHeightIndicator');
+            const measurements = document.getElementById('measurements');
+            
+            if (container && textarea && indicator && measurements) {
+                const containerHeight = container.offsetHeight;
+                const textareaHeight = textarea.offsetHeight;
+                const textareaScrollHeight = textarea.scrollHeight;
+                const containerRect = container.getBoundingClientRect();
+                const textareaRect = textarea.getBoundingClientRect();
+                
+                // Position height indicator
+                indicator.style.top = textareaRect.top - containerRect.top + 'px';
+                indicator.style.height = textareaHeight + 'px';
+                
+                // Position max-height indicator
+                maxIndicator.style.top = textareaRect.top - containerRect.top + 'px';
+                
+                // Check if textarea is at max height
+                const isAtMaxHeight = textareaHeight >= 600;
+                const hasScroll = textareaScrollHeight > textareaHeight;
+                
+                // Update measurements display
+                const viewportHeight = window.innerHeight;
+                const buttonArea = 100; // bottom: 100px
+                const availableSpace = viewportHeight - buttonArea;
+                
+                measurements.innerHTML = `
+                    <strong>Max-Height Scroll Test</strong><br>
+                    Viewport Height: ${viewportHeight}px<br>
+                    Container Height: ${containerHeight}px<br>
+                    Textarea Height: ${textareaHeight}px<br>
+                    Textarea Scroll Height: ${textareaScrollHeight}px<br>
+                    Available Space: ${availableSpace}px<br>
+                    <br>
+                    <strong>Max-Height Constraint:</strong><br>
+                    Max Height: 600px<br>
+                    At Max Height: ${isAtMaxHeight ? '✅ YES' : '❌ NO'}<br>
+                    Has Scrollbar: ${hasScroll ? '✅ YES' : '❌ NO'}<br>
+                    <br>
+                    ${isAtMaxHeight && hasScroll ? 
+                      '✅ Working correctly! Field is limited to 600px with scroll.' : 
+                      '⚠️ Test by adding more content to trigger scroll.'
+                    }
+                `;
+            }
+        }
+        
+        // Update measurements on load and resize
+        window.addEventListener('load', updateMeasurements);
+        window.addEventListener('resize', updateMeasurements);
+        
+        // Update when textarea content changes
+        const textarea = document.getElementById('contentTextarea');
+        if (textarea) {
+            textarea.addEventListener('input', updateMeasurements);
+            textarea.addEventListener('scroll', updateMeasurements);
+        }
+        
+        // Update every second to catch any dynamic changes
+        setInterval(updateMeasurements, 1000);
+    </script>
+</body>
+</html>

@@ -99,6 +99,12 @@ main {
   max-height: calc(100vh - 500px) !important;
 
   @media (max-height: 768px) {
+    .CodeMirror,
+    .CodeMirror-scroll {
+      height: 300px !important;
+      min-height: 300px !important;
+      max-height: 400px !important;
+    }
     min-height: 200px !important;
     max-height: calc(100vh - 400px) !important;
   }
@@ -120,6 +126,11 @@ main {
   font-size: 14px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
   background-color: #ffffff;
+
+  height: 400px !important;
+  min-height: 400px !important;
+  max-height: 600px !important;
+  overflow: hidden !important;
 
   &.CodeMirror-focused {
     border-color: #007bff;
@@ -145,6 +156,13 @@ main {
 
   .CodeMirror-activeline-background {
     background: rgba(0, 123, 255, 0.05);
+  }
+
+  .CodeMirror-scroll {
+    height: 400px !important;
+    min-height: 400px !important;
+    max-height: 600px !important;
+    overflow-y: auto !important;
   }
 
   .cm-header {
@@ -1012,4 +1030,74 @@ main {
   em, i {
     font-style: italic;
   }
+}
+
+/* CodeMirror縦サイズをさらに大きく設定 */
+.CodeMirror {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+  overflow: hidden !important;
+}
+
+.CodeMirror-scroll {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+  overflow-y: auto !important;
+}
+
+/* content用のtextareaをより大きく */
+#contentTextarea {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+}
+
+/* フォームコンテナの高さをさらに調整 */
+#formContainer .col-md-8 .flex-grow-1 {
+  min-height: 650px !important;
+}
+
+/* より確実で大きなCodeMirrorサイズ制御 */
+.codemirror-sized {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+
+  .CodeMirror-lines {
+    min-height: 600px !important;
+  }
+
+  .CodeMirror-gutters {
+    height: 600px !important;
+    min-height: 600px !important;
+  }
+}
+
+/* フォームレイアウトをより大きく最適化 */
+.flex-grow-1.d-flex.flex-column {
+  min-height: 650px !important;
+
+  .form-control.flex-grow-1 {
+    flex: 1 1 600px !important;
+    height: 600px !important;
+    min-height: 600px !important;
+  }
+}
+
+/* 最強制的なCodeMirrorサイズ設定 */
+[data-controller="code_editor"] .CodeMirror,
+[data-controller*="code_editor"] .CodeMirror {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+}
+
+[data-controller="code_editor"] .CodeMirror-scroll,
+[data-controller*="code_editor"] .CodeMirror-scroll {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+  overflow-y: auto !important;
 }
