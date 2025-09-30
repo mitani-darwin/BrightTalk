@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video.js Issue Test</title>
+    <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
+    <link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
+</head>
+<body>
+    <h1>Video.js Issue Test</h1>
+    
+    <!-- Test video element similar to the Rails helper output -->
+    <div class="video-container my-4" data-controller="video-player" data-video-player-src-value="/test_video.mp4" data-video-player-type-value="video/mp4">
+        <video id="video-test123" data-video-player-target="video" class="video-js vjs-default-skin w-100" style="height: 360px; max-width: 100%;" preload="metadata">
+            <source src="/test_video.mp4" type="video/mp4">
+            <p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。</p>
+        </video>
+    </div>
+
+    <script>
+        console.log('Testing Video.js initialization...');
+        console.log('Video.js available:', typeof window.videojs !== 'undefined');
+        
+        // Test manual initialization
+        const videoEl = document.querySelector('#video-test123');
+        console.log('Video element found:', videoEl);
+        console.log('Video element ID:', videoEl ? videoEl.id : 'not found');
+        
+        if (videoEl && window.videojs) {
+            try {
+                const player = videojs(videoEl, {
+                    fluid: true,
+                    responsive: true,
+                    controls: true
+                }, function() {
+                    console.log('Video.js player ready callback executed');
+                });
+                console.log('Manual initialization result:', player);
+            } catch (error) {
+                console.error('Manual initialization failed:', error);
+            }
+        } else {
+            console.error('Cannot test - missing video element or videojs');
+        }
+
+        // Test with different video element ID formats
+        setTimeout(() => {
+            console.log('Testing with different video element...');
+            const testEl = document.querySelector('[data-video-player-target="video"]');
+            console.log('Video target element:', testEl);
+            
+            if (testEl) {
+                console.log('Element classes:', testEl.className);
+                console.log('Element attributes:', Array.from(testEl.attributes).map(a => `${a.name}="${a.value}"`));
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

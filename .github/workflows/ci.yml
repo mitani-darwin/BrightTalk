@@ -18,9 +18,17 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-
           ruby-version: 3.4.4
           bundler-cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node.js dependencies
+        run: npm ci
 
       - name: Setup Database
         env:
@@ -33,7 +41,10 @@ jobs:
           bin/rails db:migrate
           bin/rails db:fixtures:load
 
-      - name: Run tests (sequential execution for CI)
+      - name: Run JavaScript tests
+        run: npm test
+
+      - name: Run Rails tests (sequential execution for CI)
         env:
           RAILS_ENV: test
           CI: true

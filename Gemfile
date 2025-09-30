@@ -58,6 +58,11 @@ gem "mail-ses"
 
 gem "aws-sdk-s3", require: false
 
+gem 'uglifier'
+
+# CORS support for S3 direct uploads
+gem "rack-cors"
+
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false

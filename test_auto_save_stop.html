@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動保存停止機能テスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-area { border: 1px solid #ccc; padding: 20px; margin: 10px 0; }
+        .console { background: #f5f5f5; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>自動保存停止機能テスト</h1>
+    
+    <div class="test-area">
+        <h3>テスト環境</h3>
+        <form data-turbo="false" id="testForm">
+            <input type="text" name="title" placeholder="タイトル" value="テスト投稿">
+            <textarea name="content" placeholder="内容">テスト内容</textarea>
+            <button type="submit">投稿</button>
+        </form>
+    </div>
+    
+    <div class="test-area">
+        <h3>コンソールログ</h3>
+        <div id="console" class="console"></div>
+        <button onclick="clearConsole()">ログクリア</button>
+        <button onclick="startTest()">テスト開始</button>
+        <button onclick="stopTest()">テスト停止</button>
+    </div>
+
+    <script>
+        let testConsole = document.getElementById('console');
+        let originalConsoleLog = console.log;
+        let originalConsoleWarn = console.warn;
+        let originalConsoleError = console.error;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            testConsole.innerHTML += logEntry + '\n';
+            testConsole.scrollTop = testConsole.scrollHeight;
+            
+            // 元のconsoleにも出力
+            if (type === 'warn') originalConsoleWarn(message);
+            else if (type === 'error') originalConsoleError(message);
+            else originalConsoleLog(message);
+        }
+
+        // console関数をオーバーライド
+        console.log = (message) => log(message, 'info');
+        console.warn = (message) => log(message, 'warn');
+        console.error = (message) => log(message, 'error');
+
+        // 自動保存機能をシミュレート
+        window.autoSaveEnabled = false;
+        window.autoSaveInterval = null;
+
+        function performAutoSave() {
+            if (!window.autoSaveEnabled) {
+                return;
+            }
+            log('自動保存を実行中...');
+        }
+
+        function initializeAutoSave() {
+            const form = document.querySelector('form[data-turbo="false"]');
+            const isNewOrEdit = form && (window.location.pathname.includes('/new') || window.location.pathname.includes('/edit') || window.location.pathname.includes('test'));
+
+            if (isNewOrEdit) {
+                window.autoSaveEnabled = true;
+                window.autoSaveInterval = setInterval(performAutoSave, 2000); // テスト用に2秒間隔
+                log('自動保存を開始しました（2秒間隔）');
+                
+                // フォーム送信時に自動保存を停止
+                if (form) {
+                    form.addEventListener('submit', function(event) {
+                        event.preventDefault(); // テスト用にフォーム送信を防ぐ
+                        stopAutoSave();
+                        log('フォームが送信されました（テスト用に実際の送信は防止）');
+                    });
+                }
+            } else {
+                log('自動保存は対象ページではありません');
+            }
+        }
+
+        function stopAutoSave() {
+            log('自動保存を停止中...');
+            window.autoSaveEnabled = false;
+            if (window.autoSaveInterval) {
+                clearInterval(window.autoSaveInterval);
+                window.autoSaveInterval = null;
+                log('自動保存が停止されました');
+            }
+        }
+
+        function clearConsole() {
+            testConsole.innerHTML = '';
+        }
+
+        function startTest() {
+            log('=== テスト開始 ===');
+            initializeAutoSave();
+        }
+
+        function stopTest() {
+            log('=== テスト停止 ===');
+            stopAutoSave();
+        }
+
+        // ページロード時に自動でテスト開始
+        window.addEventListener('load', function() {
+            log('ページが読み込まれました');
+            log('「テスト開始」ボタンをクリックして自動保存機能をテストしてください');
+            log('その後、「投稿」ボタンをクリックして自動保存が停止することを確認してください');
+        });
+    </script>
+</body>
+</html>

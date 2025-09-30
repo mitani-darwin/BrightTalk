@@ -118,6 +118,10 @@ class PasskeyAuthenticationsController < ApplicationController
       timeout: 300000,
       rpId: Rails.env.development? ? "localhost" : "www.brighttalk.jp",
       userVerification: "required",
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        userVerification: "required"
+      },
       allowCredentials: user.passkeys.map { |passkey|
         {
           id: passkey.identifier,

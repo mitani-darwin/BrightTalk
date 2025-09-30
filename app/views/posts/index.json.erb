@@ -1,0 +1,16 @@
+{
+  "posts": [
+    <% @posts.each_with_index do |post, index| %>
+    {
+      "id": "<%= post.id %>",
+      "title": "<%= j(post.title) %>",
+      "content": "<%= j(post.content.to_s.truncate(200)) %>",
+      "user": "<%= j(post.user.name) %>",
+      "created_at": "<%= post.created_at.iso8601 %>",
+      "updated_at": "<%= post.updated_at.iso8601 %>"
+    }<%= index == @posts.size - 1 ? '' : ',' %>
+    <% end %>
+  ],
+  "total_pages": <%= @posts.total_pages %>,
+  "current_page": <%= @posts.current_page %>
+}

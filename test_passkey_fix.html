@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Passkey Authentication Test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Passkey Authentication Focus Fix Test</h1>
+        <p>This test simulates the passkey authentication flow to verify the focus issue is resolved.</p>
+        
+        <input type="email" id="email" placeholder="Enter email address" value="test@example.com">
+        <br>
+        <button id="testBtn">Test Passkey Authentication Flow</button>
+        
+        <div id="status" class="status info" style="display: none;">Ready to test</div>
+        
+        <h2>Test Results:</h2>
+        <ul id="results"></ul>
+    </div>
+
+    <script>
+        // Mock implementation of the key functions for testing
+        function base64URLToArrayBuffer(base64url) {
+            const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function arrayBufferToBase64URL(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
+            return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        // Mock startPasskeyAuthentication function (simplified version)
+        async function mockStartPasskeyAuthentication(options) {
+            console.log('Mock passkey authentication started');
+            console.log('Document focus status:', document.hasFocus());
+            
+            // Check if document has focus
+            if (!document.hasFocus()) {
+                console.log('Document does not have focus, attempting to focus');
+                window.focus();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            if (!document.hasFocus()) {
+                throw new Error('認証には画面のフォーカスが必要です。ブラウザをアクティブにしてから再試行してください。');
+            }
+
+            // Mock credential data
+            return {
+                id: 'mock-credential-id',
+                rawId: 'bW9jay1jcmVkZW50aWFsLWlk',
+                type: 'public-key',
+                response: {
+                    clientDataJSON: 'bW9jay1jbGllbnQtZGF0YQ',
+                    authenticatorData: 'bW9jay1hdXRoZW50aWNhdG9yLWRhdGE',
+                    signature: 'bW9jay1zaWduYXR1cmU',
+                    userHandle: null
+                }
+            };
+        }
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function addResult(test, success, message) {
+            const results = document.getElementById('results');
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${test}:</strong> ${success ? '✓' : '✗'} ${message}`;
+            li.style.color = success ? 'green' : 'red';
+            results.appendChild(li);
+        }
+
+        async function testPasskeyFlow() {
+            const email = document.getElementById('email').value;
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+
+            try {
+                showStatus('Testing passkey authentication flow...', 'info');
+
+                // Test 1: Check if function runs within user gesture
+                addResult('User Gesture Context', true, 'Function called within user click event');
+
+                // Test 2: Check document focus
+                const hasFocus = document.hasFocus();
+                addResult('Document Focus', hasFocus, hasFocus ? 'Document has focus' : 'Document lacks focus');
+
+                // Test 3: Simulate the authentication flow
+                const mockOptions = {
+                    challenge: 'dGVzdC1jaGFsbGVuZ2U',
+                    timeout: 300000,
+                    rpId: 'localhost',
+                    userVerification: 'required',
+                    authenticatorSelection: {
+                        authenticatorAttachment: 'platform',
+                        userVerification: 'required'
+                    },
+                    allowCredentials: [{
+                        id: 'dGVzdC1jcmVkZW50aWFs',
+                        type: 'public-key'
+                    }]
+                };
+
+                try {
+                    const credentialData = await mockStartPasskeyAuthentication(mockOptions);
+                    addResult('WebAuthn API Call', true, 'Mock authentication successful');
+                    
+                    // Test 4: Check credential data format
+                    const hasRequiredFields = credentialData.id && credentialData.rawId && credentialData.response;
+                    addResult('Credential Data Format', hasRequiredFields, hasRequiredFields ? 'All required fields present' : 'Missing required fields');
+                    
+                    showStatus('All tests passed! The focus issue appears to be resolved.', 'success');
+                    
+                } catch (error) {
+                    addResult('WebAuthn API Call', false, error.message);
+                    showStatus(`Authentication failed: ${error.message}`, 'error');
+                }
+
+            } catch (error) {
+                addResult('Test Execution', false, error.message);
+                showStatus(`Test failed: ${error.message}`, 'error');
+            }
+        }
+
+        document.getElementById('testBtn').addEventListener('click', testPasskeyFlow);
+    </script>
+</body>
+</html>

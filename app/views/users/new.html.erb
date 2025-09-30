@@ -27,15 +27,6 @@
             <%= form.email_field :email, class: "form-control", placeholder: "your@example.com" %>
           </div>
 
-          <div class="mb-3">
-            <%= form.label :password, "パスワード", class: "form-label" %>
-            <%= form.password_field :password, class: "form-control", placeholder: "#{Devise.password_length.min}文字以上" %>
-          </div>
-
-          <div class="mb-4">
-            <%= form.label :password_confirmation, "パスワード確認", class: "form-label" %>
-            <%= form.password_field :password_confirmation, class: "form-control", placeholder: "パスワードを再入力" %>
-          </div>
 
           <div class="d-grid">
             <%= form.submit "アカウントを作成", class: "btn btn-primary" %>

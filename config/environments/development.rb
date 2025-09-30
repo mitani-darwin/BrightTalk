@@ -42,6 +42,8 @@ Rails.application.configure do
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!)
   config.log_level = :debug
+  config.active_storage.logger = Logger.new(STDOUT)
+  config.active_storage.logger.level = Logger::DEBUG
 
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
@@ -88,4 +90,25 @@ Rails.application.configure do
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
   config.active_job.queue_adapter = :async
+
+  # CORS configuration for development (matching production pattern)
+  config.middleware.insert_before 0, Rack::Cors do
+    allow do
+      origins "http://localhost:3000", "http://127.0.0.1:3000"
+      resource "*",
+               headers: :any,
+               methods: [ :get, :post, :put, :patch, :delete, :options, :head ],
+               credentials: true
+    end
+  end if defined?(Rack::Cors)
+
+  config.assets.js_compressor = :uglifier
+  config.assets.compile = true
+  config.assets.digest = true
+
+  config.active_storage.variant_processor = :mini_magick
+  config.active_storage.video_preview_arguments = {
+    input_options: ["-ss", "00:00:01.000"],
+    output_options: ["-vframes", "1"]
+  }
 end

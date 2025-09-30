@@ -1,0 +1,1029 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize form functionality
+        initializeFormFeatures();
+        initializeUploadHandlers();
+        initializeAutoSave();
+        initializeFormValidation();
+    });
+
+    // Form features initialization
+    function initializeFormFeatures() {
+        // Post type and category management
+        initializePostTypeManagement();
+        initializeCategoryManagement();
+
+        // File upload UI
+        initializeFileUploadUI();
+
+        // Content editing features
+        initializeContentEditor();
+
+        initializeUpdateProgressModal();
+    }
+
+    // グローバル変数（ファイルを一時保存）
+    if (typeof selectedFiles === 'undefined') {
+        var selectedFiles = [];
+    }
+
+    // Upload handlers
+    function initializeUploadHandlers() {
+        const imageInput = document.getElementById('imageInput');
+        const videoInput = document.getElementById('videoInput');
+        const textarea = document.getElementById('contentTextarea');
+
+        const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
+
+        if (codeEditorElement) {
+            codeEditorElement.addEventListener('code-editor:initialized', () => {
+                console.log('CodeEditor is ready for image insertions');
+            });
+        }
+
+        if (imageInput) {
+            imageInput.addEventListener('change', handleImageUpload);
+            // direct-uploadイベントリスナーを削除（即座にアップロードしないため）
+        }
+
+        if (videoInput) {
+            videoInput.addEventListener('change', handleVideoUpload);
+            // direct-uploadイベントリスナーを削除（即座にアップロードしないため）
+        }
+    }
+
+    // Auto-save functionality
+    function initializeAutoSave() {
+        console.log('Auto-save initialization started');
+
+        // 新規作成または編集の場合のみ自動保存を有効にする
+        const form = document.querySelector('form[data-turbo="false"]');
+        const currentPath = window.location.pathname;
+        const isNewOrEdit = form && (currentPath.includes('/new') || currentPath.includes('/edit'));
+
+        console.log('Auto-save debug info:', {
+            form: !!form,
+            currentPath: currentPath,
+            isNewOrEdit: isNewOrEdit
+        });
+
+        if (isNewOrEdit) {
+            window.autoSaveEnabled = true;
+            window.autoSaveInterval = setInterval(performAutoSave, 5000);
+            console.log('Auto-save enabled with 5-second interval');
+
+            // フォーム送信時に自動保存を停止
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    console.log('Form submit detected, stopping auto-save');
+                    stopAutoSave();
+                });
+            }
+        } else {
+            console.log('Auto-save not initialized - conditions not met');
+        }
+    }
+
+    function stopAutoSave() {
+        console.log('Stopping auto-save...');
+        window.autoSaveEnabled = false;
+        if (window.autoSaveInterval) {
+            clearInterval(window.autoSaveInterval);
+            window.autoSaveInterval = null;
+        }
+    }
+
+    // Form validation
+    function initializeFormValidation() {
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+    }
+
+    // Post type management
+    function initializePostTypeManagement() {
+        const addBtn = document.getElementById('addPostTypeBtn');
+        const saveBtn = document.getElementById('savePostTypeBtn');
+        const cancelBtn = document.getElementById('cancelPostTypeBtn');
+        const form = document.getElementById('newPostTypeForm');
+
+        if (addBtn) {
+            addBtn.addEventListener('click', () => toggleForm(form, true));
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => toggleForm(form, false));
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveNewPostType);
+        }
+    }
+
+    // Category management
+    function initializeCategoryManagement() {
+        const addBtn = document.getElementById('addCategoryBtn');
+        const saveBtn = document.getElementById('saveCategoryBtn');
+        const cancelBtn = document.getElementById('cancelCategoryBtn');
+        const form = document.getElementById('newCategoryForm');
+
+        if (addBtn) {
+            addBtn.addEventListener('click', () => toggleForm(form, true));
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => toggleForm(form, false));
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveNewCategory);
+        }
+    }
+
+    // File upload UI
+    function initializeFileUploadUI() {
+        // Image and video deletion buttons
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.delete-image-btn')) {
+                handleImageDelete(e);
+            }
+
+            if (e.target.closest('.delete-video-btn')) {
+                handleVideoDelete(e);
+            }
+
+            if (e.target.closest('.insert-existing-image')) {
+                insertExistingMedia(e, 'image');
+            }
+
+            if (e.target.closest('.insert-existing-video')) {
+                insertExistingMedia(e, 'video');
+            }
+        });
+    }
+
+    // Content editor features
+    function initializeContentEditor() {
+        const textarea = document.getElementById('contentTextarea');
+        if (!textarea) return;
+
+        // StimulusコントローラーがCodeEditorを初期化するまで待機
+        const checkCodeEditor = () => {
+            const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+            if (codeEditorElement) {
+                console.log('CodeEditorコントローラー要素を確認済み');
+                return true;
+            }
+            return false;
+        };
+
+        // 初期チェック
+        if (checkCodeEditor()) {
+            console.log('CodeEditorは既に設定済みです');
+            return;
+        }
+
+        // フォールバック：3秒後にCodeEditorが初期化されていない場合は手動で初期化
+        setTimeout(() => {
+            if (!checkCodeEditor() || !textarea.nextSibling?.className?.includes('CodeMirror')) {
+                console.warn('StimulusコントローラーでCodeEditorが初期化されませんでした。手動初期化を試行...');
+                forceInitializeCodeEditorFallback(textarea);
+            }
+        }, 3000);
+    }
+
+    async function forceInitializeCodeEditorFallback(textarea) {
+        try {
+            let CodeMirror = window.CodeMirror;
+            if (!CodeMirror && window.loadCodeMirror) {
+                CodeMirror = await window.loadCodeMirror();
+            }
+
+            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 2,
+                    tabSize: 2
+                });
+                console.log('✓ フォールバックでCodeEditorを初期化しました');
+            }
+        } catch (error) {
+            console.error('フォールバック初期化にも失敗:', error);
+        }
+    }
+
+    // Helper functions
+    function toggleForm(form, show) {
+        if (form) {
+            form.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    function handleImageUpload(event) {
+        const files = Array.from(event.target.files);
+        const textarea = document.getElementById('contentTextarea');
+
+        // 選択されたファイルを保存
+        selectedFiles = files;
+
+        // ファイル名表示を更新
+        displaySelectedFiles(files);
+
+        for (let file of files) {
+            console.log('Image selected:', file.name);
+
+            if (textarea) {
+                const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
+
+                setTimeout(() => {
+                    insertMarkdownAtCursor(textarea, markdownLink);
+                }, 500);
+            }
+        }
+    }
+
+    function handleVideoUpload(event) {
+        const file = event.target.files[0];
+        const textarea = document.getElementById('contentTextarea');
+
+        if (file) {
+            console.log('Video selected:', file.name);
+
+            // Insert Markdown format link into content textarea
+            if (textarea) {
+                const markdownLink = `[${file.name}](attachment:${file.name})\n\n`;
+                // CodeMirrorの初期化を少し待つ
+                setTimeout(() => {
+                    insertMarkdownAtCursor(textarea, markdownLink);
+                }, 500);
+            }
+        }
+    }
+
+    function handleDirectUploadStart(event) {
+        showUploadProgress();
+        updateUploadStatus('アップロード開始中...', 0);
+    }
+
+    function handleDirectUploadEnd(event) {
+        updateUploadStatus('アップロード完了', 100);
+        setTimeout(hideUploadProgress, 2000);
+    }
+
+    function handleDirectUploadError(event) {
+        updateUploadStatus('アップロードエラー', 0);
+        showError('ファイルのアップロードに失敗しました。');
+    }
+
+    function showUploadProgress() {
+        const container = document.getElementById('uploadProgressContainer');
+        if (container) {
+            container.style.display = 'block';
+        }
+    }
+
+    function hideUploadProgress() {
+        const container = document.getElementById('uploadProgressContainer');
+        if (container) {
+            container.style.display = 'none';
+        }
+    }
+
+    function updateUploadStatus(text, progress) {
+        const statusText = document.getElementById('uploadStatusText');
+        const progressBar = document.getElementById('uploadProgressBar');
+
+        if (statusText) statusText.textContent = text;
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+            progressBar.setAttribute('aria-valuenow', progress);
+        }
+    }
+
+    function performAutoSave() {
+        console.log('performAutoSave called, autoSaveEnabled:', window.autoSaveEnabled);
+        console.log('=== DETAILED AUTO-SAVE DEBUG ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Request URL will be:', '/posts/auto_save');
+        console.log('performAutoSave called, autoSaveEnabled:', window.autoSaveEnabled);
+
+        // 自動保存が有効かチェック
+        if (!window.autoSaveEnabled) {
+            console.log('Auto-save skipped - disabled');
+            return;
+        }
+
+        console.log('About to send fetch request to:', '/posts/auto_save');
+
+        // Auto-save implementation
+        const form = document.querySelector('form[data-turbo="false"]');
+        if (!form) {
+            console.log('Auto-save skipped - form not found');
+            return;
+        }
+
+        console.log('Starting auto-save process...');
+
+        // 画像ファイルを除外したFormDataを作成
+        const formData = new FormData();
+
+        // 必須パラメータを確実に設定
+        const postIdInput = document.getElementById('post_id');
+        if (postIdInput && postIdInput.value) {
+            formData.append('post_id', postIdInput.value);
+            console.log('Post ID added:', postIdInput.value);
+        }
+
+        // テキストフィールドのみを取得
+        const formElements = form.elements;
+        let fieldCount = 0;
+
+        for (let i = 0; i < formElements.length; i++) {
+            const element = formElements[i];
+
+            // ファイルフィールドは除外
+            if (element.type === 'file') {
+                continue;
+            }
+
+            // その他のフィールドは追加（post_idは既に追加済みなのでスキップ）
+            // その他のフィールドは追加（post_idと_methodは除外）
+            if (element.name && element.value !== undefined &&
+                element.name !== 'post_id' && element.name !== '_method') {
+                if (element.type === 'checkbox' || element.type === 'radio') {
+                    if (element.checked) {
+                        formData.append(element.name, element.value);
+                        fieldCount++;
+                    }
+                } else if (element.type !== 'submit' && element.type !== 'button') {
+                    // 空の値でも送信（サーバーサイドで処理）
+                    formData.append(element.name, element.value);
+                    fieldCount++;
+                }
+            }
+        }
+
+        console.log(`Auto-save: ${fieldCount} fields prepared for submission`);
+
+        fetch('/posts/auto_save', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': getCSRFToken(),
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+            .then(response => {
+                console.log('Auto-save response received:', response.status);
+                console.log('=== RESPONSE DEBUG ===');
+                console.log('Response URL:', response.url);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                const contentType = response.headers.get('content-type');
+
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Auto-save: Server error response:', text);
+                        throw new Error(`Server error: ${response.status} - ${text.substring(0, 200)}`);
+                    });
+                }
+
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    return response.text().then(text => {
+                        console.error('Auto-save: Invalid response format, received:', text.substring(0, 500));
+                        console.error('Auto-save: Expected JSON, got Content-Type:', contentType);
+                        throw new Error(`Invalid response format. Expected JSON, got: ${contentType}`);
+                    });
+                }
+            })
+            .then(data => {
+                console.log('Auto-save response data:', data);
+                if (data && data.success) {
+                    showAutoSaveSuccess(data.message);
+                    updatePostId(data.post_id);
+                    console.log('Auto-save completed successfully');
+                } else {
+                    console.warn('Auto-save failed:', data?.message || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Auto-save error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                // 開発時のみエラーメッセージを表示
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    showAutoSaveError(`自動保存エラー: ${error.message}`);
+                }
+            });
+    }
+
+    function showAutoSaveError(message) {
+        const alert = document.getElementById('autoSaveAlert');
+        const messageSpan = document.getElementById('autoSaveMessage');
+
+        if (alert && messageSpan) {
+            messageSpan.textContent = message;
+            alert.className = 'alert alert-danger alert-dismissible fade show'; // エラー用スタイル
+            alert.style.display = 'block';
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                    alert.className = 'alert alert-success alert-dismissible fade'; // 元に戻す
+                }, 300);
+            }, 8000); // エラーは少し長めに表示
+        }
+    }
+
+    function showAutoSaveSuccess(message) {
+        const alert = document.getElementById('autoSaveAlert');
+        const messageSpan = document.getElementById('autoSaveMessage');
+
+        if (alert && messageSpan) {
+            messageSpan.textContent = message + ' ' + new Date().toLocaleTimeString();
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.style.display = 'block';
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+    }
+
+    function updatePostId(postId) {
+        const hiddenInput = document.getElementById('post_id');
+        if (hiddenInput && postId) {
+            hiddenInput.value = postId;
+        }
+    }
+
+    function getCSRFToken() {
+        const token = document.querySelector('meta[name="csrf-token"]');
+        return token ? token.getAttribute('content') : '';
+    }
+
+    function saveNewPostType() {
+        // Implementation for saving new post type
+    }
+
+    function saveNewCategory() {
+        // Implementation for saving new category
+    }
+
+    function handleImageDelete(event) {
+        const button = event.target.closest('.delete-image-btn');
+        if (!button) return;
+
+        const postId = button.dataset.postId;
+        const attachmentId = button.dataset.attachmentId;
+        const filename = button.dataset.filename;
+
+        if (!confirm(`画像「${filename}」を削除しますか？`)) {
+            return;
+        }
+
+        fetch(`/posts/${postId}/delete_image`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({attachment_id: attachmentId})
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the image card from DOM
+                    const imageCard = document.getElementById(`image-card-${attachmentId}`);
+                    if (imageCard) {
+                        imageCard.remove();
+                    }
+                    showSuccess(data.message);
+                } else {
+                    showError(data.message || '画像の削除に失敗しました');
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                showError('画像の削除中にエラーが発生しました');
+            });
+    }
+
+    function handleVideoDelete(event) {
+        console.log('Delete button clicked'); // デバッグ用
+        const button = event.target.closest('.delete-video-btn');
+        console.log('Button found:', button); // デバッグ用
+        if (!button) return;
+
+        const postId = button.dataset.postId;
+        const attachmentId = button.dataset.attachmentId;
+        const filename = button.dataset.filename;
+
+        if (!confirm(`動画「${filename}」を削除しますか？`)) {
+            return;
+        }
+
+        fetch(`/posts/${postId}/delete_video`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({attachment_id: attachmentId})
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the video card from DOM
+                    const videoCard = document.getElementById(`video-card-${attachmentId}`);
+                    if (videoCard) {
+                        videoCard.remove();
+                    }
+                    showSuccess(data.message);
+                } else {
+                    showError(data.message || '動画の削除に失敗しました');
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                showError('動画の削除中にエラーが発生しました');
+            });
+    }
+
+    function insertExistingMedia(event, type) {
+        const button = event.target.closest('.insert-existing-image, .insert-existing-video');
+        if (!button) return;
+
+        const filename = button.dataset.filename;
+        const url = button.dataset.url;
+        const textarea = document.getElementById('contentTextarea');
+
+        if (!textarea || !filename) return;
+
+        let markdownLink;
+        if (type === 'image' || button.classList.contains('insert-existing-image')) {
+            markdownLink = `![${filename}](${url})\n\n`;
+        } else {
+            markdownLink = `[${filename}](${url})\n\n`;
+        }
+
+        insertMarkdownAtCursor(textarea, markdownLink);
+        showSuccess(`${type === 'image' ? '画像' : '動画'}「${filename}」を挿入しました`);
+    }
+
+    function addMarkdownShortcuts(textarea) {
+        // Implementation for markdown shortcuts
+        console.log('Add markdown shortcuts to textarea');
+    }
+
+    function insertMarkdownAtCursor(textarea, text) {
+        if (!textarea) return;
+
+        console.log('insertMarkdownAtCursor called with text:', text);
+
+        // CodeMirrorエディターコントローラーの取得
+        const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+        if (codeEditorElement) {
+            console.log('Found code-editor element:', codeEditorElement);
+
+            // Stimulus 3.x の正しいコントローラー取得方法
+            const application = window.Stimulus || window.Application;
+            if (application) {
+                try {
+                    // Stimulus application からコントローラーを取得
+                    const controller = application.getControllerForElementAndIdentifier(codeEditorElement, 'code-editor');
+                    if (controller && controller.insertText) {
+                        console.log('Using Stimulus controller insertText method');
+                        controller.insertText(text);
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Failed to get controller via Stimulus application:', error);
+                }
+            }
+
+            // 代替方法：要素に直接格納されているコントローラーを参照
+            if (codeEditorElement.controller && codeEditorElement.controller.insertText) {
+                console.log('Using element.controller insertText method');
+                codeEditorElement.controller.insertText(text);
+                return;
+            }
+
+            // 代替方法2：Stimulus内部のコントローラーマップを参照
+            if (codeEditorElement._stimulus_controllers) {
+                const codeEditorController = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor');
+                if (codeEditorController && codeEditorController.insertText) {
+                    console.log('Using _stimulus_controllers insertText method');
+                    codeEditorController.insertText(text);
+                    return;
+                }
+            }
+
+            // 代替方法3：data属性を使ったイベント発火
+            const customEvent = new CustomEvent('code-editor:insert-text', {
+                detail: { text: text }
+            });
+            codeEditorElement.dispatchEvent(customEvent);
+            console.log('Dispatched code-editor:insert-text event');
+
+            // イベントが処理されたかを確認するため、少し待機してからフォールバックを実行
+            setTimeout(() => {
+                // まだテキストが挿入されていない場合のみフォールバック実行
+                if (!textarea.value.includes(text.trim())) {
+                    console.log('Event insertion failed, using fallback method');
+                    fallbackTextInsertion(textarea, text);
+                }
+            }, 100);
+            return;
+        }
+
+        // 最終フォールバック: 通常のテキストエリア処理
+        console.log('Using fallback text insertion method');
+        fallbackTextInsertion(textarea, text);
+    }
+
+    function fallbackTextInsertion(textarea, text) {
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+        const currentValue = textarea.value;
+
+        textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+        const newPos = start + text.length;
+        textarea.selectionStart = textarea.selectionEnd = newPos;
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+        console.log('Fallback text insertion completed');
+    }
+
+    function showError(message) {
+        console.error(message);
+        showAlert(message, 'danger');
+    }
+
+    function showSuccess(message) {
+        console.log(message);
+        showAlert(message, 'success');
+    }
+
+    function showAlert(message, type) {
+        // Create or update alert element
+        let alertContainer = document.getElementById('dynamicAlerts');
+        if (!alertContainer) {
+            alertContainer = document.createElement('div');
+            alertContainer.id = 'dynamicAlerts';
+            alertContainer.className = 'position-fixed top-0 start-50 translate-middle-x';
+            alertContainer.style.zIndex = '1060';
+            alertContainer.style.marginTop = '20px';
+            document.body.appendChild(alertContainer);
+        }
+
+        const alertElement = document.createElement('div');
+        alertElement.className = `alert alert-${type} alert-dismissible fade show`;
+        alertElement.innerHTML = `
+    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+
+        alertContainer.appendChild(alertElement);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertElement.parentNode) {
+                alertElement.remove();
+            }
+        }, 5000);
+    }
+
+    // 更新進捗モーダル管理
+    function initializeUpdateProgressModal() {
+        console.log('Initializing update progress modal...');
+        
+        const form = document.querySelector('form[data-turbo="false"]');
+        const submitBtn = document.getElementById('updateSubmitBtn');
+        const progressModal = document.getElementById('updateProgressModal');
+
+        console.log('Elements found:', {
+            form: !!form,
+            submitBtn: !!submitBtn,
+            progressModal: !!progressModal,
+            bootstrap: typeof bootstrap !== 'undefined'
+        });
+
+        if (form && submitBtn && progressModal) {
+            // Bootstrap 5の確認
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap is not loaded. Modal will not work.');
+                return;
+            }
+
+            // 既存のイベントリスナーを削除
+            submitBtn.removeEventListener('click', handleUpdateSubmit);
+            
+            // 新しいイベントリスナーを追加
+            submitBtn.addEventListener('click', handleUpdateSubmit);
+            console.log('Update progress modal initialized successfully');
+        } else {
+            console.warn('Required elements not found for update progress modal');
+        }
+    }
+
+    // フォーム送信ハンドラーを修正
+    async function handleUpdateSubmit(event) {
+        console.log('Update submit button clicked');
+
+        // デフォルトの送信を一時停止
+        event.preventDefault();
+
+        const progressModal = document.getElementById('updateProgressModal');
+        const form = document.querySelector('form[data-turbo="false"]');
+
+        if (!progressModal || !form) {
+            console.error('Required elements not found');
+            form?.submit();
+            return;
+        }
+
+        try {
+            // モーダルを表示
+            const modal = new bootstrap.Modal(progressModal, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            console.log('Modal shown, starting file upload and form submission');
+
+            // 進捗アニメーション開始
+            startUpdateProgress();
+
+            // ファイルアップロードを実行してからフォーム送信
+            await uploadFilesToS3();
+
+            // 少し遅延してからフォーム送信
+            setTimeout(() => {
+                console.log('Submitting form...');
+                form.submit();
+            }, 100);
+
+        } catch (error) {
+            console.error('Error during upload or form submission:', error);
+            showUpdateError();
+        }
+    }
+
+    // 更新進捗アニメーション
+    function startUpdateProgress() {
+        const progressBar = document.getElementById('updateProgressBar');
+        const progressText = document.getElementById('updateProgressText');
+        const statusText = document.getElementById('updateStatusText');
+        const details = document.getElementById('updateDetails');
+
+        let progress = 0;
+        const steps = [
+            { progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
+            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${selectedFiles.length}個のファイルを処理しています` },
+            { progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました' },
+            { progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
+            { progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています' },
+            { progress: 100, status: '完了', detail: '更新が完了しました' }
+        ];
+
+        let currentStep = 0;
+
+        const updateProgress = () => {
+            if (currentStep < steps.length) {
+                const step = steps[currentStep];
+
+                progressBar.style.width = step.progress + '%';
+                progressBar.setAttribute('aria-valuenow', step.progress);
+                progressText.textContent = step.progress + '%';
+
+                statusText.textContent = step.status;
+                details.textContent = step.detail;
+
+                currentStep++;
+
+                setTimeout(updateProgress, 800);
+            }
+        };
+
+        setTimeout(updateProgress, 200);
+    }
+
+    // フォーム送信完了時の処理
+    function handleUpdateComplete(success = true) {
+        const progressModal = document.getElementById('updateProgressModal');
+        const modal = bootstrap.Modal.getInstance(progressModal);
+
+        if (success) {
+            // 成功時は自動的にモーダルを閉じる
+            setTimeout(() => {
+                modal.hide();
+            }, 1000);
+        } else {
+            // エラー時はエラー表示に変更
+            showUpdateError();
+        }
+    }
+
+    // エラー時の表示変更
+    function showUpdateError() {
+        // progressModal要素を関数内で取得
+        const progressModal = document.getElementById('updateProgressModal');
+
+        const progressBar = document.getElementById('updateProgressBar');
+        const progressText = document.getElementById('updateProgressText');
+        const statusText = document.getElementById('updateStatusText');
+        const details = document.getElementById('updateDetails');
+        const modalTitle = document.getElementById('updateProgressModalLabel');
+
+        // エラー表示に変更
+        progressBar.className = 'progress-bar bg-danger';
+        progressBar.style.width = '100%';
+        progressText.textContent = 'エラー';
+        statusText.textContent = '更新に失敗しました';
+        details.textContent = 'もう一度お試しください';
+        modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラーが発生しました';
+
+        // 閉じるボタンを追加
+        if (progressModal) {
+            const modalBody = progressModal.querySelector('.modal-body');
+            const closeButton = document.createElement('button');
+            closeButton.className = 'btn btn-secondary mt-3';
+            closeButton.textContent = '閉じる';
+            closeButton.onclick = () => {
+                const modal = bootstrap.Modal.getInstance(progressModal);
+                if (modal) {
+                    modal.hide();
+                }
+            };
+            modalBody.appendChild(closeButton);
+        }
+    }
+
+    // Global functions for compatibility
+    window.initializeFormFeatures = initializeFormFeatures;
+    window.performAutoSave = performAutoSave;
+
+    // Initialize all features when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeUpdateProgressModal();
+    });
+
+    // 選択されたファイル名を表示する関数（新規追加）
+    function displaySelectedFiles(files) {
+        const displayArea = document.getElementById('selectedFilesDisplay');
+        const filesList = document.getElementById('selectedFilesList');
+
+        if (files.length > 0) {
+            displayArea.style.display = 'block';
+            filesList.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'mb-1 d-flex align-items-center justify-content-between';
+                fileItem.innerHTML = `
+                <span class="small">
+                    <i class="fas fa-image text-primary me-1"></i>
+                    ${file.name} <span class="text-muted">(${formatFileSize(file.size)})</span>
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="removeSelectedFile(${index})" title="削除">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+                filesList.appendChild(fileItem);
+            });
+        } else {
+            displayArea.style.display = 'none';
+        }
+    }
+
+    // ファイルサイズをフォーマットする関数（新規追加）
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 選択されたファイルを削除する関数（新規追加）
+    function removeSelectedFile(index) {
+        selectedFiles.splice(index, 1);
+        displaySelectedFiles(selectedFiles);
+
+        // ファイル入力フィールドをリセット
+        const imageInput = document.getElementById('imageInput');
+        if (imageInput) {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
+        }
+    }
+
+    // S3にファイルをアップロードする関数（修正版）
+    async function uploadFilesToS3() {
+        if (selectedFiles.length === 0) {
+            console.log('No files to upload');
+            return;
+        }
+
+        console.log('Starting file upload to S3...');
+
+        const uploadPromises = selectedFiles.map(async (file) => {
+            try {
+                // Active Storage Direct Uploadの正しいパラメータ
+                const uploadData = {
+                    blob: {
+                        filename: file.name,
+                        content_type: file.type,
+                        byte_size: file.size,
+                        checksum: await generateChecksum(file) // MD5チェックサムが必要
+                    }
+                };
+
+                // まず署名付きIDを取得
+                const response = await fetch('/rails/active_storage/direct_uploads', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCSRFToken(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(uploadData)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Upload preparation failed for ${file.name}:`, errorText);
+                    throw new Error(`Upload preparation failed for ${file.name}: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // 実際のファイルアップロード（S3へ）
+                const uploadResponse = await fetch(result.direct_upload.url, {
+                    method: 'PUT',
+                    body: file,
+                    headers: result.direct_upload.headers || {}
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`File upload to S3 failed for ${file.name}`);
+                }
+
+                console.log(`Upload completed for ${file.name}:`, result);
+                return result;
+
+            } catch (error) {
+                console.error(`Error uploading ${file.name}:`, error);
+                throw error;
+            }
+        });
+
+        try {
+            await Promise.all(uploadPromises);
+            console.log('All files uploaded successfully');
+        } catch (error) {
+            console.error('Error during file upload:', error);
+            throw error;
+        }
+    }
+
+    // MD5チェックサム生成関数
+    async function generateChecksum(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
+                const hash = CryptoJS.MD5(wordArray);
+                const base64Hash = CryptoJS.enc.Base64.stringify(hash);
+                resolve(base64Hash);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }3
+</script>

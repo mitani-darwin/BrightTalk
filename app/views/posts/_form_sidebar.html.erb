@@ -1,0 +1,51 @@
+<!-- 投稿の目的 -->
+<div class="mb-3">
+  <%= form.label :purpose, class: "form-label" do %>
+    投稿の目的
+    <span class="text-danger">*</span>
+    <small class="text-muted">(公開時は必須)</small>
+  <% end %>
+  <%= form.text_area :purpose, class: "form-control #{'is-invalid' if post.errors[:purpose].any?}", rows: 1,
+                     placeholder: "例: ○○○に分かりやすく説明したい" %>
+  <div class="form-text">この投稿で何を伝えたいか、具体的な目的を記入してください。</div>
+</div>
+
+<!-- 投稿タイプ -->
+<div class="mb-3">
+  <%= render 'post_type_select', form: form, post: post %>
+</div>
+
+<!-- カテゴリー選択 -->
+<div class="mb-3">
+  <%= render 'category_select', form: form, post: post %>
+</div>
+
+<!-- 対象読者 -->
+<div class="mb-3">
+  <%= form.label :target_audience, class: "form-label" do %>
+    対象読者
+    <span class="text-danger">*</span>
+    <small class="text-muted">(公開時は必須)</small>
+  <% end %>
+  <%= form.text_field :target_audience, class: "form-control #{'is-invalid' if post.errors[:target_audience].any?}", required: true,
+                      placeholder: "例: このサイトに訪れた人" %>
+  <div class="form-text">どのような読者に向けた内容かを記入してください。</div>
+</div>
+
+<!-- 期待する成果 -->
+<div class="mb-3">
+  <%= form.label :expected_outcome, "期待する成果", class: "form-label" %>
+  <%= form.text_area :expected_outcome, class: "form-control", rows: 1,
+                     placeholder: "例: 読者が○○○を知った、理解して欲しい" %>
+  <div class="form-text">読者にどうなってほしいかを記入してください。</div>
+</div>
+
+<!-- 画像アップロード -->
+<div class="mb-3">
+  <%= render 'image_upload_section', form: form, post: post %>
+</div>
+
+<!-- 動画アップロード -->
+<div class="mb-3">
+  <%= render 'video_upload_section', form: form, post: post %>
+</div>

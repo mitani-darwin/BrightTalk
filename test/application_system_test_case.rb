@@ -19,7 +19,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     puts "Could not take screenshot: #{e.message}"
   end
 
-  def login_as(user, password: "Secure#P@ssw0rd9")
+  def login_as(user)
     visit new_user_session_path
 
     email_filled = false
@@ -39,24 +39,6 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     end
 
     assert email_filled, "Could not find email field"
-
-    password_filled = false
-    [ "user[password]", "user_password", "password" ].each do |field_name|
-      if page.has_field?(field_name)
-        fill_in field_name, with: password
-        password_filled = true
-        break
-      end
-    end
-
-    unless password_filled
-      if page.has_css?("input[type='password']")
-        page.find("input[type='password']").set(password)
-        password_filled = true
-      end
-    end
-
-    assert password_filled, "Could not find password field"
 
     login_clicked = false
     [ "ログイン", "Log in", "Sign in" ].each do |button_text|

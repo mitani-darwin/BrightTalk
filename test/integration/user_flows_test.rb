@@ -2,19 +2,14 @@
 require "test_helper"
 
 class UserFlowsTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+
   test "user login and post creation flow" do
     # 既存のユーザーでログイン（確認済み）
     user = users(:test_user)
 
-    # ログイン
-    post user_session_path, params: {
-      user: {
-        email: user.email,
-        password: "Secure#P@ssw0rd9"
-      }
-    }
-    assert_response :redirect
-    follow_redirect!
+    # Deviseヘルパーを使用してログイン（パスワード認証は無効化されているため）
+    sign_in user
 
     # 投稿作成ページにアクセス
     get new_post_path

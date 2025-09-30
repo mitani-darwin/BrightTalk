@@ -21,7 +21,7 @@ function arrayBufferToBase64URL(buffer) {
 }
 
 // Passkey認証用の関数
-function startPasskeyAuthentication(passkeyOptions) {
+async function startPasskeyAuthentication(passkeyOptions) {
     console.log('Passkey authentication started');
     console.log('Passkey options received:', passkeyOptions);
 
@@ -29,12 +29,14 @@ function startPasskeyAuthentication(passkeyOptions) {
         throw new Error('WebAuthn is not supported by this browser');
     }
 
-    // Passkeyオプションの変換
+    // Passkeyオプションの変換（修正版）
     const convertedOptions = {
         challenge: base64URLToArrayBuffer(passkeyOptions.challenge),
         timeout: passkeyOptions.timeout || 300000,
         rpId: passkeyOptions.rpId,
-        userVerification: passkeyOptions.userVerification || 'required'
+        userVerification: passkeyOptions.userVerification || 'required',
+        // TouchID/FaceID認証のためのauthenticatorSelection設定を追加
+        authenticatorSelection: passkeyOptions.authenticatorSelection
     };
 
     // allowCredentialsの処理
@@ -77,6 +79,22 @@ function startPasskeyAuthentication(passkeyOptions) {
         }))
     });
 
+    // ドキュメントのフォーカスを確保
+    if (!document.hasFocus()) {
+        console.log('Document does not have focus, attempting to focus');
+        window.focus();
+        // 少し待ってからフォーカスの状態を再確認
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // ユーザーインタラクションの確認
+    if (!document.hasFocus()) {
+        console.warn('Document still does not have focus after focusing attempt');
+        throw new Error('認証には画面のフォーカスが必要です。ブラウザをアクティブにしてから再試行してください。');
+    }
+
+    console.log('Document focus status:', document.hasFocus());
+
     // Passkey認証実行
     return navigator.credentials.get({
         publicKey: convertedOptions
@@ -87,7 +105,7 @@ function startPasskeyAuthentication(passkeyOptions) {
             throw new Error('No credential returned from Passkey');
         }
 
-        // サーバーに送信するデータを準備
+        // 認証データを準備して返す（サーバー送信は呼び出し側で処理）
         const credentialData = {
             id: credential.id,
             rawId: arrayBufferToBase64URL(credential.rawId),
@@ -100,55 +118,9 @@ function startPasskeyAuthentication(passkeyOptions) {
             }
         };
 
-        console.log('Sending credential data to server:', credentialData);
-
-        // CSRFトークンを取得
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        if (!csrfToken) {
-            throw new Error('CSRF token not found');
-        }
-
-        // サーバーに認証データを送信
-        return fetch('/passkey_authentications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-Token': csrfToken.getAttribute('content')
-            },
-            body: JSON.stringify({
-                credential: credentialData
-            })
-        });
-    }).then(response => {
-        console.log('Authentication response status:', response.status);
-
-        const contentType = response.headers.get('content-type');
-        console.log('Response content-type:', contentType);
-
-        if (response.ok) {
-            if (contentType && contentType.includes('application/json')) {
-                return response.json().then(data => {
-                    console.log('Authentication response data:', data);
-                    if (data.success) {
-                        window.location.href = data.redirect_url || '/';
-                    } else {
-                        throw new Error(data.error || 'Authentication failed');
-                    }
-                });
-            } else {
-                console.log('HTML response received, assuming success');
-                window.location.href = '/';
-            }
-        } else {
-            if (contentType && contentType.includes('application/json')) {
-                return response.json().then(data => {
-                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
-                });
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        }
+        console.log('Credential data prepared:', credentialData);
+        return credentialData;
+        
     }).catch(error => {
         console.error('Passkey authentication failed:', error);
         throw error;
@@ -264,6 +236,12 @@ function startPasskeyRegistration(passkeyOptions, label) {
 // グローバル関数として定義
 window.startPasskeyAuthentication = startPasskeyAuthentication;
 window.startPasskeyRegistration = startPasskeyRegistration;
+export { startPasskeyAuthentication, startPasskeyRegistration };
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Passkey module loaded');
+    window.passkeyModuleLoaded = true;
+});
 
 // DOMContentLoaded時に初期化を実行
 document.addEventListener('DOMContentLoaded', function() {

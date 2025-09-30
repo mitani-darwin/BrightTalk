@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditor Visual Issue Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            background-color: #ffeaa7;
+            resize: vertical;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .codemirror-initializing {
+            border: 2px solid #007bff !important;
+            background-color: #e3f2fd !important;
+        }
+        .codemirror-initialized {
+            border: 2px solid #28a745 !important;
+        }
+        /* CodeMirror basic styles */
+        .CodeMirror {
+            border: 2px solid #28a745;
+            height: 300px;
+            font-family: monospace;
+        }
+        .CodeMirror-focused {
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CodeEditor Visual Issue Test</h1>
+        <p>このテストは、CodeMirrorがtextareaを視覚的に置き換えない問題を再現するためのものです。</p>
+        
+        <div class="form-group">
+            <label for="contentTextarea">コンテンツ (CodeMirrorで置き換えられるべき):</label>
+            <div data-controller="code-editor">
+                <textarea 
+                    id="contentTextarea" 
+                    name="content" 
+                    data-code-editor-target="textarea" 
+                    placeholder="内容を入力してください"
+                    class="form-control">マークダウンテキストをここに入力してください...
+
+# サンプルヘッダー
+
+これはテストコンテンツです。
+
+- リスト項目1
+- リスト項目2
+
+コードブロック:
+```javascript
+console.log('Hello World');
+```</textarea>
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h3>デバッグ情報</h3>
+            <div id="debugLog"></div>
+        </div>
+
+        <script>
+            // Simple debug logger
+            function addDebugLog(message, type = 'info') {
+                const debugLog = document.getElementById('debugLog');
+                const statusClass = type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'success';
+                const timestamp = new Date().toLocaleTimeString();
+                debugLog.innerHTML += `<div class="status ${statusClass}">[${timestamp}] ${message}</div>`;
+                console.log(`[${timestamp}] ${message}`);
+            }
+
+            // Mock Stimulus Application for testing
+            class MockController {
+                constructor(element) {
+                    this.element = element;
+                    this.textareaTarget = element.querySelector('textarea');
+                    addDebugLog("MockController created");
+                }
+
+                connect() {
+                    addDebugLog("CodeEditor controller connected");
+                    
+                    // Check if already initialized
+                    if (this.element.classList.contains('codemirror-initialized')) {
+                        addDebugLog("CodeEditorは既に設定済みです", 'warning');
+                        return;
+                    }
+                    
+                    this.initializeCodeMirror();
+                }
+
+                async initializeCodeMirror() {
+                    addDebugLog("Initializing CodeMirror...");
+                    this.element.classList.add('codemirror-initializing');
+                    
+                    // Simulate CodeMirror loading delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const textarea = this.textareaTarget;
+                    if (!textarea) {
+                        addDebugLog("Textarea not found!", 'error');
+                        return;
+                    }
+
+                    addDebugLog(`Found textarea: ${textarea.id}`);
+
+                    try {
+                        // Simulate CodeMirror initialization
+                        addDebugLog("Creating CodeMirror editor...");
+                        
+                        // Instead of actually using CodeMirror, let's simulate the visual change
+                        // This is where the real issue might be - CodeMirror isn't actually replacing the textarea
+                        
+                        // Check if CodeMirror is available (it won't be in this test)
+                        if (typeof window.CodeMirror === 'undefined') {
+                            addDebugLog("CodeMirror is not available in this environment", 'warning');
+                            
+                            // Simulate what should happen
+                            addDebugLog("Simulating CodeMirror initialization success (fake)", 'warning');
+                            this.element.classList.remove('codemirror-initializing');
+                            this.element.classList.add('codemirror-initialized');
+                            addDebugLog("CodeMirror initialized successfully (FAKE)");
+                            
+                            // The problem: logs show success but textarea remains visible
+                            addDebugLog("PROBLEM: Textarea is still visible despite 'successful' initialization!", 'error');
+                            
+                            return;
+                        }
+
+                        // This would be the real CodeMirror code:
+                        this.editor = window.CodeMirror.fromTextArea(textarea, {
+                            mode: 'markdown',
+                            theme: 'default',
+                            lineNumbers: true,
+                            lineWrapping: true,
+                            indentUnit: 2,
+                            tabSize: 2
+                        });
+
+                        this.element.classList.remove('codemirror-initializing');
+                        this.element.classList.add('codemirror-initialized');
+                        addDebugLog("CodeMirror initialized successfully");
+
+                    } catch (error) {
+                        addDebugLog(`CodeMirror initialization error: ${error.message}`, 'error');
+                        this.element.classList.remove('codemirror-initializing');
+                    }
+                }
+            }
+
+            // Initialize when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                addDebugLog("DOM loaded, initializing test...");
+                
+                const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+                if (codeEditorElement) {
+                    const controller = new MockController(codeEditorElement);
+                    controller.connect();
+                } else {
+                    addDebugLog("Code editor element not found!", 'error');
+                }
+                
+                // Check final state after 2 seconds
+                setTimeout(() => {
+                    const textarea = document.getElementById('contentTextarea');
+                    const isVisible = textarea && window.getComputedStyle(textarea).display !== 'none';
+                    addDebugLog(`Final check - Textarea still visible: ${isVisible}`, 
+                               isVisible ? 'error' : 'success');
+                    
+                    if (isVisible) {
+                        addDebugLog("ISSUE REPRODUCED: CodeMirror logs success but textarea remains visible!", 'error');
+                    }
+                }, 2000);
+            });
+        </script>
+    </div>
+</body>
+</html>

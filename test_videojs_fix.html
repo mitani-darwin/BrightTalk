@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video.js Fix Test</title>
+    <script src="https://vjs.zencdn.net/8.12.0/video.min.js"></script>
+    <link href="https://vjs.zencdn.net/8.12.0/video-js.css" rel="stylesheet">
+    <style>
+        .video-container {
+            margin: 20px 0;
+        }
+        .video-js {
+            width: 100%;
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video.js Fix Verification Test</h1>
+    
+    <!-- Test video element similar to Rails helper output -->
+    <div class="video-container my-4" data-controller="video-player" data-video-player-src-value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" data-video-player-type-value="video/mp4">
+        <video id="video-test-fix" data-video-player-target="video" class="video-js vjs-default-skin w-100" style="height: 360px; max-width: 100%;" preload="metadata">
+            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+            <p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。</p>
+        </video>
+    </div>
+
+    <div id="test-results">
+        <h2>Test Results:</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        console.log('=== Video.js Fix Test Started ===');
+        
+        // Simulate the fixed controller behavior
+        function testVideoJsInitialization() {
+            const results = document.getElementById('results');
+            
+            // Test 1: Video.js availability
+            const videoJsAvailable = typeof window.videojs !== 'undefined';
+            results.innerHTML += `<p>✓ Video.js available: ${videoJsAvailable}</p>`;
+            
+            if (!videoJsAvailable) {
+                results.innerHTML += `<p style="color: red;">❌ Cannot proceed - Video.js not available</p>`;
+                return;
+            }
+            
+            // Test 2: Video element selection
+            const videoElement = document.querySelector('#video-test-fix');
+            results.innerHTML += `<p>✓ Video element found: ${!!videoElement}</p>`;
+            results.innerHTML += `<p>✓ Video element ID: ${videoElement ? videoElement.id : 'N/A'}</p>`;
+            
+            if (!videoElement) {
+                results.innerHTML += `<p style="color: red;">❌ Cannot proceed - Video element not found</p>`;
+                return;
+            }
+            
+            // Test 3: Check if already initialized
+            const alreadyInitialized = videoElement.classList.contains('vjs-tech');
+            results.innerHTML += `<p>✓ Already initialized check: ${alreadyInitialized}</p>`;
+            
+            if (alreadyInitialized) {
+                results.innerHTML += `<p style="color: orange;">⚠️ Player already initialized</p>`;
+                return;
+            }
+            
+            // Test 4: Add required CSS classes
+            if (!videoElement.classList.contains('video-js')) {
+                videoElement.classList.add('video-js', 'vjs-default-skin');
+                results.innerHTML += `<p>✓ Added required CSS classes</p>`;
+            } else {
+                results.innerHTML += `<p>✓ CSS classes already present</p>`;
+            }
+            
+            // Test 5: Initialize Video.js (using the fixed approach)
+            const options = {
+                fluid: true,
+                responsive: true,
+                controls: true,
+                playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                language: 'ja'
+            };
+            
+            results.innerHTML += `<p>✓ Attempting Video.js initialization with ID: ${videoElement.id}</p>`;
+            
+            try {
+                setTimeout(() => {
+                    const player = videojs(videoElement.id, options, function() {
+                        results.innerHTML += `<p style="color: green;">✅ Video.js player initialized successfully!</p>`;
+                        results.innerHTML += `<p>✓ Player ready callback executed</p>`;
+                        console.log('Video.js player initialized successfully:', player);
+                    });
+                    
+                    if (player) {
+                        results.innerHTML += `<p>✓ Player object created: ${typeof player}</p>`;
+                    }
+                }, 100);
+                
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;">❌ Video.js initialization failed: ${error.message}</p>`;
+                console.error('Video.js initialization failed:', error);
+            }
+        }
+        
+        // Run test when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', testVideoJsInitialization);
+        } else {
+            testVideoJsInitialization();
+        }
+    </script>
+</body>
+</html>

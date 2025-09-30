@@ -1,0 +1,36 @@
+<!-- 更新進捗モーダル -->
+<div class="modal fade" id="updateProgressModal" tabindex="-1" aria-labelledby="updateProgressModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="updateProgressModalLabel">
+          <i class="fas fa-sync fa-spin me-2"></i>更新中...
+        </h5>
+      </div>
+      <div class="modal-body text-center py-4">
+        <!-- 進捗バー -->
+        <div class="progress mb-3" style="height: 12px;">
+          <div id="updateProgressBar"
+               class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+               role="progressbar"
+               style="width: 0%"
+               aria-valuenow="0"
+               aria-valuemin="0"
+               aria-valuemax="100">
+            <span id="updateProgressText">0%</span>
+          </div>
+        </div>
+
+        <!-- ステータステキスト -->
+        <div class="mb-3">
+          <span id="updateStatusText" class="text-muted">準備中...</span>
+        </div>
+
+        <!-- 詳細情報 -->
+        <div class="small text-muted">
+          <div id="updateDetails">投稿データを処理しています...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

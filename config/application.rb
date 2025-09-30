@@ -52,6 +52,10 @@ module BrightTalk
       config.active_storage.variant_processor = :mini_magick
     end
 
+    # Active Storage Direct Upload 日本語ファイル名対応
+    config.active_storage.web_image_content_types = %w[image/png image/jpg image/jpeg image/gif image/webp]
+    config.active_storage.resolve_model_to_route = :rails_storage_proxy
+
     # esbuild用の設定
     config.assets.paths << Rails.root.join("app/assets/builds")
   end

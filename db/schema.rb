@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_20_165951) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_23_154621) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -137,6 +137,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_20_165951) do
     t.string "og_title"
     t.text "og_description"
     t.string "og_image"
+    t.datetime "voting_start_date"
+    t.datetime "voting_end_date"
     t.index ["category_id"], name: "index_posts_on_category_id"
     t.index ["draft"], name: "index_posts_on_draft"
     t.index ["post_type_id"], name: "index_posts_on_post_type_id"

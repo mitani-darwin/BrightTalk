@@ -65,11 +65,6 @@ class UsersController < ApplicationController
     end
   end
 
-  # パスワード変更画面
-  def edit_password
-    @user = current_user
-  end
-
   # アカウント削除
   def destroy_account
     @user = current_user
@@ -81,76 +76,7 @@ class UsersController < ApplicationController
     end
   end
 
-  # パスワード更新 - Passkeyに更新
-  def update_password
-    @user = current_user
-
-    # パスワード変更パラメータとPasskey設定を分離
-    password_params = user_password_params
-    passkey_enabled = params[:user][:passkey_enabled] == "1"
-
-    # パスワードが入力されているかチェック
-    password_provided = password_params[:password].present?
-
-    begin
-      User.transaction do
-        # パスワード変更が要求されている場合のみパスワード更新
-        if password_provided
-          # 現在のパスワードチェック（初回設定以外）
-          unless @user.encrypted_password.blank?
-            # 専用メソッドを使用してパスワード確認
-            unless @user.valid_password_for_change?(password_params[:current_password])
-              @user.errors.add(:current_password, "現在のパスワードが正しくありません")
-              raise ActiveRecord::RecordInvalid.new(@user)
-            end
-          end
-
-          # 新しいパスワードの設定
-          if password_params[:password] != password_params[:password_confirmation]
-            @user.errors.add(:password_confirmation, "パスワードが一致しません")
-            raise ActiveRecord::RecordInvalid.new(@user)
-          end
-
-          # パスワードの長さチェック（Deviseの設定を使用）
-          min_length = Devise.password_length.first
-          max_length = Devise.password_length.last
-
-          if password_params[:password].length < min_length
-            @user.errors.add(:password, "は#{min_length}文字以上で入力してください")
-            raise ActiveRecord::RecordInvalid.new(@user)
-          end
-
-          if max_length != Float::INFINITY && password_params[:password].length > max_length
-            @user.errors.add(:password, "は#{max_length}文字以内で入力してください")
-            raise ActiveRecord::RecordInvalid.new(@user)
-          end
-
-          @user.update!(password: password_params[:password])
-        end
-      end
-
-      # 成功メッセージ
-      if password_provided
-        flash[:notice] = "パスワードと認証設定を更新しました。"
-      else
-        flash[:notice] = "認証設定を更新しました。"
-      end
-
-      redirect_to account_user_path(current_user)
-    rescue ActiveRecord::RecordInvalid => e
-      render :edit_password, status: :unprocessable_content
-    rescue => e
-      Rails.logger.error "Password update failed: #{e.message}"
-      @user.errors.add(:base, "更新に失敗しました。")
-      render :edit_password, status: :unprocessable_content
-    end
-  end
-
   private
-
-  def user_password_params
-    params.require(:user).permit(:current_password, :password, :password_confirmation)
-  end
 
   def set_user
     # IDまたはslugでUserを検索、見つからない場合は current_user を使用
@@ -162,15 +88,11 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :password, :password_confirmation)
+    params.require(:user).permit(:name, :email)
   end
 
   def account_params
     params.require(:user).permit(:name, :email, :avatar, :bio, :header_image,
                                  :twitter_url, :github_url)
-  end
-
-  def password_params
-    params.require(:user).permit(:password, :password_confirmation)
   end
 end

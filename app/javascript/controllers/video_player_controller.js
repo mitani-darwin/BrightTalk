@@ -1,173 +1,119 @@
 import { Controller } from "@hotwired/stimulus"
+import videojs from 'video.js'
 
 export default class extends Controller {
-  static targets = ["video"]
-  static values = { 
-    src: String,
-    type: String,
-    poster: String
-  }
+    static targets = ["video"]
 
-  connect() {
-    // Check if the video target element exists before initializing
-    if (!this.hasVideoTarget) {
-      console.warn('Video player controller connected but no video target found')
-      return
-    }
-    this.initializeVideoJS()
-  }
+    connect() {
+        console.log("VideoPlayer controller connected")
+        console.log("hasVideoTarget:", this.hasVideoTarget)
+        console.log("videoTargets length:", this.videoTargets ? this.videoTargets.length : 'undefined')
+        console.log("All targets:", this.element.querySelectorAll('[data-video-player-target="video"]'))
 
-  disconnect() {
-    if (this.player) {
-      this.player.dispose()
-    }
-  }
-
-  async initializeVideoJS() {
-    // Double-check that video target exists before initialization
-    if (!this.hasVideoTarget) {
-      console.error('Cannot initialize Video.js: video target element is missing')
-      return
-    }
-
-    try {
-      // Check if VideoJS is available globally
-      let VideoJS = window.videojs
-      
-      if (!VideoJS) {
-        // Try dynamic import as fallback
-        const videojs = await import("video.js")
-        VideoJS = videojs.default || videojs
-      }
-
-      // Video.js configuration options
-      const options = {
-        controls: true,
-        responsive: true,
-        fluid: true,
-        preload: 'metadata',
-        playbackRates: [0.5, 1, 1.25, 1.5, 2],
-        techOrder: ['html5'],
-        html5: {
-          vhs: {
-            overrideNative: true
-          }
+        // DOM が完全に準備できてから初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log("DOMContentLoaded - calling initializePlayer")
+                this.initializePlayer()
+            })
+        } else {
+            console.log("Document already ready - calling initializePlayer")
+            this.initializePlayer()
         }
-      }
-
-      // Initialize Video.js player
-      this.player = VideoJS(this.videoTarget, options)
-
-      // Set video source if provided
-      if (this.hasSrcValue && this.hasTypeValue) {
-        this.player.src({
-          src: this.srcValue,
-          type: this.typeValue
-        })
-      }
-
-      // Set poster image if provided
-      if (this.hasPosterValue) {
-        this.player.poster(this.posterValue)
-      }
-
-      // Add event listeners
-      this.setupEventListeners()
-
-      console.log('Video.js player initialized successfully')
-      
-    } catch (error) {
-      console.error('Failed to initialize Video.js:', error)
-      // Fallback to native HTML5 video
-      this.initializeFallback()
-    }
-  }
-
-  setupEventListeners() {
-    if (!this.player) return
-
-    // Player ready event
-    this.player.ready(() => {
-      console.log('Video.js player is ready')
-    })
-
-    // Error handling
-    this.player.on('error', (error) => {
-      console.error('Video.js player error:', error)
-      this.handleVideoError()
-    })
-
-    // Loading states
-    this.player.on('loadstart', () => {
-      console.log('Video loading started')
-    })
-
-    this.player.on('canplay', () => {
-      console.log('Video can start playing')
-    })
-  }
-
-  handleVideoError() {
-    // Display user-friendly error message
-    const errorContainer = document.createElement('div')
-    errorContainer.className = 'alert alert-warning mt-2'
-    errorContainer.innerHTML = `
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      動画の読み込みに問題が発生しました。
-      <a href="${this.srcValue}" target="_blank" class="alert-link">直接ダウンロード</a>してお試しください。
-    `
-    
-    if (this.videoTarget.parentNode) {
-      this.videoTarget.parentNode.insertBefore(errorContainer, this.videoTarget.nextSibling)
-    }
-  }
-
-  initializeFallback() {
-    // Check if video target exists before fallback initialization
-    if (!this.hasVideoTarget) {
-      console.error('Cannot initialize fallback video player: video target element is missing')
-      return
     }
 
-    // Enable native HTML5 video controls as fallback
-    this.videoTarget.controls = true
-    this.videoTarget.preload = 'metadata'
-    
-    if (this.hasSrcValue) {
-      this.videoTarget.src = this.srcValue
+    disconnect() {
+        if (this.player) {
+            this.player.dispose()
+            this.player = null
+        }
     }
-    
-    if (this.hasPosterValue) {
-      this.videoTarget.poster = this.posterValue
-    }
-    
-    console.log('Fallback to native HTML5 video player')
-  }
 
-  // Public method to update video source
-  updateSource(src, type) {
-    if (this.player) {
-      this.player.src({ src, type })
-    } else {
-      this.videoTarget.src = src
-    }
-  }
+    initializePlayer() {
+        console.log('initializePlayer called')
+        console.log('hasVideoTarget:', this.hasVideoTarget)
+        console.log('videoTargets:', this.videoTargets)
 
-  // Public method to play video
-  play() {
-    if (this.player) {
-      return this.player.play()
-    } else {
-      return this.videoTarget.play()
-    }
-  }
+        // より確実なvideo要素の取得
+        const videoElement = this.element.querySelector('[data-video-player-target="video"]')
+        console.log('Video element found:', videoElement)
 
-  // Public method to pause video
-  pause() {
-    if (this.player) {
-      this.player.pause()
-    } else {
-      this.videoTarget.pause()
+        if (!videoElement) {
+            console.error('Video target element not found in controller element:', this.element)
+            return
+        }
+
+        if (this.hasVideoTarget) {
+            console.log('Using hasVideoTarget path')
+            const videoTarget = this.videoTarget
+            console.log('Video target:', videoTarget)
+            console.log('Video target ID:', videoTarget.id)
+            this.setupPlayer(videoTarget)
+        } else {
+            console.log('Using direct query selector path')
+            console.log('Direct video element:', videoElement)
+            console.log('Direct video element ID:', videoElement.id)
+            this.setupPlayer(videoElement)
+        }
     }
-  }
+
+    setupPlayer(videoElement) {
+        // Video.jsが利用可能かチェック
+        if (typeof videojs === 'undefined') {
+            console.error('Video.js library is not available')
+            return
+        }
+
+        // 既にVideo.jsプレーヤーが初期化されているかチェック
+        if (videoElement.classList.contains('vjs-tech')) {
+            console.log('Video.js player already initialized for this element')
+            return
+        }
+
+        // 既存のプレーヤーがある場合は破棄
+        if (this.player) {
+            console.log('Disposing existing player')
+            this.player.dispose()
+            this.player = null
+        }
+
+        // Video.js用のクラスを確実に追加
+        if (!videoElement.classList.contains('video-js')) {
+            videoElement.classList.add('video-js', 'vjs-default-skin')
+        }
+
+        // optionsオブジェクトを定義
+        const options = {
+            fluid: false,
+            responsive: true,
+            width: 'auto',  // 動画の実際の横幅
+            height: 'auto', // 動画の実際の高さ
+            controls: true,
+            playbackRates: [0.5, 1, 1.25, 1.5, 2],
+            language: 'ja'
+        }
+
+        try {
+            console.log('Attempting to initialize Video.js player with element:', videoElement.id)
+            // DOM要素を直接渡してより確実に初期化
+            this.player = videojs(videoElement, options, () => {
+                console.log('Video.js player is ready')
+                
+                // 動画の実際のサイズを取得
+                this.player.ready(() => {
+                    const videoWidth = this.player.videoWidth()
+                    const videoHeight = this.player.videoHeight()
+                    
+                    if (videoWidth && videoHeight) {
+                        this.player.width(videoWidth)
+                        this.player.height(videoHeight)
+                        console.log('Video size set to:', videoWidth, 'x', videoHeight)
+                    }
+                })
+            })
+            console.log('Player created successfully:', this.player)
+        } catch (error) {
+            console.error('Failed to initialize Video.js player:', error)
+        }
+    }
 }

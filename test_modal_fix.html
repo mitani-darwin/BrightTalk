@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Modal Fix</title>
+    <script>
+        // Simple test to verify modal functionality
+        function testModal() {
+            // Open the posts/new page in a new window for manual testing
+            const newWindow = window.open('http://localhost:3000/posts/new', '_blank');
+            
+            // Instructions for manual testing
+            alert(`
+Manual Test Instructions:
+1. A new window will open with the posts/new page
+2. Fill in the title and content fields
+3. Click the "投稿" (Submit) button
+4. Verify that the modal dialog appears with progress bar
+5. Close this alert to continue
+            `);
+            
+            console.log('Test window opened. Please manually verify modal appears when clicking submit button.');
+        }
+        
+        // Auto-run test when page loads
+        window.onload = function() {
+            setTimeout(testModal, 1000);
+        };
+    </script>
+</head>
+<body>
+    <h1>Modal Fix Test</h1>
+    <p>This page will open the posts/new form for manual testing.</p>
+    <p>Check the browser console for any JavaScript errors.</p>
+    
+    <button onclick="testModal()">Open Test Window</button>
+    
+    <div style="margin-top: 20px; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6;">
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li>Modal should appear when clicking the submit button</li>
+            <li>Progress bar should animate</li>
+            <li>Form should submit after modal appears</li>
+            <li>No JavaScript errors in console</li>
+        </ul>
+    </div>
+</body>
+</html>

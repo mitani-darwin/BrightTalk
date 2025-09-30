@@ -51,6 +51,8 @@ RUN bundle install --jobs 4 --retry 3 && \
 # Copy application code
 COPY . .
 
+RUN npm install && npm run build
+
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
