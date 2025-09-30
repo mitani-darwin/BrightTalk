@@ -27,7 +27,8 @@ class ImageSelectionFixTest < ApplicationSystemTestCase
       
       Object.defineProperty(imageInput, 'files', {
         value: mockFileList1,
-        writable: false
+        writable: false,
+        configurable: true
       });
       
       const changeEvent = new Event('change', { bubbles: true });
@@ -197,7 +198,7 @@ class ImageSelectionFixTest < ApplicationSystemTestCase
       </head>
       <body>
         <input type="file" id="imageInput" accept="image/*" multiple>
-        <div id="selectedFilesDisplay" style="display: none;">
+        <div id="selectedFilesDisplay" style="display: block;">
           <div id="selectedFilesList"></div>
         </div>
 

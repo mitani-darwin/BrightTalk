@@ -1,4 +1,7 @@
 <script>
+    // Global variables
+    let selectedFiles = [];
+
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize form functionality
         initializeFormFeatures();
@@ -187,7 +190,7 @@
 
         // フォールバック：3秒後にCodeEditorが初期化されていない場合は手動で初期化
         setTimeout(() => {
-            if (!checkCodeEditor() || !textarea.nextSibling?.className?.includes('CodeMirror')) {
+            if (!checkCodeEditor() || !textarea.nextElementSibling?.classList?.contains('CodeMirror')) {
                 console.warn('StimulusコントローラーでCodeEditorが初期化されませんでした。手動初期化を試行...');
                 forceInitializeCodeEditorFallback(textarea);
             }
@@ -608,65 +611,57 @@
 
         console.log('insertMarkdownAtCursor called with text:', text);
 
-        // CodeMirrorエディターコントローラーの取得
+        // CodeMirrorエディターが存在する場合はそちらを使用
         const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
         if (codeEditorElement) {
             console.log('Found code-editor element:', codeEditorElement);
 
-            // Stimulus 3.x の正しいコントローラー取得方法
-            const application = window.Stimulus || window.Application;
-            if (application) {
-                try {
-                    // Stimulus application からコントローラーを取得
-                    const controller = application.getControllerForElementAndIdentifier(codeEditorElement, 'code-editor');
-                    if (controller && controller.insertText) {
-                        console.log('Using Stimulus controller insertText method');
-                        controller.insertText(text);
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Failed to get controller via Stimulus application:', error);
+            // Stimulus 3.x の正しいAPI を使用
+            try {
+                const controller = window.Stimulus.getControllerForElementAndIdentifier(
+                    codeEditorElement,
+                    'code_editor'
+                );
+
+                if (controller && controller.insertText) {
+                    console.log('Using Stimulus controller insertText method');
+                    controller.insertText(text);
+                    return;
                 }
+            } catch (error) {
+                console.warn('Stimulus controller access failed:', error);
             }
 
-            // 代替方法：要素に直接格納されているコントローラーを参照
-            if (codeEditorElement.controller && codeEditorElement.controller.insertText) {
-                console.log('Using element.controller insertText method');
-                codeEditorElement.controller.insertText(text);
-                return;
-            }
+            // 代替方法: 直接CodeMirrorアクセス
+            if (codeEditorElement.querySelector('.CodeMirror')) {
+                const cmWrapper = codeEditorElement.querySelector('.CodeMirror');
+                const cmInstance = cmWrapper.CodeMirror;
 
-            // 代替方法2：Stimulus内部のコントローラーマップを参照
-            if (codeEditorElement._stimulus_controllers) {
-                const codeEditorController = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor');
-                if (codeEditorController && codeEditorController.insertText) {
-                    console.log('Using _stimulus_controllers insertText method');
-                    codeEditorController.insertText(text);
+                if (cmInstance && cmInstance.replaceRange) {
+                    console.log('Using direct CodeMirror access');
+                    const cursor = cmInstance.getCursor();
+                    cmInstance.replaceRange(text, cursor);
+                    cmInstance.focus();
                     return;
                 }
             }
 
-            // 代替方法3：data属性を使ったイベント発火
-            const customEvent = new CustomEvent('code-editor:insert-text', {
-                detail: { text: text }
-            });
-            codeEditorElement.dispatchEvent(customEvent);
-            console.log('Dispatched code-editor:insert-text event');
-
-            // イベントが処理されたかを確認するため、少し待機してからフォールバックを実行
-            setTimeout(() => {
-                // まだテキストが挿入されていない場合のみフォールバック実行
-                if (!textarea.value.includes(text.trim())) {
-                    console.log('Event insertion failed, using fallback method');
-                    fallbackTextInsertion(textarea, text);
-                }
-            }, 100);
-            return;
+            console.warn('CodeEditor controller not found or insertText method unavailable');
         }
 
-        // 最終フォールバック: 通常のテキストエリア処理
+        // フォールバック: 通常のテキストエリア処理
         console.log('Using fallback text insertion method');
-        fallbackTextInsertion(textarea, text);
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+
+        textarea.value = before + text + after;
+        const newPos = start + text.length;
+        textarea.selectionStart = textarea.selectionEnd = newPos;
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+        console.log('Fallback text insertion completed');
     }
 
     function fallbackTextInsertion(textarea, text) {

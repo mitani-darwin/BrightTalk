@@ -173,12 +173,20 @@ export default class extends Controller {
     }
 
     insertText(text) {
+        console.log('=== CodeEditor insertText called ===');
+        console.log('Text to insert:', text);
+        console.log('Editor available:', !!this.editor);
+
         if (this.editor && this.editor.getDoc) {
-            const cursor = this.editor.getCursor()
-            this.editor.replaceRange(text, cursor)
-            this.editor.focus()
+            const cursor = this.editor.getCursor();
+            console.log('Current cursor position:', cursor);
+
+            this.editor.replaceRange(text, cursor);
+            this.editor.focus();
+
+            console.log('Text insertion completed successfully');
         } else {
-            console.warn('CodeMirror editor not available for text insertion')
+            console.warn('CodeMirror editor not available for text insertion');
         }
     }
 
