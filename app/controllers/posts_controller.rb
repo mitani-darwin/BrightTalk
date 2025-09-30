@@ -218,14 +218,36 @@ class PostsController < ApplicationController
       safe_params = auto_save_params.except(:id, :video_signed_ids, :images, :post_id)
 
       if safe_params.present?
-        @post.update!(safe_params)
-
-        render json: {
-          success: true,
-          message: "自動保存が完了しました",
-          post_id: @post.id,
-          updated_at: @post.updated_at
-        }
+        # 自動保存時は常にdraftステータスで保存
+        safe_params[:status] = 'draft'
+        
+        # 自動保存フラグを設定（バリデーション回避のため）
+        @post.auto_save = true
+        
+        # video_signed_idsの処理（重複チェック含む）
+        if auto_save_params[:video_signed_ids].present?
+          process_video_signed_ids_for_auto_save(auto_save_params[:video_signed_ids])
+        end
+        
+        # update!ではなくupdateを使用してバリデーションエラーを回避
+        if @post.update(safe_params)
+          render json: {
+            success: true,
+            message: "自動保存が完了しました",
+            post_id: @post.id,
+            updated_at: @post.updated_at
+          }
+        else
+          # バリデーションエラーがあっても自動保存は成功とみなす
+          Rails.logger.info "Auto-save validation errors (ignored): #{@post.errors.full_messages}"
+          render json: {
+            success: true,
+            message: "自動保存が完了しました（一部項目は未入力）",
+            post_id: @post.id,
+            updated_at: @post.updated_at,
+            validation_errors: @post.errors.full_messages
+          }
+        end
       else
         render json: {
           success: false,
@@ -324,26 +346,33 @@ class PostsController < ApplicationController
     if params[:post_id].present?
       Rails.logger.info "Finding post by post_id: #{params[:post_id]}"
       @post = current_user.posts.friendly.find(params[:post_id])
+      @post.auto_save = true  # 既存の投稿にもauto_saveフラグを設定
     elsif params[:id].present?
       Rails.logger.info "Finding post by id: #{params[:id]}"
       @post = current_user.posts.friendly.find(params[:id])
+      @post.auto_save = true  # 既存の投稿にもauto_saveフラグを設定
     else
-      Rails.logger.info "Creating new post or finding existing draft"
-      # 安全なパラメータアクセス
+      Rails.logger.info "Creating new post for auto_save"
+      # auto_save時は新しい投稿を作成（バリデーション回避のためcreateではなく手動作成）
       title = params.dig(:post, :title) || params[:title] || "無題の下書き"
-      @post = current_user.posts.drafts.find_or_create_by(title: title) do |post|
-        post.status = 'draft'
-      end
+      @post = current_user.posts.new(status: 'draft', title: title)
+      @post.auto_save = true
+      # バリデーション回避のためsave(validate: false)を使用
+      @post.save(validate: false)
     end
 
     Rails.logger.info "Post found/created: ID=#{@post.id}, Title=#{@post.title}"
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error "Post not found, creating new: #{e.message}"
-    @post = current_user.posts.build
+    @post = current_user.posts.new(status: 'draft', title: "無題の下書き")
+    @post.auto_save = true
+    @post.save(validate: false)
   rescue => e
     Rails.logger.error "Error in set_post_for_auto_save: #{e.message}"
     Rails.logger.error "Backtrace: #{e.backtrace.first(3).join('\n')}"
-    @post = current_user.posts.build
+    @post = current_user.posts.new(status: 'draft', title: "無題の下書き")
+    @post.auto_save = true
+    @post.save(validate: false)
   end
 
   def set_post

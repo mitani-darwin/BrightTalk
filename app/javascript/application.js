@@ -10,7 +10,7 @@ import 'codemirror/mode/markdown/markdown';
 import 'codemirror/addon/fold/foldcode';
 import 'codemirror/addon/fold/foldgutter';
 import 'codemirror/lib/codemirror.css';
-import 'codemirror/theme/default.css';
+
 
 window.videojs = videojs;
 window.CodeMirror = CodeMirror;

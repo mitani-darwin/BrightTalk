@@ -11,6 +11,9 @@ export default class extends Controller {
             return
         }
         this.initializeCodeMirror()
+        
+        // カスタムイベントリスナーを追加
+        this.element.addEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
     }
 
     async initializeCodeMirror() {
@@ -101,7 +104,18 @@ export default class extends Controller {
         }
     }
 
+    handleInsertText(event) {
+        console.log('Handling code-editor:insert-text event')
+        const text = event.detail.text
+        if (text) {
+            this.insertText(text)
+        }
+    }
+
     disconnect() {
+        // イベントリスナーを削除
+        this.element.removeEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
+        
         if (this.editor) {
             try {
                 this.editor.toTextArea()

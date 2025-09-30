@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeEditor File Selection Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .CodeMirror { border: 1px solid #ccc; }
+        .file-input { margin: 10px 0; }
+        .test-results { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>CodeEditor File Selection Test</h1>
+        
+        <div class="file-input">
+            <label for="imageInput">画像ファイル選択:</label>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+        </div>
+        
+        <div class="file-input">
+            <label for="videoInput">動画ファイル選択:</label>
+            <input type="file" id="videoInput" accept="video/*">
+        </div>
+        
+        <div data-controller="code-editor" id="codeEditorContainer">
+            <textarea id="contentTextarea" data-code_editor_target="textarea" placeholder="ファイルを選択すると、ここにMarkdownが挿入されます..."></textarea>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            <h3>テスト結果:</h3>
+            <div id="resultList"></div>
+        </div>
+    </div>
+
+    <script>
+        // CodeEditor Controller (simplified version)
+        class CodeEditorController {
+            constructor(element) {
+                this.element = element;
+                this.textareaTarget = element.querySelector('textarea');
+                this.connect();
+            }
+            
+            connect() {
+                console.log("CodeEditor controller connected");
+                this.initializeCodeMirror();
+                
+                // カスタムイベントリスナーを追加
+                this.element.addEventListener('code-editor:insert-text', this.handleInsertText.bind(this));
+                this.addResult("✓ CodeEditor controller connected", "success");
+            }
+            
+            async initializeCodeMirror() {
+                try {
+                    this.editor = CodeMirror.fromTextArea(this.textareaTarget, {
+                        mode: 'markdown',
+                        theme: 'default',
+                        lineNumbers: true,
+                        lineWrapping: true,
+                        indentUnit: 2,
+                        tabSize: 2
+                    });
+                    
+                    console.log('CodeMirror initialized successfully');
+                    this.addResult("✓ CodeMirror initialized successfully", "success");
+                } catch (error) {
+                    console.error('CodeMirror initialization error:', error);
+                    this.addResult("✗ CodeMirror initialization failed: " + error.message, "error");
+                }
+            }
+            
+            insertText(text) {
+                if (this.editor && this.editor.getDoc) {
+                    const cursor = this.editor.getCursor();
+                    this.editor.replaceRange(text, cursor);
+                    this.editor.focus();
+                    this.addResult("✓ Text inserted via CodeMirror: " + text.trim(), "success");
+                } else {
+                    console.warn('CodeMirror editor not available for text insertion');
+                    this.addResult("✗ CodeMirror editor not available", "error");
+                }
+            }
+            
+            handleInsertText(event) {
+                console.log('Handling code-editor:insert-text event');
+                const text = event.detail.text;
+                if (text) {
+                    this.insertText(text);
+                    this.addResult("✓ Custom event handled: " + text.trim(), "success");
+                }
+            }
+            
+            addResult(message, type) {
+                const resultList = document.getElementById('resultList');
+                const div = document.createElement('div');
+                div.className = type;
+                div.textContent = new Date().toLocaleTimeString() + " - " + message;
+                resultList.appendChild(div);
+            }
+        }
+        
+        // File upload handlers
+        function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            const textarea = document.getElementById('contentTextarea');
+            
+            for (let file of files) {
+                console.log('Image selected:', file.name);
+                
+                if (textarea) {
+                    const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
+                    
+                    setTimeout(() => {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, 100);
+                }
+            }
+        }
+        
+        function handleVideoUpload(event) {
+            const file = event.target.files[0];
+            const textarea = document.getElementById('contentTextarea');
+            
+            if (file) {
+                console.log('Video selected:', file.name);
+                
+                if (textarea) {
+                    const markdownLink = `[${file.name}](attachment:${file.name})\n\n`;
+                    setTimeout(() => {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, 100);
+                }
+            }
+        }
+        
+        function insertMarkdownAtCursor(textarea, text) {
+            if (!textarea) return;
+            
+            console.log('insertMarkdownAtCursor called with text:', text);
+            
+            const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+            if (codeEditorElement) {
+                console.log('Found code-editor element:', codeEditorElement);
+                
+                // カスタムイベントを発火
+                const customEvent = new CustomEvent('code-editor:insert-text', {
+                    detail: { text: text }
+                });
+                codeEditorElement.dispatchEvent(customEvent);
+                console.log('Dispatched code-editor:insert-text event');
+                return;
+            }
+            
+            // フォールバック
+            console.log('Using fallback text insertion method');
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const currentValue = textarea.value;
+            
+            textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+            const newPos = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newPos;
+            textarea.focus();
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize CodeEditor controller
+            const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement) {
+                new CodeEditorController(codeEditorElement);
+            }
+            
+            // Setup file input handlers
+            const imageInput = document.getElementById('imageInput');
+            const videoInput = document.getElementById('videoInput');
+            
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImageUpload);
+            }
+            
+            if (videoInput) {
+                videoInput.addEventListener('change', handleVideoUpload);
+            }
+        });
+    </script>
+</body>
+</html>
