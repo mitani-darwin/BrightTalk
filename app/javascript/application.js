@@ -10,10 +10,13 @@ import 'codemirror/mode/markdown/markdown';
 import 'codemirror/addon/fold/foldcode';
 import 'codemirror/addon/fold/foldgutter';
 import 'codemirror/lib/codemirror.css';
-
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 window.videojs = videojs;
 window.CodeMirror = CodeMirror;
+
+window.flatpickr = flatpickr;
 
 window.startPasskeyAuthentication = startPasskeyAuthentication;
 window.startPasskeyRegistration = startPasskeyRegistration;
@@ -118,9 +121,11 @@ window.Stimulus = application
 // Controllers の登録
 import CodeEditorController from "./controllers/code_editor_controller"
 import VideoPlayerController from "./controllers/video_player_controller"
+import FlatpickrController from "./controllers/flatpickr_controller"
 
 application.register("code-editor", CodeEditorController)
 application.register("video-player", VideoPlayerController)
+application.register("flatpickr", FlatpickrController)
 
 console.log('Application loaded with esbuild (CodeMirror dynamic)')
 
