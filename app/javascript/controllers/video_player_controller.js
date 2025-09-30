@@ -84,8 +84,10 @@ export default class extends Controller {
 
         // optionsオブジェクトを定義
         const options = {
-            fluid: true,
+            fluid: false,
             responsive: true,
+            width: 'auto',  // 動画の実際の横幅
+            height: 'auto', // 動画の実際の高さ
             controls: true,
             playbackRates: [0.5, 1, 1.25, 1.5, 2],
             language: 'ja'
@@ -96,6 +98,18 @@ export default class extends Controller {
             // DOM要素を直接渡してより確実に初期化
             this.player = videojs(videoElement, options, () => {
                 console.log('Video.js player is ready')
+                
+                // 動画の実際のサイズを取得
+                this.player.ready(() => {
+                    const videoWidth = this.player.videoWidth()
+                    const videoHeight = this.player.videoHeight()
+                    
+                    if (videoWidth && videoHeight) {
+                        this.player.width(videoWidth)
+                        this.player.height(videoHeight)
+                        console.log('Video size set to:', videoWidth, 'x', videoHeight)
+                    }
+                })
             })
             console.log('Player created successfully:', this.player)
         } catch (error) {
