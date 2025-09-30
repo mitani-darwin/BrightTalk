@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Selection Issue Reproduction Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .file-input { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .test-results { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .selected-files { margin-top: 10px; padding: 10px; background: #e9ecef; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Image Selection Issue Reproduction Test</h1>
+        <p><strong>Issue:</strong> 最後に選択した画像しかアップロード出来ていない。画像は一つずつ選択する。</p>
+        
+        <div class="file-input">
+            <label for="imageInput">画像ファイル選択 (multiple enabled):</label>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <p>Test: Select images one by one to see if they accumulate or get replaced</p>
+        </div>
+        
+        <div class="selected-files" id="selectedFilesDisplay" style="display: none;">
+            <h3>選択されたファイル:</h3>
+            <div id="selectedFilesList"></div>
+        </div>
+        
+        <div>
+            <button onclick="clearSelection()">Clear Selection</button>
+            <button onclick="showSelectedFiles()">Show Current Selection</button>
+            <button onclick="simulateMultipleSelections()">Simulate Multiple Individual Selections</button>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            <h3>テスト結果:</h3>
+            <div id="resultList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variable to track selected files (simulating the existing code)
+        var selectedFiles = [];
+
+        // Current handleImageUpload function (with the bug)
+        function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            addResult(`📁 New selection: ${files.length} files`, 'info');
+            files.forEach(file => {
+                addResult(`  - ${file.name}`, 'info');
+            });
+            
+            // This is the problematic line - it replaces instead of appending
+            selectedFiles = files;
+            
+            addResult(`📊 Total selectedFiles after replacement: ${selectedFiles.length}`, selectedFiles.length > files.length ? 'success' : 'error');
+            
+            // Display selected files
+            displaySelectedFiles(selectedFiles);
+        }
+        
+        // Fixed version of handleImageUpload (for comparison)
+        function handleImageUploadFixed(event) {
+            const files = Array.from(event.target.files);
+            
+            addResult(`📁 New selection (FIXED): ${files.length} files`, 'info');
+            files.forEach(file => {
+                addResult(`  - ${file.name}`, 'info');
+            });
+            
+            // This is the fix - append new files to existing selection
+            selectedFiles = selectedFiles.concat(files.filter(newFile => 
+                !selectedFiles.some(existingFile => existingFile.name === newFile.name)
+            ));
+            
+            addResult(`📊 Total selectedFiles after append: ${selectedFiles.length}`, 'success');
+            
+            // Display selected files
+            displaySelectedFiles(selectedFiles);
+        }
+
+        // Display selected files function
+        function displaySelectedFiles(files) {
+            const displayArea = document.getElementById('selectedFilesDisplay');
+            const filesList = document.getElementById('selectedFilesList');
+
+            if (files.length > 0) {
+                displayArea.style.display = 'block';
+                filesList.innerHTML = '';
+
+                files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.style.marginBottom = '5px';
+                    fileItem.innerHTML = `
+                        <span>📷 ${file.name} (${formatFileSize(file.size)})</span>
+                        <button onclick="removeSelectedFile(${index})" style="margin-left: 10px;">❌</button>
+                    `;
+                    filesList.appendChild(fileItem);
+                });
+            } else {
+                displayArea.style.display = 'none';
+            }
+        }
+
+        // Remove selected file function
+        function removeSelectedFile(index) {
+            const removedFile = selectedFiles[index];
+            selectedFiles.splice(index, 1);
+            addResult(`🗑️ Removed: ${removedFile.name}`, 'info');
+            displaySelectedFiles(selectedFiles);
+        }
+
+        // Format file size function
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Test helper functions
+        function clearSelection() {
+            selectedFiles = [];
+            displaySelectedFiles(selectedFiles);
+            addResult('🧹 Selection cleared', 'info');
+        }
+
+        function showSelectedFiles() {
+            addResult(`📋 Current selection: ${selectedFiles.length} files`, 'info');
+            selectedFiles.forEach((file, index) => {
+                addResult(`  ${index + 1}. ${file.name}`, 'info');
+            });
+        }
+
+        function simulateMultipleSelections() {
+            addResult('🧪 Simulating multiple individual selections...', 'info');
+            
+            // Create mock files
+            const mockFiles = [
+                new File(['mock1'], 'image1.jpg', { type: 'image/jpeg' }),
+                new File(['mock2'], 'image2.png', { type: 'image/png' }),
+                new File(['mock3'], 'image3.gif', { type: 'image/gif' })
+            ];
+
+            // Simulate selecting files one by one (current buggy behavior)
+            addResult('--- Testing CURRENT (buggy) behavior ---', 'error');
+            clearSelection();
+            
+            mockFiles.forEach((file, index) => {
+                // Simulate file input change event
+                const mockEvent = {
+                    target: {
+                        files: [file]
+                    }
+                };
+                addResult(`Selection ${index + 1}:`, 'info');
+                handleImageUpload(mockEvent);
+            });
+
+            addResult(`Expected: 3 files, Actual: ${selectedFiles.length} files`, 
+                     selectedFiles.length === 3 ? 'success' : 'error');
+
+            // Test fixed behavior
+            addResult('--- Testing FIXED behavior ---', 'success');
+            clearSelection();
+            
+            mockFiles.forEach((file, index) => {
+                // Simulate file input change event
+                const mockEvent = {
+                    target: {
+                        files: [file]
+                    }
+                };
+                addResult(`Selection ${index + 1} (FIXED):`, 'info');
+                handleImageUploadFixed(mockEvent);
+            });
+
+            addResult(`Expected: 3 files, Actual: ${selectedFiles.length} files`, 
+                     selectedFiles.length === 3 ? 'success' : 'error');
+        }
+
+        function addResult(message, type) {
+            const resultList = document.getElementById('resultList');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = new Date().toLocaleTimeString() + " - " + message;
+            resultList.appendChild(div);
+            resultList.scrollTop = resultList.scrollHeight;
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageInput = document.getElementById('imageInput');
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImageUpload);
+                addResult('✅ Image input event listener attached', 'success');
+                addResult('🔍 Ready to test image selection issue', 'info');
+                addResult('📋 Instructions: Try selecting different images one by one and observe the behavior', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

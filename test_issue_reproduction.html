@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Reproduction Test - Image/Video Markdown Insertion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .CodeMirror { border: 1px solid #ccc; min-height: 200px; }
+        .file-input { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .test-results { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button { margin: 5px; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Issue Reproduction Test</h1>
+        <p>画像ファイルや動画ファイルを選択して、CodeEditorにMarkdownリンクが正しく挿入されるかテストします。</p>
+        
+        <div class="file-input">
+            <h3>画像ファイル選択テスト</h3>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <button onclick="simulateImageSelection()">画像選択をシミュレート</button>
+        </div>
+        
+        <div class="file-input">
+            <h3>動画ファイル選択テスト</h3>
+            <input type="file" id="videoInput" accept="video/*">
+            <button onclick="simulateVideoSelection()">動画選択をシミュレート</button>
+        </div>
+        
+        <div data-controller="code-editor" id="codeEditorContainer">
+            <h3>CodeEditor</h3>
+            <textarea id="contentTextarea" data-code_editor_target="textarea" placeholder="ファイルを選択すると、ここにMarkdownが挿入されるはずです..."></textarea>
+        </div>
+        
+        <div>
+            <h3>Manual Tests</h3>
+            <button onclick="testDirectInsertion()">Direct Text Insertion Test</button>
+            <button onclick="testEventInsertion()">Custom Event Test</button>
+            <button onclick="clearEditor()">Clear Editor</button>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            <h3>テスト結果:</h3>
+            <div id="resultList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated CodeEditor Controller based on actual implementation
+        class CodeEditorController {
+            constructor(element) {
+                this.element = element;
+                this.textareaTarget = element.querySelector('textarea');
+                this.connect();
+            }
+            
+            connect() {
+                console.log("CodeEditor controller connected");
+                this.initializeCodeMirror();
+                
+                // カスタムイベントリスナーを追加
+                this.element.addEventListener('code-editor:insert-text', this.handleInsertText.bind(this));
+                this.addResult("✓ CodeEditor controller connected", "success");
+            }
+            
+            async initializeCodeMirror() {
+                try {
+                    if (!window.CodeMirror) {
+                        throw new Error("CodeMirror library not loaded");
+                    }
+                    
+                    this.editor = CodeMirror.fromTextArea(this.textareaTarget, {
+                        mode: 'markdown',
+                        theme: 'default',
+                        lineNumbers: true,
+                        lineWrapping: true,
+                        indentUnit: 2,
+                        tabSize: 2
+                    });
+                    
+                    console.log('CodeMirror initialized successfully');
+                    this.addResult("✓ CodeMirror initialized successfully", "success");
+                    
+                    // Store reference for external access
+                    this.element.codeEditorController = this;
+                    
+                } catch (error) {
+                    console.error('CodeMirror initialization error:', error);
+                    this.addResult("✗ CodeMirror initialization failed: " + error.message, "error");
+                }
+            }
+            
+            insertText(text) {
+                if (this.editor && this.editor.getDoc) {
+                    const cursor = this.editor.getCursor();
+                    this.editor.replaceRange(text, cursor);
+                    this.editor.focus();
+                    this.addResult("✓ Text inserted via CodeMirror: " + text.trim(), "success");
+                    return true;
+                } else {
+                    console.warn('CodeMirror editor not available for text insertion');
+                    this.addResult("✗ CodeMirror editor not available", "error");
+                    return false;
+                }
+            }
+            
+            handleInsertText(event) {
+                console.log('Handling code-editor:insert-text event');
+                const text = event.detail.text;
+                if (text) {
+                    const success = this.insertText(text);
+                    if (success) {
+                        this.addResult("✓ Custom event handled successfully: " + text.trim(), "success");
+                    }
+                }
+            }
+            
+            addResult(message, type) {
+                const resultList = document.getElementById('resultList');
+                const div = document.createElement('div');
+                div.className = type;
+                div.textContent = new Date().toLocaleTimeString() + " - " + message;
+                resultList.appendChild(div);
+            }
+        }
+        
+        // File upload handlers - copied from actual implementation
+        function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            const textarea = document.getElementById('contentTextarea');
+            
+            addTestResult("📁 Image files selected: " + files.map(f => f.name).join(', '), "success");
+            
+            for (let file of files) {
+                console.log('Image selected:', file.name);
+                
+                if (textarea) {
+                    const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
+                    
+                    setTimeout(() => {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, 500);
+                }
+            }
+        }
+        
+        function handleVideoUpload(event) {
+            const file = event.target.files[0];
+            const textarea = document.getElementById('contentTextarea');
+            
+            if (file) {
+                console.log('Video selected:', file.name);
+                addTestResult("📹 Video file selected: " + file.name, "success");
+                
+                if (textarea) {
+                    const markdownLink = `[${file.name}](attachment:${file.name})\n\n`;
+                    setTimeout(() => {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, 500);
+                }
+            }
+        }
+        
+        // Actual insertMarkdownAtCursor function from the application
+        function insertMarkdownAtCursor(textarea, text) {
+            if (!textarea) return;
+            
+            console.log('insertMarkdownAtCursor called with text:', text);
+            addTestResult("🔧 insertMarkdownAtCursor called with: " + text.trim(), "warning");
+            
+            // CodeMirrorエディターコントローラーの取得
+            const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+            if (codeEditorElement) {
+                console.log('Found code-editor element:', codeEditorElement);
+                addTestResult("✓ Found code-editor element", "success");
+                
+                // Try direct controller access
+                if (codeEditorElement.codeEditorController && codeEditorElement.codeEditorController.insertText) {
+                    console.log('Using direct controller insertText method');
+                    addTestResult("✓ Using direct controller method", "success");
+                    codeEditorElement.codeEditorController.insertText(text);
+                    return;
+                }
+                
+                // Try custom event
+                const customEvent = new CustomEvent('code-editor:insert-text', {
+                    detail: { text: text }
+                });
+                codeEditorElement.dispatchEvent(customEvent);
+                console.log('Dispatched code-editor:insert-text event');
+                addTestResult("📡 Dispatched custom event", "warning");
+                
+                // Check if insertion worked
+                setTimeout(() => {
+                    if (!textarea.value.includes(text.trim())) {
+                        console.log('Event insertion failed, using fallback method');
+                        addTestResult("⚠️ Custom event failed, using fallback", "warning");
+                        fallbackTextInsertion(textarea, text);
+                    } else {
+                        addTestResult("✓ Custom event insertion successful", "success");
+                    }
+                }, 100);
+                return;
+            } else {
+                addTestResult("✗ No code-editor element found", "error");
+            }
+            
+            // 最終フォールバック: 通常のテキストエリア処理
+            console.log('Using fallback text insertion method');
+            addTestResult("🔄 Using fallback method", "warning");
+            fallbackTextInsertion(textarea, text);
+        }
+        
+        function fallbackTextInsertion(textarea, text) {
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const currentValue = textarea.value;
+            
+            textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+            const newPos = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newPos;
+            textarea.focus();
+            textarea.dispatchEvent(new Event('input'));
+            console.log('Fallback text insertion completed');
+            addTestResult("✓ Fallback insertion completed", "success");
+        }
+        
+        // Test functions
+        function simulateImageSelection() {
+            const textarea = document.getElementById('contentTextarea');
+            const testImage = { name: "test-image.jpg" };
+            const markdownLink = `![${testImage.name}](attachment:${testImage.name})\n\n`;
+            
+            addTestResult("🧪 Simulating image selection", "warning");
+            setTimeout(() => {
+                insertMarkdownAtCursor(textarea, markdownLink);
+            }, 100);
+        }
+        
+        function simulateVideoSelection() {
+            const textarea = document.getElementById('contentTextarea');
+            const testVideo = { name: "test-video.mp4" };
+            const markdownLink = `[${testVideo.name}](attachment:${testVideo.name})\n\n`;
+            
+            addTestResult("🧪 Simulating video selection", "warning");
+            setTimeout(() => {
+                insertMarkdownAtCursor(textarea, markdownLink);
+            }, 100);
+        }
+        
+        function testDirectInsertion() {
+            const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement && codeEditorElement.codeEditorController) {
+                const success = codeEditorElement.codeEditorController.insertText("Direct insertion test\n");
+                if (success) {
+                    addTestResult("✓ Direct insertion test passed", "success");
+                } else {
+                    addTestResult("✗ Direct insertion test failed", "error");
+                }
+            } else {
+                addTestResult("✗ Controller not accessible for direct test", "error");
+            }
+        }
+        
+        function testEventInsertion() {
+            const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement) {
+                const customEvent = new CustomEvent('code-editor:insert-text', {
+                    detail: { text: "Event insertion test\n" }
+                });
+                codeEditorElement.dispatchEvent(customEvent);
+                addTestResult("📡 Event insertion test dispatched", "warning");
+            } else {
+                addTestResult("✗ No code-editor element for event test", "error");
+            }
+        }
+        
+        function clearEditor() {
+            const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement && codeEditorElement.codeEditorController && codeEditorElement.codeEditorController.editor) {
+                codeEditorElement.codeEditorController.editor.setValue("");
+                addTestResult("🗑️ Editor cleared", "success");
+            } else {
+                const textarea = document.getElementById('contentTextarea');
+                if (textarea) {
+                    textarea.value = "";
+                    addTestResult("🗑️ Textarea cleared", "success");
+                }
+            }
+        }
+        
+        function addTestResult(message, type) {
+            const resultList = document.getElementById('resultList');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = new Date().toLocaleTimeString() + " - " + message;
+            resultList.appendChild(div);
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            addTestResult("🚀 Starting issue reproduction test", "warning");
+            
+            // Initialize CodeEditor controller
+            const codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement) {
+                new CodeEditorController(codeEditorElement);
+            }
+            
+            // Setup file input handlers
+            const imageInput = document.getElementById('imageInput');
+            const videoInput = document.getElementById('videoInput');
+            
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImageUpload);
+            }
+            
+            if (videoInput) {
+                videoInput.addEventListener('change', handleVideoUpload);
+            }
+            
+            addTestResult("🎯 Test setup completed - ready for testing", "success");
+        });
+    </script>
+</body>
+</html>

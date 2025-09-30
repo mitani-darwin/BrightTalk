@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final CodeEditor Markdown Insertion Verification</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .CodeMirror { 
+            border: 1px solid #ccc; 
+            min-height: 200px; 
+            font-size: 14px;
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+        }
+        .test-results { 
+            margin-top: 20px; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-radius: 4px;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        .info { color: #17a2b8; font-weight: bold; }
+        button { 
+            margin: 5px; 
+            padding: 8px 16px; 
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        button.success { background: #28a745; }
+        button.danger { background: #dc3545; }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .status-pass { background-color: #28a745; }
+        .status-fail { background-color: #dc3545; }
+        .status-pending { background-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 CodeEditor Markdown Insertion Final Verification</h1>
+        <p>このテストは画像ファイルと動画ファイルを選択した時に、CodeEditorにMarkdownリンクが正しく挿入されることを確認します。</p>
+        
+        <div class="test-section">
+            <h2>📝 CodeEditor</h2>
+            <div data-controller="code-editor" id="codeEditorContainer">
+                <textarea id="contentTextarea" data-code-editor-target="textarea" 
+                          placeholder="ここにMarkdownが自動挿入されます..."></textarea>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📁 File Selection Tests</h2>
+            
+            <h3>画像ファイル選択テスト</h3>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <button onclick="simulateImageSelection()">画像選択をシミュレート</button>
+            <button onclick="testMultipleImages()">複数画像テスト</button>
+            
+            <h3>動画ファイル選択テスト</h3>
+            <input type="file" id="videoInput" accept="video/*">
+            <button onclick="simulateVideoSelection()">動画選択をシミュレート</button>
+            
+            <h3>手動テスト</h3>
+            <button onclick="testDirectInsertion()">Direct Insertion Test</button>
+            <button onclick="testCustomEvent()">Custom Event Test</button>
+            <button class="danger" onclick="clearEditor()">Clear Editor</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔄 Automated Tests</h2>
+            <button class="success" onclick="runAllAutomatedTests()">Run All Automated Tests</button>
+            <div id="automatedResults" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            <h3>📊 Test Results</h3>
+            <div id="resultList"></div>
+        </div>
+    </div>
+
+    <script>
+        // CodeEditor Controller Implementation (matches the actual implementation)
+        class CodeEditorController {
+            constructor(element) {
+                this.element = element;
+                this.textareaTarget = element.querySelector('textarea');
+                this.connect();
+            }
+            
+            connect() {
+                console.log("CodeEditor controller connected");
+                this.initializeCodeMirror();
+                
+                // カスタムイベントリスナーを追加
+                this.element.addEventListener('code-editor:insert-text', this.handleInsertText.bind(this));
+                this.addResult("✅ CodeEditor controller connected", "success");
+            }
+            
+            async initializeCodeMirror() {
+                try {
+                    if (!window.CodeMirror) {
+                        throw new Error("CodeMirror library not loaded");
+                    }
+                    
+                    this.editor = window.CodeMirror.fromTextArea(this.textareaTarget, {
+                        mode: 'markdown',
+                        theme: 'default',
+                        lineNumbers: true,
+                        lineWrapping: true,
+                        indentUnit: 2,
+                        tabSize: 2
+                    });
+                    
+                    console.log('CodeMirror initialized successfully');
+                    this.addResult("✅ CodeMirror initialized successfully", "success");
+                    
+                    // Store reference for external access
+                    this.element.codeEditorController = this;
+                    
+                } catch (error) {
+                    console.error('CodeMirror initialization error:', error);
+                    this.addResult("❌ CodeMirror initialization failed: " + error.message, "error");
+                }
+            }
+            
+            insertText(text) {
+                if (this.editor && this.editor.getDoc) {
+                    var cursor = this.editor.getCursor();
+                    this.editor.replaceRange(text, cursor);
+                    this.editor.focus();
+                    this.addResult("✅ Text inserted via CodeMirror: " + text.trim(), "success");
+                    return true;
+                } else {
+                    console.warn('CodeMirror editor not available for text insertion');
+                    this.addResult("❌ CodeMirror editor not available", "error");
+                    return false;
+                }
+            }
+            
+            handleInsertText(event) {
+                console.log('Handling code-editor:insert-text event');
+                var text = event.detail.text;
+                if (text) {
+                    var success = this.insertText(text);
+                    if (success) {
+                        this.addResult("✅ Custom event handled successfully: " + text.trim(), "success");
+                    }
+                }
+            }
+            
+            addResult(message, type) {
+                var resultList = document.getElementById('resultList');
+                var div = document.createElement('div');
+                div.className = type;
+                div.textContent = new Date().toLocaleTimeString() + " - " + message;
+                resultList.appendChild(div);
+                
+                // Auto-scroll to bottom
+                resultList.scrollTop = resultList.scrollHeight;
+            }
+        }
+        
+        // File upload handlers - copied from actual implementation
+        function handleImageUpload(event) {
+            var files = Array.from(event.target.files);
+            var textarea = document.getElementById('contentTextarea');
+            
+            addTestResult("📁 Image files selected: " + files.map(function(f) { return f.name; }).join(', '), "info");
+            
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                console.log('Image selected:', file.name);
+                
+                if (textarea) {
+                    var markdownLink = '![' + file.name + '](attachment:' + file.name + ')\n\n';
+                    
+                    setTimeout(function(link) {
+                        return function() {
+                            insertMarkdownAtCursor(textarea, link);
+                        };
+                    }(markdownLink), 500);
+                }
+            }
+        }
+        
+        function handleVideoUpload(event) {
+            var file = event.target.files[0];
+            var textarea = document.getElementById('contentTextarea');
+            
+            if (file) {
+                console.log('Video selected:', file.name);
+                addTestResult("📹 Video file selected: " + file.name, "info");
+                
+                if (textarea) {
+                    var markdownLink = '[' + file.name + '](attachment:' + file.name + ')\n\n';
+                    setTimeout(function() {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, 500);
+                }
+            }
+        }
+        
+        // Main insertion function - copied from actual implementation
+        function insertMarkdownAtCursor(textarea, text) {
+            if (!textarea) return;
+            
+            console.log('insertMarkdownAtCursor called with text:', text);
+            addTestResult("🔧 insertMarkdownAtCursor called with: " + text.trim(), "warning");
+            
+            // CodeMirrorエディターコントローラーの取得
+            var codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+            if (codeEditorElement) {
+                console.log('Found code-editor element:', codeEditorElement);
+                addTestResult("✅ Found code-editor element", "success");
+                
+                // Try direct controller access
+                if (codeEditorElement.codeEditorController && codeEditorElement.codeEditorController.insertText) {
+                    console.log('Using direct controller insertText method');
+                    addTestResult("✅ Using direct controller method", "success");
+                    codeEditorElement.codeEditorController.insertText(text);
+                    return;
+                }
+                
+                // Try custom event
+                var customEvent = new CustomEvent('code-editor:insert-text', {
+                    detail: { text: text }
+                });
+                codeEditorElement.dispatchEvent(customEvent);
+                console.log('Dispatched code-editor:insert-text event');
+                addTestResult("📡 Dispatched custom event", "warning");
+                
+                // Check if insertion worked
+                setTimeout(function() {
+                    if (!textarea.value.includes(text.trim())) {
+                        console.log('Event insertion failed, using fallback method');
+                        addTestResult("⚠️ Custom event failed, using fallback", "warning");
+                        fallbackTextInsertion(textarea, text);
+                    } else {
+                        addTestResult("✅ Custom event insertion successful", "success");
+                    }
+                }, 100);
+                return;
+            } else {
+                addTestResult("❌ No code-editor element found", "error");
+            }
+            
+            // 最終フォールバック
+            console.log('Using fallback text insertion method');
+            addTestResult("🔄 Using fallback method", "warning");
+            fallbackTextInsertion(textarea, text);
+        }
+        
+        function fallbackTextInsertion(textarea, text) {
+            var start = textarea.selectionStart || textarea.value.length;
+            var end = textarea.selectionEnd || textarea.value.length;
+            var currentValue = textarea.value;
+            
+            textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+            var newPos = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newPos;
+            textarea.focus();
+            textarea.dispatchEvent(new Event('input'));
+            console.log('Fallback text insertion completed');
+            addTestResult("✅ Fallback insertion completed", "success");
+        }
+        
+        // Test functions
+        function simulateImageSelection() {
+            var textarea = document.getElementById('contentTextarea');
+            var testImage = { name: "test-image.jpg" };
+            var markdownLink = '![' + testImage.name + '](attachment:' + testImage.name + ')\n\n';
+            
+            addTestResult("🧪 Simulating image selection", "warning");
+            setTimeout(function() {
+                insertMarkdownAtCursor(textarea, markdownLink);
+            }, 100);
+        }
+        
+        function simulateVideoSelection() {
+            var textarea = document.getElementById('contentTextarea');
+            var testVideo = { name: "test-video.mp4" };
+            var markdownLink = '[' + testVideo.name + '](attachment:' + testVideo.name + ')\n\n';
+            
+            addTestResult("🧪 Simulating video selection", "warning");
+            setTimeout(function() {
+                insertMarkdownAtCursor(textarea, markdownLink);
+            }, 100);
+        }
+        
+        function testMultipleImages() {
+            var textarea = document.getElementById('contentTextarea');
+            var images = [
+                { name: "image1.png" },
+                { name: "image2.jpg" },
+                { name: "image3.gif" }
+            ];
+            
+            addTestResult("🧪 Testing multiple image insertion", "warning");
+            
+            for (var i = 0; i < images.length; i++) {
+                var image = images[i];
+                var markdownLink = '![' + image.name + '](attachment:' + image.name + ')\n\n';
+                
+                setTimeout(function(link) {
+                    return function() {
+                        insertMarkdownAtCursor(textarea, link);
+                    };
+                }(markdownLink), (i + 1) * 200);
+            }
+        }
+        
+        function testDirectInsertion() {
+            var codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement && codeEditorElement.codeEditorController) {
+                var success = codeEditorElement.codeEditorController.insertText("Direct insertion test\n");
+                if (success) {
+                    addTestResult("✅ Direct insertion test passed", "success");
+                } else {
+                    addTestResult("❌ Direct insertion test failed", "error");
+                }
+            } else {
+                addTestResult("❌ Controller not accessible for direct test", "error");
+            }
+        }
+        
+        function testCustomEvent() {
+            var codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement) {
+                var customEvent = new CustomEvent('code-editor:insert-text', {
+                    detail: { text: "Custom event test\n" }
+                });
+                codeEditorElement.dispatchEvent(customEvent);
+                addTestResult("📡 Custom event test dispatched", "warning");
+            } else {
+                addTestResult("❌ No code-editor element for event test", "error");
+            }
+        }
+        
+        function clearEditor() {
+            var codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement && codeEditorElement.codeEditorController && codeEditorElement.codeEditorController.editor) {
+                codeEditorElement.codeEditorController.editor.setValue("");
+                addTestResult("🗑️ Editor cleared", "success");
+            } else {
+                var textarea = document.getElementById('contentTextarea');
+                if (textarea) {
+                    textarea.value = "";
+                    addTestResult("🗑️ Textarea cleared", "success");
+                }
+            }
+        }
+        
+        function getEditorContent() {
+            var codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement && codeEditorElement.codeEditorController && codeEditorElement.codeEditorController.editor) {
+                return codeEditorElement.codeEditorController.editor.getValue();
+            }
+            return document.getElementById('contentTextarea').value;
+        }
+        
+        function runAllAutomatedTests() {
+            var resultsDiv = document.getElementById('automatedResults');
+            resultsDiv.innerHTML = '<h4>🔄 Running automated tests...</h4>';
+            
+            var tests = [];
+            var currentTest = 0;
+            
+            function runNextTest() {
+                if (currentTest >= tests.length) {
+                    var passed = tests.filter(function(t) { return t.passed; }).length;
+                    var failed = tests.length - passed;
+                    
+                    var summary = '<h4>📊 Automated Test Results</h4>';
+                    summary += '<div class="success">✅ Passed: ' + passed + '</div>';
+                    summary += '<div class="error">❌ Failed: ' + failed + '</div>';
+                    
+                    if (failed === 0) {
+                        summary += '<div class="success" style="margin-top: 15px;">🎉 All automated tests passed! Image/video markdown insertion is working correctly.</div>';
+                    }
+                    
+                    resultsDiv.innerHTML = summary;
+                    return;
+                }
+                
+                var test = tests[currentTest];
+                resultsDiv.innerHTML += '<div>🧪 Running: ' + test.name + '</div>';
+                
+                clearEditor();
+                
+                setTimeout(function() {
+                    test.run(function(success, message) {
+                        test.passed = success;
+                        var status = success ? '✅' : '❌';
+                        resultsDiv.innerHTML += '<div class="' + (success ? 'success' : 'error') + '">' + status + ' ' + test.name + ': ' + message + '</div>';
+                        
+                        currentTest++;
+                        setTimeout(runNextTest, 500);
+                    });
+                }, 500);
+            }
+            
+            // Define automated tests
+            tests = [
+                {
+                    name: 'Image Markdown Insertion',
+                    run: function(callback) {
+                        simulateImageSelection();
+                        setTimeout(function() {
+                            var content = getEditorContent();
+                            var success = content.includes('![test-image.jpg](attachment:test-image.jpg)');
+                            callback(success, success ? 'Image markdown inserted correctly' : 'Image markdown not found');
+                        }, 1000);
+                    }
+                },
+                {
+                    name: 'Video Markdown Insertion',
+                    run: function(callback) {
+                        simulateVideoSelection();
+                        setTimeout(function() {
+                            var content = getEditorContent();
+                            var success = content.includes('[test-video.mp4](attachment:test-video.mp4)');
+                            callback(success, success ? 'Video markdown inserted correctly' : 'Video markdown not found');
+                        }, 1000);
+                    }
+                },
+                {
+                    name: 'Multiple Image Insertion',
+                    run: function(callback) {
+                        testMultipleImages();
+                        setTimeout(function() {
+                            var content = getEditorContent();
+                            var hasImage1 = content.includes('![image1.png](attachment:image1.png)');
+                            var hasImage2 = content.includes('![image2.jpg](attachment:image2.jpg)');
+                            var hasImage3 = content.includes('![image3.gif](attachment:image3.gif)');
+                            var success = hasImage1 && hasImage2 && hasImage3;
+                            callback(success, success ? 'All multiple images inserted' : 'Some images missing');
+                        }, 2000);
+                    }
+                },
+                {
+                    name: 'CodeEditor Integration',
+                    run: function(callback) {
+                        var hasCodeMirror = typeof window.CodeMirror !== 'undefined';
+                        var codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+                        var hasController = codeEditorElement && codeEditorElement.codeEditorController;
+                        var success = hasCodeMirror && hasController;
+                        callback(success, success ? 'CodeEditor properly integrated' : 'Integration issues detected');
+                    }
+                }
+            ];
+            
+            runNextTest();
+        }
+        
+        function addTestResult(message, type) {
+            var resultList = document.getElementById('resultList');
+            var div = document.createElement('div');
+            div.className = type;
+            div.textContent = new Date().toLocaleTimeString() + " - " + message;
+            resultList.appendChild(div);
+            
+            // Auto-scroll to bottom
+            resultList.scrollTop = resultList.scrollHeight;
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            addTestResult("🚀 Starting CodeEditor verification test", "warning");
+            
+            // Initialize CodeEditor controller
+            var codeEditorElement = document.querySelector('[data-controller="code-editor"]');
+            if (codeEditorElement) {
+                new CodeEditorController(codeEditorElement);
+            }
+            
+            // Setup file input handlers
+            var imageInput = document.getElementById('imageInput');
+            var videoInput = document.getElementById('videoInput');
+            
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImageUpload);
+            }
+            
+            if (videoInput) {
+                videoInput.addEventListener('change', handleVideoUpload);
+            }
+            
+            addTestResult("🎯 Test setup completed - ready for testing", "success");
+        });
+    </script>
+</body>
+</html>

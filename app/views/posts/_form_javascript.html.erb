@@ -233,13 +233,16 @@
         const files = Array.from(event.target.files);
         const textarea = document.getElementById('contentTextarea');
 
-        // 選択されたファイルを保存
-        selectedFiles = files;
+        // 新しいファイルを既存の選択に追加（重複を避ける）
+        const newFiles = files.filter(newFile => 
+            !selectedFiles.some(existingFile => existingFile.name === newFile.name)
+        );
+        selectedFiles = selectedFiles.concat(newFiles);
 
         // ファイル名表示を更新
-        displaySelectedFiles(files);
+        displaySelectedFiles(selectedFiles);
 
-        for (let file of files) {
+        for (let file of newFiles) {
             console.log('Image selected:', file.name);
 
             if (textarea) {
@@ -249,6 +252,14 @@
                     insertMarkdownAtCursor(textarea, markdownLink);
                 }, 500);
             }
+        }
+
+        // ファイル入力フィールドを更新して全ての選択されたファイルを反映
+        const imageInput = document.getElementById('imageInput');
+        if (imageInput && selectedFiles.length > 0) {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
         }
     }
 
