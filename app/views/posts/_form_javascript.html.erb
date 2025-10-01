@@ -228,8 +228,8 @@
         const files = Array.from(event.target.files);
         const textarea = document.getElementById('contentTextarea');
 
-        // 新しいファイルを既存の選択に追加（重複を避ける）
-        const newFiles = files.filter(newFile => 
+        // 新しいファイルを既存の選択に追加
+        const newFiles = files.filter(newFile =>
             !selectedFiles.some(existingFile => existingFile.name === newFile.name)
         );
         selectedFiles = selectedFiles.concat(newFiles);
@@ -237,24 +237,28 @@
         // ファイル名表示を更新
         displaySelectedFiles(selectedFiles);
 
+        // マークダウン挿入
         for (let file of newFiles) {
             console.log('Image selected:', file.name);
-
             if (textarea) {
                 const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
-
                 setTimeout(() => {
                     insertMarkdownAtCursor(textarea, markdownLink);
                 }, 500);
             }
         }
 
-        // ファイル入力フィールドを更新して全ての選択されたファイルを反映
+        // ファイル入力フィールドを更新
         const imageInput = document.getElementById('imageInput');
         if (imageInput && selectedFiles.length > 0) {
             const dt = new DataTransfer();
             selectedFiles.forEach(file => dt.items.add(file));
             imageInput.files = dt.files;
+        }
+
+        // ★重要: S3にアップロードを実行
+        if (newFiles.length > 0) {
+            uploadFilesToS3();
         }
     }
 
