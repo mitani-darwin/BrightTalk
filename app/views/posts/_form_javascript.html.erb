@@ -334,14 +334,14 @@
     function handleImageUpload(event) {
         const files = Array.from(event.target.files);
         const textarea = document.getElementById('contentTextarea');
+        const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
 
-        // 新しいファイルを既存の選択に追加（重複を避ける）
-        const newFiles = files.filter(newFile => 
+        // 新しいファイルを既存の選択に追加
+        const newFiles = files.filter(newFile =>
             !window.selectedFiles.some(existingFile => existingFile.name === newFile.name)
         );
         window.selectedFiles = window.selectedFiles.concat(newFiles);
 
-        // ファイル名表示を更新
         displaySelectedFiles(window.selectedFiles);
 
         for (let file of newFiles) {
@@ -350,18 +350,21 @@
             if (textarea) {
                 const markdownLink = `![${file.name}](attachment:${file.name})\n\n`;
 
-                setTimeout(() => {
+                // CodeEditorの初期化を確認
+                if (codeEditorElement && codeEditorElement.classList.contains('codemirror-initialized')) {
                     insertMarkdownAtCursor(textarea, markdownLink);
-                }, 500);
-            }
-        }
+                } else {
+                    // 初期化完了を待つ
+                    codeEditorElement.addEventListener('code-editor:initialized', () => {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, { once: true });
 
-        // ファイル入力フィールドを更新して全ての選択されたファイルを反映
-        const imageInput = document.getElementById('imageInput');
-        if (imageInput && window.selectedFiles.length > 0) {
-            const dt = new DataTransfer();
-            window.selectedFiles.forEach(file => dt.items.add(file));
-            imageInput.files = dt.files;
+                    // タイムアウトとして1秒後にも実行
+                    setTimeout(() => {
+                        insertMarkdownAtCursor(textarea, markdownLink);
+                    }, 1000);
+                }
+            }
         }
     }
 
@@ -378,7 +381,7 @@
                 // CodeMirrorの初期化を少し待つ
                 setTimeout(() => {
                     insertMarkdownAtCursor(textarea, markdownLink);
-                }, 500);
+                }, 1000);
             }
         }
     }
@@ -715,32 +718,52 @@
 
         console.log('insertMarkdownAtCursor called with text:', text);
 
-        // CodeMirrorエディターが存在する場合はそちらを使用
         const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
         if (codeEditorElement) {
             console.log('Found code-editor element:', codeEditorElement);
 
-            // Stimulus 3.x の正しいAPI を使用
-            try {
-                const controller = window.Stimulus.getControllerForElementAndIdentifier(
-                    codeEditorElement,
-                    'code-editor'
-                );
+            // より確実なコントローラー取得方法
+            let controller = null;
 
-                if (controller && controller.insertText) {
-                    console.log('Using Stimulus controller insertText method');
-                    controller.insertText(text);
-                    return;
+            // 方法1: Stimulusアプリケーションから直接取得
+            if (window.Stimulus && window.Stimulus.application) {
+                try {
+                    controller = window.Stimulus.application.getControllerForElementAndIdentifier(
+                        codeEditorElement,
+                        'code-editor'
+                    );
+                } catch (error) {
+                    console.warn('Stimulus application access failed:', error);
                 }
-            } catch (error) {
-                console.warn('Stimulus controller access failed:', error);
             }
 
-            // 代替方法: 直接CodeMirrorアクセス
-            if (codeEditorElement.querySelector('.CodeMirror')) {
-                const cmWrapper = codeEditorElement.querySelector('.CodeMirror');
-                const cmInstance = cmWrapper.CodeMirror;
+            // 方法2: データ属性から取得（フォールバック）
+            if (!controller && codeEditorElement.stimulus) {
+                controller = codeEditorElement.stimulus['code-editor'];
+            }
 
+            // 方法3: 直接プロパティアクセス
+            if (!controller && codeEditorElement.codeEditor) {
+                controller = codeEditorElement.codeEditor;
+            }
+
+            if (controller && controller.insertText) {
+                console.log('Using Stimulus controller insertText method');
+                controller.insertText(text);
+                return;
+            }
+
+            // CodeMirrorの初期化を待つ
+            if (codeEditorElement.classList.contains('codemirror-initializing')) {
+                console.log('CodeMirror is initializing, waiting...');
+                setTimeout(() => insertMarkdownAtCursor(textarea, text), 1000);
+                return;
+            }
+
+            // 直接CodeMirrorアクセス
+            const cmWrapper = codeEditorElement.querySelector('.CodeMirror');
+            if (cmWrapper && cmWrapper.CodeMirror) {
+                const cmInstance = cmWrapper.CodeMirror;
                 if (cmInstance && cmInstance.replaceRange) {
                     console.log('Using direct CodeMirror access');
                     const cursor = cmInstance.getCursor();
