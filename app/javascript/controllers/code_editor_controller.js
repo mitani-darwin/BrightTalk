@@ -22,49 +22,55 @@ export default class extends Controller {
     async initializeCodeMirror() {
         // 初期化フラグを設定
         this.element.classList.add('codemirror-initializing')
-        
-        // CodeMirrorの確実な読み込みを試行
+
         try {
-            // loadCodeMirror関数を使用してCodeMirrorを取得
-            const CodeMirror = await window.loadCodeMirror?.() || window.CodeMirror;
-            
+            // 本番環境での確実なCodeMirror取得
+            let CodeMirror = window.CodeMirror;
+
+            // 本番環境特有の遅延対応
+            if (!CodeMirror && window.loadCodeMirror) {
+                console.log('Loading CodeMirror via loadCodeMirror in production...');
+                CodeMirror = await window.loadCodeMirror();
+            }
+
+            // さらに厳格な待機処理（本番環境用）
             if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
-                // 追加の待機ロジック
-                console.log("CodeMirror not immediately available, waiting...")
-                let retryCount = 0
-                const maxRetries = 15
-                
+                console.log('Waiting for CodeMirror in production environment...');
+                let retryCount = 0;
+                const maxRetries = 30; // 本番環境用に増加
+
                 while (retryCount < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 300)); // 待機時間も増加
+
                     if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
-                        break
+                        CodeMirror = window.CodeMirror;
+                        break;
                     }
-                    console.log(`Waiting for CodeMirror... (attempt ${retryCount + 1}/${maxRetries})`)
-                    await new Promise(resolve => setTimeout(resolve, 200))
-                    retryCount++
+
+                    console.log(`CodeMirror wait attempt: ${retryCount + 1}/${maxRetries}`);
+                    retryCount++;
                 }
             }
-            
-            if (!window.CodeMirror || typeof window.CodeMirror.fromTextArea !== 'function') {
-                throw new Error("CodeMirror is not available after waiting")
+
+            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
+                throw new Error("CodeMirror is not available in production after waiting");
             }
-            
+
         } catch (error) {
-            console.error("Failed to initialize CodeMirror:", error)
-            return
+            console.error("Failed to initialize CodeMirror in production:", error);
+            return;
         }
 
-        const textarea = this.textareaTarget || this.element.querySelector('textarea')
+        const textarea = this.textareaTarget || this.element.querySelector('textarea');
         if (!textarea) {
-            console.error("Textarea not found in CodeEditor controller")
-            console.log("Available targets:", this.targets)
-            console.log("Element:", this.element)
-            return
+            console.error("Textarea not found in CodeEditor controller");
+            return;
         }
 
-        console.log("Found textarea:", textarea.id)
+        console.log("Found textarea in production:", textarea.id);
 
         try {
-            // CodeMirrorエディタを初期化
+            // 本番環境用のより厳格なCodeMirror初期化
             this.editor = window.CodeMirror.fromTextArea(textarea, {
                 mode: 'markdown',
                 theme: 'default',
@@ -75,39 +81,44 @@ export default class extends Controller {
                 extraKeys: {
                     "Ctrl-Space": "autocomplete"
                 },
-                resize: true,
-            })
+                viewportMargin: Infinity, // 本番環境での表示改善
+            });
 
-            // 初期化完了イベントを発火
-            this.dispatch('initialized', { detail: { editor: this.editor } })
+            // 本番環境での確実な初期化確認
+            if (this.editor && this.editor.getDoc && this.editor.getWrapperElement) {
+                console.log('CodeMirror successfully initialized in production');
 
-            console.log('CodeMirror initialized successfully')
+                // 本番環境での強制サイズ設定
+                const wrapper = this.editor.getWrapperElement();
+                if (wrapper) {
+                    wrapper.style.height = '600px';
+                    wrapper.style.minHeight = '600px';
+                    wrapper.style.display = 'block';
+                    wrapper.style.visibility = 'visible';
+                }
 
-            // エディターが正常に作成されたかを確認
-            if (this.editor && this.editor.getDoc) {
-                console.log('CodeMirror editor is functional')
+                this.element.classList.remove('codemirror-initializing');
+                this.element.classList.add('codemirror-initialized');
 
-                this.element.classList.remove('codemirror-initializing')
-                this.element.classList.add('codemirror-initialized')
+                // 初期化完了イベントを発火
+                this.dispatch('initialized', { detail: { editor: this.editor } });
+
+                // 本番環境での遅延リフレッシュ
+                setTimeout(() => {
+                    if (this.editor && this.editor.refresh) {
+                        this.editor.refresh();
+                        console.log('Production CodeMirror refreshed');
+                    }
+                }, 500);
+
             } else {
-                console.error('CodeMirror editor creation failed')
+                console.error('CodeMirror editor creation failed in production');
             }
 
-            // 初期化直後に強制サイズ設定
-            setTimeout(() => {
-                this.adjustEditorSize();
-            }, 100);
-
-            // さらに確実にするため、500ms後にも実行
-            setTimeout(() => {
-                this.adjustEditorSize();
-            }, 500);
-
         } catch (error) {
-            console.error('CodeMirror initialization error:', error)
+            console.error('CodeMirror initialization error in production:', error);
         }
     }
-
     initializeDynamicSizing() {
         console.log('動的サイズ調整を初期化中...');
         

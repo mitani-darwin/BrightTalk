@@ -172,11 +172,11 @@
         const textarea = document.getElementById('contentTextarea');
         if (!textarea) return;
 
-        // StimulusコントローラーがCodeEditorを初期化するまで待機
+        // 本番環境での確実な初期化確認
         const checkCodeEditor = () => {
             const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
-            if (codeEditorElement) {
-                console.log('CodeEditorコントローラー要素を確認済み');
+            if (codeEditorElement && codeEditorElement.classList.contains('codemirror-initialized')) {
+                console.log('CodeEditorは正常に初期化済み（本番環境）');
                 return true;
             }
             return false;
@@ -184,17 +184,80 @@
 
         // 初期チェック
         if (checkCodeEditor()) {
-            console.log('CodeEditorは既に設定済みです');
             return;
         }
 
-        // フォールバック：3秒後にCodeEditorが初期化されていない場合は手動で初期化
+        // 本番環境用：より長い待機時間でフォールバック
         setTimeout(() => {
             if (!checkCodeEditor() || !textarea.nextElementSibling?.classList?.contains('CodeMirror')) {
-                console.warn('StimulusコントローラーでCodeEditorが初期化されませんでした。手動初期化を試行...');
-                forceInitializeCodeEditorFallback(textarea);
+                console.warn('本番環境でStimulusコントローラー初期化失敗。手動初期化を実行...');
+                forceInitializeCodeEditorFallbackProduction(textarea);
             }
-        }, 3000);
+        }, 5000); // 本番環境用に5秒に延長
+    }
+
+    // 本番環境専用のフォールバック初期化
+    async function forceInitializeCodeEditorFallbackProduction(textarea) {
+        try {
+            console.log('本番環境用フォールバック初期化開始...');
+
+            let CodeMirror = window.CodeMirror;
+
+            if (!CodeMirror && window.loadCodeMirror) {
+                console.log('本番環境でloadCodeMirror関数を使用...');
+                CodeMirror = await window.loadCodeMirror();
+            }
+
+            // 本番環境での確実な待機処理
+            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
+                console.log('本番環境でCodeMirror待機中...');
+                let attempts = 0;
+                const maxAttempts = 40; // 本番環境用に増加
+
+                while (attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+                        CodeMirror = window.CodeMirror;
+                        break;
+                    }
+
+                    attempts++;
+                    console.log(`本番環境CodeMirror待機: ${attempts}/${maxAttempts}`);
+                }
+            }
+
+            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 2,
+                    tabSize: 2,
+                    viewportMargin: Infinity
+                });
+
+                // 本番環境での確実な表示設定
+                const wrapper = editor.getWrapperElement();
+                if (wrapper) {
+                    wrapper.style.height = '600px';
+                    wrapper.style.minHeight = '600px';
+                    wrapper.style.display = 'block';
+                    wrapper.style.visibility = 'visible';
+                }
+
+                console.log('✅ 本番環境フォールバックでCodeEditorを初期化しました');
+
+                // リフレッシュ
+                setTimeout(() => editor.refresh(), 300);
+
+            } else {
+                console.error('本番環境でCodeMirrorを読み込めませんでした');
+            }
+        } catch (error) {
+            console.error('本番環境フォールバック初期化失敗:', error);
+        }
     }
 
     // forceInitializeCodeEditorFallback関数（200行目付近）の改善

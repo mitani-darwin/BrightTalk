@@ -123,7 +123,7 @@ import CodeEditorController from "./controllers/code_editor_controller"
 import VideoPlayerController from "./controllers/video_player_controller"
 import FlatpickrController from "./controllers/flatpickr_controller"
 
-application.register("code_editor", CodeEditorController)
+application.register("code-editor", CodeEditorController)
 application.register("video-player", VideoPlayerController)
 application.register("flatpickr", FlatpickrController)
 
