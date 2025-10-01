@@ -167,6 +167,8 @@ class PostsController < ApplicationController
     Rails.logger.info "authenticity_token value: #{params[:authenticity_token]}"
     Rails.logger.info "=========================="
 
+    @post.status = :published
+
     # 動画処理（統合版）
     process_video_uploads
 
@@ -516,6 +518,9 @@ class PostsController < ApplicationController
   # 統合された動画処理メソッド（videosとvideo_signed_idsの両方を処理）
   def process_video_uploads
     Rails.logger.info "=== Video Upload Processing Started ==="
+
+    # params[:post]の存在チェックを追加
+    return unless params[:post].present?
 
     # 両方のパラメータをチェック
     videos_present = params[:post][:videos].present?
