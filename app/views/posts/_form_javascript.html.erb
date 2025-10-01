@@ -1,6 +1,6 @@
 <script>
     // Global variables
-    let selectedFiles = [];
+    window.selectedFiles = window.selectedFiles || [];
 
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize form functionality
@@ -197,6 +197,47 @@
         }, 3000);
     }
 
+    // forceInitializeCodeEditorFallback関数（200行目付近）の改善
+    async function forceInitializeCodeEditorFallback(textarea) {
+        try {
+            // 本番環境での確実な読み込み確認
+            let CodeMirror = window.CodeMirror;
+
+            if (!CodeMirror && window.loadCodeMirror) {
+                console.log('Loading CodeMirror via loadCodeMirror function...');
+                CodeMirror = await window.loadCodeMirror();
+            }
+
+            // 追加の待機処理（本番環境での遅延対応）
+            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
+                console.log('Waiting for CodeMirror in production...');
+                let attempts = 0;
+                while (attempts < 20 && (!window.CodeMirror || typeof window.CodeMirror.fromTextArea !== 'function')) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    attempts++;
+                    console.log(`CodeMirror wait attempt: ${attempts}`);
+                }
+                CodeMirror = window.CodeMirror;
+            }
+
+            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 2,
+                    tabSize: 2
+                });
+                console.log('✓ フォールバックでCodeEditorを初期化しました（本番環境）');
+            } else {
+                console.error('CodeMirror could not be loaded in production');
+            }
+        } catch (error) {
+            console.error('フォールバック初期化にも失敗（本番環境）:', error);
+        }
+    }
+
     async function forceInitializeCodeEditorFallback(textarea) {
         try {
             let CodeMirror = window.CodeMirror;
@@ -233,12 +274,12 @@
 
         // 新しいファイルを既存の選択に追加（重複を避ける）
         const newFiles = files.filter(newFile => 
-            !selectedFiles.some(existingFile => existingFile.name === newFile.name)
+            !window.selectedFiles.some(existingFile => existingFile.name === newFile.name)
         );
-        selectedFiles = selectedFiles.concat(newFiles);
+        window.selectedFiles = window.selectedFiles.concat(newFiles);
 
         // ファイル名表示を更新
-        displaySelectedFiles(selectedFiles);
+        displaySelectedFiles(window.selectedFiles);
 
         for (let file of newFiles) {
             console.log('Image selected:', file.name);
@@ -254,9 +295,9 @@
 
         // ファイル入力フィールドを更新して全ての選択されたファイルを反映
         const imageInput = document.getElementById('imageInput');
-        if (imageInput && selectedFiles.length > 0) {
+        if (imageInput && window.selectedFiles.length > 0) {
             const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
+            window.selectedFiles.forEach(file => dt.items.add(file));
             imageInput.files = dt.files;
         }
     }
@@ -620,7 +661,7 @@
             try {
                 const controller = window.Stimulus.getControllerForElementAndIdentifier(
                     codeEditorElement,
-                    'code_editor'
+                    'code-editor'
                 );
 
                 if (controller && controller.insertText) {
@@ -804,7 +845,7 @@
         let progress = 0;
         const steps = [
             { progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
-            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${selectedFiles.length}個のファイルを処理しています` },
+            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${window.selectedFiles.length}個のファイルを処理しています` },
             { progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました' },
             { progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
             { progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています' },
@@ -933,28 +974,28 @@
 
     // 選択されたファイルを削除する関数（新規追加）
     function removeSelectedFile(index) {
-        selectedFiles.splice(index, 1);
-        displaySelectedFiles(selectedFiles);
+        window.selectedFiles.splice(index, 1);
+        displaySelectedFiles(window.selectedFiles);
 
         // ファイル入力フィールドをリセット
         const imageInput = document.getElementById('imageInput');
         if (imageInput) {
             const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
+            window.selectedFiles.forEach(file => dt.items.add(file));
             imageInput.files = dt.files;
         }
     }
 
     // S3にファイルをアップロードする関数（修正版）
     async function uploadFilesToS3() {
-        if (selectedFiles.length === 0) {
+        if (window.selectedFiles.length === 0) {
             console.log('No files to upload');
             return;
         }
 
         console.log('Starting file upload to S3...');
 
-        const uploadPromises = selectedFiles.map(async (file) => {
+        const uploadPromises = window.selectedFiles.map(async (file) => {
             try {
                 // Active Storage Direct Uploadの正しいパラメータ
                 const uploadData = {
