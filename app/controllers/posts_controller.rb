@@ -517,6 +517,9 @@ class PostsController < ApplicationController
   def process_video_uploads
     Rails.logger.info "=== Video Upload Processing Started ==="
 
+    # params[:post]の存在チェックを追加
+    return unless params[:post].present?
+
     # 両方のパラメータをチェック
     videos_present = params[:post][:videos].present?
     signed_ids_present = params[:post][:video_signed_ids].present?
