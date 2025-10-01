@@ -36,7 +36,7 @@ function testFileExistence() {
     ];
     
     requiredFiles.forEach(filePath => {
-        const fullPath = path.join(__dirname, filePath);
+        const fullPath = path.join(__dirname, '..', filePath);
         const exists = fs.existsSync(fullPath);
         addTestResult(`ファイル存在: ${filePath}`, exists, exists ? '存在' : '見つかりません');
     });
@@ -49,7 +49,7 @@ function testPackageJsonDependencies() {
     console.log('\n--- package.json依存関係テスト ---');
     
     try {
-        const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+        const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
         
         const requiredDependencies = [
             '@hotwired/stimulus',
@@ -73,7 +73,7 @@ function testApplicationJsConfiguration() {
     console.log('\n--- application.js設定テスト ---');
     
     try {
-        const appJsContent = fs.readFileSync(path.join(__dirname, 'app/javascript/application.js'), 'utf8');
+        const appJsContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/application.js'), 'utf8');
         
         // 必要なimport文の確認
         const requiredImports = [
@@ -108,7 +108,7 @@ function testCodeEditorController() {
     console.log('\n--- CodeEditorController設定テスト ---');
     
     try {
-        const controllerContent = fs.readFileSync(path.join(__dirname, 'app/javascript/controllers/code_editor_controller.js'), 'utf8');
+        const controllerContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/controllers/code_editor_controller.js'), 'utf8');
         
         // 必要なメソッドの確認
         const requiredMethods = [
@@ -144,7 +144,7 @@ function testHtmlViewConfiguration() {
     console.log('\n--- HTMLビュー設定テスト ---');
     
     try {
-        const viewContent = fs.readFileSync(path.join(__dirname, 'app/views/posts/_form_main_content.html.erb'), 'utf8');
+        const viewContent = fs.readFileSync(path.join(__dirname, '..', 'app/views/posts/_form_main_content.html.erb'), 'utf8');
         
         // data-controller属性の確認
         const hasDataController = viewContent.includes('controller: "code-editor"') || viewContent.includes('data-controller="code-editor"');
@@ -174,7 +174,7 @@ function testBuildFiles() {
     ];
     
     buildFiles.forEach(filePath => {
-        const fullPath = path.join(__dirname, filePath);
+        const fullPath = path.join(__dirname, '..', filePath);
         const exists = fs.existsSync(fullPath);
         if (exists) {
             const stats = fs.statSync(fullPath);

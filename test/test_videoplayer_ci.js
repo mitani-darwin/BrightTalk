@@ -35,7 +35,7 @@ function testFileExistence() {
     ];
     
     requiredFiles.forEach(filePath => {
-        const fullPath = path.join(__dirname, filePath);
+        const fullPath = path.join(__dirname, '..', filePath);
         const exists = fs.existsSync(fullPath);
         addTestResult(`ファイル存在: ${filePath}`, exists, exists ? '存在' : '見つかりません');
     });
@@ -48,7 +48,7 @@ function testPackageJsonDependencies() {
     console.log('\n--- package.json依存関係テスト ---');
     
     try {
-        const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+        const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
         
         const requiredDependencies = [
             '@hotwired/stimulus',
@@ -72,7 +72,7 @@ function testApplicationJsConfiguration() {
     console.log('\n--- application.js設定テスト ---');
     
     try {
-        const appJsContent = fs.readFileSync(path.join(__dirname, 'app/javascript/application.js'), 'utf8');
+        const appJsContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/application.js'), 'utf8');
         
         // 必要なimport文の確認
         const requiredImports = [
@@ -101,7 +101,7 @@ function testVideoPlayerController() {
     console.log('\n--- VideoPlayerController設定テスト ---');
     
     try {
-        const controllerContent = fs.readFileSync(path.join(__dirname, 'app/javascript/controllers/video_player_controller.js'), 'utf8');
+        const controllerContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/controllers/video_player_controller.js'), 'utf8');
         
         // 必要なimport文の確認
         const requiredImports = [
@@ -159,7 +159,7 @@ function testVideoJsConfiguration() {
     console.log('\n--- Video.js設定オプション確認テスト ---');
     
     try {
-        const controllerContent = fs.readFileSync(path.join(__dirname, 'app/javascript/controllers/video_player_controller.js'), 'utf8');
+        const controllerContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/controllers/video_player_controller.js'), 'utf8');
         
         // 必要な設定オプションの確認
         const requiredOptions = [
@@ -187,7 +187,7 @@ function testDOMHandling() {
     console.log('\n--- DOM操作とイベントハンドリング確認テスト ---');
     
     try {
-        const controllerContent = fs.readFileSync(path.join(__dirname, 'app/javascript/controllers/video_player_controller.js'), 'utf8');
+        const controllerContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/controllers/video_player_controller.js'), 'utf8');
         
         // DOM要素の取得確認
         const hasDOMQuery = controllerContent.includes('querySelector') || controllerContent.includes('videoTarget');

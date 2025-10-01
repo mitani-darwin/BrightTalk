@@ -1,4 +1,7 @@
 <script>
+    // Global variables
+    window.selectedFiles = window.selectedFiles || [];
+
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize form functionality
         initializeFormFeatures();
@@ -169,11 +172,11 @@
         const textarea = document.getElementById('contentTextarea');
         if (!textarea) return;
 
-        // StimulusコントローラーがCodeEditorを初期化するまで待機
+        // 本番環境での確実な初期化確認
         const checkCodeEditor = () => {
             const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
-            if (codeEditorElement) {
-                console.log('CodeEditorコントローラー要素を確認済み');
+            if (codeEditorElement && codeEditorElement.classList.contains('codemirror-initialized')) {
+                console.log('CodeEditorは正常に初期化済み（本番環境）');
                 return true;
             }
             return false;
@@ -181,17 +184,121 @@
 
         // 初期チェック
         if (checkCodeEditor()) {
-            console.log('CodeEditorは既に設定済みです');
             return;
         }
 
-        // フォールバック：3秒後にCodeEditorが初期化されていない場合は手動で初期化
+        // 本番環境用：より長い待機時間でフォールバック
         setTimeout(() => {
-            if (!checkCodeEditor() || !textarea.nextSibling?.className?.includes('CodeMirror')) {
-                console.warn('StimulusコントローラーでCodeEditorが初期化されませんでした。手動初期化を試行...');
-                forceInitializeCodeEditorFallback(textarea);
+            if (!checkCodeEditor() || !textarea.nextElementSibling?.classList?.contains('CodeMirror')) {
+                console.warn('本番環境でStimulusコントローラー初期化失敗。手動初期化を実行...');
+                forceInitializeCodeEditorFallbackProduction(textarea);
             }
-        }, 3000);
+        }, 5000); // 本番環境用に5秒に延長
+    }
+
+    // 本番環境専用のフォールバック初期化
+    async function forceInitializeCodeEditorFallbackProduction(textarea) {
+        try {
+            console.log('本番環境用フォールバック初期化開始...');
+
+            let CodeMirror = window.CodeMirror;
+
+            if (!CodeMirror && window.loadCodeMirror) {
+                console.log('本番環境でloadCodeMirror関数を使用...');
+                CodeMirror = await window.loadCodeMirror();
+            }
+
+            // 本番環境での確実な待機処理
+            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
+                console.log('本番環境でCodeMirror待機中...');
+                let attempts = 0;
+                const maxAttempts = 40; // 本番環境用に増加
+
+                while (attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+                        CodeMirror = window.CodeMirror;
+                        break;
+                    }
+
+                    attempts++;
+                    console.log(`本番環境CodeMirror待機: ${attempts}/${maxAttempts}`);
+                }
+            }
+
+            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 2,
+                    tabSize: 2,
+                    viewportMargin: Infinity
+                });
+
+                // 本番環境での確実な表示設定
+                const wrapper = editor.getWrapperElement();
+                if (wrapper) {
+                    wrapper.style.height = '600px';
+                    wrapper.style.minHeight = '600px';
+                    wrapper.style.display = 'block';
+                    wrapper.style.visibility = 'visible';
+                }
+
+                console.log('✅ 本番環境フォールバックでCodeEditorを初期化しました');
+
+                // リフレッシュ
+                setTimeout(() => editor.refresh(), 300);
+
+            } else {
+                console.error('本番環境でCodeMirrorを読み込めませんでした');
+            }
+        } catch (error) {
+            console.error('本番環境フォールバック初期化失敗:', error);
+        }
+    }
+
+    // forceInitializeCodeEditorFallback関数（200行目付近）の改善
+    async function forceInitializeCodeEditorFallback(textarea) {
+        try {
+            // 本番環境での確実な読み込み確認
+            let CodeMirror = window.CodeMirror;
+
+            if (!CodeMirror && window.loadCodeMirror) {
+                console.log('Loading CodeMirror via loadCodeMirror function...');
+                CodeMirror = await window.loadCodeMirror();
+            }
+
+            // 追加の待機処理（本番環境での遅延対応）
+            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
+                console.log('Waiting for CodeMirror in production...');
+                let attempts = 0;
+                while (attempts < 20 && (!window.CodeMirror || typeof window.CodeMirror.fromTextArea !== 'function')) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    attempts++;
+                    console.log(`CodeMirror wait attempt: ${attempts}`);
+                }
+                CodeMirror = window.CodeMirror;
+            }
+
+            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 2,
+                    tabSize: 2
+                });
+                console.log('✓ フォールバックでCodeEditorを初期化しました（本番環境）');
+            } else {
+                console.error('CodeMirror could not be loaded in production');
+            }
+        } catch (error) {
+            console.error('フォールバック初期化にも失敗（本番環境）:', error);
+        }
     }
 
     async function forceInitializeCodeEditorFallback(textarea) {
@@ -230,12 +337,12 @@
 
         // 新しいファイルを既存の選択に追加（重複を避ける）
         const newFiles = files.filter(newFile => 
-            !selectedFiles.some(existingFile => existingFile.name === newFile.name)
+            !window.selectedFiles.some(existingFile => existingFile.name === newFile.name)
         );
-        selectedFiles = selectedFiles.concat(newFiles);
+        window.selectedFiles = window.selectedFiles.concat(newFiles);
 
         // ファイル名表示を更新
-        displaySelectedFiles(selectedFiles);
+        displaySelectedFiles(window.selectedFiles);
 
         for (let file of newFiles) {
             console.log('Image selected:', file.name);
@@ -251,9 +358,9 @@
 
         // ファイル入力フィールドを更新して全ての選択されたファイルを反映
         const imageInput = document.getElementById('imageInput');
-        if (imageInput && selectedFiles.length > 0) {
+        if (imageInput && window.selectedFiles.length > 0) {
             const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
+            window.selectedFiles.forEach(file => dt.items.add(file));
             imageInput.files = dt.files;
         }
     }
@@ -608,65 +715,57 @@
 
         console.log('insertMarkdownAtCursor called with text:', text);
 
-        // CodeMirrorエディターコントローラーの取得
+        // CodeMirrorエディターが存在する場合はそちらを使用
         const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
         if (codeEditorElement) {
             console.log('Found code-editor element:', codeEditorElement);
 
-            // Stimulus 3.x の正しいコントローラー取得方法
-            const application = window.Stimulus || window.Application;
-            if (application) {
-                try {
-                    // Stimulus application からコントローラーを取得
-                    const controller = application.getControllerForElementAndIdentifier(codeEditorElement, 'code-editor');
-                    if (controller && controller.insertText) {
-                        console.log('Using Stimulus controller insertText method');
-                        controller.insertText(text);
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Failed to get controller via Stimulus application:', error);
+            // Stimulus 3.x の正しいAPI を使用
+            try {
+                const controller = window.Stimulus.getControllerForElementAndIdentifier(
+                    codeEditorElement,
+                    'code-editor'
+                );
+
+                if (controller && controller.insertText) {
+                    console.log('Using Stimulus controller insertText method');
+                    controller.insertText(text);
+                    return;
                 }
+            } catch (error) {
+                console.warn('Stimulus controller access failed:', error);
             }
 
-            // 代替方法：要素に直接格納されているコントローラーを参照
-            if (codeEditorElement.controller && codeEditorElement.controller.insertText) {
-                console.log('Using element.controller insertText method');
-                codeEditorElement.controller.insertText(text);
-                return;
-            }
+            // 代替方法: 直接CodeMirrorアクセス
+            if (codeEditorElement.querySelector('.CodeMirror')) {
+                const cmWrapper = codeEditorElement.querySelector('.CodeMirror');
+                const cmInstance = cmWrapper.CodeMirror;
 
-            // 代替方法2：Stimulus内部のコントローラーマップを参照
-            if (codeEditorElement._stimulus_controllers) {
-                const codeEditorController = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor');
-                if (codeEditorController && codeEditorController.insertText) {
-                    console.log('Using _stimulus_controllers insertText method');
-                    codeEditorController.insertText(text);
+                if (cmInstance && cmInstance.replaceRange) {
+                    console.log('Using direct CodeMirror access');
+                    const cursor = cmInstance.getCursor();
+                    cmInstance.replaceRange(text, cursor);
+                    cmInstance.focus();
                     return;
                 }
             }
 
-            // 代替方法3：data属性を使ったイベント発火
-            const customEvent = new CustomEvent('code-editor:insert-text', {
-                detail: { text: text }
-            });
-            codeEditorElement.dispatchEvent(customEvent);
-            console.log('Dispatched code-editor:insert-text event');
-
-            // イベントが処理されたかを確認するため、少し待機してからフォールバックを実行
-            setTimeout(() => {
-                // まだテキストが挿入されていない場合のみフォールバック実行
-                if (!textarea.value.includes(text.trim())) {
-                    console.log('Event insertion failed, using fallback method');
-                    fallbackTextInsertion(textarea, text);
-                }
-            }, 100);
-            return;
+            console.warn('CodeEditor controller not found or insertText method unavailable');
         }
 
-        // 最終フォールバック: 通常のテキストエリア処理
+        // フォールバック: 通常のテキストエリア処理
         console.log('Using fallback text insertion method');
-        fallbackTextInsertion(textarea, text);
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+
+        textarea.value = before + text + after;
+        const newPos = start + text.length;
+        textarea.selectionStart = textarea.selectionEnd = newPos;
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+        console.log('Fallback text insertion completed');
     }
 
     function fallbackTextInsertion(textarea, text) {
@@ -809,7 +908,7 @@
         let progress = 0;
         const steps = [
             { progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
-            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${selectedFiles.length}個のファイルを処理しています` },
+            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${window.selectedFiles.length}個のファイルを処理しています` },
             { progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました' },
             { progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
             { progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています' },
@@ -938,28 +1037,28 @@
 
     // 選択されたファイルを削除する関数（新規追加）
     function removeSelectedFile(index) {
-        selectedFiles.splice(index, 1);
-        displaySelectedFiles(selectedFiles);
+        window.selectedFiles.splice(index, 1);
+        displaySelectedFiles(window.selectedFiles);
 
         // ファイル入力フィールドをリセット
         const imageInput = document.getElementById('imageInput');
         if (imageInput) {
             const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
+            window.selectedFiles.forEach(file => dt.items.add(file));
             imageInput.files = dt.files;
         }
     }
 
     // S3にファイルをアップロードする関数（修正版）
     async function uploadFilesToS3() {
-        if (selectedFiles.length === 0) {
+        if (window.selectedFiles.length === 0) {
             console.log('No files to upload');
             return;
         }
 
         console.log('Starting file upload to S3...');
 
-        const uploadPromises = selectedFiles.map(async (file) => {
+        const uploadPromises = window.selectedFiles.map(async (file) => {
             try {
                 // Active Storage Direct Uploadの正しいパラメータ
                 const uploadData = {
