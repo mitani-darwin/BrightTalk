@@ -617,14 +617,15 @@
         if (codeEditorElement) {
             console.log('Found code-editor element:', codeEditorElement);
 
-            // Stimulus 3.x の正しいコントローラー取得方法
+            // 方法1: Stimulus 3.xの正しいコントローラー取得方法
             const application = window.Stimulus || window.Application;
-            if (application) {
+            if (application && application.controllers) {
                 try {
-                    // Stimulus application からコントローラーを取得
-                    const controller = application.getControllerForElementAndIdentifier(codeEditorElement, 'code-editor');
+                    const controller = application.controllers.find(c =>
+                        c.element === codeEditorElement && c.identifier === 'code-editor'
+                    );
                     if (controller && controller.insertText) {
-                        console.log('Using Stimulus controller insertText method');
+                        console.log('Using Stimulus application controller insertText method');
                         controller.insertText(text);
                         return;
                     }
@@ -633,14 +634,14 @@
                 }
             }
 
-            // 代替方法：要素に直接格納されているコントローラーを参照
+            // 方法2: 要素に直接格納されているコントローラーを参照
             if (codeEditorElement.controller && codeEditorElement.controller.insertText) {
                 console.log('Using element.controller insertText method');
                 codeEditorElement.controller.insertText(text);
                 return;
             }
 
-            // 代替方法2：Stimulus内部のコントローラーマップを参照
+            // 方法3: Stimulus内部のコントローラーマップを参照
             if (codeEditorElement._stimulus_controllers) {
                 const codeEditorController = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor');
                 if (codeEditorController && codeEditorController.insertText) {
@@ -650,21 +651,24 @@
                 }
             }
 
-            // 代替方法3：data属性を使ったイベント発火
+            // 方法4: カスタムイベントを使った挿入（推奨方法）
+            console.log('Using custom event method');
             const customEvent = new CustomEvent('code-editor:insert-text', {
                 detail: { text: text }
             });
             codeEditorElement.dispatchEvent(customEvent);
-            console.log('Dispatched code-editor:insert-text event');
 
-            // イベントが処理されたかを確認するため、少し待機してからフォールバックを実行
+            // イベント処理の完了を待つため、短い遅延後にフォールバックを実行
             setTimeout(() => {
-                // まだテキストが挿入されていない場合のみフォールバック実行
-                if (!textarea.value.includes(text.trim())) {
-                    console.log('Event insertion failed, using fallback method');
-                    fallbackTextInsertion(textarea, text);
+                // テキストが挿入されたかを確認
+                if (codeEditorElement.querySelector('.CodeMirror')) {
+                    const codeMirror = codeEditorElement.querySelector('.CodeMirror').CodeMirror;
+                    if (codeMirror && !codeMirror.getValue().includes(text.trim())) {
+                        console.log('Event insertion may have failed, checking...');
+                        fallbackTextInsertion(textarea, text);
+                    }
                 }
-            }, 100);
+            }, 200); // 100ms → 200ms に延長
             return;
         }
 
