@@ -23,7 +23,7 @@
         initializeContentEditor();
 
         initializeUpdateProgressModal();
-   }
+    }
 
     // Upload handlers
     function initializeUploadHandlers() {
@@ -31,7 +31,7 @@
         const videoInput = document.getElementById('videoInput');
         const textarea = document.getElementById('contentTextarea');
 
-        const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
+        const codeEditorElement = textarea?.closest('[data-controller*="code_editor"]');
 
         if (codeEditorElement) {
             codeEditorElement.addEventListener('code-editor:initialized', () => {
@@ -72,7 +72,7 @@
 
             // フォーム送信時に自動保存を停止
             if (form) {
-                form.addEventListener('submit', function(event) {
+                form.addEventListener('submit', function (event) {
                     console.log('Form submit detected, stopping auto-save');
                     stopAutoSave();
                 });
@@ -269,18 +269,40 @@
         const file = event.target.files[0];
         const textarea = document.getElementById('contentTextarea');
 
+        console.log('=== Video Upload Debug ===');
+        console.log('File selected:', file ? file.name : 'No file');
+        console.log('File type:', file ? file.type : 'N/A');
+        console.log('Textarea found:', !!textarea);
+
         if (file) {
             console.log('Video selected:', file.name);
 
-            // Insert Markdown format link into content textarea
             if (textarea) {
                 const markdownLink = `[${file.name}](attachment:${file.name})\n\n`;
-                // CodeMirrorの初期化を少し待つ
+                console.log('Markdown link to insert:', markdownLink);
+
+                // CodeEditorの状態確認
+                const codeEditorElement = textarea.closest('[data-controller*="code_editor"]');
+                console.log('CodeEditor element found:', !!codeEditorElement);
+
+                // CodeMirrorの存在確認
+                const codeMirrorWrapper = codeEditorElement?.querySelector('.CodeMirror');
+                console.log('CodeMirror wrapper found:', !!codeMirrorWrapper);
+                console.log('CodeMirror instance found:', !!(codeMirrorWrapper?.CodeMirror));
+
+                // 待機時間を短縮（CodeMirror直接アクセスにより高速化）
                 setTimeout(() => {
+                    console.log('Attempting to insert markdown for video...');
                     insertMarkdownAtCursor(textarea, markdownLink);
-                }, 500);
+                }, 200); // 500ms → 200ms に短縮
+            } else {
+                console.error('Textarea not found for video markdown insertion');
             }
+        } else {
+            console.warn('No video file selected');
         }
+
+        console.log('=== Video Upload Debug End ===');
     }
 
     function handleDirectUploadStart(event) {
@@ -616,62 +638,78 @@
         console.log('insertMarkdownAtCursor called with text:', text);
 
         // CodeMirrorエディターコントローラーの取得
-        const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
+        const codeEditorElement = textarea.closest('[data-controller*="code_editor"]');
         if (codeEditorElement) {
             console.log('Found code-editor element:', codeEditorElement);
 
-            // 方法1: Stimulus 3.xの正しいコントローラー取得方法
+            // ★修正方法1: CodeMirrorに直接アクセス（最も確実）
+            const codeMirrorWrapper = codeEditorElement.querySelector('.CodeMirror');
+            if (codeMirrorWrapper && codeMirrorWrapper.CodeMirror) {
+                const editor = codeMirrorWrapper.CodeMirror;
+                const cursor = editor.getCursor();
+                editor.replaceRange(text, cursor);
+                editor.focus();
+                console.log('Text inserted directly into CodeMirror');
+                return;
+            }
+
+            // ★修正方法2: Stimulusコントローラーの改良された取得方法
             const application = window.Stimulus || window.Application;
-            if (application && application.controllers) {
+            if (application) {
                 try {
-                    const controller = application.controllers.find(c =>
-                        c.element === codeEditorElement && c.identifier === 'code-editor'
+                    // より確実なコントローラー取得
+                    const controllers = application.controllers || [];
+                    const controller = controllers.find(c =>
+                        c.element === codeEditorElement &&
+                        c.identifier === 'code-editor' &&
+                        c.insertText
                     );
-                    if (controller && controller.insertText) {
-                        console.log('Using Stimulus application controller insertText method');
+                    if (controller) {
+                        console.log('Using improved Stimulus controller insertText method');
                         controller.insertText(text);
                         return;
                     }
                 } catch (error) {
-                    console.warn('Failed to get controller via Stimulus application:', error);
+                    console.warn('Failed to get controller via improved method:', error);
                 }
             }
 
-            // 方法2: 要素に直接格納されているコントローラーを参照
-            if (codeEditorElement.controller && codeEditorElement.controller.insertText) {
-                console.log('Using element.controller insertText method');
-                codeEditorElement.controller.insertText(text);
-                return;
-            }
-
-            // 方法3: Stimulus内部のコントローラーマップを参照
-            if (codeEditorElement._stimulus_controllers) {
-                const codeEditorController = codeEditorElement._stimulus_controllers.find(c => c.identifier === 'code-editor');
-                if (codeEditorController && codeEditorController.insertText) {
-                    console.log('Using _stimulus_controllers insertText method');
-                    codeEditorController.insertText(text);
-                    return;
-                }
-            }
-
-            // 方法4: カスタムイベントを使った挿入（推奨方法）
-            console.log('Using custom event method');
+            // ★修正方法3: カスタムイベントの改良（待機時間延長）
+            console.log('Using improved custom event method');
             const customEvent = new CustomEvent('code-editor:insert-text', {
-                detail: { text: text }
+                detail: {text: text}
             });
             codeEditorElement.dispatchEvent(customEvent);
 
-            // イベント処理の完了を待つため、短い遅延後にフォールバックを実行
-            setTimeout(() => {
+            // イベント処理の完了を待つ時間を延長し、確実性を向上
+            let insertionChecked = false;
+            const checkInsertion = () => {
+                if (insertionChecked) return;
+                insertionChecked = true;
+
                 // テキストが挿入されたかを確認
-                if (codeEditorElement.querySelector('.CodeMirror')) {
-                    const codeMirror = codeEditorElement.querySelector('.CodeMirror').CodeMirror;
-                    if (codeMirror && !codeMirror.getValue().includes(text.trim())) {
-                        console.log('Event insertion may have failed, checking...');
-                        fallbackTextInsertion(textarea, text);
+                const codeMirrorWrapper = codeEditorElement.querySelector('.CodeMirror');
+                if (codeMirrorWrapper && codeMirrorWrapper.CodeMirror) {
+                    const codeMirror = codeMirrorWrapper.CodeMirror;
+                    const currentValue = codeMirror.getValue();
+                    if (!currentValue.includes(text.trim())) {
+                        console.log('Event insertion failed, using direct CodeMirror insertion');
+                        const cursor = codeMirror.getCursor();
+                        codeMirror.replaceRange(text, cursor);
+                        codeMirror.focus();
+                    } else {
+                        console.log('Event insertion successful');
                     }
+                } else {
+                    console.log('CodeMirror not available, using fallback');
+                    fallbackTextInsertion(textarea, text);
                 }
-            }, 200); // 100ms → 200ms に延長
+            };
+
+            // 複数の時間で確認を実行
+            setTimeout(checkInsertion, 100);
+            setTimeout(checkInsertion, 300);
+            setTimeout(checkInsertion, 500);
             return;
         }
 
@@ -736,7 +774,7 @@
     // 更新進捗モーダル管理
     function initializeUpdateProgressModal() {
         console.log('Initializing update progress modal...');
-        
+
         const form = document.querySelector('form[data-turbo="false"]');
         const submitBtn = document.getElementById('updateSubmitBtn');
         const progressModal = document.getElementById('updateProgressModal');
@@ -757,7 +795,7 @@
 
             // 既存のイベントリスナーを削除
             submitBtn.removeEventListener('click', handleUpdateSubmit);
-            
+
             // 新しいイベントリスナーを追加
             submitBtn.addEventListener('click', handleUpdateSubmit);
             console.log('Update progress modal initialized successfully');
@@ -819,12 +857,16 @@
 
         let progress = 0;
         const steps = [
-            { progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
-            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${selectedFiles.length}個のファイルを処理しています` },
-            { progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました' },
-            { progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
-            { progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています' },
-            { progress: 100, status: '完了', detail: '更新が完了しました' }
+            {progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています'},
+            {
+                progress: 35,
+                status: '画像ファイルをS3にアップロード中...',
+                detail: `${selectedFiles.length}個のファイルを処理しています`
+            },
+            {progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました'},
+            {progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています'},
+            {progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています'},
+            {progress: 100, status: '完了', detail: '更新が完了しました'}
         ];
 
         let currentStep = 0;
@@ -905,7 +947,7 @@
     window.performAutoSave = performAutoSave;
 
     // Initialize all features when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         initializeUpdateProgressModal();
     });
 
@@ -1034,7 +1076,7 @@
     async function generateChecksum(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
                 const hash = CryptoJS.MD5(wordArray);
                 const base64Hash = CryptoJS.enc.Base64.stringify(hash);
@@ -1042,5 +1084,7 @@
             };
             reader.readAsArrayBuffer(file);
         });
-    }3
+    }
+
+    3
 </script>
