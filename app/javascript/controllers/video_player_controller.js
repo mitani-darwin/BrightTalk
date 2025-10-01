@@ -84,7 +84,7 @@ export default class extends Controller {
 
         // optionsオブジェクトを定義
         const options = {
-            fluid: false,
+            fluid: true,
             responsive: true,
             width: 'auto',  // 動画の実際の横幅
             height: 'auto', // 動画の実際の高さ

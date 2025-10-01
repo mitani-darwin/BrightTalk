@@ -62,7 +62,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
     error_messages = [ "Invalid Email or password", "メールアドレスまたはパスワードが違います" ]
     error_messages.each do |error_msg|
-      assert_no_text error_msg, "Login failed with error: #{error_msg}"
+      refute_text error_msg, "Login failed with error: #{error_msg}"
     end
   end
 
