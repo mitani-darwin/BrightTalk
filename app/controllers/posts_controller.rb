@@ -167,11 +167,7 @@ class PostsController < ApplicationController
     Rails.logger.info "authenticity_token value: #{params[:authenticity_token]}"
     Rails.logger.info "=========================="
 
-    # 公開ボタンがクリックされた場合、ステータスを公開に変更
-    if params[:commit] == "公開"
-      @post.status = :published
-      Rails.logger.info "Setting post status to published via commit parameter"
-    end
+    @post.status = :published
 
     # 動画処理（統合版）
     process_video_uploads
