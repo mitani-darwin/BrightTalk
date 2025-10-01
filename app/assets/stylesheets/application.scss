@@ -1101,3 +1101,47 @@ main {
   max-height: 800px !important;
   overflow-y: auto !important;
 }
+
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 1.5rem 0;
+
+  .video-js {
+    width: 100% !important;
+    height: auto !important;
+
+    &.vjs-fluid {
+      padding-top: 0 !important;
+    }
+
+    @media (max-width: 768px) {
+      max-height: 50vh;
+    }
+
+    @media (min-width: 1200px) {
+      max-width: 800px;
+    }
+  }
+
+  &::before {
+    content: '';
+    display: block;
+    padding-top: 56.25%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: -1;
+  }
+}
+
+.vjs-fluid {
+  padding-top: 0 !important;
+}
+
+.vjs-responsive {
+  width: 100% !important;
+  max-width: 100% !important;
+}

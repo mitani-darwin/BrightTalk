@@ -3,3 +3,20 @@ set -e
 
 echo "Running database migrations after deployment..."
 kamal app exec --reuse "bin/rails db:migrate"
+
+echo "Clearing application cache..."
+kamal app exec --reuse "bin/rails cache:clear"
+
+echo "Precompiling assets..."
+kamal app exec --reuse "bin/rails assets:precompile"
+
+echo "Clearing CloudFront cache..."
+# CloudFrontのディストリビューションIDを環境変数から取得
+if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+    kamal app exec --reuse "aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths '/*'"
+    echo "CloudFront cache invalidation requested"
+else
+    echo "CLOUDFRONT_DISTRIBUTION_ID not set, skipping CloudFront cache clear"
+fi
+
+echo "Cache clearing completed successfully"
