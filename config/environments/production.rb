@@ -15,9 +15,6 @@ Rails.application.configure do
   # Turn on fragment caching in view templates.
   config.action_controller.perform_caching = true
 
-  # Cache assets for far-future expiry since they are all digest stamped.
-  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
-
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
@@ -111,9 +108,26 @@ Rails.application.configure do
   # アセット配信の強化
   config.public_file_server.enabled = true
   config.public_file_server.headers = {
-    "Cache-Control" => "public, max-age=31536000",
-    "Expires" => 1.year.from_now.to_formatted_s(:rfc822)
+    "Cache-Control" => lambda do |path, req|
+      if path =~ /\.(js|css)$/ && path =~ /-[a-f0-9]{32}\./
+        # Digest付きのJS/CSSファイルは長期キャッシュ
+        "public, max-age=31536000, immutable"
+      elsif path =~ /\.(js|css)$/
+        # Digest無しのJS/CSSファイルは短期キャッシュ
+        "public, max-age=86400"  # 1日
+      else
+        # その他のファイルは中期キャッシュ
+        "public, max-age=2592000"  # 30日
+      end
+    end
   }
+
+  # Turbo用の設定を追加
+  config.action_controller.asset_host = nil  # CDNを使用していない場合
+
+  # HTMLページは短いキャッシュに設定
+  config.action_controller.perform_caching = true
+  config.cache_store = :solid_cache_store
 
   # Add this to the end of the configure block, before the final 'end'
   config.importmap.sweep_cache = false if config.respond_to?(:importmap)
@@ -123,7 +137,21 @@ Rails.application.configure do
     policy.connect_src :self, "https://www.brighttalk.jp"
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
-    policy.img_src :self, :https, :data, :blob, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
+
+    # Video.js用のスタイル設定を追加
+    policy.style_src :self, :unsafe_inline, "https://cdn.jsdelivr.net"
+    policy.style_src_elem :self, :unsafe_inline, "https://cdn.jsdelivr.net"
+
+    # 動画ストリーミング用の設定を追加
+    policy.media_src :self, :https, :data, :blob,
+                     "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com",
+                     Rails.application.credentials.dig(:cloudfront, :distribution_url)
+
+    # Video.jsアイコンフォント用の設定を追加
+    policy.font_src :self, :https, :data
+
+    policy.img_src :self, :https, :data, :blob,
+                   "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
   end
 
   config.assets.js_compressor = :uglifier
