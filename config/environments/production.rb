@@ -134,6 +134,7 @@ Rails.application.configure do
 
   # Add Content Security Policy for importmaps with CDN support
   # Add Content Security Policy for importmaps with CDN support
+  # Add Content Security Policy for importmaps with CDN support
   config.content_security_policy do |policy|
     policy.connect_src :self, "https://www.brighttalk.jp"
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
@@ -143,27 +144,15 @@ Rails.application.configure do
     policy.style_src :self, :unsafe_inline, "https://cdn.jsdelivr.net"
     policy.style_src_elem :self, :unsafe_inline, "https://cdn.jsdelivr.net"
 
-    # 動画ストリーミング用の設定を追加
     # 動画ストリーミング用の設定を追加（環境変数使用版）
     media_sources = [:self, :https, :data, :blob, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"]
 
-    # 環境変数またはcredentialsからCloudFront URLを取得（より安全な方法）
-    begin
-      cloudfront_url = ENV['CLOUDFRONT_DISTRIBUTION_URL'] ||
-                       (Rails.application.credentials.respond_to?(:dig) ? 
-                        Rails.application.credentials.dig(:cloudfront, :distribution_url) : nil)
-      
-      # より厳密なnil/空文字チェック
-      if cloudfront_url.is_a?(String) && !cloudfront_url.strip.empty?
-        media_sources << cloudfront_url.strip
-      end
-    rescue => e
-      Rails.logger&.warn("Warning: Could not load CloudFront URL: #{e.message}")
-    end
+    # 環境変数またはcredentialsからCloudFront URLを取得
+    cloudfront_url = ENV['CLOUDFRONT_DISTRIBUTION_URL'] ||
+                     Rails.application.credentials.dig(:cloudfront, :distribution_url)
+    media_sources << cloudfront_url if cloudfront_url.present?
 
-    # 確実にnilや空文字を除去してからpolicyに設定
-    filtered_sources = media_sources.compact.reject { |source| source.is_a?(String) && source.strip.empty? }
-    policy.media_src(*filtered_sources)
+    policy.media_src(*media_sources)
 
     # Video.jsアイコンフォント用の設定を追加
     policy.font_src :self, :https, :data

@@ -1,7 +1,5 @@
 ARG RUBY_VERSION=3.4.4
 ARG TARGETPLATFORM=linux/arm64
-# ビルド時に必須の環境変数を渡す
-ARG CLOUDFRONT_DISTRIBUTION_URL
 
 FROM ruby:3.4.4-slim AS base
 

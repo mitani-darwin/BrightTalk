@@ -128,8 +128,7 @@ module PostsHelper
   # Get CloudFront URL for video if available, otherwise fallback to s3 URL
   def get_cloudfront_video_url(video_attachment)
     # Check if CloudFront distribution URL is configured
-    ENV['CLOUDFRONT_DISTRIBUTION_URL'] ||
-      Rails.application.credentials.dig(:cloudfront, :distribution_url)
+    cloudfront_base_url = Rails.application.credentials.dig(:cloudfront, :distribution_url)
 
     if cloudfront_base_url.present?
       # Use CloudFront URL for optimized video delivery
