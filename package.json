@@ -22,10 +22,10 @@
     "@hotwired/turbo": "^8.0.13",
     "@rails/activestorage": "^8.0.300",
     "codemirror": "^5.65.20",
+    "esbuild": "^0.25.10",
     "flatpickr": "^4.6.13",
     "video.js": "^8.10.0"
   },
   "devDependencies": {
-    "esbuild": "^0.25.10"
   }
 }
