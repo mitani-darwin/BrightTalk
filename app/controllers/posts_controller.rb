@@ -167,6 +167,8 @@ class PostsController < ApplicationController
     Rails.logger.info "authenticity_token value: #{params[:authenticity_token]}"
     Rails.logger.info "=========================="
 
+    @post.status = 'published'
+
     # 動画処理（統合版）
     process_video_uploads
 
