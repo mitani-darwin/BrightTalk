@@ -5,7 +5,7 @@ FROM ruby:3.4.4-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base packages with newer Node.js
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
     curl \
@@ -13,10 +13,12 @@ RUN apt-get update -qq && \
     libvips \
     libvips-dev \
     sqlite3 \
-    nodejs \
     libvips \
     ruby-vips \
-    npm && \
+    ca-certificates \
+    gnupg && \
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -42,16 +44,23 @@ RUN apt-get update -qq && \
     python3 && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install application gems
-COPY Gemfile Gemfile.lock ./
+# Install application gems and npm packages
+COPY Gemfile Gemfile.lock package.json package-lock.json ./
 RUN bundle install --jobs 4 --retry 3 && \
+    npm ci --only=production && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
 # Copy application code
 COPY . .
 
-RUN npm install && npm run build
+# Build JavaScript and CSS assets
+RUN npm run build && npm run build:css
+
+# Ensure Video.js assets are available
+RUN mkdir -p public/assets && \
+    find node_modules/video.js/dist -name "*.css" -exec cp {} public/assets/ \; || true && \
+    find node_modules/video.js/dist -name "*.woff*" -exec cp {} public/assets/ \; || true
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
@@ -81,7 +90,7 @@ COPY --from=build /rails /rails
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
     mkdir -p db log storage tmp && \
-    chown -R rails:rails db log storage tmp
+    chown -R rails:rails db log storage tmp app/assets/builds public/assets
 USER 1000:1000
 
 # Entrypoint prepares the database.
