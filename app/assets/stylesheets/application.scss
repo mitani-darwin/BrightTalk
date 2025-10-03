@@ -1145,3 +1145,21 @@ main {
   width: 100% !important;
   max-width: 100% !important;
 }
+
+.flatpickr-current-month {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center; /* 中央寄せ */
+  align-items: center;
+  gap: 40px; /* 年と月の間に余白をつける */
+}
+
+.flatpickr-current-month .numInputWrapper .arrowUp,
+.flatpickr-current-month .numInputWrapper .arrowDown {
+  display: none !important;
+}
+
+.flatpickr-yearDropdown,
+.flatpickr-monthDropdown-months {
+  text-align: center;
+}

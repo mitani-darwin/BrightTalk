@@ -15,7 +15,6 @@ export default class extends Controller {
             ...Japanese,
             months: {
                 ...Japanese.months,
-                // 月の表示順序を年月順に調整
                 longhand: [
                     "1月", "2月", "3月", "4月", "5月", "6月",
                     "7月", "8月", "9月", "10月", "11月", "12月"
@@ -25,7 +24,6 @@ export default class extends Controller {
                     "7月", "8月", "9月", "10月", "11月", "12月"
                 ]
             },
-            // 年月の表示順序をカスタマイズ
             yearAriaLabel: "年",
             monthAriaLabel: "月"
         }
@@ -35,17 +33,42 @@ export default class extends Controller {
             dateFormat: this.dateFormatValue || "Y/m/d",
             locale: customJapanese,
             allowInput: false,
-            // 年月選択の順序を制御
             showMonths: 1,
             monthSelectorType: "dropdown",
-            yearSelectorType: "dropdown"
+            onReady: function(selectedDates, dateStr, instance) {
+                const yearInput = instance.currentYearElement
+                const wrapper = yearInput.parentNode
+
+                // input を削除
+                wrapper.innerHTML = ""
+
+                // 現在の年
+                const thisYear = new Date().getFullYear()
+
+                // セレクトを作成（今年 ±5年）
+                const select = document.createElement("select")
+                select.className = "flatpickr-yearDropdown"
+
+                for (let y = thisYear - 5; y <= thisYear + 5; y++) {
+                    const option = document.createElement("option")
+                    option.value = y
+                    option.textContent = `${y}年`
+                    if (y === instance.currentYear) option.selected = true
+                    select.appendChild(option)
+                }
+
+                // 年を切り替えたら flatpickr に反映
+                select.addEventListener("change", (e) => {
+                    instance.changeYear(parseInt(e.target.value, 10))
+                })
+
+                wrapper.appendChild(select)
+            }
         }
 
         if (this.modeValue === "range") {
             options.mode = "range"
-            options.dateFormat = "Y/m/d"  // YYをYに修正
-            // 無効な設定を削除
-            // options.flex-direction = "row-reverse"  // これは無効な設定
+            options.dateFormat = "Y/m/d"
         }
 
         this.flatpickr = flatpickr(this.inputTarget, options)
