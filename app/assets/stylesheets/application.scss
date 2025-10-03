@@ -1101,3 +1101,14 @@ main {
   max-height: 800px !important;
   overflow-y: auto !important;
 }
+
+.video-container {
+  width: 100%;          /* 画面幅いっぱい */
+  max-width: 960px;     /* 必要なら最大幅制限 */
+  margin: 0 auto;       /* 中央寄せ */
+}
+
+.video-container .video-js {
+  width: 100%;
+  height: auto;
+}
