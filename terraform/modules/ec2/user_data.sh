@@ -133,3 +133,16 @@ systemctl enable docker-permissions.service
 systemctl start docker-permissions.service
 
 echo "User data script completed successfully - 日本のロケール設定完了、ファイアーウォール無効化完了"
+
+# Swapfile 4GB 作成
+fallocate -l 4G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=4096
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+
+# 永続化
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
+# swappiness 調整（オプション）
+sysctl vm.swappiness=10
+echo 'vm.swappiness=10' >> /etc/sysctl.conf

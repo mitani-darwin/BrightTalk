@@ -344,6 +344,13 @@
 
         displaySelectedFiles(window.selectedFiles);
 
+        const imageInput = document.getElementById('imageInput');
+        if (imageInput) {
+            const dt = new DataTransfer();
+            window.selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
+        }
+
         for (let file of newFiles) {
             console.log('Image selected:', file.name);
 
