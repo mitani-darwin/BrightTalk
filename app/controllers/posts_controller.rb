@@ -429,7 +429,7 @@ class PostsController < ApplicationController
   # 画像を既存に追加するためのカスタム更新メソッド
   def update_with_additional_images
     # デバッグ: 送信された画像データを確認
-    if params[:post][:images].present?
+    if params[:post].present? && params[:post][:images].present?
       Rails.logger.info "=== Image Upload Debug ==="
       Rails.logger.info "Raw images param: #{params[:post][:images].inspect}"
       Rails.logger.info "Images count: #{params[:post][:images].count}"
@@ -447,8 +447,13 @@ class PostsController < ApplicationController
     end
 
     # 画像・動画・signed_ids以外のフィールドを更新
-    other_params = post_params.except(:images, :videos, :video_signed_ids)
-    @post.update(other_params)
+    if params[:post].present?
+      other_params = post_params.except(:images, :videos, :video_signed_ids)
+      @post.update(other_params)
+    else
+      # params[:post]が存在しない場合は、単純に保存のみ実行
+      @post.save
+    end
   end
 
   def auto_save_params

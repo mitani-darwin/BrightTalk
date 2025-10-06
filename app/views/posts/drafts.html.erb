@@ -56,14 +56,6 @@
                       <i class="fas fa-edit"></i> 編集
                     <% end %>
 
-                    <%= link_to post_path(post), method: :patch,
-                                class: "btn btn-success btn-sm",
-                                confirm: "この投稿を公開しますか？",
-                                data: { turbo_method: :patch },
-                                params: { commit: "公開" } do %>
-                      <i class="fas fa-globe"></i> 公開
-                    <% end %>
-
                     <%= link_to post_path(post), method: :delete,
                                 class: "btn btn-outline-danger btn-sm",
                                 confirm: "この下書きを削除しますか？",
