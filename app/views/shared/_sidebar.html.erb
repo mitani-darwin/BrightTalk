@@ -18,7 +18,7 @@
       </div>
 
       <div class="card-body">
-        <%= form.collection_select :post_type_id, PostType.all, :id, :description,
+        <%= form.collection_select :post_type_id, PostType.all, :id, :name,
                                    { prompt: "すべての投稿タイプ", selected: params[:post_type_id] },
                                    { class: "form-select", onchange: "this.form.submit();" } %>
       </div>
