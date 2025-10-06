@@ -11,11 +11,36 @@
       </div>
 
       <% if @posts.any? %>
+        <%= form_with url: bulk_destroy_posts_path, method: :delete, local: true, 
+                      data: { turbo_confirm: "選択した下書きを削除していいですか？" }, 
+                      id: "bulk_delete_form" do |form| %>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="select_all">
+                <label class="form-check-label" for="select_all">
+                  すべて選択
+                </label>
+              </div>
+              <button type="submit" class="btn btn-danger" id="bulk_delete_btn" disabled>
+                <i class="fas fa-trash me-2"></i>選択した下書きを削除
+              </button>
+            </div>
+          </div>
+
         <% @posts.each do |post| %>
           <div class="card mb-3">
             <div class="card-body">
               <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-1 d-flex align-items-center justify-content-center">
+                  <div class="form-check">
+                    <input class="form-check-input draft-checkbox" type="checkbox" 
+                           name="post_ids[]" value="<%= post.id %>" id="post_<%= post.id %>"
+                           style="transform: scale(1.5); cursor: pointer;">
+                    <label class="form-check-label" for="post_<%= post.id %>" style="cursor: pointer;"></label>
+                  </div>
+                </div>
+                <div class="col-md-7">
                   <h5 class="card-title">
                     <%= link_to post.title.presence || "（タイトル未設定）", edit_post_path(post),
                                 class: "text-decoration-none" %>
@@ -58,8 +83,7 @@
 
                     <%= link_to post_path(post), method: :delete,
                                 class: "btn btn-outline-danger btn-sm",
-                                confirm: "この下書きを削除しますか？",
-                                data: { turbo_method: :delete } do %>
+                                data: { turbo_method: :delete, turbo_confirm: "この下書きを削除しますか？" } do %>
                       <i class="fas fa-trash"></i> 削除
                     <% end %>
                   </div>
@@ -67,6 +91,7 @@
               </div>
             </div>
           </div>
+        <% end %>
         <% end %>
 
         <!-- ページネーション -->
@@ -86,3 +111,43 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAllCheckbox = document.getElementById('select_all');
+  const draftCheckboxes = document.querySelectorAll('.draft-checkbox');
+  const bulkDeleteBtn = document.getElementById('bulk_delete_btn');
+  
+  // Select All functionality
+  selectAllCheckbox.addEventListener('change', function() {
+    draftCheckboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+    updateDeleteButton();
+  });
+  
+  // Individual checkbox change
+  draftCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      updateSelectAllState();
+      updateDeleteButton();
+    });
+  });
+  
+  function updateSelectAllState() {
+    const checkedCount = document.querySelectorAll('.draft-checkbox:checked').length;
+    const totalCount = draftCheckboxes.length;
+    
+    selectAllCheckbox.checked = checkedCount === totalCount;
+    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+  }
+  
+  function updateDeleteButton() {
+    const checkedCount = document.querySelectorAll('.draft-checkbox:checked').length;
+    bulkDeleteBtn.disabled = checkedCount === 0;
+  }
+  
+  // Initial state
+  updateDeleteButton();
+});
+</script>

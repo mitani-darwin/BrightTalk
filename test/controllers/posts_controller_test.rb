@@ -521,4 +521,158 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert created_post.videos.attached?
     assert_equal "test_video.mp4", created_post.videos.first.filename.to_s
   end
+
+  # === Bulk Delete Tests ===
+
+  test "下書き一覧ページが表示されること" do
+    sign_in @user
+    get drafts_posts_path
+    assert_response :success
+  end
+
+  test "ログインユーザーが複数の下書きを一括削除できること" do
+    sign_in @user
+
+    # テスト用下書き投稿を3件作成
+    draft1 = Post.create!(
+      title: "下書き1",
+      content: "下書き内容1",
+      user: @user,
+      category: @category,
+      status: :draft
+    )
+    draft2 = Post.create!(
+      title: "下書き2", 
+      content: "下書き内容2",
+      user: @user,
+      category: @category,
+      status: :draft
+    )
+    draft3 = Post.create!(
+      title: "下書き3",
+      content: "下書き内容3", 
+      user: @user,
+      category: @category,
+      status: :draft
+    )
+
+    # 2件の下書きを選択して削除
+    assert_difference("Post.count", -2) do
+      delete bulk_destroy_posts_path, params: {
+        post_ids: [draft1.id, draft2.id]
+      }
+    end
+
+    assert_redirected_to drafts_posts_path
+    assert_match "2件の下書きを削除しました", flash[:notice]
+
+    # 削除されたことを確認
+    assert_not Post.exists?(draft1.id)
+    assert_not Post.exists?(draft2.id)
+    assert Post.exists?(draft3.id) # 選択されていない投稿は残る
+  end
+
+  test "他人の下書きは一括削除できないこと" do
+    sign_in @user
+
+    # 他のユーザーの下書きを作成
+    other_draft = Post.create!(
+      title: "他人の下書き",
+      content: "他人の下書き内容",
+      user: @another_user,
+      category: @category,
+      status: :draft
+    )
+
+    # 自分のユーザーでログインしているので、他人の投稿は削除されない
+    assert_no_difference("Post.count") do
+      delete bulk_destroy_posts_path, params: {
+        post_ids: [other_draft.id]
+      }
+    end
+
+    assert_redirected_to drafts_posts_path
+    assert_match "0件の下書きを削除しました", flash[:notice]
+    assert Post.exists?(other_draft.id) # 他人の投稿は削除されない
+  end
+
+  test "公開済み投稿は一括削除の対象にならないこと" do
+    sign_in @user
+
+    # 公開済み投稿を作成
+    published_post = Post.create!(
+      title: "公開済み投稿",
+      content: "公開済み内容",
+      purpose: "テスト目的",
+      target_audience: "テストユーザー",
+      user: @user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :published
+    )
+
+    # 公開済み投稿を削除対象に指定しても削除されない
+    assert_no_difference("Post.count") do
+      delete bulk_destroy_posts_path, params: {
+        post_ids: [published_post.id]
+      }
+    end
+
+    assert_redirected_to drafts_posts_path
+    assert_match "0件の下書きを削除しました", flash[:notice]
+    assert Post.exists?(published_post.id)
+  end
+
+  test "post_idsが空の場合はエラーメッセージが表示されること" do
+    sign_in @user
+
+    assert_no_difference("Post.count") do
+      delete bulk_destroy_posts_path, params: { post_ids: [] }
+    end
+
+    assert_redirected_to drafts_posts_path
+    # The controller treats empty array as selecting 0 posts and shows success message
+    assert_match "0件の下書きを削除しました", flash[:notice]
+  end
+
+  test "post_idsパラメータが存在しない場合はエラーメッセージが表示されること" do
+    sign_in @user
+
+    assert_no_difference("Post.count") do
+      delete bulk_destroy_posts_path
+    end
+
+    assert_redirected_to drafts_posts_path
+    assert_match "削除する下書きが選択されていません", flash[:alert]
+  end
+
+  test "未ログインユーザーは一括削除できないこと" do
+    # ログインしていない状態で一括削除を試行
+    delete bulk_destroy_posts_path, params: { post_ids: [1, 2, 3] }
+    assert_redirected_to new_user_session_path
+  end
+
+  test "存在しない投稿IDを指定した場合は無視されること" do
+    sign_in @user
+
+    # 実在する下書きを1件作成
+    draft = Post.create!(
+      title: "実在する下書き",
+      content: "実在する下書き内容",
+      user: @user,
+      category: @category,
+      status: :draft
+    )
+
+    # 実在するIDと存在しないIDを混在させる
+    assert_difference("Post.count", -1) do
+      delete bulk_destroy_posts_path, params: {
+        post_ids: [draft.id, 99999, 88888] # 存在しないIDを含む
+      }
+    end
+
+    assert_redirected_to drafts_posts_path
+    assert_match "1件の下書きを削除しました", flash[:notice]
+    assert_not Post.exists?(draft.id) # 実在した投稿は削除される
+  end
 end

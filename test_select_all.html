@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Select All Functionality</title>
+</head>
+<body>
+    <h2>Testing Select All Functionality</h2>
+    
+    <form id="bulk_delete_form">
+        <div>
+            <div class="form-check">
+                <input class="form-check-input form-check-input-lg" type="checkbox" id="select_all">
+                <label class="form-check-label fw-bold" for="select_all">すべて選択</label>
+            </div>
+            <button type="submit" id="bulk_delete_btn" disabled>選択した下書きを削除</button>
+        </div>
+
+        <div class="card">
+            <input class="form-check-input draft-checkbox" type="checkbox" 
+                   name="post_ids[]" value="1" id="post_1">
+            <label for="post_1">Draft 1</label>
+        </div>
+        
+        <div class="card">
+            <input class="form-check-input draft-checkbox" type="checkbox" 
+                   name="post_ids[]" value="2" id="post_2">
+            <label for="post_2">Draft 2</label>
+        </div>
+        
+        <div class="card">
+            <input class="form-check-input draft-checkbox" type="checkbox" 
+                   name="post_ids[]" value="3" id="post_3">
+            <label for="post_3">Draft 3</label>
+        </div>
+    </form>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing...');
+      
+      const selectAllCheckbox = document.getElementById('select_all');
+      const draftCheckboxes = document.querySelectorAll('.draft-checkbox');
+      const bulkDeleteBtn = document.getElementById('bulk_delete_btn');
+      
+      console.log('Found elements:');
+      console.log('selectAllCheckbox:', selectAllCheckbox);
+      console.log('draftCheckboxes:', draftCheckboxes.length);
+      console.log('bulkDeleteBtn:', bulkDeleteBtn);
+      
+      // Select All functionality
+      selectAllCheckbox.addEventListener('change', function() {
+        console.log('Select all clicked, checked:', this.checked);
+        draftCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+          console.log('Set checkbox', checkbox.id, 'to', checkbox.checked);
+        });
+        updateDeleteButton();
+      });
+      
+      // Individual checkbox change
+      draftCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          console.log('Individual checkbox changed:', this.id, this.checked);
+          updateSelectAllState();
+          updateDeleteButton();
+        });
+      });
+      
+      function updateSelectAllState() {
+        const checkedCount = document.querySelectorAll('.draft-checkbox:checked').length;
+        const totalCount = draftCheckboxes.length;
+        
+        console.log('Updating select all state:', checkedCount, '/', totalCount);
+        selectAllCheckbox.checked = checkedCount === totalCount;
+        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+      }
+      
+      function updateDeleteButton() {
+        const checkedCount = document.querySelectorAll('.draft-checkbox:checked').length;
+        console.log('Updating delete button, checked count:', checkedCount);
+        bulkDeleteBtn.disabled = checkedCount === 0;
+      }
+      
+      // Initial state
+      updateDeleteButton();
+      console.log('Initialization complete');
+    });
+    </script>
+</body>
+</html>

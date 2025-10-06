@@ -203,6 +203,22 @@ class PostsController < ApplicationController
     redirect_to posts_path, notice: "投稿が削除されました。"
   end
 
+  def bulk_destroy
+    post_ids = params[:post_ids]
+    
+    if post_ids.blank?
+      redirect_to drafts_posts_path, alert: "削除する下書きが選択されていません。"
+      return
+    end
+    
+    posts = current_user.posts.draft.where(id: post_ids)
+    deleted_count = posts.count
+    
+    posts.destroy_all
+    
+    redirect_to drafts_posts_path, notice: "#{deleted_count}件の下書きを削除しました。"
+  end
+
   # 下書き一覧
   def drafts
     @posts = current_user.posts.draft.recent.page(params[:page]).per(10)

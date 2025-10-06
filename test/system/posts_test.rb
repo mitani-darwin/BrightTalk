@@ -515,6 +515,183 @@ class PostsTest < ApplicationSystemTestCase
     end
   end
 
+  # === Bulk Delete System Tests ===
+
+  test "下書き一覧で複数選択して一括削除できること" do
+    sign_in @user
+
+    # テスト用下書きを3件作成
+    draft1 = Post.create!(
+      title: "下書き1",
+      content: "下書き内容1",
+      user: @user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :draft
+    )
+    draft2 = Post.create!(
+      title: "下書き2",
+      content: "下書き内容2", 
+      user: @user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :draft
+    )
+    draft3 = Post.create!(
+      title: "下書き3",
+      content: "下書き内容3",
+      user: @user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :draft
+    )
+
+    visit drafts_posts_path
+
+    # 下書きが表示されていることを確認
+    assert_text "下書き1"
+    assert_text "下書き2"
+    assert_text "下書き3"
+
+    # 2件の下書きをチェック
+    check "post_#{draft1.id}"
+    check "post_#{draft2.id}"
+
+    # 削除ボタンがアクティブになることを確認
+    delete_button = find("#bulk_delete_btn")
+    assert_not delete_button.disabled?
+
+    # 確認ダイアログを受け入れて削除実行
+    accept_confirm do
+      click_button "選択した下書きを削除"
+    end
+
+    # 削除完了メッセージの確認
+    assert_text "2件の下書きを削除しました"
+
+    # 削除された下書きが表示されていないことを確認
+    assert_no_text "下書き1"
+    assert_no_text "下書き2"
+    
+    # 選択されていない下書きは残っていることを確認
+    assert_text "下書き3"
+  end
+
+  test "すべて選択チェックボックスが正常に動作すること" do
+    sign_in @user
+
+    # テスト用下書きを2件作成
+    2.times do |i|
+      Post.create!(
+        title: "下書き#{i + 1}",
+        content: "下書き内容#{i + 1}",
+        user: @user,
+        category: @category,
+        post_type: post_types(:tutorial),
+        status: :draft
+      )
+    end
+
+    visit drafts_posts_path
+
+    # 最初は削除ボタンが無効であることを確認
+    delete_button = find("#bulk_delete_btn")
+    assert delete_button.disabled?
+
+    # すべて選択をチェック
+    check "select_all"
+
+    # 個別チェックボックスがすべてチェックされることを確認
+    page.all(".draft-checkbox").each do |checkbox|
+      assert checkbox.checked?
+    end
+
+    # 削除ボタンがアクティブになることを確認
+    assert_not delete_button.disabled?
+
+    # すべて選択を外す
+    uncheck "select_all"
+
+    # 個別チェックボックスがすべて外れることを確認
+    page.all(".draft-checkbox").each do |checkbox|
+      assert_not checkbox.checked?
+    end
+
+    # 削除ボタンが無効になることを確認
+    assert delete_button.disabled?
+  end
+
+  test "下書きが存在しない場合は適切なメッセージが表示されること" do
+    sign_in @user
+    visit drafts_posts_path
+
+    assert_text "下書きがありません"
+    assert_text "新しい投稿を作成してみましょう"
+    assert_link "新しい投稿を作成"
+  end
+
+  test "チェックボックス未選択で削除ボタンを押してもエラーになること" do
+    sign_in @user
+
+    # テスト用下書きを1件作成
+    Post.create!(
+      title: "テスト下書き",
+      content: "テスト内容",
+      user: @user,
+      category: @category,
+      post_type: post_types(:tutorial),
+      status: :draft
+    )
+
+    visit drafts_posts_path
+
+    # 何もチェックせずに削除ボタンを確認（ボタンは無効状態のはず）
+    delete_button = find("#bulk_delete_btn")
+    assert delete_button.disabled?
+  end
+
+  test "一部の下書きを選択して削除できること" do
+    sign_in @user
+
+    # テスト用下書きを4件作成
+    drafts = []
+    4.times do |i|
+      drafts << Post.create!(
+        title: "下書き#{i + 1}",
+        content: "下書き内容#{i + 1}",
+        user: @user,
+        category: @category,
+        post_type: post_types(:tutorial),
+        status: :draft
+      )
+    end
+
+    visit drafts_posts_path
+
+    # 1番目と3番目の下書きを選択
+    check "post_#{drafts[0].id}"
+    check "post_#{drafts[2].id}"
+
+    # すべて選択チェックボックスは中間状態（indeterminate）になるはず
+    # （JavaScriptで制御されているため、視覚的な確認は困難）
+
+    # 削除実行
+    accept_confirm do
+      click_button "選択した下書きを削除"
+    end
+
+    # 削除完了メッセージの確認
+    assert_text "2件の下書きを削除しました"
+
+    # 選択された下書きが削除されていることを確認
+    assert_no_text "下書き1"
+    assert_no_text "下書き3"
+
+    # 選択されなかった下書きが残っていることを確認
+    assert_text "下書き2"
+    assert_text "下書き4"
+  end
+
   private
 
   def fill_in_basic_post_fields(title, content)

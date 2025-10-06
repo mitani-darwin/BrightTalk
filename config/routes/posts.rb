@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     collection do
       get :drafts
       post :auto_save
+      delete :bulk_destroy
     end
 
     # 画像・動画削除機能を追加
