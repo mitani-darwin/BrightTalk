@@ -33,10 +33,14 @@
       <% end %>
     </small>
   <% end %>
-  <div data-controller="code-editor" class="flex-grow-1 d-flex flex-column">
-    <%= form.text_area :content, class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
-                       id: "contentTextarea", required: true, style: "overflow-y: auto; overflow-x: hidden; resize: vertical; height: calc(100vh - 200px); min-height: 400px; max-height: none; font-family: Monaco, 'Lucida Console', monospace; scrollbar-width: thin;",
-                       placeholder: "内容を入力してください", data: { code_editor_target: "textarea" } %>
+  <div data-controller="code-editor" class="flex-grow-1 d-flex flex-column post-form-buttons">
+    <%= form.text_area :content,
+                       class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
+                       id: "contentTextarea",
+                       required: true,
+                       style: "resize: vertical; font-family: Monaco, 'Lucida Console', monospace;",
+                       placeholder: "内容を入力してください",
+                       data: { code_editor_target: "textarea" } %>
   </div>
 </div>
 <!-- 投稿ボタンとキャンセルボタン（CodeEditorの直下に配置） -->
