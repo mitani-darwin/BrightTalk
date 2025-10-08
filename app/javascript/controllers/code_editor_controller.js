@@ -127,36 +127,44 @@ export default class extends Controller {
     }
 
     adjustEditorSize() {
+        // エディターが初期化されているかチェック
         if (!this.editor || !this.editor.dom) return;
 
-        // ウィンドウサイズに基づく動的計算
         const viewportHeight = window.innerHeight;
-        const viewportWidth = window.innerWidth;
+        const buttonAreaHeight = 100; // ボタンエリア（投稿・キャンセルボタン）
+        const headerHeight = this.getEstimatedHeaderHeight(); // ヘッダー・タイトル部分
+        const safetyMargin = this.getDeviceSpecificAdjustments().safetyMargin; // 安全余白
 
-        // レスポンシブな高さ計算
-        let targetHeight;
-        if (viewportWidth >= 1200) {
-            // 大画面: より大きく
-            targetHeight = Math.max(500, viewportHeight * 0.75);
-        } else if (viewportWidth >= 768) {
-            // 中画面: 標準
-            targetHeight = Math.max(400, viewportHeight * 0.65);
-        } else {
-            // 小画面: コンパクト
-            targetHeight = Math.max(300, viewportHeight * 0.55);
-        }
+        // 利用可能な高さを計算
+        const availableHeight = (viewportHeight - buttonAreaHeight - headerHeight - safetyMargin) * 0.6;
 
+        console.log('Viewport height:', viewportHeight);
+        console.log('Button area height:', buttonAreaHeight);
+        console.log('Header height:', headerHeight);
+        console.log('Safety margin:', safetyMargin);
+        console.log('Available viewport height:', availableHeight);
+
+        // CodeMirror 6のAPIを使用してエディターサイズを調整
         const editorDom = this.editor.dom;
         if (editorDom) {
-            editorDom.style.height = `${targetHeight}px`;
+            editorDom.style.maxHeight = `${availableHeight}px`;
+            editorDom.style.height = `${availableHeight}px`;
             editorDom.style.width = '100%';
-            editorDom.style.maxWidth = '100%';
-
-            // レスポンシブクラスを追加
-            editorDom.classList.add('codemirror-sized');
         }
+    }
 
-        console.log(`CodeMirrorサイズ調整: ${targetHeight}px (画面: ${viewportWidth}x${viewportHeight})`);
+    getEstimatedHeaderHeight() {
+        const navbar = document.querySelector('.navbar, nav, header');
+        return navbar ? navbar.offsetHeight + 20 : 80;
+    }
+
+    getDeviceSpecificAdjustments() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        return {
+            safetyMargin: isMobile ? 40 : 20,
+            maxContentRatio: isMobile ? 0.5 : 0.6
+        };
     }
 
     debounce(func, wait) {

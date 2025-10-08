@@ -445,28 +445,16 @@
     }
 
     function performAutoSave() {
-        console.log('performAutoSave called, autoSaveEnabled:', window.autoSaveEnabled);
-        console.log('=== DETAILED AUTO-SAVE DEBUG ===');
-        console.log('Current URL:', window.location.href);
-        console.log('Request URL will be:', '/posts/auto_save');
-        console.log('performAutoSave called, autoSaveEnabled:', window.autoSaveEnabled);
-
         // 自動保存が有効かチェック
         if (!window.autoSaveEnabled) {
-            console.log('Auto-save skipped - disabled');
             return;
         }
-
-        console.log('About to send fetch request to:', '/posts/auto_save');
 
         // Auto-save implementation
         const form = document.querySelector('form[data-turbo="false"]');
         if (!form) {
-            console.log('Auto-save skipped - form not found');
             return;
         }
-
-        console.log('Starting auto-save process...');
 
         // 画像ファイルを除外したFormDataを作成
         const formData = new FormData();
@@ -475,7 +463,6 @@
         const postIdInput = document.getElementById('post_id');
         if (postIdInput && postIdInput.value) {
             formData.append('post_id', postIdInput.value);
-            console.log('Post ID added:', postIdInput.value);
         }
 
         // テキストフィールドのみを取得
@@ -519,11 +506,6 @@
             body: formData
         })
             .then(response => {
-                console.log('Auto-save response received:', response.status);
-                console.log('=== RESPONSE DEBUG ===');
-                console.log('Response URL:', response.url);
-                console.log('Response status:', response.status);
-                console.log('Response headers:', [...response.headers.entries()]);
                 const contentType = response.headers.get('content-type');
 
                 if (!response.ok) {
