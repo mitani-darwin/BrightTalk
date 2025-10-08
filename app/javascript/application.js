@@ -5,16 +5,25 @@ import * as ActiveStorage from "@rails/activestorage"
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';  // CSS追加
 import { startPasskeyAuthentication, startPasskeyRegistration } from './passkey.js';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/markdown/markdown';
-import 'codemirror/addon/fold/foldcode';
-import 'codemirror/addon/fold/foldgutter';
-import 'codemirror/lib/codemirror.css';
+import { EditorView, basicSetup } from 'codemirror';
+import { EditorState } from '@codemirror/state';
+import { markdown } from '@codemirror/lang-markdown';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { foldGutter, codeFolding } from '@codemirror/language';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 window.videojs = videojs;
-window.CodeMirror = CodeMirror;
+// CodeMirror 6 objects for global access
+window.CodeMirror = {
+    EditorView,
+    EditorState,
+    basicSetup,
+    markdown,
+    oneDark,
+    foldGutter,
+    codeFolding
+};
 
 window.flatpickr = flatpickr;
 
@@ -33,50 +42,29 @@ if (!window.ActiveStorage) {
     console.log('ActiveStorage initialized');
 }
 
-// CodeMirrorの確実な読み込み（修正版）
+// CodeMirror 6の確実な読み込み
 async function loadCodeMirror() {
     // 既に window.CodeMirror が正しく設定されている場合はそれを返す
-    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
-        console.log('CodeMirror already available');
+    if (window.CodeMirror && window.CodeMirror.EditorView) {
+        console.log('CodeMirror 6 already available');
         return window.CodeMirror;
     }
 
     try {
-        console.log('Ensuring CodeMirror is available...');
+        console.log('Ensuring CodeMirror 6 is available...');
 
-        // 静的インポートで既に読み込まれているCodeMirrorを使用
-        const CM = CodeMirror;
+        // CodeMirror 6オブジェクトが設定済みかチェック
+        const CM = window.CodeMirror;
         
-        if (!CM || typeof CM.fromTextArea !== 'function') {
-            throw new Error('CodeMirror.fromTextArea not available');
+        if (!CM || !CM.EditorView || !CM.EditorState) {
+            throw new Error('CodeMirror 6 modules not available');
         }
 
-        // window.CodeMirrorが未設定の場合は設定
-        if (!window.CodeMirror) {
-            window.CodeMirror = CM;
-        }
-
-        console.log('CodeMirror confirmed available:', !!CM.fromTextArea);
+        console.log('CodeMirror 6 confirmed available');
         return CM;
 
     } catch (error) {
-        console.error('CodeMirror setup failed:', error);
-        
-        // フォールバック: 動的インポートを試行
-        try {
-            console.log('Attempting dynamic CodeMirror import...');
-            const CodeMirrorModule = await import('codemirror');
-            const CM = CodeMirrorModule.default || CodeMirrorModule;
-            
-            if (CM && typeof CM.fromTextArea === 'function') {
-                window.CodeMirror = CM;
-                console.log('CodeMirror loaded via dynamic import');
-                return CM;
-            }
-        } catch (dynamicError) {
-            console.error('Dynamic CodeMirror import also failed:', dynamicError);
-        }
-        
+        console.error('CodeMirror 6 setup failed:', error);
         return null;
     }
 }

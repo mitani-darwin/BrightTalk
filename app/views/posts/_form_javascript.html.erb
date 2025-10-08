@@ -23,7 +23,7 @@
         initializeContentEditor();
 
         initializeUpdateProgressModal();
-   }
+    }
 
     // Upload handlers
     function initializeUploadHandlers() {
@@ -33,9 +33,32 @@
 
         const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
 
+        // イベントリスナーの活用: キューイングシステムの実装
         if (codeEditorElement) {
+            // テキスト挿入キューの初期化
+            if (!codeEditorElement._insertQueue) {
+                codeEditorElement._insertQueue = [];
+            }
+
             codeEditorElement.addEventListener('code-editor:initialized', () => {
                 console.log('CodeEditor is ready for image insertions');
+
+                // キューに溜まったテキスト挿入要求を処理
+                if (codeEditorElement._insertQueue && codeEditorElement._insertQueue.length > 0) {
+                    console.log(`Processing ${codeEditorElement._insertQueue.length} queued text insertions`);
+
+                    codeEditorElement._insertQueue.forEach((queuedText, index) => {
+                        setTimeout(() => {
+                            const textarea = document.getElementById('contentTextarea');
+                            if (textarea) {
+                                insertMarkdownAtCursor(textarea, queuedText);
+                            }
+                        }, index * 100); // 各挿入を100ms間隔で実行
+                    });
+
+                    // キューをクリア
+                    codeEditorElement._insertQueue = [];
+                }
             });
         }
 
@@ -72,7 +95,7 @@
 
             // フォーム送信時に自動保存を停止
             if (form) {
-                form.addEventListener('submit', function(event) {
+                form.addEventListener('submit', function (event) {
                     console.log('Form submit detected, stopping auto-save');
                     stopAutoSave();
                 });
@@ -96,13 +119,142 @@
         const form = document.querySelector('.needs-validation');
         if (form) {
             form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Custom ordered validation
+                const validationResult = performOrderedValidation();
+                
+                if (validationResult.isValid) {
+                    // Remove validation classes and proceed with submission
+                    form.classList.remove('was-validated');
+                    clearValidationErrors();
+                    
+                    // Allow form submission
+                    event.target.removeEventListener('submit', arguments.callee);
+                    event.target.submit();
+                } else {
+                    // Show the first error in order
+                    showValidationError(validationResult.firstError);
+                    form.classList.add('was-validated');
                 }
-                form.classList.add('was-validated');
             });
         }
+    }
+    
+    // Perform ordered validation as specified in the issue
+    function performOrderedValidation() {
+        const validationOrder = [
+            {
+                field: 'purpose',
+                selector: 'textarea[name="post[purpose]"]',
+                message: '必須項目を入力または選択してください',
+                label: '投稿の目的'
+            },
+            {
+                field: 'post_type_id', 
+                selector: 'select[name="post[post_type_id]"]',
+                message: '必須項目を入力または選択してください',
+                label: '投稿タイプ'
+            },
+            {
+                field: 'category_id',
+                selector: 'select[name="post[category_id]"]', 
+                message: '必須項目を入力または選択してください',
+                label: 'カテゴリー'
+            },
+            {
+                field: 'target_audience',
+                selector: 'input[name="post[target_audience]"]',
+                message: '必須項目を入力または選択してください',
+                label: '対象読者'
+            },
+            {
+                field: 'title',
+                selector: 'input[name="post[title]"]',
+                message: '必須項目を入力または選択してください',
+                label: 'タイトル'
+            }
+        ];
+        
+        for (let i = 0; i < validationOrder.length; i++) {
+            const validation = validationOrder[i];
+            const element = document.querySelector(validation.selector);
+            
+            if (!element) {
+                console.warn(`Element not found for ${validation.field}: ${validation.selector}`);
+                continue;
+            }
+            
+            let isEmpty = false;
+            
+            if (element.tagName === 'SELECT') {
+                isEmpty = !element.value || element.value === '';
+            } else {
+                isEmpty = !element.value || element.value.trim() === '';
+            }
+            
+            if (isEmpty) {
+                return {
+                    isValid: false,
+                    firstError: {
+                        element: element,
+                        message: validation.message,
+                        label: validation.label,
+                        field: validation.field
+                    }
+                };
+            }
+        }
+        
+        return { isValid: true };
+    }
+    
+    // Show validation error for the first missing required field
+    function showValidationError(error) {
+        // Clear previous validation errors
+        clearValidationErrors();
+        
+        // Add invalid class to the problematic field
+        error.element.classList.add('is-invalid');
+        
+        // Find or create error message element
+        let errorDiv = error.element.parentNode.querySelector('.invalid-feedback');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            error.element.parentNode.appendChild(errorDiv);
+        }
+        
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
+        
+        // Scroll to the problematic field
+        error.element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        // Focus on the field
+        setTimeout(() => {
+            error.element.focus();
+        }, 300);
+        
+        // Show alert with generic message
+        showAlert('必須項目を入力または選択してください', 'danger');
+    }
+    
+    // Clear all validation errors
+    function clearValidationErrors() {
+        const invalidElements = document.querySelectorAll('.is-invalid');
+        invalidElements.forEach(element => {
+            element.classList.remove('is-invalid');
+        });
+        
+        const errorDivs = document.querySelectorAll('.invalid-feedback');
+        errorDivs.forEach(div => {
+            div.style.display = 'none';
+        });
     }
 
     // Post type management
@@ -307,18 +459,6 @@
             if (!CodeMirror && window.loadCodeMirror) {
                 CodeMirror = await window.loadCodeMirror();
             }
-
-            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
-                const editor = CodeMirror.fromTextArea(textarea, {
-                    mode: 'markdown',
-                    theme: 'default',
-                    lineNumbers: true,
-                    lineWrapping: true,
-                    indentUnit: 2,
-                    tabSize: 2
-                });
-                console.log('✓ フォールバックでCodeEditorを初期化しました');
-            }
         } catch (error) {
             console.error('フォールバック初期化にも失敗:', error);
         }
@@ -364,7 +504,7 @@
                     // 初期化完了を待つ
                     codeEditorElement.addEventListener('code-editor:initialized', () => {
                         insertMarkdownAtCursor(textarea, markdownLink);
-                    }, { once: true });
+                    }, {once: true});
 
                     // タイムアウトとして1秒後にも実行
                     setTimeout(() => {
@@ -434,28 +574,16 @@
     }
 
     function performAutoSave() {
-        console.log('performAutoSave called, autoSaveEnabled:', window.autoSaveEnabled);
-        console.log('=== DETAILED AUTO-SAVE DEBUG ===');
-        console.log('Current URL:', window.location.href);
-        console.log('Request URL will be:', '/posts/auto_save');
-        console.log('performAutoSave called, autoSaveEnabled:', window.autoSaveEnabled);
-
         // 自動保存が有効かチェック
         if (!window.autoSaveEnabled) {
-            console.log('Auto-save skipped - disabled');
             return;
         }
-
-        console.log('About to send fetch request to:', '/posts/auto_save');
 
         // Auto-save implementation
         const form = document.querySelector('form[data-turbo="false"]');
         if (!form) {
-            console.log('Auto-save skipped - form not found');
             return;
         }
-
-        console.log('Starting auto-save process...');
 
         // 画像ファイルを除外したFormDataを作成
         const formData = new FormData();
@@ -464,7 +592,6 @@
         const postIdInput = document.getElementById('post_id');
         if (postIdInput && postIdInput.value) {
             formData.append('post_id', postIdInput.value);
-            console.log('Post ID added:', postIdInput.value);
         }
 
         // テキストフィールドのみを取得
@@ -508,11 +635,6 @@
             body: formData
         })
             .then(response => {
-                console.log('Auto-save response received:', response.status);
-                console.log('=== RESPONSE DEBUG ===');
-                console.log('Response URL:', response.url);
-                console.log('Response status:', response.status);
-                console.log('Response headers:', [...response.headers.entries()]);
                 const contentType = response.headers.get('content-type');
 
                 if (!response.ok) {
@@ -729,86 +851,125 @@
         if (codeEditorElement) {
             console.log('Found code-editor element:', codeEditorElement);
 
-            // より確実なコントローラー取得方法
-            let controller = null;
+            // 新しい方法: カスタムイベントを使用した確実な挿入
+            const insertEvent = new CustomEvent('code-editor:insert-text', {
+                detail: {text: text},
+                bubbles: true
+            });
 
-            // 方法1: Stimulusアプリケーションから直接取得
-            if (window.Stimulus && window.Stimulus.application) {
-                try {
-                    controller = window.Stimulus.application.getControllerForElementAndIdentifier(
-                        codeEditorElement,
-                        'code-editor'
-                    );
-                } catch (error) {
-                    console.warn('Stimulus application access failed:', error);
-                }
-            }
+            // まずイベントベースの挿入を試行
+            codeEditorElement.dispatchEvent(insertEvent);
 
-            // 方法2: データ属性から取得（フォールバック）
-            if (!controller && codeEditorElement.stimulus) {
-                controller = codeEditorElement.stimulus['code-editor'];
-            }
+            // 少し待ってから成功確認
+            setTimeout(() => {
+                verifyTextInsertion(textarea, text, codeEditorElement);
+            }, 100);
 
-            // 方法3: 直接プロパティアクセス
-            if (!controller && codeEditorElement.codeEditor) {
-                controller = codeEditorElement.codeEditor;
-            }
+            return; // イベントベース処理で完了
+        }
 
-            if (controller && controller.insertText) {
-                console.log('Using Stimulus controller insertText method');
-                controller.insertText(text);
-                return;
-            }
+        // フォールバック: 通常のテキストエリア処理
+        performFallbackInsertion(textarea, text);
+    }
 
-            // CodeMirrorの初期化を待つ
-            if (codeEditorElement.classList.contains('codemirror-initializing')) {
-                console.log('CodeMirror is initializing, waiting...');
-                setTimeout(() => insertMarkdownAtCursor(textarea, text), 1000);
-                return;
-            }
+    function performFallbackInsertion(textarea, text) {
+        console.log('Performing enhanced fallback text insertion');
 
-            // 直接CodeMirrorアクセス
-            const cmWrapper = codeEditorElement.querySelector('.CodeMirror');
-            if (cmWrapper && cmWrapper.CodeMirror) {
-                const cmInstance = cmWrapper.CodeMirror;
-                if (cmInstance && cmInstance.replaceRange) {
-                    console.log('Using direct CodeMirror access');
-                    const cursor = cmInstance.getCursor();
-                    cmInstance.replaceRange(text, cursor);
-                    cmInstance.focus();
+        try {
+            // 1. CodeMirrorエディターへの直接アクセス
+            const cmEditor = textarea.parentNode.querySelector('.cm-editor');
+            if (cmEditor) {
+                // CodeMirror 6のDOM要素から逆引きでエディターインスタンスを取得
+                const editorView = cmEditor.cmView || window.cmEditors?.get?.(cmEditor);
+                if (editorView && editorView.state) {
+                    console.log('Using direct CodeMirror 6 DOM access');
+                    const cursor = editorView.state.selection.main.head;
+                    const transaction = editorView.state.update({
+                        changes: { from: cursor, insert: text }
+                    });
+                    editorView.dispatch(transaction);
+                    editorView.focus();
                     return;
                 }
             }
 
-            console.warn('CodeEditor controller not found or insertText method unavailable');
+            // 2. 通常のテキストエリア処理
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const before = textarea.value.substring(0, start);
+            const after = textarea.value.substring(end);
+
+            textarea.value = before + text + after;
+            const newPos = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newPos;
+            textarea.focus();
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+            console.log('Fallback text insertion completed successfully');
+
+        } catch (error) {
+            console.error('Fallback insertion failed:', error);
         }
-
-        // フォールバック: 通常のテキストエリア処理
-        console.log('Using fallback text insertion method');
-        const start = textarea.selectionStart ?? textarea.value.length;
-        const end = textarea.selectionEnd ?? textarea.value.length;
-        const before = textarea.value.substring(0, start);
-        const after = textarea.value.substring(end);
-
-        textarea.value = before + text + after;
-        const newPos = start + text.length;
-        textarea.selectionStart = textarea.selectionEnd = newPos;
-        textarea.focus();
-        textarea.dispatchEvent(new Event('input'));
-        console.log('Fallback text insertion completed');
     }
 
-    function fallbackTextInsertion(textarea, text) {
-        const start = textarea.selectionStart ?? textarea.value.length;
-        const end = textarea.selectionEnd ?? textarea.value.length;
-        const currentValue = textarea.value;
+    function verifyTextInsertion(textarea, text, codeEditorElement) {
+        // CodeMirrorエディターの値を確認
+        let currentValue = '';
 
-        textarea.value = currentValue.substring(0, start) + text + currentValue.substring(end);
-        const newPos = start + text.length;
-        textarea.selectionStart = textarea.selectionEnd = newPos;
-        textarea.focus();
-        textarea.dispatchEvent(new Event('input'));
-        console.log('Fallback text insertion completed');
+        // CodeMirror 6からの値取得を試行
+        const controller = getCodeEditorController(codeEditorElement);
+        if (controller && controller.editor) {
+            currentValue = controller.editor.state.doc.toString();
+        } else {
+            currentValue = textarea.value;
+        }
+
+        // テキストが挿入されているかチェック
+        if (!currentValue.includes(text.trim())) {
+            console.log('Text insertion verification failed, using fallback');
+            performFallbackInsertion(textarea, text);
+        } else {
+            console.log('Text insertion verified successfully');
+        }
+    }
+
+    function getCodeEditorController(codeEditorElement) {
+        // 改良されたコントローラー取得方法
+        const attempts = [
+            () => window.Stimulus?.application?.getControllerForElementAndIdentifier?.(codeEditorElement, 'code-editor'),
+            () => codeEditorElement.stimulus?.['code-editor'],
+            () => codeEditorElement.codeEditor,
+            () => {
+                // データ属性を使った直接検索
+                const controllerId = codeEditorElement.getAttribute('data-controller');
+                if (controllerId && controllerId.includes('code-editor')) {
+                    return Object.values(codeEditorElement).find(prop =>
+                        prop && typeof prop === 'object' && prop.insertText
+                    );
+                }
+            },
+            () => {
+                // DOM内の全Stimulusコントローラーから検索
+                if (window.Stimulus?.application?.controllers) {
+                    return window.Stimulus.application.controllers.find(c =>
+                        c.identifier === 'code-editor' && c.element === codeEditorElement
+                    );
+                }
+            }
+        ];
+
+        for (const attempt of attempts) {
+            try {
+                const controller = attempt();
+                if (controller && typeof controller.insertText === 'function') {
+                    return controller;
+                }
+            } catch (error) {
+                console.warn('Controller access attempt failed:', error);
+            }
+        }
+
+        return null;
     }
 
     function showError(message) {
@@ -854,7 +1015,7 @@
     // 更新進捗モーダル管理
     function initializeUpdateProgressModal() {
         console.log('Initializing update progress modal...');
-        
+
         const form = document.querySelector('form[data-turbo="false"]');
         const submitBtn = document.getElementById('updateSubmitBtn');
         const progressModal = document.getElementById('updateProgressModal');
@@ -875,7 +1036,7 @@
 
             // 既存のイベントリスナーを削除
             submitBtn.removeEventListener('click', handleUpdateSubmit);
-            
+
             // 新しいイベントリスナーを追加
             submitBtn.addEventListener('click', handleUpdateSubmit);
             console.log('Update progress modal initialized successfully');
@@ -937,12 +1098,16 @@
 
         let progress = 0;
         const steps = [
-            { progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています' },
-            { progress: 35, status: '画像ファイルをS3にアップロード中...', detail: `${window.selectedFiles.length}個のファイルを処理しています` },
-            { progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました' },
-            { progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています' },
-            { progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています' },
-            { progress: 100, status: '完了', detail: '更新が完了しました' }
+            {progress: 15, status: 'フォームデータを検証中...', detail: 'データの整合性を確認しています'},
+            {
+                progress: 35,
+                status: '画像ファイルをS3にアップロード中...',
+                detail: `${window.selectedFiles.length}個のファイルを処理しています`
+            },
+            {progress: 55, status: 'ファイルアップロード完了', detail: 'S3への保存が完了しました'},
+            {progress: 75, status: 'データベースを更新中...', detail: '投稿情報を保存しています'},
+            {progress: 90, status: '最終処理中...', detail: 'インデックスを更新しています'},
+            {progress: 100, status: '完了', detail: '更新が完了しました'}
         ];
 
         let currentStep = 0;
@@ -1023,7 +1188,7 @@
     window.performAutoSave = performAutoSave;
 
     // Initialize all features when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         initializeUpdateProgressModal();
     });
 
@@ -1152,7 +1317,7 @@
     async function generateChecksum(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
                 const hash = CryptoJS.MD5(wordArray);
                 const base64Hash = CryptoJS.enc.Base64.stringify(hash);
@@ -1160,5 +1325,7 @@
             };
             reader.readAsArrayBuffer(file);
         });
-    }3
+    }
+
+    3
 </script>

@@ -98,7 +98,7 @@
     <orderEntry type="library" scope="PROVIDED" name="irb (v1.15.2, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="jbuilder (v2.14.1, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="jmespath (v1.6.2, rbenv: 3.4.4) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="json (v2.15.0, rbenv: 3.4.4) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="json (v2.13.2, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="jwt (v3.1.2, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="kamal (v2.7.0, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="kaminari (v1.2.2, rbenv: 3.4.4) [gem]" level="application" />
@@ -134,7 +134,7 @@
     <orderEntry type="library" scope="PROVIDED" name="parser (v3.3.9.0, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="pp (v0.6.2, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="prettyprint (v0.2.0, rbenv: 3.4.4) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="prism (v1.5.1, rbenv: 3.4.4) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="prism (v1.4.0, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="propshaft (v1.3.1, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="psych (v5.2.6, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="public_suffix (v6.0.2, rbenv: 3.4.4) [gem]" level="application" />
@@ -170,7 +170,7 @@
     <orderEntry type="library" scope="PROVIDED" name="safety_net_attestation (v0.5.0, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sass-embedded (v1.93.2, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="securerandom (v0.4.1, rbenv: 3.4.4) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="selenium-webdriver (v4.35.0, rbenv: 3.4.4) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="selenium-webdriver (v4.36.0, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sitemap_generator (v6.3.0, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="solid_cable (v3.0.12, rbenv: 3.4.4) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="solid_cache (v1.0.7, rbenv: 3.4.4) [gem]" level="application" />

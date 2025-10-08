@@ -1,10 +1,7 @@
 <% if post.errors.any? %>
   <div class="alert alert-danger">
-    <h4><%= pluralize(post.errors.count, "error") %> prohibited this post from being saved:</h4>
     <ul>
-      <% post.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
+      <li>必須項目を入力または選択してください</li>
     </ul>
   </div>
 <% end %>

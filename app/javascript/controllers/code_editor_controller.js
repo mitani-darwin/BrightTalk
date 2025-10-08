@@ -11,53 +11,61 @@ export default class extends Controller {
             return
         }
         this.initializeCodeMirror();
-        
-        // 動的サイズ調整の初期化を追加
-        this.initializeDynamicSizing();
-        
-        // カスタムイベントリスナーを追加
-        this.element.addEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
-    }
+
+        // グローバル参照を作成（デバッグ用）
+        if (!window.codeEditorInstances) {
+            window.codeEditorInstances = new Map();
+        }
+        window.addEventListener('resize', this.resizeHandler);
+
+        this.resizeHandler = this.debounce(() => {
+            this.adjustEditorSize();
+        }, 150);
+
+        // カスタムイベントリスナーを追加（改良版）
+        this.boundInsertHandler = this.handleInsertText.bind(this);
+        this.element.addEventListener('code-editor:insert-text', this.boundInsertHandler);
+   }
 
     async initializeCodeMirror() {
         // 初期化フラグを設定
         this.element.classList.add('codemirror-initializing')
 
         try {
-            // 本番環境での確実なCodeMirror取得
+            // CodeMirror 6の確実な取得
             let CodeMirror = window.CodeMirror;
 
             // 本番環境特有の遅延対応
             if (!CodeMirror && window.loadCodeMirror) {
-                console.log('Loading CodeMirror via loadCodeMirror in production...');
+                console.log('Loading CodeMirror 6 via loadCodeMirror in production...');
                 CodeMirror = await window.loadCodeMirror();
             }
 
-            // さらに厳格な待機処理（本番環境用）
-            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
-                console.log('Waiting for CodeMirror in production environment...');
+            // CodeMirror 6の待機処理
+            if (!CodeMirror || !CodeMirror.EditorView || !CodeMirror.EditorState) {
+                console.log('Waiting for CodeMirror 6 in production environment...');
                 let retryCount = 0;
-                const maxRetries = 30; // 本番環境用に増加
+                const maxRetries = 30;
 
                 while (retryCount < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 300)); // 待機時間も増加
+                    await new Promise(resolve => setTimeout(resolve, 300));
 
-                    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
+                    if (window.CodeMirror && window.CodeMirror.EditorView && window.CodeMirror.EditorState) {
                         CodeMirror = window.CodeMirror;
                         break;
                     }
 
-                    console.log(`CodeMirror wait attempt: ${retryCount + 1}/${maxRetries}`);
+                    console.log(`CodeMirror 6 wait attempt: ${retryCount + 1}/${maxRetries}`);
                     retryCount++;
                 }
             }
 
-            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
-                throw new Error("CodeMirror is not available in production after waiting");
+            if (!CodeMirror || !CodeMirror.EditorView || !CodeMirror.EditorState) {
+                throw new Error("CodeMirror 6 is not available in production after waiting");
             }
 
         } catch (error) {
-            console.error("Failed to initialize CodeMirror in production:", error);
+            console.error("Failed to initialize CodeMirror 6 in production:", error);
             return;
         }
 
@@ -70,32 +78,35 @@ export default class extends Controller {
         console.log("Found textarea in production:", textarea.id);
 
         try {
-            // 本番環境用のより厳格なCodeMirror初期化
-            this.editor = window.CodeMirror.fromTextArea(textarea, {
-                mode: 'markdown',
-                theme: 'default',
-                lineNumbers: true,
-                lineWrapping: true,
-                indentUnit: 2,
-                tabSize: 2,
-                extraKeys: {
-                    "Ctrl-Space": "autocomplete"
-                },
-                viewportMargin: Infinity, // 本番環境での表示改善
+            // CodeMirror 6の初期化
+            const { EditorView, EditorState, basicSetup, markdown } = CodeMirror;
+            
+            const state = EditorState.create({
+                doc: textarea.value,
+                extensions: [
+                    basicSetup,
+                    markdown(),
+                    EditorView.lineWrapping,
+                    EditorView.updateListener.of((update) => {
+                        if (update.docChanged) {
+                            textarea.value = update.state.doc.toString();
+                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    })
+                ]
             });
 
-            // 本番環境での確実な初期化確認
-            if (this.editor && this.editor.getDoc && this.editor.getWrapperElement) {
-                console.log('CodeMirror successfully initialized in production');
+            this.editor = new EditorView({
+                state,
+                parent: textarea.parentNode
+            });
+            
+            // テキストエリアを非表示にする
+            textarea.style.display = 'none';
 
-                // 本番環境での強制サイズ設定
-                const wrapper = this.editor.getWrapperElement();
-                if (wrapper) {
-                    wrapper.style.height = '600px';
-                    wrapper.style.minHeight = '600px';
-                    wrapper.style.display = 'block';
-                    wrapper.style.visibility = 'visible';
-                }
+            // CodeMirror 6での確実な初期化確認
+            if (this.editor && this.editor.dom) {
+                console.log('CodeMirror 6 successfully initialized in production');
 
                 this.element.classList.remove('codemirror-initializing');
                 this.element.classList.add('codemirror-initialized');
@@ -103,76 +114,57 @@ export default class extends Controller {
                 // 初期化完了イベントを発火
                 this.dispatch('initialized', { detail: { editor: this.editor } });
 
-                // 本番環境での遅延リフレッシュ
-                setTimeout(() => {
-                    if (this.editor && this.editor.refresh) {
-                        this.editor.refresh();
-                        console.log('Production CodeMirror refreshed');
-                    }
-                }, 500);
+                console.log('CodeMirror 6 initialization completed');
 
             } else {
-                console.error('CodeMirror editor creation failed in production');
+                console.error('CodeMirror 6 editor creation failed in production');
             }
 
+            this.adjustEditorSize();
         } catch (error) {
             console.error('CodeMirror initialization error in production:', error);
         }
     }
-    initializeDynamicSizing() {
-        console.log('動的サイズ調整を初期化中...');
-        
-        // 初期サイズ調整
-        this.adjustEditorSize();
-        
-        // リサイズイベントリスナー
-        this.resizeHandler = this.debounce(() => this.adjustEditorSize(), 250);
-        window.addEventListener('resize', this.resizeHandler);
-        
-        // デバイス向き変更イベント
-        this.orientationHandler = () => setTimeout(() => this.adjustEditorSize(), 500);
-        window.addEventListener('orientationchange', this.orientationHandler);
-        
-        console.log('動的サイズ調整が有効になりました');
-    }
 
     adjustEditorSize() {
-        if (!this.editor) return;
+        // エディターが初期化されているかチェック
+        if (!this.editor || !this.editor.dom) return;
 
-        // より大きなサイズ設定
-        const minHeight = 600; // 400px → 600px
-        const maxHeight = 800; // 600px → 800px
-        const targetHeight = Math.min(maxHeight, Math.max(minHeight, window.innerHeight * 0.6));
+        const viewportHeight = window.innerHeight;
+        const buttonAreaHeight = 100; // ボタンエリア（投稿・キャンセルボタン）
+        const headerHeight = this.getEstimatedHeaderHeight(); // ヘッダー・タイトル部分
+        const safetyMargin = this.getDeviceSpecificAdjustments().safetyMargin; // 安全余白
 
-        // CodeMirrorの各要素に確実に大きなサイズを適用
-        const wrapper = this.editor.getWrapperElement();
-        const scrollElement = this.editor.getScrollerElement();
+        // 利用可能な高さを計算
+        const availableHeight = (viewportHeight - buttonAreaHeight - headerHeight - safetyMargin) * 0.6;
 
-        if (wrapper) {
-            // wrapperに直接大きなサイズ設定
-            wrapper.style.height = `${targetHeight}px`;
-            wrapper.style.minHeight = `${minHeight}px`;
-            wrapper.style.maxHeight = `${maxHeight}px`;
-            wrapper.style.overflow = 'hidden';
+        console.log('Viewport height:', viewportHeight);
+        console.log('Button area height:', buttonAreaHeight);
+        console.log('Header height:', headerHeight);
+        console.log('Safety margin:', safetyMargin);
+        console.log('Available viewport height:', availableHeight);
 
-            // CSSクラスも追加
-            wrapper.classList.add('codemirror-sized');
+        // CodeMirror 6のAPIを使用してエディターサイズを調整
+        const editorDom = this.editor.dom;
+        if (editorDom) {
+            editorDom.style.maxHeight = `${availableHeight}px`;
+            editorDom.style.height = `${availableHeight}px`;
+            editorDom.style.width = '100%';
         }
+    }
 
-        if (scrollElement) {
-            // scrollElementにも同じ大きなサイズ設定
-            scrollElement.style.height = `${targetHeight}px`;
-            scrollElement.style.minHeight = `${minHeight}px`;
-            scrollElement.style.maxHeight = `${maxHeight}px`;
-            scrollElement.style.overflowY = 'auto';
-        }
+    getEstimatedHeaderHeight() {
+        const navbar = document.querySelector('.navbar, nav, header');
+        return navbar ? navbar.offsetHeight + 20 : 80;
+    }
 
-        // 強制的にリフレッシュ
-        setTimeout(() => {
-            this.editor.refresh();
-        }, 100);
+    getDeviceSpecificAdjustments() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        console.log(`✅ CodeMirrorサイズをより大きく設定: ${targetHeight}px (${minHeight}px-${maxHeight}px)`);
+        return {
+            safetyMargin: isMobile ? 40 : 20,
+            maxContentRatio: isMobile ? 0.5 : 0.6
+        };
     }
 
     debounce(func, wait) {
@@ -188,24 +180,33 @@ export default class extends Controller {
         console.log('Text to insert:', text);
         console.log('Editor available:', !!this.editor);
 
-        if (this.editor && this.editor.getDoc) {
-            const cursor = this.editor.getCursor();
+        if (this.editor && this.editor.state) {
+            const cursor = this.editor.state.selection.main.head;
             console.log('Current cursor position:', cursor);
 
-            this.editor.replaceRange(text, cursor);
+            const transaction = this.editor.state.update({
+                changes: { from: cursor, insert: text }
+            });
+            
+            this.editor.dispatch(transaction);
             this.editor.focus();
 
             console.log('Text insertion completed successfully');
         } else {
-            console.warn('CodeMirror editor not available for text insertion');
+            console.warn('CodeMirror 6 editor not available for text insertion');
         }
     }
 
+
     handleInsertText(event) {
-        console.log('Handling code-editor:insert-text event')
-        const text = event.detail.text
+        console.log('=== CodeEditor received insert-text event ===');
+        const text = event.detail.text;
         if (text) {
-            this.insertText(text)
+            console.log('Inserting text via event:', text);
+            this.insertText(text);
+
+            // 成功イベントを発火
+            this.dispatch('text-inserted', {detail: {text: text}});
         }
     }
 
@@ -220,15 +221,15 @@ export default class extends Controller {
         
         // カスタムイベントリスナーを削除
         this.element.removeEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
-        
-        if (this.editor) {
-            try {
-                this.editor.toTextArea()
-                this.editor = null
-                console.log('CodeEditor disconnected')
-            } catch (error) {
-                console.error('Error during CodeEditor disconnect:', error)
-            }
+
+        // イベントリスナーを削除
+        if (this.boundInsertHandler) {
+            this.element.removeEventListener('code-editor:insert-text', this.boundInsertHandler);
+        }
+
+        // グローバル参照を削除
+        if (window.codeEditorInstances) {
+            window.codeEditorInstances.delete(this.element);
         }
     }
 }
