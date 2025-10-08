@@ -1098,14 +1098,16 @@ main {
   }
 }
 
-/* 投稿ボタンを画面下部に固定 */
+/* 投稿ボタンを画面下部に固定（常に表示） */
 .post-form-buttons {
   position: sticky;
-  bottom: 20px;
-  background: white;
+  bottom: 0;               /* ビューポート下端に吸着 */
+  background: #fff;        /* コンテンツと分離 */
   padding: 10px 0;
   border-top: 1px solid #dee2e6;
   margin-top: auto;
+  z-index: 1020;           /* ヘッダー等より手前に */
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
 }
 
 /* フォームレイアウトをより大きく最適化 */
