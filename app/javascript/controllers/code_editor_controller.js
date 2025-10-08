@@ -78,15 +78,51 @@ export default class extends Controller {
         console.log("Found textarea in production:", textarea.id);
 
         try {
-            // CodeMirror 6の初期化
-            const { EditorView, EditorState, basicSetup, markdown } = CodeMirror;
+            // CodeMirror 6の初期化 with enhanced markdown highlighting
+            const { EditorView, EditorState, basicSetup, markdown, oneDark } = CodeMirror;
             
             const state = EditorState.create({
                 doc: textarea.value,
                 extensions: [
                     basicSetup,
-                    markdown(),
+                    markdown({
+                        codeLanguages: ['javascript', 'python', 'ruby', 'html', 'css', 'sql'],
+                        addKeymap: true
+                    }),
                     EditorView.lineWrapping,
+                    EditorView.theme({
+                        '&': {
+                            fontSize: '14px',
+                            fontFamily: 'Monaco, "Lucida Console", monospace'
+                        },
+                        '.cm-content': {
+                            padding: '16px',
+                            minHeight: '300px'
+                        },
+                        '.cm-focused': {
+                            outline: '2px solid #0d6efd'
+                        },
+                        '.cm-editor': {
+                            border: '1px solid #ced4da',
+                            borderRadius: '0.375rem'
+                        },
+                        // Enhanced markdown syntax highlighting
+                        '.cm-header': { color: '#ff0000', fontWeight: 'bold' },
+                        '.cm-strong': { color: '#81c784', fontWeight: 'bold' },
+                        '.cm-emphasis': { color: '#ffb74d', fontStyle: 'italic' },
+                        '.cm-link': { color: '#64b5f6', textDecoration: 'underline' },
+                        '.cm-monospace': { 
+                            color: '#ff8a65', 
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            padding: '2px 4px',
+                            borderRadius: '3px'
+                        },
+                        '.cm-url': { color: '#64b5f6' },
+                        '.cm-quote': { color: '#a5d6a7', fontStyle: 'italic' },
+                        '.cm-list': { color: '#ce93d8' },
+                        '.cm-hr': { color: '#90a4ae' },
+                        '.cm-strikethrough': { textDecoration: 'line-through', color: '#ef5350' }
+                    }),
                     EditorView.updateListener.of((update) => {
                         if (update.docChanged) {
                             textarea.value = update.state.doc.toString();
