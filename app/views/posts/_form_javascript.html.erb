@@ -119,13 +119,142 @@
         const form = document.querySelector('.needs-validation');
         if (form) {
             form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Custom ordered validation
+                const validationResult = performOrderedValidation();
+                
+                if (validationResult.isValid) {
+                    // Remove validation classes and proceed with submission
+                    form.classList.remove('was-validated');
+                    clearValidationErrors();
+                    
+                    // Allow form submission
+                    event.target.removeEventListener('submit', arguments.callee);
+                    event.target.submit();
+                } else {
+                    // Show the first error in order
+                    showValidationError(validationResult.firstError);
+                    form.classList.add('was-validated');
                 }
-                form.classList.add('was-validated');
             });
         }
+    }
+    
+    // Perform ordered validation as specified in the issue
+    function performOrderedValidation() {
+        const validationOrder = [
+            {
+                field: 'purpose',
+                selector: 'textarea[name="post[purpose]"]',
+                message: '必須項目を入力または選択してください',
+                label: '投稿の目的'
+            },
+            {
+                field: 'post_type_id', 
+                selector: 'select[name="post[post_type_id]"]',
+                message: '必須項目を入力または選択してください',
+                label: '投稿タイプ'
+            },
+            {
+                field: 'category_id',
+                selector: 'select[name="post[category_id]"]', 
+                message: '必須項目を入力または選択してください',
+                label: 'カテゴリー'
+            },
+            {
+                field: 'target_audience',
+                selector: 'input[name="post[target_audience]"]',
+                message: '必須項目を入力または選択してください',
+                label: '対象読者'
+            },
+            {
+                field: 'title',
+                selector: 'input[name="post[title]"]',
+                message: '必須項目を入力または選択してください',
+                label: 'タイトル'
+            }
+        ];
+        
+        for (let i = 0; i < validationOrder.length; i++) {
+            const validation = validationOrder[i];
+            const element = document.querySelector(validation.selector);
+            
+            if (!element) {
+                console.warn(`Element not found for ${validation.field}: ${validation.selector}`);
+                continue;
+            }
+            
+            let isEmpty = false;
+            
+            if (element.tagName === 'SELECT') {
+                isEmpty = !element.value || element.value === '';
+            } else {
+                isEmpty = !element.value || element.value.trim() === '';
+            }
+            
+            if (isEmpty) {
+                return {
+                    isValid: false,
+                    firstError: {
+                        element: element,
+                        message: validation.message,
+                        label: validation.label,
+                        field: validation.field
+                    }
+                };
+            }
+        }
+        
+        return { isValid: true };
+    }
+    
+    // Show validation error for the first missing required field
+    function showValidationError(error) {
+        // Clear previous validation errors
+        clearValidationErrors();
+        
+        // Add invalid class to the problematic field
+        error.element.classList.add('is-invalid');
+        
+        // Find or create error message element
+        let errorDiv = error.element.parentNode.querySelector('.invalid-feedback');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            error.element.parentNode.appendChild(errorDiv);
+        }
+        
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
+        
+        // Scroll to the problematic field
+        error.element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        // Focus on the field
+        setTimeout(() => {
+            error.element.focus();
+        }, 300);
+        
+        // Show alert with generic message
+        showAlert('必須項目を入力または選択してください', 'danger');
+    }
+    
+    // Clear all validation errors
+    function clearValidationErrors() {
+        const invalidElements = document.querySelectorAll('.is-invalid');
+        invalidElements.forEach(element => {
+            element.classList.remove('is-invalid');
+        });
+        
+        const errorDivs = document.querySelectorAll('.invalid-feedback');
+        errorDivs.forEach(div => {
+            div.style.display = 'none';
+        });
     }
 
     // Post type management
