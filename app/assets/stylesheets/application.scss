@@ -127,9 +127,9 @@ main {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
   background-color: #ffffff;
 
-  height: auto !important;  /* 固定高さを削除 */
-  min-height: 200px !important;  /* 最小高さを小さく */
-  max-height: calc(100vh - 400px) !important;  /* 画面に収まる最大高さ */
+  height: auto !important; /* 固定高さを削除 */
+  min-height: 200px !important; /* 最小高さを小さく */
+  max-height: calc(100vh - 400px) !important; /* 画面に収まる最大高さ */
   overflow: hidden !important;
 
   &.CodeMirror-focused {
@@ -159,7 +159,7 @@ main {
   }
 
   .CodeMirror-scroll {
-    height: auto !important;  /* 固定高さを削除 */
+    height: auto !important; /* 固定高さを削除 */
     min-height: 400px !important;
     max-height: 600px !important;
     overflow-y: auto !important;
@@ -1049,40 +1049,13 @@ main {
 
 /* content用のtextareaをより大きく */
 #contentTextarea {
-  height: auto !important;  /* 固定高さを削除 */
+  height: auto !important; /* 固定高さを削除 */
   min-height: 200px !important;
   max-height: calc(100vh - 400px) !important;
 }
 
 /* CodeMirrorエディター用のレスポンシブスタイル */
 .codemirror-sized {
-  width: 100% !important;
-  min-height: 200px !important;
-  overflow: auto;
-
-  /* ウィンドウサイズに応じた高さ調整 */
-  height: calc(100vh - 450px) !important;  /* より小さく調整 */
-  max-height: calc(100vh - 400px) !important;
-
-  /* 大画面での調整 */
-  @media (min-width: 1200px) {
-    height: calc(100vh - 400px) !important;
-    max-height: calc(100vh - 350px) !important;
-  }
-
-  /* 中画面での調整 */
-  @media (min-width: 768px) and (max-width: 1199px) {
-    height: calc(100vh - 450px) !important;
-    max-height: calc(100vh - 400px) !important;
-  }
-
-  /* 小画面での調整 */
-  @media (max-width: 767px) {
-    min-height: 200px !important;
-    height: calc(100vh - 500px) !important;
-    max-height: calc(100vh - 450px) !important;
-  }
-
   .cm-editor {
     height: 100% !important;
     width: 100% !important;
@@ -1096,49 +1069,50 @@ main {
 /* 投稿ボタンを画面下部に固定（常に表示） */
 .post-form-buttons {
   position: sticky;
-  bottom: 0;               /* ビューポート下端に吸着 */
-  background: #fff;        /* コンテンツと分離 */
+  bottom: 0; /* ビューポート下端に吸着 */
+  background: #fff; /* コンテンツと分離 */
   padding: 10px 0;
   border-top: 1px solid #dee2e6;
   margin-top: auto;
-  z-index: 1020;           /* ヘッダー等より手前に */
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+  z-index: 1020; /* ヘッダー等より手前に */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* フォームレイアウトをより大きく最適化 */
 .flex-grow-1.d-flex.flex-column {
-  min-height: auto !important;  /* 固定高さを削除 */
+  min-height: auto !important; /* 固定高さを削除 */
 
   .form-control.flex-grow-1 {
-    flex: 1 1 auto !important;  /* 自動サイズに変更 */
+    flex: 1 1 auto !important; /* 自動サイズに変更 */
     height: auto !important;
-    min-height: 200px !important;  /* 最小高さを小さく */
+    min-height: 200px !important; /* 最小高さを小さく */
   }
 }
 
-/* 最強制的なCodeMirrorサイズ設定 */
-[data-controller="code-editor"] .CodeMirror,
-[data-controller*="code-editor"] .CodeMirror {
-  height: auto !important;  /* 固定高さを削除 */
-  min-height: 200px !important;
-  max-height: calc(100vh - 400px) !important;
-}
-
-[data-controller="code-editor"] .CodeMirror-scroll,
-[data-controller*="code-editor"] .CodeMirror-scroll {
-  height: auto !important;  /* 固定高さを削除 */
-  min-height: 200px !important;
-  max-height: calc(100vh - 400px) !important;
-  overflow-y: auto !important;
-}
-
 .video-container {
-  width: 100%;          /* 画面幅いっぱい */
-  max-width: 960px;     /* 必要なら最大幅制限 */
-  margin: 0 auto;       /* 中央寄せ */
+  width: 100%; /* 画面幅いっぱい */
+  max-width: 960px; /* 必要なら最大幅制限 */
+  margin: 0 auto; /* 中央寄せ */
 }
 
 .video-container .video-js {
   width: 100%;
   height: auto;
+}
+
+/* textarea を使う場合 */
+#contentTextarea {
+  overflow: auto;
+}
+
+/* CodeMirror 側（内部スクロールを確実に表示） */
+.CodeMirror-scroll {
+  overflow-y: scroll !important; /* 常にスクロールバーを出す */
+  scrollbar-gutter: stable both-edges; /* スクロールバー分の揺れ防止（対応ブラウザ） */
+}
+
+/* CodeMirror 6 用（内部スクロールを確実に表示） */
+.cm-scroller {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable both-edges;
 }

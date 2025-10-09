@@ -38,7 +38,7 @@
                        class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
                        id: "contentTextarea",
                        required: true,
-                       style: "resize: vertical; font-family: Monaco, 'Lucida Console', monospace;",
+                       style: "resize: none; font-family: Monaco, 'Lucida Console', monospace;",
                        placeholder: "内容を入力してください",
                        data: { code_editor_target: "textarea" } %>
   </div>

@@ -387,11 +387,14 @@
                     lineWrapping: true,
                     indentUnit: 2,
                     tabSize: 2,
-                    viewportMargin: Infinity
+                    // viewportMargin: Infinity  ← これを削除 or 10 に変更
+                    viewportMargin: 10
                 });
 
                 // 本番環境での確実な表示設定
                 const wrapper = editor.getWrapperElement();
+                const scroller = editor.getScrollerElement ? editor.getScrollerElement() : wrapper.querySelector('.CodeMirror-scroll');
+                if (scroller) scroller.style.overflowY = 'auto';
                 if (wrapper) {
                     wrapper.style.height = '600px';
                     wrapper.style.minHeight = '600px';
@@ -1350,44 +1353,77 @@
         const btnsH      = elH('.post-form-buttons');
 
         // 余白（Bootstrapの上下マージンやcontainerのパディング等の見込み）
-        const safetyPadding = 0; // 24→32 に引き上げ（端末差・フォント差の吸収）
+        const safetyPadding = 32; // 24→32 に引き上げ（端末差・フォント差の吸収）
 
         // ビューポートから差し引き
         const totalMinus = headerH + footerH + kpLabelH + kpInputH + kpHelpH + titleLblH + titleInpH + contentLblH + btnsH + safetyPadding;
         const available  = Math.max(200, Math.floor(window.innerHeight - totalMinus));
 
+        // フッターに隠れないよう、ボタンをフッター分だけ持ち上げる＋フォーム全体に下パディングを確保
+        const buttonsEl = document.querySelector('.post-form-buttons');
+        if (buttonsEl) {
+            buttonsEl.style.position = 'sticky';
+            buttonsEl.style.zIndex = '1030';
+            buttonsEl.style.bottom = (footerH + 8) + 'px'; // フッター高 + 余白
+        }
+        const formContainer = document.getElementById('formContainer');
+        if (formContainer) {
+            // ボタンがフッターに重ならないように、フォーム下に余白を常に確保
+            const reserve = footerH + 16; // 少し余裕
+            formContainer.style.paddingBottom = reserve + 'px';
+        }
+
         // 通常の textarea に適用
         textarea.style.height = available + 'px';
         textarea.style.minHeight = available + 'px';
-        textarea.style.boxSizing = 'border-box'; // パディング分でのはみ出し防止
+        textarea.style.boxSizing = 'border-box';
+        textarea.style.overflow = 'auto';
 
-        console.log('-----------------------------')
-        console.log('headerH: ' + headerH);
-        console.log('footerH: ' + footerH);
-        console.log('kpLabelH: ' + kpLabelH);
-        console.log('kpInputH: ' + kpInputH);
-        console.log('titleLblH: ' + titleLblH);
-        console.log('titleInpH: ' + titleInpH);
-        console.log('btnsH: ' + btnsH);
-        console.log('safetyPadding: ' + safetyPadding);
-        console.log('available: ' + available);
-        console.log('totalMinus: ' + totalMinus);
-
-        textarea.style.height = available + 'px';
-        textarea.style.minHeight = available + 'px';
-
-        // CodeMirror があればラッパーにも適用
+        // CodeMirror があればラッパと scroller にも適用
         const cmWrapper = textarea.nextElementSibling && textarea.nextElementSibling.classList && textarea.nextElementSibling.classList.contains('CodeMirror')
             ? textarea.nextElementSibling
             : null;
 
         if (cmWrapper) {
-            cmWrapper.style.height = available + 'px';
-            cmWrapper.style.minHeight = available + 'px';
-            cmWrapper.style.boxSizing = 'border-box';
+            cmWrapper.style.setProperty('height', available + 'px', 'important');
+            cmWrapper.style.setProperty('min-height', available + 'px', 'important');
+            cmWrapper.style.setProperty('box-sizing', 'border-box');
+            cmWrapper.style.setProperty('overflow', 'hidden', 'important');
+
+            // 内部スクローラにも高さを適用（これで中スクロールになる）
+            const editor = cmWrapper.CodeMirror;
+            if (editor && typeof editor.setSize === 'function') {
+                editor.setSize(null, available); // 横幅は自動、縦だけ固定
+            }
+
+            // スクロラも !important で固定
+            const scroller = cmWrapper.querySelector('.CodeMirror-scroll');
+            if (scroller) {
+                scroller.style.setProperty('height', available + 'px', 'important');
+                scroller.style.setProperty('max-height', available + 'px', 'important');
+                scroller.style.setProperty('overflow-y', 'auto', 'important');
+            }
 
             if (cmWrapper.CodeMirror && typeof cmWrapper.CodeMirror.refresh === 'function') {
                 cmWrapper.CodeMirror.refresh();
+            }
+        }
+
+        // --- CodeMirror 6（CM6）対応 ---
+        const container = textarea.closest('[data-controller*="code-editor"]') || document;
+        const cm6Wrapper = container.querySelector('.cm-editor');
+        if (cm6Wrapper) {
+            cm6Wrapper.style.setProperty('height', available + 'px', 'important');
+            cm6Wrapper.style.setProperty('min-height', available + 'px', 'important');
+            cm6Wrapper.style.setProperty('box-sizing', 'border-box');
+            cm6Wrapper.style.setProperty('overflow', 'hidden', 'important');
+
+            const scroller6 = cm6Wrapper.querySelector('.cm-scroller');
+            if (scroller6) {
+                scroller6.style.setProperty('height', available + 'px', 'important');
+                scroller6.style.setProperty('max-height', available + 'px', 'important');
+                scroller6.style.setProperty('overflow-y', 'auto', 'important');
+                scroller6.style.setProperty('overscroll-behavior', 'contain');
             }
         }
     }
@@ -1409,5 +1445,6 @@
     document.addEventListener('code-editor:initialized', () => {
         adjustContentTextareaHeight();
         setTimeout(adjustContentTextareaHeight, 50);
+        setTimeout(adjustContentTextareaHeight, 200);
     });
 </script>
