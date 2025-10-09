@@ -121,15 +121,15 @@
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                
+
                 // Custom ordered validation
                 const validationResult = performOrderedValidation();
-                
+
                 if (validationResult.isValid) {
                     // Remove validation classes and proceed with submission
                     form.classList.remove('was-validated');
                     clearValidationErrors();
-                    
+
                     // Allow form submission
                     event.target.removeEventListener('submit', arguments.callee);
                     event.target.submit();
@@ -141,7 +141,7 @@
             });
         }
     }
-    
+
     // Perform ordered validation as specified in the issue
     function performOrderedValidation() {
         const validationOrder = [
@@ -152,14 +152,14 @@
                 label: '投稿の目的'
             },
             {
-                field: 'post_type_id', 
+                field: 'post_type_id',
                 selector: 'select[name="post[post_type_id]"]',
                 message: '必須項目を入力または選択してください',
                 label: '投稿タイプ'
             },
             {
                 field: 'category_id',
-                selector: 'select[name="post[category_id]"]', 
+                selector: 'select[name="post[category_id]"]',
                 message: '必須項目を入力または選択してください',
                 label: 'カテゴリー'
             },
@@ -176,24 +176,24 @@
                 label: 'タイトル'
             }
         ];
-        
+
         for (let i = 0; i < validationOrder.length; i++) {
             const validation = validationOrder[i];
             const element = document.querySelector(validation.selector);
-            
+
             if (!element) {
                 console.warn(`Element not found for ${validation.field}: ${validation.selector}`);
                 continue;
             }
-            
+
             let isEmpty = false;
-            
+
             if (element.tagName === 'SELECT') {
                 isEmpty = !element.value || element.value === '';
             } else {
                 isEmpty = !element.value || element.value.trim() === '';
             }
-            
+
             if (isEmpty) {
                 return {
                     isValid: false,
@@ -206,18 +206,18 @@
                 };
             }
         }
-        
-        return { isValid: true };
+
+        return {isValid: true};
     }
-    
+
     // Show validation error for the first missing required field
     function showValidationError(error) {
         // Clear previous validation errors
         clearValidationErrors();
-        
+
         // Add invalid class to the problematic field
         error.element.classList.add('is-invalid');
-        
+
         // Find or create error message element
         let errorDiv = error.element.parentNode.querySelector('.invalid-feedback');
         if (!errorDiv) {
@@ -225,32 +225,32 @@
             errorDiv.className = 'invalid-feedback';
             error.element.parentNode.appendChild(errorDiv);
         }
-        
+
         errorDiv.textContent = error.message;
         errorDiv.style.display = 'block';
-        
+
         // Scroll to the problematic field
-        error.element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
+        error.element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
         });
-        
+
         // Focus on the field
         setTimeout(() => {
             error.element.focus();
         }, 300);
-        
+
         // Show alert with generic message
         showAlert('必須項目を入力または選択してください', 'danger');
     }
-    
+
     // Clear all validation errors
     function clearValidationErrors() {
         const invalidElements = document.querySelectorAll('.is-invalid');
         invalidElements.forEach(element => {
             element.classList.remove('is-invalid');
         });
-        
+
         const errorDivs = document.querySelectorAll('.invalid-feedback');
         errorDivs.forEach(div => {
             div.style.display = 'none';
@@ -885,7 +885,7 @@
                     console.log('Using direct CodeMirror 6 DOM access');
                     const cursor = editorView.state.selection.main.head;
                     const transaction = editorView.state.update({
-                        changes: { from: cursor, insert: text }
+                        changes: {from: cursor, insert: text}
                     });
                     editorView.dispatch(transaction);
                     editorView.focus();
@@ -903,7 +903,7 @@
             const newPos = start + text.length;
             textarea.selectionStart = textarea.selectionEnd = newPos;
             textarea.focus();
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('input', {bubbles: true}));
 
             console.log('Fallback text insertion completed successfully');
 
@@ -1327,5 +1327,87 @@
         });
     }
 
-    3
+    // 高さ測定のユーティリティ
+    function elH(selector) {
+        const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+        return el ? Math.ceil(el.getBoundingClientRect().height) : 0;
+    }
+
+    function adjustContentTextareaHeight() {
+        const textarea = document.getElementById('contentTextarea');
+        if (!textarea) return;
+
+        // 計測対象
+        // 計測対象
+        const headerH    = elH('nav.navbar');
+        const footerH    = elH('footer');
+        const kpLabelH   = elH('label[for="post_key_points"]');
+        const kpInputH   = elH('#post_key_points');
+        const kpHelpH    = elH('#post_key_points ~ .form-text'); // ← 要点・ポイントの補足テキスト
+        const titleLblH  = elH('label[for="post_title"]');
+        const titleInpH  = elH('#post_title');
+        const contentLblH= elH('label[for="post_content"]');    // ← 内容ラベル（Markdownガイド含む）
+        const btnsH      = elH('.post-form-buttons');
+
+        // 余白（Bootstrapの上下マージンやcontainerのパディング等の見込み）
+        const safetyPadding = 0; // 24→32 に引き上げ（端末差・フォント差の吸収）
+
+        // ビューポートから差し引き
+        const totalMinus = headerH + footerH + kpLabelH + kpInputH + kpHelpH + titleLblH + titleInpH + contentLblH + btnsH + safetyPadding;
+        const available  = Math.max(200, Math.floor(window.innerHeight - totalMinus));
+
+        // 通常の textarea に適用
+        textarea.style.height = available + 'px';
+        textarea.style.minHeight = available + 'px';
+        textarea.style.boxSizing = 'border-box'; // パディング分でのはみ出し防止
+
+        console.log('-----------------------------')
+        console.log('headerH: ' + headerH);
+        console.log('footerH: ' + footerH);
+        console.log('kpLabelH: ' + kpLabelH);
+        console.log('kpInputH: ' + kpInputH);
+        console.log('titleLblH: ' + titleLblH);
+        console.log('titleInpH: ' + titleInpH);
+        console.log('btnsH: ' + btnsH);
+        console.log('safetyPadding: ' + safetyPadding);
+        console.log('available: ' + available);
+        console.log('totalMinus: ' + totalMinus);
+
+        textarea.style.height = available + 'px';
+        textarea.style.minHeight = available + 'px';
+
+        // CodeMirror があればラッパーにも適用
+        const cmWrapper = textarea.nextElementSibling && textarea.nextElementSibling.classList && textarea.nextElementSibling.classList.contains('CodeMirror')
+            ? textarea.nextElementSibling
+            : null;
+
+        if (cmWrapper) {
+            cmWrapper.style.height = available + 'px';
+            cmWrapper.style.minHeight = available + 'px';
+            cmWrapper.style.boxSizing = 'border-box';
+
+            if (cmWrapper.CodeMirror && typeof cmWrapper.CodeMirror.refresh === 'function') {
+                cmWrapper.CodeMirror.refresh();
+            }
+        }
+    }
+
+    // 初期化とリサイズで反映
+    document.addEventListener('DOMContentLoaded', () => {
+        adjustContentTextareaHeight();
+
+        // ナビの開閉等で高さが変わる可能性があるため、少し遅延して再計算
+        setTimeout(adjustContentTextareaHeight, 100);
+        setTimeout(adjustContentTextareaHeight, 300);
+    });
+
+    window.addEventListener('resize', () => {
+        adjustContentTextareaHeight();
+    });
+
+    // Stimulus の code-editor が非同期に立ち上がる場合に備えて
+    document.addEventListener('code-editor:initialized', () => {
+        adjustContentTextareaHeight();
+        setTimeout(adjustContentTextareaHeight, 50);
+    });
 </script>

@@ -16,11 +16,6 @@ export default class extends Controller {
         if (!window.codeEditorInstances) {
             window.codeEditorInstances = new Map();
         }
-        window.addEventListener('resize', this.resizeHandler);
-
-        this.resizeHandler = this.debounce(() => {
-            this.adjustEditorSize();
-        }, 150);
 
         // カスタムイベントリスナーを追加（改良版）
         this.boundInsertHandler = this.handleInsertText.bind(this);
@@ -155,61 +150,11 @@ export default class extends Controller {
             } else {
                 console.error('CodeMirror 6 editor creation failed in production');
             }
-
-            this.adjustEditorSize();
-        } catch (error) {
+       } catch (error) {
             console.error('CodeMirror initialization error in production:', error);
         }
     }
 
-    adjustEditorSize() {
-        // エディターが初期化されているかチェック
-        if (!this.editor || !this.editor.dom) return;
-
-        const viewportHeight = window.innerHeight;
-        const buttonAreaHeight = 100; // ボタンエリア（投稿・キャンセルボタン）
-        const headerHeight = this.getEstimatedHeaderHeight(); // ヘッダー・タイトル部分
-        const safetyMargin = this.getDeviceSpecificAdjustments().safetyMargin; // 安全余白
-
-        // 利用可能な高さを計算
-        const availableHeight = (viewportHeight - buttonAreaHeight - headerHeight - safetyMargin) * 0.6;
-
-        console.log('Viewport height:', viewportHeight);
-        console.log('Button area height:', buttonAreaHeight);
-        console.log('Header height:', headerHeight);
-        console.log('Safety margin:', safetyMargin);
-        console.log('Available viewport height:', availableHeight);
-
-        // CodeMirror 6のAPIを使用してエディターサイズを調整
-        const editorDom = this.editor.dom;
-        if (editorDom) {
-            editorDom.style.maxHeight = `${availableHeight}px`;
-            editorDom.style.height = `${availableHeight}px`;
-            editorDom.style.width = '100%';
-        }
-    }
-
-    getEstimatedHeaderHeight() {
-        const navbar = document.querySelector('.navbar, nav, header');
-        return navbar ? navbar.offsetHeight + 20 : 80;
-    }
-
-    getDeviceSpecificAdjustments() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        return {
-            safetyMargin: isMobile ? 40 : 20,
-            maxContentRatio: isMobile ? 0.5 : 0.6
-        };
-    }
-
-    debounce(func, wait) {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
 
     insertText(text) {
         console.log('=== CodeEditor insertText called ===');

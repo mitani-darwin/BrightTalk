@@ -1054,11 +1054,6 @@ main {
   max-height: calc(100vh - 400px) !important;
 }
 
-/* フォームコンテナの高さをさらに調整 */
-#formContainer .col-md-8 .flex-grow-1 {
-  min-height: 650px !important;
-}
-
 /* CodeMirrorエディター用のレスポンシブスタイル */
 .codemirror-sized {
   width: 100% !important;
