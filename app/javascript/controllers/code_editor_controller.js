@@ -1,4 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
+import { EditorView, basicSetup } from 'codemirror'
+import { EditorState } from '@codemirror/state'
+import { markdown } from '@codemirror/lang-markdown'
+import { tags as t } from '@lezer/highlight'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 
 export default class extends Controller {
     static targets = ["textarea"]
@@ -26,56 +31,60 @@ export default class extends Controller {
         // 初期化フラグを設定
         this.element.classList.add('codemirror-initializing')
 
-        try {
-            // CodeMirror 6の確実な取得
-            let CodeMirror = window.CodeMirror;
-
-            // 本番環境特有の遅延対応
-            if (!CodeMirror && window.loadCodeMirror) {
-                console.log('Loading CodeMirror 6 via loadCodeMirror in production...');
-                CodeMirror = await window.loadCodeMirror();
-            }
-
-            // CodeMirror 6の待機処理
-            if (!CodeMirror || !CodeMirror.EditorView || !CodeMirror.EditorState) {
-                console.log('Waiting for CodeMirror 6 in production environment...');
-                let retryCount = 0;
-                const maxRetries = 30;
-
-                while (retryCount < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 300));
-
-                    if (window.CodeMirror && window.CodeMirror.EditorView && window.CodeMirror.EditorState) {
-                        CodeMirror = window.CodeMirror;
-                        break;
-                    }
-
-                    console.log(`CodeMirror 6 wait attempt: ${retryCount + 1}/${maxRetries}`);
-                    retryCount++;
-                }
-            }
-
-            if (!CodeMirror || !CodeMirror.EditorView || !CodeMirror.EditorState) {
-                throw new Error("CodeMirror 6 is not available in production after waiting");
-            }
-
-        } catch (error) {
-            console.error("Failed to initialize CodeMirror 6 in production:", error);
-            return;
-        }
-
         const textarea = this.textareaTarget || this.element.querySelector('textarea');
         if (!textarea) {
             console.error("Textarea not found in CodeEditor controller");
             return;
         }
 
-        console.log("Found textarea in production:", textarea.id);
+        console.log("Found textarea:", textarea.id || '(no id)');
 
         try {
-            // CodeMirror 6の初期化 with enhanced markdown highlighting
-            const { EditorView, EditorState, basicSetup, markdown, oneDark } = CodeMirror;
-            
+            // 静的インポートに変更：必要なモジュールはファイル先頭で import 済み
+
+            // CM6 HighlightStyle 定義（Markdown と一般コードトークン）
+            const mdHighlight = HighlightStyle.define([
+                // Markdown headings: Light blue
+                { tag: t.heading,  color: '#4fc3f7', fontWeight: 'bold' },
+                { tag: t.heading1, color: '#4fc3f7', fontWeight: 'bold' },
+                { tag: t.heading2, color: '#4fc3f7', fontWeight: 'bold' },
+                { tag: t.heading3, color: '#4fc3f7', fontWeight: 'bold' },
+                { tag: t.heading4, color: '#4fc3f7', fontWeight: 'bold' },
+                { tag: t.heading5, color: '#4fc3f7', fontWeight: 'bold' },
+                { tag: t.heading6, color: '#4fc3f7', fontWeight: 'bold' },
+
+                // Emphasis/Bold/Italic
+                { tag: t.strong,   color: '#81c784', fontWeight: 'bold' },
+                { tag: t.emphasis, color: '#ffb74d', fontStyle: 'italic' },
+                { tag: t.strikethrough, textDecoration: 'line-through', color: '#ef5350' },
+
+                // Links
+                { tag: t.link,     color: '#64b5f6', textDecoration: 'underline' },
+                { tag: t.url,      color: '#64b5f6', textDecoration: 'underline' },
+
+                // Quotes and lists
+                { tag: t.quote,    color: '#a5d6a7', fontStyle: 'italic' },
+                { tag: t.list,     color: '#ce93d8' },
+
+                // Inline/Block code appearance
+                { tag: t.code,     color: '#ff8a65', backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: '2px 4px', borderRadius: '3px' },
+
+                // Fenced code common tokens
+                { tag: t.keyword,       color: '#8e44ad', fontWeight: 'bold' },
+                { tag: t.atom,          color: '#d35400' },
+                { tag: t.number,        color: '#e74c3c' },
+                { tag: t.definition,    color: '#2c3e50' },
+                { tag: t.variableName,  color: '#27ae60' },
+                { tag: t.typeName,      color: '#3498db' },
+                { tag: t.propertyName,  color: '#16a085' },
+                { tag: t.operator,      color: '#95a5a6' },
+                { tag: t.comment,       color: '#95a5a6', fontStyle: 'italic' },
+                { tag: t.string,        color: '#27ae60' },
+                { tag: t.meta,          color: '#34495e' },
+                { tag: t.tagName,       color: '#e74c3c' },
+                { tag: t.attributeName, color: '#3498db' },
+            ]);
+
             const state = EditorState.create({
                 doc: textarea.value,
                 extensions: [
@@ -84,39 +93,16 @@ export default class extends Controller {
                         codeLanguages: ['javascript', 'python', 'ruby', 'html', 'css', 'sql'],
                         addKeymap: true
                     }),
+                    syntaxHighlighting(mdHighlight),
                     EditorView.lineWrapping,
                     EditorView.theme({
                         '&': {
                             fontSize: '14px',
                             fontFamily: 'Monaco, "Lucida Console", monospace'
                         },
-                        '.cm-content': {
-                            padding: '16px',
-                            minHeight: '300px'
-                        },
-                        '.cm-focused': {
-                            outline: '2px solid #0d6efd'
-                        },
-                        '.cm-editor': {
-                            border: '1px solid #ced4da',
-                            borderRadius: '0.375rem'
-                        },
-                        // Enhanced markdown syntax highlighting
-                        '.cm-header': { color: '#ff0000', fontWeight: 'bold' },
-                        '.cm-strong': { color: '#81c784', fontWeight: 'bold' },
-                        '.cm-emphasis': { color: '#ffb74d', fontStyle: 'italic' },
-                        '.cm-link': { color: '#64b5f6', textDecoration: 'underline' },
-                        '.cm-monospace': { 
-                            color: '#ff8a65', 
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            padding: '2px 4px',
-                            borderRadius: '3px'
-                        },
-                        '.cm-url': { color: '#64b5f6' },
-                        '.cm-quote': { color: '#a5d6a7', fontStyle: 'italic' },
-                        '.cm-list': { color: '#ce93d8' },
-                        '.cm-hr': { color: '#90a4ae' },
-                        '.cm-strikethrough': { textDecoration: 'line-through', color: '#ef5350' }
+                        '.cm-content': { padding: '16px', minHeight: '300px' },
+                        '.cm-focused': { outline: '2px solid #0d6efd' },
+                        '.cm-editor': { border: '1px solid #ced4da', borderRadius: '0.375rem' },
                     }),
                     EditorView.updateListener.of((update) => {
                         if (update.docChanged) {
@@ -127,31 +113,46 @@ export default class extends Controller {
                 ]
             });
 
-            this.editor = new EditorView({
-                state,
-                parent: textarea.parentNode
-            });
-            
+            this.editor = new EditorView({ state, parent: textarea.parentNode });
+
             // テキストエリアを非表示にする
             textarea.style.display = 'none';
 
-            // CodeMirror 6での確実な初期化確認
             if (this.editor && this.editor.dom) {
-                console.log('CodeMirror 6 successfully initialized in production');
-
+                console.log('CodeMirror 6 successfully initialized with static imports');
                 this.element.classList.remove('codemirror-initializing');
                 this.element.classList.add('codemirror-initialized');
-
-                // 初期化完了イベントを発火
                 this.dispatch('initialized', { detail: { editor: this.editor } });
-
-                console.log('CodeMirror 6 initialization completed');
-
             } else {
-                console.error('CodeMirror 6 editor creation failed in production');
+                console.error('CodeMirror 6 editor creation failed');
             }
-       } catch (error) {
-            console.error('CodeMirror initialization error in production:', error);
+        } catch (error) {
+            console.error('CodeMirror initialization error (static import):', error);
+
+            // フォールバック（任意）: 既存の window.CodeMirror を試す
+            try {
+                const CM = window.CodeMirror || (window.loadCodeMirror ? await window.loadCodeMirror() : null);
+                if (!CM) throw new Error('Fallback CodeMirror not available');
+
+                const { EditorView, EditorState, basicSetup, markdown, HighlightStyle, tags: t, syntaxHighlighting } = CM;
+                const mdHighlight = HighlightStyle && HighlightStyle.define ? HighlightStyle.define([]) : null;
+
+                const state = EditorState.create({
+                    doc: textarea.value,
+                    extensions: [
+                        basicSetup,
+                        markdown({ addKeymap: true }),
+                        ...(mdHighlight ? [syntaxHighlighting(mdHighlight)] : []),
+                    ]
+                });
+                this.editor = new EditorView({ state, parent: textarea.parentNode });
+                textarea.style.display = 'none';
+                this.element.classList.remove('codemirror-initializing');
+                this.element.classList.add('codemirror-initialized');
+                this.dispatch('initialized', { detail: { editor: this.editor } });
+            } catch (fallbackErr) {
+                console.error('Fallback CodeMirror initialization also failed:', fallbackErr);
+            }
         }
     }
 

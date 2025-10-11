@@ -12,5 +12,7 @@ Rails.application.configure do
       policy.script_src :self, :https, :unsafe_inline, :unsafe_eval
       policy.connect_src :self, :https, "ws://localhost:*", "http://localhost:*"
     end
+
+    policy.script_src :self, :https
   end
 end

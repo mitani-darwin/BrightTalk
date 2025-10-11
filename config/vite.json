@@ -1,0 +1,8 @@
+{
+  "all": {
+    "entrypointsDir": "app/frontend/entrypoints",
+    "watchAdditionalPaths": [
+      "app/views/**/*"
+    ]
+  }
+}

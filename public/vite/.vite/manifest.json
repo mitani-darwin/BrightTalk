@@ -1,0 +1,28 @@
+{
+  "_flatpickr-B_JH6AFf.js": {
+    "file": "assets/flatpickr-B_JH6AFf.js",
+    "name": "flatpickr"
+  },
+  "_hotwired-CNBfJhiG.js": {
+    "file": "assets/hotwired-CNBfJhiG.js",
+    "name": "hotwired"
+  },
+  "_video-C1nf6gR8.js": {
+    "file": "assets/video-C1nf6gR8.js",
+    "name": "video"
+  },
+  "entrypoints/application.js": {
+    "file": "assets/application-BbQtGF3_.js",
+    "name": "application",
+    "src": "entrypoints/application.js",
+    "isEntry": true,
+    "imports": [
+      "_hotwired-CNBfJhiG.js",
+      "_video-C1nf6gR8.js",
+      "_flatpickr-B_JH6AFf.js"
+    ],
+    "css": [
+      "assets/application-B2UxNtTH.css"
+    ]
+  }
+}

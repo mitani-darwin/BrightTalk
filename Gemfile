@@ -71,6 +71,7 @@ end
 
 group :development do
   gem "web-console"
+  gem "vite_rails"
 end
 
 group :test do
