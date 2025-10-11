@@ -2,13 +2,24 @@
     // Global variables
     window.selectedFiles = window.selectedFiles || [];
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function initPostForm() {
         // Initialize form functionality
         initializeFormFeatures();
         initializeUploadHandlers();
         initializeAutoSave();
         initializeFormValidation();
-    });
+    }
+
+    function initPostFormOnce() {
+        if (window._postFormInitOnce) return;
+        window._postFormInitOnce = true;
+        initPostForm();
+    }
+
+    document.addEventListener('DOMContentLoaded', initPostFormOnce);
+    document.addEventListener('turbo:load', initPostFormOnce);
+    document.addEventListener('turbo:render', initPostFormOnce);
+    if (document.readyState !== 'loading') { initPostFormOnce(); }
 
     // Form features initialization
     function initializeFormFeatures() {

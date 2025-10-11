@@ -1,28 +1,14 @@
 // vite.config.ts
 import { defineConfig } from 'vite'
 import RubyPlugin from 'vite-plugin-ruby'
-import { resolve } from 'path'
 
 export default defineConfig({
     plugins: [RubyPlugin()],
-    base: '/vite/',
-    server: { port: 3036, strictPort: true, hmr: { path: '/vite' } },
+    // 任意: dev ポートを固定したいならこれだけ残す
+    server: { port: 3036, strictPort: true },
+    // build 出力先をカスタムしたい場合のみ設定（なければ省略可）
     build: {
         outDir: 'public/vite',
         assetsDir: 'assets',
-        rollupOptions: {
-            // ← ここを追加
-            input: {
-                application: resolve(__dirname, 'app/frontend/entrypoints/application.js'),
-            },
-            output: {
-                manualChunks: {
-                    // 必要なら分割
-                    video: ['video.js'],
-                    flatpickr: ['flatpickr'],
-                    hotwired: ['@hotwired/stimulus', '@hotwired/turbo'],
-                },
-            },
-        },
     },
 })

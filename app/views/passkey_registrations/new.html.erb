@@ -128,10 +128,10 @@
           <%= link_to "ログイン", new_user_session_path, class: "btn btn-outline-primary" %>
         </div>
       </div>
-    </div>
+  </div>
   </div>
 
-  <%= javascript_import_module_tag "passkey" %>
+  <%= vite_javascript_tag 'entrypoints/new' %>
 
   <script>
       console.log('Script block starting...'); // デバッグログ追加
@@ -297,7 +297,39 @@
             }
 
             // パスキー登録実行
-            const result = await startPasskeyRegistration(challengeData.publicKey, 'メインパスキー');
+            // Ensure the passkey module is ready
+            if (typeof window.startPasskeyRegistration !== 'function') {
+              console.log('startPasskeyRegistration not ready yet, waiting for passkey:ready event...');
+              await new Promise((resolve) => {
+                let settled = false;
+                const onReady = () => {
+                  if (settled) return;
+                  settled = true;
+                  window.removeEventListener('passkey:ready', onReady);
+                  resolve();
+                };
+                const timeout = setTimeout(() => {
+                  if (settled) return;
+                  settled = true;
+                  window.removeEventListener('passkey:ready', onReady);
+                  resolve();
+                }, 7000);
+                window.addEventListener('passkey:ready', () => {
+                  clearTimeout(timeout);
+                  onReady();
+                }, { once: true });
+              });
+            }
+            if (typeof window.startPasskeyRegistration !== 'function') {
+              // 最後に短時間のポーリング（フォールバック）
+              for (let i = 0; i < 30 && typeof window.startPasskeyRegistration !== 'function'; i++) {
+                await new Promise(r => setTimeout(r, 100));
+              }
+            }
+            if (typeof window.startPasskeyRegistration !== 'function') {
+              throw new Error('Passkeyモジュールの読み込みが完了していません。数秒後にもう一度お試しください。');
+            }
+            const result = await window.startPasskeyRegistration(challengeData.publicKey, 'メインパスキー');
 
             // startPasskeyRegistration が既に verify_passkey を呼び出しているので、結果を処理
             if (result && result.success) {
@@ -344,6 +376,10 @@
             document.getElementById('basic-info-step').classList.remove('d-none');
           } else if (stepNumber === 2) {
             document.getElementById('passkey-setup-step').classList.remove('d-none');
+            // パスキー準備シグナルに合わせてボタンを有効化（Turbo遷移でも確実に）
+            if (typeof enableSetupPasskeyButtonWhenReady === 'function') {
+              enableSetupPasskeyButtonWhenReady();
+            }
           } else if (stepNumber === 3) {
             document.getElementById('completion-step').classList.remove('d-none');
           }
@@ -436,6 +472,42 @@
         console.error('Error creating PasskeyRegistrationFlow:', error);
       }
     });
+
+      // パスキー準備に合わせてボタンを有効化する共通関数（Turbo対応）
+      function enableSetupPasskeyButtonWhenReady() {
+          const setupBtn = document.getElementById('setup-passkey-btn');
+          if (!setupBtn) return;
+
+          const enableButton = () => { setupBtn.disabled = false; };
+
+          if (typeof window.startPasskeyRegistration === 'function') {
+              enableButton();
+              return;
+          }
+
+          let settled = false;
+          const onReady = () => {
+              if (settled) return;
+              settled = true;
+              window.removeEventListener('passkey:ready', onReady);
+              if (typeof window.startPasskeyRegistration === 'function') enableButton();
+          };
+
+          const to = setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              window.removeEventListener('passkey:ready', onReady);
+              if (typeof window.startPasskeyRegistration === 'function') enableButton();
+          }, 7000);
+          window.addEventListener('passkey:ready', () => { clearTimeout(to); onReady(); }, { once: true });
+      }
+
+      // 初回読み込み、Turbo遷移/再描画でも実行
+      document.addEventListener('DOMContentLoaded', enableSetupPasskeyButtonWhenReady);
+      document.addEventListener('turbo:load', enableSetupPasskeyButtonWhenReady);
+      document.addEventListener('turbo:render', enableSetupPasskeyButtonWhenReady);
+      // 既に読み込み済みのケースもカバー
+      enableSetupPasskeyButtonWhenReady();
   </script>
 
   <style>

@@ -85,6 +85,7 @@ export default class extends Controller {
         // optionsオブジェクトを定義
         const options = {
             fluid: true,              // 親要素に合わせてリサイズ
+            responsive: true,         // レイアウト変化に対応（CI期待値）
             controls: true,
             playbackRates: [0.5, 1, 1.25, 1.5, 2, 4],
             language: 'ja'
