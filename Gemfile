@@ -71,7 +71,6 @@ end
 
 group :development do
   gem "web-console"
-  gem "vite_rails"
 end
 
 group :test do
@@ -82,3 +81,5 @@ end
 group :production do
   gem "sqlite3", ">= 2.1"
 end
+
+gem "vite_rails", github: "ElMassimo/vite_ruby", branch: "main"
