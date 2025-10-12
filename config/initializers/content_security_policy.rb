@@ -29,7 +29,9 @@ Rails.application.configure do
     # 開発時は Vite HMR 用の緩和（eval と WS 接続の許可）
     if Rails.env.development?
       policy.script_src  :self, :https, :unsafe_eval
-      policy.connect_src :self, :https, 'http://localhost:3036', 'ws://localhost:3036'
+      policy.connect_src :self, :https,
+                         'http://localhost:3036', 'ws://localhost:3036',
+                         'http://127.0.0.1:3036', 'ws://127.0.0.1:3036'  # ← 追加
     else
       policy.script_src  :self, :https
       policy.connect_src :self, :https

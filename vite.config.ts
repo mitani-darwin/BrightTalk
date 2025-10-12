@@ -5,15 +5,22 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
     plugins: [RubyPlugin()],
-    server: { port: 3036, strictPort: true },
+    server: {
+        host: 'localhost',     // ← 追加（IPv4に固定）
+        port: 3036,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',   // ← 追加（HMRも同一ホストに固定）
+            port: 3036,
+            protocol: 'ws',      // 開発は ws（もし https でアプリを開いているなら 'wss'）
+        },
+    },
     build: {
         outDir: 'public/vite',
         assetsDir: 'assets',
         rollupOptions: {
             input: {
-                // レイアウトの `vite_javascript_tag 'application'` に対応
                 application: resolve(__dirname, 'app/frontend/entrypoints/application.js'),
-                // パスキー画面の `vite_javascript_tag 'entrypoints/new'` に対応
                 'entrypoints/new': resolve(__dirname, 'app/frontend/entrypoints/new.js'),
             },
         },

@@ -9,10 +9,10 @@
       <div class="card shadow-sm">
         <!-- 投稿者のヘッダー画像 -->
         <% if @post.user&.header_image_or_default %>
-          <div class="card-header p-0" style="height: 150px; overflow: hidden;" nonce="<%= content_security_policy_nonce(:style) %>">
+          <div class="card-header p-0" style="height: 150px; overflow: hidden;">
             <%= image_tag @post.user.header_image_or_default, 
                 class: "w-100 h-100", 
-                style: "object-fit: cover;", nonce: content_security_policy_nonce(:style) %>
+                style: "object-fit: cover;" %>
           </div>
         <% end %>
         <div class="card-body">
