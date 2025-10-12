@@ -1,5 +1,6 @@
+import { EditorView } from '@codemirror/view'
+import { basicSetup } from 'codemirror'
 import { Controller } from "@hotwired/stimulus"
-import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { tags as t } from '@lezer/highlight'

@@ -46,7 +46,7 @@
 <!-- パスキー認証用JavaScript -->
 <!-- JavaScript is already loaded in the application layout head section -->
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
     (function() {
         function setupPasskeyLogin() {
             const emailInput = document.getElementById('email');

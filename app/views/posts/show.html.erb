@@ -9,10 +9,10 @@
       <div class="card shadow-sm">
         <!-- 投稿者のヘッダー画像 -->
         <% if @post.user&.header_image_or_default %>
-          <div class="card-header p-0" style="height: 150px; overflow: hidden;">
+          <div class="card-header p-0" style="height: 150px; overflow: hidden;" nonce="<%= content_security_policy_nonce(:style) %>">
             <%= image_tag @post.user.header_image_or_default, 
                 class: "w-100 h-100", 
-                style: "object-fit: cover;" %>
+                style: "object-fit: cover;", nonce: content_security_policy_nonce(:style) %>
           </div>
         <% end %>
         <div class="card-body">
@@ -24,7 +24,7 @@
                   <% if @post.user.avatar_or_default %>
                     <%= image_tag @post.user.avatar_or_default, 
                         class: "rounded-circle", 
-                        style: "width: 50px; height: 50px; object-fit: cover;" %>
+                        style: "width: 50px; height: 50px; object-fit: cover;"%>
                   <% else %>
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
                          style="width: 50px; height: 50px;">
@@ -426,7 +426,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 document.addEventListener('DOMContentLoaded', function() {
   // 画像モーダルの初期化
   const imageModal = document.getElementById('imageModal');

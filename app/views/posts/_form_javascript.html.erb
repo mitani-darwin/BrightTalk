@@ -1,4 +1,4 @@
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
     // Global variables
     window.selectedFiles = window.selectedFiles || [];
 
@@ -350,77 +350,47 @@
             return;
         }
 
-        // 本番環境用：より長い待機時間でフォールバック
+        // 本番環境用：より長い待機時間でフォールバック（CM6/Stimulus を再接続試行）
         setTimeout(() => {
-            if (!checkCodeEditor() || !textarea.nextElementSibling?.classList?.contains('CodeMirror')) {
+            if (!checkCodeEditor()) {
                 console.warn('本番環境でStimulusコントローラー初期化失敗。手動初期化を実行...');
                 forceInitializeCodeEditorFallbackProduction(textarea);
             }
         }, 5000); // 本番環境用に5秒に延長
     }
 
-    // 本番環境専用のフォールバック初期化
+    // 本番環境専用のフォールバック初期化（CM6/Stimulus 再接続用）
     async function forceInitializeCodeEditorFallbackProduction(textarea) {
         try {
             console.log('本番環境用フォールバック初期化開始...');
 
-            let CodeMirror = window.CodeMirror;
-
-            if (!CodeMirror && window.loadCodeMirror) {
-                console.log('本番環境でloadCodeMirror関数を使用...');
-                CodeMirror = await window.loadCodeMirror();
+            const wrapper = textarea.closest('[data-controller*="code-editor"]');
+            if (!wrapper) {
+                console.error('code-editor コントローラー要素が見つかりません');
+                return;
             }
 
-            // 本番環境での確実な待機処理
-            if (!CodeMirror || typeof CodeMirror.fromTextArea !== 'function') {
-                console.log('本番環境でCodeMirror待機中...');
-                let attempts = 0;
-                const maxAttempts = 40; // 本番環境用に増加
+            // Stimulus 再接続のために data-controller 属性を一旦外して付け直す
+            const original = wrapper.getAttribute('data-controller') || '';
+            wrapper.removeAttribute('data-controller');
+            // Reflow を発生させて確実に属性変化を通知
+            void wrapper.offsetHeight;
+            wrapper.setAttribute('data-controller', original);
 
-                while (attempts < maxAttempts) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-
-                    if (window.CodeMirror && typeof window.CodeMirror.fromTextArea === 'function') {
-                        CodeMirror = window.CodeMirror;
-                        break;
-                    }
-
-                    attempts++;
-                    console.log(`本番環境CodeMirror待機: ${attempts}/${maxAttempts}`);
+            // 再接続後、codemirror-initialized が付くのを待機
+            let attempts = 0;
+            const maxAttempts = 40; // 500ms * 40 = 20s まで待機
+            while (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                if (wrapper.classList.contains('codemirror-initialized')) {
+                    console.log('✅ Stimulus再接続によりCodeMirror6が初期化されました');
+                    return;
                 }
+                attempts++;
+                console.log(`本番環境CodeMirror待機(CM6): ${attempts}/${maxAttempts}`);
             }
 
-            if (CodeMirror && typeof CodeMirror.fromTextArea === 'function') {
-                const editor = CodeMirror.fromTextArea(textarea, {
-                    mode: 'markdown',
-                    theme: 'default',
-                    lineNumbers: true,
-                    lineWrapping: true,
-                    indentUnit: 2,
-                    tabSize: 2,
-                    // viewportMargin: Infinity  ← これを削除 or 10 に変更
-                    viewportMargin: 10
-                });
-
-                // 本番環境での確実な表示設定
-                const wrapper = editor.getWrapperElement();
-                const scroller = editor.getScrollerElement ? editor.getScrollerElement() : wrapper.querySelector('.CodeMirror-scroll');
-                if (scroller) scroller.style.overflowY = 'auto';
-                if (wrapper) {
-                    wrapper.style.height = '600px';
-                    wrapper.style.minHeight = '600px';
-                    wrapper.style.display = 'block';
-                    wrapper.style.visibility = 'visible';
-                }
-
-                console.log('✅ 本番環境フォールバックでCodeEditorを初期化しました');
-
-                // リフレッシュ
-                setTimeout(() => editor.refresh(), 300);
-
-            } else {
-                console.error('本番環境でCodeMirrorを読み込めませんでした');
-            }
+            console.error('本番環境でCodeMirror6の初期化を確認できませんでした');
         } catch (error) {
             console.error('本番環境フォールバック初期化失敗:', error);
         }

@@ -15,220 +15,220 @@
 
       <!-- 投稿フォーム内容省略（既存のHTMLをそのまま維持） -->
       <!-- このファイルではJavaScript部分のみを修正 -->
-      
-<script>
-    // CSRFトークン取得関数
-    function getCSRFToken() {
-        const metaToken = document.querySelector('meta[name="csrf-token"]');
-        return metaToken ? metaToken.getAttribute('content') : null;
-    }
 
-    (function() {
-        // アップロード機能の初期化（重複防止版）
-        let uploadSystemInitialized = false;
+      <script nonce="<%= content_security_policy_nonce %>">
+          // CSRFトークン取得関数
+          function getCSRFToken() {
+              const metaToken = document.querySelector('meta[name="csrf-token"]');
+              return metaToken ? metaToken.getAttribute('content') : null;
+          }
 
-        function initializeUploadSystem() {
-            if (uploadSystemInitialized) {
-                console.log('Upload system already initialized, skipping...');
-                return;
-            }
-            
-            console.log('Initializing upload system...');
-            uploadSystemInitialized = true;
-            
-            // DirectUpload機能の初期化
-            initializeVideoDirectUpload();
-            
-            // フォーム送信処理の初期化（プログレス機能統合）
-            initializeFormSubmission();
-        }
+          (function () {
+              // アップロード機能の初期化（重複防止版）
+              let uploadSystemInitialized = false;
 
-        function initializeFormSubmission() {
-            const form = document.querySelector('form[data-turbo="false"]');
-            const submitButton = document.getElementById('submitButton');
-            const progressContainer = document.getElementById('uploadProgressContainer');
-            const progressBar = document.getElementById('uploadProgressBar');
-            const statusText = document.getElementById('uploadStatusText');
-            const uploadDetails = document.getElementById('uploadDetails');
-            
-            if (!form) {
-                console.warn('Form not found, skipping upload initialization');
-                return;
-            }
+              function initializeUploadSystem() {
+                  if (uploadSystemInitialized) {
+                      console.log('Upload system already initialized, skipping...');
+                      return;
+                  }
 
-            // 既存のハンドラーを除去
-            if (form._customUploadHandler) {
-                form.removeEventListener('submit', form._customUploadHandler);
-            }
+                  console.log('Initializing upload system...');
+                  uploadSystemInitialized = true;
 
-            const submitHandler = function(e) {
-                const timestamp = Date.now();
-                console.log(`Form submission attempt at ${timestamp}`);
+                  // DirectUpload機能の初期化
+                  initializeVideoDirectUpload();
 
-                // 重複送信防止
-                if (form._submissionInProgress) {
-                    console.log('Submission already in progress, preventing duplicate');
-                    e.preventDefault();
-                    return;
-                }
+                  // フォーム送信処理の初期化（プログレス機能統合）
+                  initializeFormSubmission();
+              }
 
-                const videoInput = document.getElementById('videoInput');
-                const imageInput = document.getElementById('imageInput');
+              function initializeFormSubmission() {
+                  const form = document.querySelector('form[data-turbo="false"]');
+                  const submitButton = document.getElementById('submitButton');
+                  const progressContainer = document.getElementById('uploadProgressContainer');
+                  const progressBar = document.getElementById('uploadProgressBar');
+                  const statusText = document.getElementById('uploadStatusText');
+                  const uploadDetails = document.getElementById('uploadDetails');
 
-                // DirectUpload確認
-                const hasDirectUploadVideo = videoInput && 
-                    videoInput.files.length > 0 &&
-                    videoInput.hasAttribute('data-direct-upload-url');
+                  if (!form) {
+                      console.warn('Form not found, skipping upload initialization');
+                      return;
+                  }
 
-                console.log('Submit Decision Tree:', {
-                    timestamp,
-                    hasDirectUploadVideo,
-                    activeStorageReady: window.checkActiveStorageStatus?.() || false
-                });
+                  // 既存のハンドラーを除去
+                  if (form._customUploadHandler) {
+                      form.removeEventListener('submit', form._customUploadHandler);
+                  }
 
-                if (hasDirectUploadVideo) {
-                    if (window.checkActiveStorageStatus?.().available && window.checkActiveStorageStatus?.().directUpload) {
-                        console.log('DirectUpload confirmed - allowing normal submission');
-                        return; // ActiveStorageに処理を委任
-                    } else {
-                        console.error('DirectUpload expected but ActiveStorage not ready');
-                        alert('アップロード機能の初期化中です。少し待ってから再試行してください。');
-                        e.preventDefault();
-                        return;
-                    }
-                }
+                  const submitHandler = function (e) {
+                      const timestamp = Date.now();
+                      console.log(`Form submission attempt at ${timestamp}`);
 
-                // カスタムアップロードが必要かチェック
-                const hasImages = imageInput && imageInput.files.length > 0;
-                const hasVideosWithoutDirect = videoInput && 
-                    videoInput.files.length > 0 && 
-                    !hasDirectUploadVideo;
+                      // 重複送信防止
+                      if (form._submissionInProgress) {
+                          console.log('Submission already in progress, preventing duplicate');
+                          e.preventDefault();
+                          return;
+                      }
 
-                if (!hasImages && !hasVideosWithoutDirect) {
-                    console.log('No custom upload needed - normal submission');
-                    return;
-                }
+                      const videoInput = document.getElementById('videoInput');
+                      const imageInput = document.getElementById('imageInput');
 
-                // カスタムアップロード実行（プログレス機能付き）
-                console.log('Executing custom upload processing with progress');
-                e.preventDefault();
-                form._submissionInProgress = true;
+                      // DirectUpload確認
+                      const hasDirectUploadVideo = videoInput &&
+                          videoInput.files.length > 0 &&
+                          videoInput.hasAttribute('data-direct-upload-url');
 
-                // プログレス表示の初期化
-                if (progressContainer && submitButton) {
-                    progressContainer.style.display = 'block';
-                    submitButton.disabled = true;
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>アップロード中...';
-                }
+                      console.log('Submit Decision Tree:', {
+                          timestamp,
+                          hasDirectUploadVideo,
+                          activeStorageReady: window.checkActiveStorageStatus?.() || false
+                      });
 
-                executeCustomUploadProcessWithProgress()
-                    .finally(() => {
-                        form._submissionInProgress = false;
-                    });
-            };
+                      if (hasDirectUploadVideo) {
+                          if (window.checkActiveStorageStatus?.().available && window.checkActiveStorageStatus?.().directUpload) {
+                              console.log('DirectUpload confirmed - allowing normal submission');
+                              return; // ActiveStorageに処理を委任
+                          } else {
+                              console.error('DirectUpload expected but ActiveStorage not ready');
+                              alert('アップロード機能の初期化中です。少し待ってから再試行してください。');
+                              e.preventDefault();
+                              return;
+                          }
+                      }
 
-            // カスタムアップロード処理（プログレス機能付き）
-            function executeCustomUploadProcessWithProgress() {
-                return new Promise((resolve, reject) => {
-                    const formData = new FormData(form);
+                      // カスタムアップロードが必要かチェック
+                      const hasImages = imageInput && imageInput.files.length > 0;
+                      const hasVideosWithoutDirect = videoInput &&
+                          videoInput.files.length > 0 &&
+                          !hasDirectUploadVideo;
 
-                    // CSRFトークンを確実に設定
-                    const csrfToken = getCSRFToken();
-                    if (csrfToken) {
-                        formData.set('authenticity_token', csrfToken);
-                        console.log('CSRF token added to FormData');
-                    }
+                      if (!hasImages && !hasVideosWithoutDirect) {
+                          console.log('No custom upload needed - normal submission');
+                          return;
+                      }
 
-                    const xhr = new XMLHttpRequest();
+                      // カスタムアップロード実行（プログレス機能付き）
+                      console.log('Executing custom upload processing with progress');
+                      e.preventDefault();
+                      form._submissionInProgress = true;
 
-                    // アップロード進捗の監視
-                    if (progressBar && statusText && uploadDetails) {
-                        xhr.upload.addEventListener('progress', function(e) {
-                            if (e.lengthComputable) {
-                                const percentComplete = Math.round((e.loaded / e.total) * 100);
-                                progressBar.style.width = percentComplete + '%';
-                                progressBar.setAttribute('aria-valuenow', percentComplete);
-                                statusText.textContent = `アップロード中... ${percentComplete}%`;
-                                uploadDetails.textContent = `${formatBytes(e.loaded)} / ${formatBytes(e.total)}`;
-                            }
-                        });
-                    }
+                      // プログレス表示の初期化
+                      if (progressContainer && submitButton) {
+                          progressContainer.style.display = 'block';
+                          submitButton.disabled = true;
+                          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>アップロード中...';
+                      }
 
-                    xhr.addEventListener('load', function() {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            if (statusText) statusText.textContent = 'アップロード完了!';
-                            if (uploadDetails) uploadDetails.textContent = '処理中...';
+                      executeCustomUploadProcessWithProgress()
+                          .finally(() => {
+                              form._submissionInProgress = false;
+                          });
+                  };
 
-                            setTimeout(() => {
-                                if (xhr.responseURL) {
-                                    window.location.href = xhr.responseURL;
-                                } else {
-                                    form.submit();
-                                }
-                                resolve();
-                            }, 1000);
-                        } else {
-                            console.error('Upload failed:', xhr.status, xhr.statusText);
-                            reject(new Error(`Upload failed: ${xhr.status}`));
-                        }
-                    });
+                  // カスタムアップロード処理（プログレス機能付き）
+                  function executeCustomUploadProcessWithProgress() {
+                      return new Promise((resolve, reject) => {
+                          const formData = new FormData(form);
 
-                    xhr.addEventListener('error', function() {
-                        console.error('Upload error');
-                        reject(new Error('Network error'));
-                    });
+                          // CSRFトークンを確実に設定
+                          const csrfToken = getCSRFToken();
+                          if (csrfToken) {
+                              formData.set('authenticity_token', csrfToken);
+                              console.log('CSRF token added to FormData');
+                          }
 
-                    xhr.open('POST', form.action);
-                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                    xhr.setRequestHeader('X-CSRF-Token', csrfToken);
-                    xhr.send(formData);
-                });
-            }
+                          const xhr = new XMLHttpRequest();
 
-            function formatBytes(bytes, decimals = 2) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const dm = decimals < 0 ? 0 : decimals;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-            }
+                          // アップロード進捗の監視
+                          if (progressBar && statusText && uploadDetails) {
+                              xhr.upload.addEventListener('progress', function (e) {
+                                  if (e.lengthComputable) {
+                                      const percentComplete = Math.round((e.loaded / e.total) * 100);
+                                      progressBar.style.width = percentComplete + '%';
+                                      progressBar.setAttribute('aria-valuenow', percentComplete);
+                                      statusText.textContent = `アップロード中... ${percentComplete}%`;
+                                      uploadDetails.textContent = `${formatBytes(e.loaded)} / ${formatBytes(e.total)}`;
+                                  }
+                              });
+                          }
 
-            form._customUploadHandler = submitHandler;
-            form.addEventListener('submit', submitHandler);
-            console.log('Form submission handler registered with integrated progress');
-        }
+                          xhr.addEventListener('load', function () {
+                              if (xhr.status >= 200 && xhr.status < 300) {
+                                  if (statusText) statusText.textContent = 'アップロード完了!';
+                                  if (uploadDetails) uploadDetails.textContent = '処理中...';
 
-        function initializeVideoDirectUpload() {
-            // 既存のDirectUpload初期化コード（省略）
-            console.log('DirectUpload initialized');
-        }
+                                  setTimeout(() => {
+                                      if (xhr.responseURL) {
+                                          window.location.href = xhr.responseURL;
+                                      } else {
+                                          form.submit();
+                                      }
+                                      resolve();
+                                  }, 1000);
+                              } else {
+                                  console.error('Upload failed:', xhr.status, xhr.statusText);
+                                  reject(new Error(`Upload failed: ${xhr.status}`));
+                              }
+                          });
 
-        // Turbo対応の初期化
-        function safeInitializeWithTurbo() {
-            uploadSystemInitialized = false;
-            initializeUploadSystem();
-        }
+                          xhr.addEventListener('error', function () {
+                              console.error('Upload error');
+                              reject(new Error('Network error'));
+                          });
 
-        // イベントリスナーの登録
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeUploadSystem);
-        } else {
-            initializeUploadSystem();
-        }
+                          xhr.open('POST', form.action);
+                          xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                          xhr.setRequestHeader('X-CSRF-Token', csrfToken);
+                          xhr.send(formData);
+                      });
+                  }
 
-        document.addEventListener('turbo:load', safeInitializeWithTurbo);
-        document.addEventListener('turbo:before-cache', () => {
-            uploadSystemInitialized = false;
-        });
+                  function formatBytes(bytes, decimals = 2) {
+                      if (bytes === 0) return '0 Bytes';
+                      const k = 1024;
+                      const dm = decimals < 0 ? 0 : decimals;
+                      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                      const i = Math.floor(Math.log(bytes) / Math.log(k));
+                      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                  }
 
-        // グローバル関数を公開
-        window.getCSRFToken = getCSRFToken;
-        
-        console.log('Upload system initialized successfully');
+                  form._customUploadHandler = submitHandler;
+                  form.addEventListener('submit', submitHandler);
+                  console.log('Form submission handler registered with integrated progress');
+              }
 
-    })();
-</script>
+              function initializeVideoDirectUpload() {
+                  // 既存のDirectUpload初期化コード（省略）
+                  console.log('DirectUpload initialized');
+              }
+
+              // Turbo対応の初期化
+              function safeInitializeWithTurbo() {
+                  uploadSystemInitialized = false;
+                  initializeUploadSystem();
+              }
+
+              // イベントリスナーの登録
+              if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', initializeUploadSystem);
+              } else {
+                  initializeUploadSystem();
+              }
+
+              document.addEventListener('turbo:load', safeInitializeWithTurbo);
+              document.addEventListener('turbo:before-cache', () => {
+                  uploadSystemInitialized = false;
+              });
+
+              // グローバル関数を公開
+              window.getCSRFToken = getCSRFToken;
+
+              console.log('Upload system initialized successfully');
+
+          })();
+      </script>
 
     <% end %>
   </div>

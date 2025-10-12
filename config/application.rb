@@ -58,7 +58,6 @@ module BrightTalk
 
     # esbuild用の設定
     config.assets.paths << Rails.root.join("app/assets/builds")
+    config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
   end
-
-  config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
 end
