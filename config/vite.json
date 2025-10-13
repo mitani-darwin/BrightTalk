@@ -2,6 +2,7 @@
   "all": {
     "sourceCodeDir": "app/frontend",
     "outDir": "public/vite",
-    "entrypointsDir": "entrypoints"
+    "entrypointsDir": "entrypoints",
+    "devServerHost": "localhost"
   }
 }

@@ -1,57 +1,30 @@
 # config/initializers/content_security_policy.rb
 Rails.application.configure do
-  # 必ず config. を付ける
-  config.content_security_policy do |policy|
-    policy.default_src :self
+  if Rails.env.development?
+    # スタイルは inline 許可、スクリプトは nonce を使う
+    config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+    config.content_security_policy_nonce_directives = %w[script-src] # ← style-src は含めない
 
-    # 画像/フォント（dataやblobも許可）
-    policy.img_src  :self, :https, :data, :blob
-    policy.font_src :self, :https,
-                    'https://cdn.jsdelivr.net',
-                    'https://cdnjs.cloudflare.com',
-                    :data
+    localhost_http = %w[http://localhost:3036 http://127.0.0.1:3036]
+    localhost_ws   = %w[ws://localhost:3036 ws://127.0.0.1:3036]
 
-    # スタイル（外部CSSはホスト許可。インライン<style>は nonce/attr で許可）
-    policy.style_src :self, :https,
-                     'https://cdn.jsdelivr.net',
-                     'https://cdnjs.cloudflare.com'
-
-    # インライン style 属性の許可（RailsのDSLにある場合は属性限定、なければ暫定で全体許可）
-    if policy.respond_to?(:style_src_attr)
-      policy.style_src_attr :unsafe_inline
-    else
-      policy.style_src :self, :https,
-                       'https://cdn.jsdelivr.net',
-                       'https://cdnjs.cloudflare.com',
-                       :unsafe_inline
+    config.content_security_policy do |policy|
+      policy.script_src  :self, :https, *localhost_http, :unsafe_eval
+      policy.style_src   :self, :https, *localhost_http, :unsafe_inline,
+                         "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
+      policy.font_src    :self, :https, :data,
+                         "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
+      policy.img_src     :self, :https, :data, *localhost_http
+      policy.connect_src :self, :https, *localhost_http, *localhost_ws
     end
-
-    # 開発時は Vite HMR 用の緩和（eval と WS 接続の許可）
-    if Rails.env.development?
-      policy.script_src  :self, :https, :unsafe_eval
-      policy.connect_src :self, :https,
-                         'http://localhost:3036', 'ws://localhost:3036',
-                         'http://127.0.0.1:3036', 'ws://127.0.0.1:3036'  # ← 追加
-    else
+  else
+    config.content_security_policy do |policy|
+      policy.default_src :self
       policy.script_src  :self, :https
+      policy.style_src   :self, :https, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
+      policy.img_src     :self, :https, :data
+      policy.font_src    :self, :https, :data, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
       policy.connect_src :self, :https
     end
-
-    # 外部スクリプトCDN（必要に応じて）
-    policy.script_src  :self, :https,
-                       'https://cdn.jsdelivr.net',
-                       'https://cdnjs.cloudflare.com',
-                       'https://www.googletagmanager.com',
-                       'https://www.google-analytics.com'
-
-    policy.frame_ancestors :self
   end
-
-  # ここを追加: 各リクエストで nonce を必ず生成
-  config.content_security_policy_nonce_generator = -> request { SecureRandom.base64(16) }
-  # 生成した nonce をどのディレクティブに適用するか
-  config.content_security_policy_nonce_directives = %w(script-src style-src)
-
-  # 必要に応じてレポートオンリー
-  # config.content_security_policy_report_only = true
 end

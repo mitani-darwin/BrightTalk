@@ -1,3 +1,5 @@
+console.log('[Vite entry] application.js2 loaded at', new Date())
+
 // esbuild用のapplication.js（CodeMirror完全修正版）
 import { Application } from "@hotwired/stimulus"
 import "@hotwired/turbo"
