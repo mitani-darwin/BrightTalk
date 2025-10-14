@@ -154,7 +154,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
     function previewAvatar(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();

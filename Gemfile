@@ -23,9 +23,6 @@ gem "bcrypt", "~> 3.1.7"
 # ページネーション
 gem "kaminari"
 
-# Sassプリプロセッサ
-gem "dartsass-rails"
-
 gem "devise"
 # Deviseの日本語化
 gem "devise-i18n"
@@ -71,6 +68,7 @@ end
 
 group :development do
   gem "web-console"
+  gem "foreman"
 end
 
 group :test do
@@ -81,3 +79,5 @@ end
 group :production do
   gem "sqlite3", ">= 2.1"
 end
+
+gem "vite_rails", github: "ElMassimo/vite_ruby", branch: "main"

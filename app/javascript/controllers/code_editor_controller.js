@@ -1,178 +1,172 @@
+import { EditorView } from '@codemirror/view'
+import { basicSetup } from 'codemirror'
 import { Controller } from "@hotwired/stimulus"
+import { markdown } from '@codemirror/lang-markdown'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { tags as t } from '@lezer/highlight'
 
 export default class extends Controller {
     static targets = ["textarea"]
 
     connect() {
-        console.log("CodeEditor controller connected")
-        // 既に初期化済みかチェック
-        if (this.element.classList.contains('codemirror-initialized')) {
-            console.log("CodeEditorは既に設定済みです")
-            return
+        // 可視状態なら即初期化、そうでなければ次フレームで再確認
+        if (this.cm) return
+        const start = () => this.initializeCodeMirror()
+        const isVisible = (el) => {
+            if (!el) return false
+            const style = getComputedStyle(el)
+            if (style.display === 'none' || style.visibility === 'hidden') return false
+            if (!el.offsetParent && style.position !== 'fixed') return false
+            return true
         }
-        this.initializeCodeMirror();
-
-        // グローバル参照を作成（デバッグ用）
-        if (!window.codeEditorInstances) {
-            window.codeEditorInstances = new Map();
+        if (document.head && this.element.isConnected && isVisible(this.element)) {
+            start()
+        } else {
+            requestAnimationFrame(() => {
+                if (document.head && this.element.isConnected && isVisible(this.element)) start()
+            })
         }
-        window.addEventListener('resize', this.resizeHandler);
-
-        this.resizeHandler = this.debounce(() => {
-            this.adjustEditorSize();
-        }, 150);
-
-        // カスタムイベントリスナーを追加（改良版）
-        this.boundInsertHandler = this.handleInsertText.bind(this);
-        this.element.addEventListener('code-editor:insert-text', this.boundInsertHandler);
-   }
+    }
 
     async initializeCodeMirror() {
-        // 初期化フラグを設定
-        this.element.classList.add('codemirror-initializing')
+        // 既存の初期化までは同じ
+        const textarea = this.textareaTarget || this.element.querySelector('textarea')
+        if (!textarea) return
 
-        try {
-            // CodeMirror 6の確実な取得
-            let CodeMirror = window.CodeMirror;
-
-            // 本番環境特有の遅延対応
-            if (!CodeMirror && window.loadCodeMirror) {
-                console.log('Loading CodeMirror 6 via loadCodeMirror in production...');
-                CodeMirror = await window.loadCodeMirror();
+        // CodeMirror v5 デフォルト風の配色（できる限り近づけた近似）
+        const cm5Theme = EditorView.theme({
+            '&': { color: '#000', backgroundColor: '#fff' },
+            '.cm-content': { caretColor: '#000' },
+            '.cm-cursor, .cm-dropCursor': { borderLeft: '1px solid #000' },
+            '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
+                backgroundColor: '#d9d9d9'
+            },
+            '.cm-gutters': {
+                backgroundColor: '#f7f7f7',
+                color: '#999',
+                borderRight: '1px solid #ddd'
             }
+        }, { dark: false })
 
-            // CodeMirror 6の待機処理
-            if (!CodeMirror || !CodeMirror.EditorView || !CodeMirror.EditorState) {
-                console.log('Waiting for CodeMirror 6 in production environment...');
-                let retryCount = 0;
-                const maxRetries = 30;
+        // Editor size/scroll: add vertical scrollbar by constraining height
+        const fixedHeightTheme = EditorView.theme({
+            '&': { maxHeight: '60vh' },
+            '.cm-scroller': { overflowY: 'auto' }
+        })
 
-                while (retryCount < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 300));
+        // 既存の cm5Highlight 定義の直前・または直上に追記
+        const headingTags = [
+            t.heading,
+            t.heading1, t.heading2, t.heading3, t.heading4, t.heading5, t.heading6
+        ].filter(Boolean) // 未定義要素を除外
 
-                    if (window.CodeMirror && window.CodeMirror.EditorView && window.CodeMirror.EditorState) {
-                        CodeMirror = window.CodeMirror;
-                        break;
-                    }
+        if (t.headingMark) headingTags.push(t.headingMark) // 存在すれば追加
 
-                    console.log(`CodeMirror 6 wait attempt: ${retryCount + 1}/${maxRetries}`);
-                    retryCount++;
-                }
+        const cm5Highlight = HighlightStyle.define([
+            { tag: headingTags, color: '#00f' },
+            { tag: t.keyword, color: '#708' },          // .cm-keyword
+            { tag: t.atom, color: '#219' },             // .cm-atom
+            { tag: t.number, color: '#164' },           // .cm-number
+            { tag: t.definition(t.variableName), color: '#00f' }, // .cm-def
+            { tag: t.variableName, color: '#000' },     // .cm-variable
+            { tag: t.propertyName, color: '#00c' },     // .cm-property
+            { tag: t.typeName, color: '#085' },         // .cm-variable-3 近似
+            { tag: t.className, color: '#05a' },        // .cm-variable-2 近似
+            { tag: t.string, color: '#a11' },           // .cm-string
+            { tag: t.special(t.string), color: '#f50' },// .cm-string-2
+            { tag: t.comment, color: '#a50' },          // .cm-comment
+            { tag: t.meta, color: '#555' },             // .cm-meta / .cm-qualifier
+            { tag: t.link, color: '#00c', textDecoration: 'underline' }, // .cm-link
+            { tag: t.tagName, color: '#170' },          // .cm-tag
+            { tag: t.attributeName, color: '#00c' },    // .cm-attribute
+            { tag: t.bracket, color: '#997' },          // .cm-bracket
+            { tag: t.contentSeparator, color: '#888' }, // Markdown horizontal rule ("---")
+
+            // --- Markdown (CM5 default-like) ---
+            // Headers (including the leading '#') — CM5 .cm-header is blue
+            // Blockquote — CM5 .cm-quote is green
+            { tag: t.quote, color: '#090' },
+            // Emphasis/Bold/Strike — CM5 changes font style rather than color
+            { tag: t.strong, fontWeight: 'bold' },
+            { tag: t.emphasis, fontStyle: 'italic' },
+            { tag: t.strikethrough, textDecoration: 'line-through' },
+
+            { tag: t.invalid, color: '#f00' }           // .cm-error
+        ])
+
+        // CodeMirror → textarea の内容同期（入力のたび同期）
+        const syncToTextarea = EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+                textarea.value = update.state.doc.toString()
             }
+        })
 
-            if (!CodeMirror || !CodeMirror.EditorView || !CodeMirror.EditorState) {
-                throw new Error("CodeMirror 6 is not available in production after waiting");
-            }
+        const baseExtensions = [
+            basicSetup,
+            markdown(),
+            cm5Theme,
+            fixedHeightTheme,
+            // Use our highlight style with normal precedence so it applies
+            syntaxHighlighting(cm5Highlight),
+            syncToTextarea,
+        ]
 
-        } catch (error) {
-            console.error("Failed to initialize CodeMirror 6 in production:", error);
-            return;
+        // テキストエリアの直前に CodeMirror 用コンテナを挿入（置換表示）
+        const cmContainer = document.createElement('div')
+        cmContainer.className = 'cm-container'
+        textarea.parentElement.insertBefore(cmContainer, textarea)
+
+        this.cm = new EditorView({
+            doc: textarea.value || '',
+            parent: cmContainer,
+            extensions: baseExtensions,
+        })
+
+        // textarea は送信用に保持しつつ非表示にする
+        textarea.hidden = true
+        textarea.setAttribute('aria-hidden', 'true')
+
+        // 念のため初期同期
+        textarea.value = this.cm.state.doc.toString()
+
+        // フォーム送信直前にも最終同期
+        const form = textarea.closest('form')
+        if (form && !this._syncedOnSubmit) {
+            this._syncedOnSubmit = true
+            form.addEventListener('submit', () => {
+                textarea.value = this.cm.state.doc.toString()
+            })
         }
 
-        const textarea = this.textareaTarget || this.element.querySelector('textarea');
-        if (!textarea) {
-            console.error("Textarea not found in CodeEditor controller");
-            return;
+        // insertText 等で利用する参照（後方互換）
+        this.editor = this.cm
+
+        // カスタムイベントでのテキスト挿入（フォーム側からの依頼に対応）
+        if (!this.boundInsertHandler) {
+            this.boundInsertHandler = this.handleInsertText.bind(this)
+            this.element.addEventListener('code-editor:insert-text', this.boundInsertHandler)
         }
 
-        console.log("Found textarea in production:", textarea.id);
+        // 初期化完了の通知とフラグ設定（ページ側の確認ロジック向け）
+        this.dispatch('ready', { detail: { view: this.cm } })
+        // 互換目的: 以前のリスナー向けイベント名も発火
+        this.dispatch('initialized', { detail: { view: this.cm } })
+        this.element.dataset.codemirrorReady = 'true'
+        this.element.classList.add('codemirror-initialized')
+        if (!window.codeEditorInstances) window.codeEditorInstances = new WeakMap()
+        window.codeEditorInstances.set(this.element, this.cm)
 
-        try {
-            // CodeMirror 6の初期化
-            const { EditorView, EditorState, basicSetup, markdown } = CodeMirror;
-            
-            const state = EditorState.create({
-                doc: textarea.value,
-                extensions: [
-                    basicSetup,
-                    markdown(),
-                    EditorView.lineWrapping,
-                    EditorView.updateListener.of((update) => {
-                        if (update.docChanged) {
-                            textarea.value = update.state.doc.toString();
-                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    })
-                ]
-            });
-
-            this.editor = new EditorView({
-                state,
-                parent: textarea.parentNode
-            });
-            
-            // テキストエリアを非表示にする
-            textarea.style.display = 'none';
-
-            // CodeMirror 6での確実な初期化確認
-            if (this.editor && this.editor.dom) {
-                console.log('CodeMirror 6 successfully initialized in production');
-
-                this.element.classList.remove('codemirror-initializing');
-                this.element.classList.add('codemirror-initialized');
-
-                // 初期化完了イベントを発火
-                this.dispatch('initialized', { detail: { editor: this.editor } });
-
-                console.log('CodeMirror 6 initialization completed');
-
-            } else {
-                console.error('CodeMirror 6 editor creation failed in production');
-            }
-
-            this.adjustEditorSize();
-        } catch (error) {
-            console.error('CodeMirror initialization error in production:', error);
-        }
+        // Safari 安定化のため、レイアウト確定後に軽くフォーカス同期（副作用なし）
+        queueMicrotask(() => requestAnimationFrame(() => { /* noop */ }))
     }
 
-    adjustEditorSize() {
-        // エディターが初期化されているかチェック
-        if (!this.editor || !this.editor.dom) return;
-
-        const viewportHeight = window.innerHeight;
-        const buttonAreaHeight = 100; // ボタンエリア（投稿・キャンセルボタン）
-        const headerHeight = this.getEstimatedHeaderHeight(); // ヘッダー・タイトル部分
-        const safetyMargin = this.getDeviceSpecificAdjustments().safetyMargin; // 安全余白
-
-        // 利用可能な高さを計算
-        const availableHeight = (viewportHeight - buttonAreaHeight - headerHeight - safetyMargin) * 0.6;
-
-        console.log('Viewport height:', viewportHeight);
-        console.log('Button area height:', buttonAreaHeight);
-        console.log('Header height:', headerHeight);
-        console.log('Safety margin:', safetyMargin);
-        console.log('Available viewport height:', availableHeight);
-
-        // CodeMirror 6のAPIを使用してエディターサイズを調整
-        const editorDom = this.editor.dom;
-        if (editorDom) {
-            editorDom.style.maxHeight = `${availableHeight}px`;
-            editorDom.style.height = `${availableHeight}px`;
-            editorDom.style.width = '100%';
-        }
-    }
-
-    getEstimatedHeaderHeight() {
-        const navbar = document.querySelector('.navbar, nav, header');
-        return navbar ? navbar.offsetHeight + 20 : 80;
-    }
-
-    getDeviceSpecificAdjustments() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        return {
-            safetyMargin: isMobile ? 40 : 20,
-            maxContentRatio: isMobile ? 0.5 : 0.6
-        };
-    }
-
-    debounce(func, wait) {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
+    isVisible(el) {
+        if (!el) return false
+        const style = getComputedStyle(el)
+        if (style.display === 'none' || style.visibility === 'hidden') return false
+        // display:none 親のケースにも一部対応
+        if (!el.offsetParent && style.position !== 'fixed') return false
+        return true
     }
 
     insertText(text) {
@@ -211,25 +205,32 @@ export default class extends Controller {
     }
 
     disconnect() {
+        // EditorView を破棄し参照をクリア
+        try { this.cm?.destroy() } finally { this.cm = null }
+        this.editor = null
+
         // 動的サイズ調整のイベントリスナーを削除
         if (this.resizeHandler) {
-            window.removeEventListener('resize', this.resizeHandler);
+            window.removeEventListener('resize', this.resizeHandler)
         }
         if (this.orientationHandler) {
-            window.removeEventListener('orientationchange', this.orientationHandler);
+            window.removeEventListener('orientationchange', this.orientationHandler)
         }
-        
-        // カスタムイベントリスナーを削除
-        this.element.removeEventListener('code-editor:insert-text', this.handleInsertText.bind(this))
 
-        // イベントリスナーを削除
+        // カスタムイベントリスナー（事前にバインド済みの場合のみ）を削除
         if (this.boundInsertHandler) {
-            this.element.removeEventListener('code-editor:insert-text', this.boundInsertHandler);
+            this.element.removeEventListener('code-editor:insert-text', this.boundInsertHandler)
+            this.boundInsertHandler = null
         }
 
         // グローバル参照を削除
         if (window.codeEditorInstances) {
-            window.codeEditorInstances.delete(this.element);
+            window.codeEditorInstances.delete(this.element)
+        }
+
+        // 状態フラグを戻す
+        if (this.element && this.element.dataset) {
+            delete this.element.dataset.codemirrorReady
         }
     }
 }

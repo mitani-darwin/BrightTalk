@@ -1,0 +1,31 @@
+{
+  "_passkey-dcje0AiI.js": {
+    "file": "assets/passkey-dcje0AiI.js",
+    "name": "passkey"
+  },
+  "entrypoints/application.js": {
+    "file": "assets/application-DPE5Liym.js",
+    "name": "entrypoints/application.js",
+    "src": "entrypoints/application.js",
+    "isEntry": true,
+    "imports": [
+      "_passkey-dcje0AiI.js"
+    ],
+    "dynamicImports": [
+      "entrypoints/new.js"
+    ],
+    "css": [
+      "assets/application-B2UxNtTH.css"
+    ]
+  },
+  "entrypoints/new.js": {
+    "file": "assets/new-DbwhxP13.js",
+    "name": "entrypoints/new.js",
+    "src": "entrypoints/new.js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_passkey-dcje0AiI.js"
+    ]
+  }
+}

@@ -238,13 +238,23 @@ window.startPasskeyAuthentication = startPasskeyAuthentication;
 window.startPasskeyRegistration = startPasskeyRegistration;
 export { startPasskeyAuthentication, startPasskeyRegistration };
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Passkey module loaded');
-    window.passkeyModuleLoaded = true;
-});
+// モジュール読み込み完了を即時に通知（DOMContentLoadedを待たない）
+(function signalPasskeyReady() {
+    try {
+        window.passkeyModuleLoaded = true;
+        // 重複発火しても問題ないようにする
+        const evt = new Event('passkey:ready');
+        window.dispatchEvent(evt);
+    } catch (e) {
+        // 環境によっては Event の生成に失敗することがあるが、無視しても致命的ではない
+        console.warn('Failed to dispatch passkey:ready event:', e);
+    }
+})();
 
-// DOMContentLoaded時に初期化を実行
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Passkey module loaded');
+    console.log('Passkey module loaded (DOMContentLoaded)');
     window.passkeyModuleLoaded = true;
+    try {
+        window.dispatchEvent(new Event('passkey:ready'));
+    } catch (e) {}
 });

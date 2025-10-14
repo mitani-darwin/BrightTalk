@@ -112,7 +112,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 document.addEventListener('DOMContentLoaded', function() {
   const selectAllCheckbox = document.getElementById('select_all');
   const draftCheckboxes = document.querySelectorAll('.draft-checkbox');

@@ -24,7 +24,7 @@
                   <% if @post.user.avatar_or_default %>
                     <%= image_tag @post.user.avatar_or_default, 
                         class: "rounded-circle", 
-                        style: "width: 50px; height: 50px; object-fit: cover;" %>
+                        style: "width: 50px; height: 50px; object-fit: cover;"%>
                   <% else %>
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
                          style="width: 50px; height: 50px;">
@@ -45,9 +45,15 @@
             </div>
 
             <!-- カテゴリーバッジ -->
-            <%= link_to posts_path(category_id: @post.category.id),
-                        class: "badge bg-primary text-decoration-none" do %>
-              <i class="fas fa-tag"></i> <%= @post.category.full_name %>
+            <% if @post.category.present? %>
+              <%= link_to posts_path(category_id: @post.category.id),
+                          class: "badge bg-primary text-decoration-none" do %>
+                <i class="fas fa-tag"></i> <%= @post.category.full_name %>
+              <% end %>
+            <% else %>
+              <span class="badge bg-secondary text-decoration-none">
+                <i class="fas fa-tag"></i> 未分類
+              </span>
             <% end %>
           </div>
 
@@ -426,7 +432,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="<%= content_security_policy_nonce %>">
 document.addEventListener('DOMContentLoaded', function() {
   // 画像モーダルの初期化
   const imageModal = document.getElementById('imageModal');

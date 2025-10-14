@@ -1,402 +1,441 @@
-  <%= content_for :title, "新規登録 - パスキー認証" %>
+<%= content_for :title, "新規登録 - パスキー認証" %>
 
-  <div class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-header">
-            <h4 class="mb-0">
-              <i class="fas fa-user-plus me-2"></i>新規登録
-              <span class="badge bg-success ms-2">パスキー認証</span>
-            </h4>
-          </div>
-          <div class="card-body">
-
-            <!-- ステップインジケーター -->
-            <div class="row mb-4">
-              <div class="col-12">
-                <div class="progress" style="height: 4px;">
-                  <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 33%" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2 small text-muted">
-                  <span id="step-1-label" class="fw-bold text-primary">1. 基本情報</span>
-                  <span id="step-2-label">2. パスキー設定</span>
-                  <span id="step-3-label">3. 完了</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ステップ1: 基本情報入力 -->
-            <div id="basic-info-step" class="step">
-              <div class="mb-4">
-                <h5><i class="fas fa-info-circle me-2"></i>基本情報の入力</h5>
-                <p class="text-muted">アカウント作成に必要な基本情報を入力してください。</p>
-              </div>
-
-              <%= form_with model: @user, url: passkey_registrations_path, id: 'basic-info-form', class: 'needs-validation', local: false, data: { turbo: false, remote: true  } do |f| %>
-                <div id="error-messages" class="alert alert-danger d-none" role="alert"></div>
-
-                <div class="mb-3">
-                  <%= f.label :name, "名前", class: "form-label" %>
-                  <%= f.text_field :name,
-                                   autofocus: true,
-                                   class: "form-control",
-                                   required: true,
-                                   placeholder: "あなたの名前" %>
-                  <div class="invalid-feedback">名前を入力してください。</div>
-                </div>
-
-                <div class="mb-3">
-                  <%= f.label :email, "メールアドレス", class: "form-label" %>
-                  <%= f.email_field :email,
-                                    class: "form-control",
-                                    required: true,
-                                    placeholder: "your@email.com" %>
-                  <div class="invalid-feedback">有効なメールアドレスを入力してください。</div>
-                </div>
-
-                <div class="alert alert-info">
-                  <h6><i class="fas fa-shield-alt me-2"></i>パスキー認証について</h6>
-                  <ul class="mb-0">
-                    <li><strong>パスワード不要</strong>：生体認証（指紋・顔認証）やセキュリティキーでログイン</li>
-                    <li><strong>高セキュリティ</strong>：フィッシング攻撃やパスワード漏洩のリスクを排除</li>
-                    <li><strong>快適な体験</strong>：パスワードを覚える必要がなく、高速ログイン</li>
-                  </ul>
-                </div>
-
-                <div class="d-grid">
-                  <%= f.submit "次へ：パスキーを設定", class: "btn btn-primary btn-lg", id: "next-to-passkey" %>
-                </div>
-              <% end %>
-            </div>
-
-            <!-- ステップ2: パスキー設定 -->
-            <div id="passkey-setup-step" class="step d-none">
-              <div class="mb-4">
-                <h5><i class="fas fa-fingerprint me-2"></i>パスキーの設定</h5>
-                <p class="text-muted">生体認証またはセキュリティキーでアカウントを保護します。</p>
-              </div>
-
-              <div class="text-center mb-4">
-                <div class="passkey-icon mb-3">
-                  <i class="fas fa-fingerprint fa-4x text-primary"></i>
-                </div>
-                <h6>パスキーを設定してください</h6>
-                <p class="text-muted">お使いのデバイスの生体認証機能を使用します</p>
-              </div>
-
-              <div class="d-grid gap-2">
-                <button id="setup-passkey-btn" class="btn btn-success btn-lg">
-                  <i class="fas fa-fingerprint me-2"></i>パスキーを設定
-                </button>
-                <button id="back-to-basic" class="btn btn-outline-secondary">
-                  <i class="fas fa-arrow-left me-2"></i>基本情報に戻る
-                </button>
-              </div>
-
-              <div id="passkey-status" class="mt-3 text-center d-none">
-                <div class="spinner-border spinner-border-sm me-2" role="status">
-                  <span class="visually-hidden">読み込み中...</span>
-                </div>
-                <span>パスキーを設定中です...</span>
-              </div>
-            </div>
-
-            <!-- ステップ3: 完了 -->
-            <div id="completion-step" class="step d-none">
-              <div class="text-center">
-                <div class="mb-4">
-                  <i class="fas fa-check-circle fa-4x text-success"></i>
-                </div>
-                <h5 class="text-success">登録完了</h5>
-                <p class="text-muted">パスキー認証が正常に設定されました。<br>BrightTalkをお楽しみください！</p>
-
-                <div class="d-grid">
-                  <button id="go-to-home" class="btn btn-primary btn-lg">
-                    <i class="fas fa-home me-2"></i>ホームへ移動
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-user-plus me-2"></i>新規登録
+            <span class="badge bg-success ms-2">パスキー認証</span>
+          </h4>
         </div>
+        <div class="card-body">
 
-        <!-- ログインリンク -->
-        <div class="text-center mt-4">
-          <p>すでにアカウントをお持ちの場合：</p>
-          <%= link_to "ログイン", new_user_session_path, class: "btn btn-outline-primary" %>
+          <!-- ステップインジケーター -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="progress" style="height: 4px;">
+                <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 33%" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <div class="d-flex justify-content-between mt-2 small text-muted">
+                <span id="step-1-label" class="fw-bold text-primary">1. 基本情報</span>
+                <span id="step-2-label">2. パスキー設定</span>
+                <span id="step-3-label">3. 完了</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ステップ1: 基本情報入力 -->
+          <div id="basic-info-step" class="step">
+            <div class="mb-4">
+              <h5><i class="fas fa-info-circle me-2"></i>基本情報の入力</h5>
+              <p class="text-muted">アカウント作成に必要な基本情報を入力してください。</p>
+            </div>
+
+            <%= form_with model: @user, url: passkey_registrations_path, id: 'basic-info-form', class: 'needs-validation', local: false, data: { turbo: false, remote: true } do |f| %>
+              <div id="error-messages" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <%= f.label :name, "名前", class: "form-label" %>
+                <%= f.text_field :name,
+                                 autofocus: true,
+                                 class: "form-control",
+                                 required: true,
+                                 placeholder: "あなたの名前" %>
+                <div class="invalid-feedback">名前を入力してください。</div>
+              </div>
+
+              <div class="mb-3">
+                <%= f.label :email, "メールアドレス", class: "form-label" %>
+                <%= f.email_field :email,
+                                  class: "form-control",
+                                  required: true,
+                                  placeholder: "your@email.com" %>
+                <div class="invalid-feedback">有効なメールアドレスを入力してください。</div>
+              </div>
+
+              <div class="alert alert-info">
+                <h6><i class="fas fa-shield-alt me-2"></i>パスキー認証について</h6>
+                <ul class="mb-0">
+                  <li><strong>パスワード不要</strong>：生体認証（指紋・顔認証）やセキュリティキーでログイン</li>
+                  <li><strong>高セキュリティ</strong>：フィッシング攻撃やパスワード漏洩のリスクを排除</li>
+                  <li><strong>快適な体験</strong>：パスワードを覚える必要がなく、高速ログイン</li>
+                </ul>
+              </div>
+
+              <div class="d-grid">
+                <%= f.submit "次へ：パスキーを設定", class: "btn btn-primary btn-lg", id: "next-to-passkey" %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- ステップ2: パスキー設定 -->
+          <div id="passkey-setup-step" class="step d-none">
+            <div class="mb-4">
+              <h5><i class="fas fa-fingerprint me-2"></i>パスキーの設定</h5>
+              <p class="text-muted">生体認証またはセキュリティキーでアカウントを保護します。</p>
+            </div>
+
+            <div class="text-center mb-4">
+              <div class="passkey-icon mb-3">
+                <i class="fas fa-fingerprint fa-4x text-primary"></i>
+              </div>
+              <h6>パスキーを設定してください</h6>
+              <p class="text-muted">お使いのデバイスの生体認証機能を使用します</p>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button id="setup-passkey-btn" class="btn btn-success btn-lg">
+                <i class="fas fa-fingerprint me-2"></i>パスキーを設定
+              </button>
+              <button id="back-to-basic" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>基本情報に戻る
+              </button>
+            </div>
+
+            <div id="passkey-status" class="mt-3 text-center d-none">
+              <div class="spinner-border spinner-border-sm me-2" role="status">
+                <span class="visually-hidden">読み込み中...</span>
+              </div>
+              <span>パスキーを設定中です...</span>
+            </div>
+          </div>
+
+          <!-- ステップ3: 完了 -->
+          <div id="completion-step" class="step d-none">
+            <div class="text-center">
+              <div class="mb-4">
+                <i class="fas fa-check-circle fa-4x text-success"></i>
+              </div>
+              <h5 class="text-success">登録完了</h5>
+              <p class="text-muted">パスキー認証が正常に設定されました。<br>BrightTalkをお楽しみください！</p>
+
+              <div class="d-grid">
+                <button id="go-to-home" class="btn btn-primary btn-lg">
+                  <i class="fas fa-home me-2"></i>ホームへ移動
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
+      </div>
+
+      <!-- ログインリンク -->
+      <div class="text-center mt-4">
+        <p>すでにアカウントをお持ちの場合：</p>
+        <%= link_to "ログイン", new_user_session_path, class: "btn btn-outline-primary" %>
       </div>
     </div>
   </div>
+</div>
 
-  <%= javascript_import_module_tag "passkey" %>
+<%= vite_javascript_tag 'new' %>
 
-  <script>
-      console.log('Script block starting...'); // デバッグログ追加
+<script nonce="<%= content_security_policy_nonce %>">
+    console.log('Script block starting...'); // デバッグログ追加
 
-      document.addEventListener('DOMContentLoaded', function() {
-          // 外部JavaScriptの読み込み完了を確認
-          if (typeof window.startPasskeyRegistration === 'function') {
-              console.log('Passkey module loaded successfully');
-          } else {
-              console.log('Passkey module not loaded yet');
-          }
-
-      class PasskeyRegistrationFlow {
-        constructor() {
-          console.log('PasskeyRegistrationFlow constructor called');
-          this.currentStep = 1;
-          this.initializeEventListeners();
+    document.addEventListener('DOMContentLoaded', function () {
+        // 外部JavaScriptの読み込み完了を確認
+        if (typeof window.startPasskeyRegistration === 'function') {
+            console.log('Passkey module loaded successfully');
+        } else {
+            console.log('Passkey module not loaded yet');
         }
 
-        initializeEventListeners() {
-          console.log('Initializing event listeners');
-          const basicInfoForm = document.getElementById('basic-info-form');
-          const setupPasskeyBtn = document.getElementById('setup-passkey-btn');
-          const backToBasicBtn = document.getElementById('back-to-basic');
-          const goToHomeBtn = document.getElementById('go-to-home');
-          const submitButton = document.getElementById('next-to-passkey');
-
-          if (basicInfoForm) {
-            // フォーム送信イベントを最優先でキャッチ
-            basicInfoForm.addEventListener('submit', (e) => {
-              console.log('Form submit event triggered');
-              e.preventDefault();
-              e.stopImmediatePropagation();
-              this.handleBasicInfoSubmission(e);
-            }, true); // useCapture: true で確実にキャッチ
-          }
-
-          // 送信ボタンの直接制御
-          if (submitButton) {
-            submitButton.addEventListener('click', (e) => {
-              console.log('Submit button clicked - preventing default form submission');
-              e.preventDefault();
-              e.stopImmediatePropagation();
-
-              const form = document.getElementById('basic-info-form');
-              if (form && form.checkValidity()) {
-                this.handleBasicInfoSubmission({ target: form, preventDefault: () => {} });
-              } else if (form) {
-                form.classList.add('was-validated');
-              }
-            });
-          }
-
-          if (setupPasskeyBtn) {
-            setupPasskeyBtn.addEventListener('click', () => this.setupPasskey());
-          }
-
-          if (backToBasicBtn) {
-            backToBasicBtn.addEventListener('click', () => this.showStep(1));
-          }
-
-          if (goToHomeBtn) {
-            goToHomeBtn.addEventListener('click', () => {
-              window.location.href = '/';
-            });
-          }
-        }
-
-        async handleBasicInfoSubmission(event) {
-          console.log('handleBasicInfoSubmission called');
-
-          // 既存のフォーム送信を確実に停止
-          if (event.preventDefault) event.preventDefault();
-          if (event.stopPropagation) event.stopPropagation();
-          if (event.stopImmediatePropagation) event.stopImmediatePropagation();
-
-          const form = event.target || document.getElementById('basic-info-form');
-          if (!form.checkValidity()) {
-            form.classList.add('was-validated');
-            return;
-          }
-
-          try {
-            // CSRFトークンを確実に取得
-            const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
-            if (!csrfTokenElement) {
-              throw new Error('CSRFトークンが見つかりません');
-            }
-            const csrfToken = csrfTokenElement.getAttribute('content');
-
-            console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
-
-            const formData = new FormData(form);
-            const userData = {
-              user: {
-                name: formData.get('user[name]'),
-                email: formData.get('user[email]')
-              }
-            };
-
-            console.log('Sending data:', userData);
-
-            const response = await fetch('<%= passkey_registrations_path %>', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken,
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify(userData)
-            });
-
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers.get('content-type'));
-
-            if (response.headers.get('content-type')?.includes('application/json')) {
-              const data = await response.json();
-              console.log('Response data:', data);
-
-              if (response.ok && data.success) {
-                console.log('Success - transitioning to step 2');
-                this.showStep(2);
-              } else {
-                this.showErrors(data.errors || ['登録に失敗しました']);
-              }
-            } else {
-              // HTMLレスポンスの場合（リダイレクトなど）
-              console.log('Received HTML response instead of JSON');
-              const text = await response.text();
-              console.log('Response text:', text.substring(0, 200));
-
-              // HTMLレスポンスでもステップ2に進む
-              if (response.ok) {
-                console.log('HTML response OK - transitioning to step 2');
-                this.showStep(2);
-              } else {
-                this.showErrors(['サーバーエラーが発生しました']);
-              }
-            }
-          } catch (error) {
-            console.error('Basic info submission error:', error);
-            this.showErrors(['ネットワークエラーが発生しました: ' + error.message]);
-          }
-        }
-
-        async setupPasskey() {
-          try {
-            this.showPasskeyStatus(true);
-
-            // チャレンジ取得
-            const challengeResponse = await fetch('<%= register_passkey_passkey_registrations_path %>', {
-              method: 'POST',
-              headers: {
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-              }
-            });
-
-            const challengeData = await challengeResponse.json();
-
-            if (!challengeResponse.ok || !challengeData.success) {
-              throw new Error(challengeData.error || 'チャレンジ取得に失敗しました');
+        class PasskeyRegistrationFlow {
+            constructor() {
+                console.log('PasskeyRegistrationFlow constructor called');
+                this.currentStep = 1;
+                this.initializeEventListeners();
             }
 
-            // パスキー登録実行
-            const result = await startPasskeyRegistration(challengeData.publicKey, 'メインパスキー');
+            initializeEventListeners() {
+                console.log('Initializing event listeners');
+                const basicInfoForm = document.getElementById('basic-info-form');
+                const setupPasskeyBtn = document.getElementById('setup-passkey-btn');
+                const backToBasicBtn = document.getElementById('back-to-basic');
+                const goToHomeBtn = document.getElementById('go-to-home');
+                const submitButton = document.getElementById('next-to-passkey');
 
-            // startPasskeyRegistration が既に verify_passkey を呼び出しているので、結果を処理
-            if (result && result.success) {
-              // 仮登録完了の場合は確認メッセージを表示
-              if (result.show_confirmation_notice) {
-                this.showConfirmationNotice(result.message);
-              } else {
-                this.showStep(3);
-              }
-            } else {
-              throw new Error(result?.error || '登録検証に失敗しました');
+                if (basicInfoForm) {
+                    // フォーム送信イベントを最優先でキャッチ
+                    basicInfoForm.addEventListener('submit', (e) => {
+                        console.log('Form submit event triggered');
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        this.handleBasicInfoSubmission(e);
+                    }, true); // useCapture: true で確実にキャッチ
+                }
+
+                // 送信ボタンの直接制御
+                if (submitButton) {
+                    submitButton.addEventListener('click', (e) => {
+                        console.log('Submit button clicked - preventing default form submission');
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+
+                        const form = document.getElementById('basic-info-form');
+                        if (form && form.checkValidity()) {
+                            this.handleBasicInfoSubmission({
+                                target: form, preventDefault: () => {
+                                }
+                            });
+                        } else if (form) {
+                            form.classList.add('was-validated');
+                        }
+                    });
+                }
+
+                if (setupPasskeyBtn) {
+                    setupPasskeyBtn.addEventListener('click', () => this.setupPasskey());
+                }
+
+                if (backToBasicBtn) {
+                    backToBasicBtn.addEventListener('click', () => this.showStep(1));
+                }
+
+                if (goToHomeBtn) {
+                    goToHomeBtn.addEventListener('click', () => {
+                        window.location.href = '/';
+                    });
+                }
             }
 
-          } catch (error) {
-            console.error('パスキー登録エラー:', error);
-            this.showPasskeyStatus(false);
-            alert('パスキーの設定に失敗しました: ' + error.message);
-          }
-        }
+            async handleBasicInfoSubmission(event) {
+                console.log('handleBasicInfoSubmission called');
 
-        showStep(stepNumber) {
-          // すべてのステップを非表示
-          document.querySelectorAll('.step').forEach(step => {
-            step.classList.add('d-none');
-          });
+                // 既存のフォーム送信を確実に停止
+                if (event.preventDefault) event.preventDefault();
+                if (event.stopPropagation) event.stopPropagation();
+                if (event.stopImmediatePropagation) event.stopImmediatePropagation();
 
-          // プログレスバー更新
-          const progressBar = document.getElementById('progress-bar');
-          const progressWidth = (stepNumber / 3) * 100;
-          progressBar.style.width = progressWidth + '%';
-          progressBar.setAttribute('aria-valuenow', progressWidth);
+                const form = event.target || document.getElementById('basic-info-form');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
 
-          // ステップラベル更新
-          document.querySelectorAll('[id^="step-"][id$="-label"]').forEach(label => {
-            label.classList.remove('fw-bold', 'text-primary');
-            label.classList.add('text-muted');
-          });
+                try {
+                    // CSRFトークンを確実に取得
+                    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+                    if (!csrfTokenElement) {
+                        throw new Error('CSRFトークンが見つかりません');
+                    }
+                    const csrfToken = csrfTokenElement.getAttribute('content');
 
-          document.getElementById(`step-${stepNumber}-label`).classList.remove('text-muted');
-          document.getElementById(`step-${stepNumber}-label`).classList.add('fw-bold', 'text-primary');
+                    console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
 
-          // 対象ステップを表示
-          if (stepNumber === 1) {
-            document.getElementById('basic-info-step').classList.remove('d-none');
-          } else if (stepNumber === 2) {
-            document.getElementById('passkey-setup-step').classList.remove('d-none');
-          } else if (stepNumber === 3) {
-            document.getElementById('completion-step').classList.remove('d-none');
-          }
+                    const formData = new FormData(form);
+                    const userData = {
+                        user: {
+                            name: formData.get('user[name]'),
+                            email: formData.get('user[email]')
+                        }
+                    };
 
-          this.currentStep = stepNumber;
-        }
+                    console.log('Sending data:', userData);
 
-        showErrors(errors) {
-          const errorDiv = document.getElementById('error-messages');
-          errorDiv.innerHTML = '<ul class="mb-0">' +
-            errors.map(error => `<li>${error}</li>`).join('') +
-            '</ul>';
-          errorDiv.classList.remove('d-none');
+                    const response = await fetch('<%= passkey_registrations_path %>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
 
-          // エラー表示位置にスクロール
-          errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers.get('content-type'));
 
-        showPasskeyStatus(show) {
-          const statusDiv = document.getElementById('passkey-status');
-          const setupBtn = document.getElementById('setup-passkey-btn');
+                    if (response.headers.get('content-type')?.includes('application/json')) {
+                        const data = await response.json();
+                        console.log('Response data:', data);
 
-          if (show) {
-            statusDiv.classList.remove('d-none');
-            setupBtn.disabled = true;
-          } else {
-            statusDiv.classList.add('d-none');
-            setupBtn.disabled = false;
-          }
-        }
+                        if (response.ok && data.success) {
+                            console.log('Success - transitioning to step 2');
+                            this.showStep(2);
+                        } else {
+                            this.showErrors(data.errors || ['登録に失敗しました']);
+                        }
+                    } else {
+                        // HTMLレスポンスの場合（リダイレクトなど）
+                        console.log('Received HTML response instead of JSON');
+                        const text = await response.text();
+                        console.log('Response text:', text.substring(0, 200));
 
-        showConfirmationNotice(message) {
-          // すべてのステップを非表示
-          document.querySelectorAll('.step').forEach(step => {
-            step.classList.add('d-none');
-          });
+                        // HTMLレスポンスでもステップ2に進む
+                        if (response.ok) {
+                            console.log('HTML response OK - transitioning to step 2');
+                            this.showStep(2);
+                        } else {
+                            this.showErrors(['サーバーエラーが発生しました']);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Basic info submission error:', error);
+                    this.showErrors(['ネットワークエラーが発生しました: ' + error.message]);
+                }
+            }
 
-          // プログレスバーを100%に
-          const progressBar = document.getElementById('progress-bar');
-          progressBar.style.width = '100%';
-          progressBar.setAttribute('aria-valuenow', '100');
+            async setupPasskey() {
+                try {
+                    this.showPasskeyStatus(true);
 
-          // ステップ3ラベルをアクティブに
-          document.querySelectorAll('[id^="step-"][id$="-label"]').forEach(label => {
-            label.classList.remove('fw-bold', 'text-primary');
-            label.classList.add('text-muted');
-          });
-          document.getElementById('step-3-label').classList.remove('text-muted');
-          document.getElementById('step-3-label').classList.add('fw-bold', 'text-primary');
+                    // チャレンジ取得
+                    const challengeResponse = await fetch('<%= register_passkey_passkey_registrations_path %>', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    });
 
-          // 仮登録完了画面を表示
-          const completionStep = document.getElementById('completion-step');
-          completionStep.innerHTML = `
+                    const challengeData = await challengeResponse.json();
+
+                    if (!challengeResponse.ok || !challengeData.success) {
+                        throw new Error(challengeData.error || 'チャレンジ取得に失敗しました');
+                    }
+
+                    // パスキー登録実行
+                    // Ensure the passkey module is ready
+                    if (typeof window.startPasskeyRegistration !== 'function') {
+                        console.log('startPasskeyRegistration not ready yet, waiting for passkey:ready event...');
+                        await new Promise((resolve) => {
+                            let settled = false;
+                            const onReady = () => {
+                                if (settled) return;
+                                settled = true;
+                                window.removeEventListener('passkey:ready', onReady);
+                                resolve();
+                            };
+                            const timeout = setTimeout(() => {
+                                if (settled) return;
+                                settled = true;
+                                window.removeEventListener('passkey:ready', onReady);
+                                resolve();
+                            }, 7000);
+                            window.addEventListener('passkey:ready', () => {
+                                clearTimeout(timeout);
+                                onReady();
+                            }, {once: true});
+                        });
+                    }
+                    if (typeof window.startPasskeyRegistration !== 'function') {
+                        // 最後に短時間のポーリング（フォールバック）
+                        for (let i = 0; i < 30 && typeof window.startPasskeyRegistration !== 'function'; i++) {
+                            await new Promise(r => setTimeout(r, 100));
+                        }
+                    }
+                    if (typeof window.startPasskeyRegistration !== 'function') {
+                        throw new Error('Passkeyモジュールの読み込みが完了していません。数秒後にもう一度お試しください。');
+                    }
+                    const result = await window.startPasskeyRegistration(challengeData.publicKey, 'メインパスキー');
+
+                    // startPasskeyRegistration が既に verify_passkey を呼び出しているので、結果を処理
+                    if (result && result.success) {
+                        // 仮登録完了の場合は確認メッセージを表示
+                        if (result.show_confirmation_notice) {
+                            this.showConfirmationNotice(result.message);
+                        } else {
+                            this.showStep(3);
+                        }
+                    } else {
+                        throw new Error(result?.error || '登録検証に失敗しました');
+                    }
+
+                } catch (error) {
+                    console.error('パスキー登録エラー:', error);
+                    this.showPasskeyStatus(false);
+                    alert('パスキーの設定に失敗しました: ' + error.message);
+                }
+            }
+
+            showStep(stepNumber) {
+                // すべてのステップを非表示
+                document.querySelectorAll('.step').forEach(step => {
+                    step.classList.add('d-none');
+                });
+
+                // プログレスバー更新
+                const progressBar = document.getElementById('progress-bar');
+                const progressWidth = (stepNumber / 3) * 100;
+                progressBar.style.width = progressWidth + '%';
+                progressBar.setAttribute('aria-valuenow', progressWidth);
+
+                // ステップラベル更新
+                document.querySelectorAll('[id^="step-"][id$="-label"]').forEach(label => {
+                    label.classList.remove('fw-bold', 'text-primary');
+                    label.classList.add('text-muted');
+                });
+
+                document.getElementById(`step-${stepNumber}-label`).classList.remove('text-muted');
+                document.getElementById(`step-${stepNumber}-label`).classList.add('fw-bold', 'text-primary');
+
+                // 対象ステップを表示
+                if (stepNumber === 1) {
+                    document.getElementById('basic-info-step').classList.remove('d-none');
+                } else if (stepNumber === 2) {
+                    document.getElementById('passkey-setup-step').classList.remove('d-none');
+                    // パスキー準備シグナルに合わせてボタンを有効化（Turbo遷移でも確実に）
+                    if (typeof enableSetupPasskeyButtonWhenReady === 'function') {
+                        enableSetupPasskeyButtonWhenReady();
+                    }
+                } else if (stepNumber === 3) {
+                    document.getElementById('completion-step').classList.remove('d-none');
+                }
+
+                this.currentStep = stepNumber;
+            }
+
+            showErrors(errors) {
+                const errorDiv = document.getElementById('error-messages');
+                errorDiv.innerHTML = '<ul class="mb-0">' +
+                    errors.map(error => `<li>${error}</li>`).join('') +
+                    '</ul>';
+                errorDiv.classList.remove('d-none');
+
+                // エラー表示位置にスクロール
+                errorDiv.scrollIntoView({behavior: 'smooth', block: 'center'});
+            }
+
+            showPasskeyStatus(show) {
+                const statusDiv = document.getElementById('passkey-status');
+                const setupBtn = document.getElementById('setup-passkey-btn');
+
+                if (show) {
+                    statusDiv.classList.remove('d-none');
+                    setupBtn.disabled = true;
+                } else {
+                    statusDiv.classList.add('d-none');
+                    setupBtn.disabled = false;
+                }
+            }
+
+            showConfirmationNotice(message) {
+                // すべてのステップを非表示
+                document.querySelectorAll('.step').forEach(step => {
+                    step.classList.add('d-none');
+                });
+
+                // プログレスバーを100%に
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = '100%';
+                progressBar.setAttribute('aria-valuenow', '100');
+
+                // ステップ3ラベルをアクティブに
+                document.querySelectorAll('[id^="step-"][id$="-label"]').forEach(label => {
+                    label.classList.remove('fw-bold', 'text-primary');
+                    label.classList.add('text-muted');
+                });
+                document.getElementById('step-3-label').classList.remove('text-muted');
+                document.getElementById('step-3-label').classList.add('fw-bold', 'text-primary');
+
+                // 仮登録完了画面を表示
+                const completionStep = document.getElementById('completion-step');
+                completionStep.innerHTML = `
             <div class="text-center">
               <div class="mb-4">
                 <i class="fas fa-envelope-check fa-4x text-warning"></i>
@@ -416,44 +455,94 @@
               </div>
             </div>
           `;
-          completionStep.classList.remove('d-none');
+                completionStep.classList.remove('d-none');
 
-          // ログインボタンのイベントリスナーを追加
-          document.getElementById('go-to-login').addEventListener('click', () => {
-            window.location.href = '/users/sign_in';
-          });
+                // ログインボタンのイベントリスナーを追加
+                document.getElementById('go-to-login').addEventListener('click', () => {
+                    window.location.href = '/users/sign_in';
+                });
 
-          this.showPasskeyStatus(false);
+                this.showPasskeyStatus(false);
+            }
         }
-      }
 
-      // 初期化前のデバッグ
-      console.log('About to create PasskeyRegistrationFlow instance');
-      try {
-        new PasskeyRegistrationFlow();
-        console.log('PasskeyRegistrationFlow instance created successfully');
-      } catch (error) {
-        console.error('Error creating PasskeyRegistrationFlow:', error);
-      }
+        // 初期化前のデバッグ
+        console.log('About to create PasskeyRegistrationFlow instance');
+        try {
+            new PasskeyRegistrationFlow();
+            console.log('PasskeyRegistrationFlow instance created successfully');
+        } catch (error) {
+            console.error('Error creating PasskeyRegistrationFlow:', error);
+        }
     });
-  </script>
 
-  <style>
-  .passkey-icon {
-    animation: pulse 2s infinite;
-  }
+    // パスキー準備に合わせてボタンを有効化する共通関数（Turbo対応）
+    function enableSetupPasskeyButtonWhenReady() {
+        const setupBtn = document.getElementById('setup-passkey-btn');
+        if (!setupBtn) return;
 
-  @keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.7; }
-    100% { transform: scale(1); opacity: 1; }
-  }
+        const enableButton = () => {
+            setupBtn.disabled = false;
+        };
 
-  .progress {
-    border-radius: 10px;
-  }
+        if (typeof window.startPasskeyRegistration === 'function') {
+            enableButton();
+            return;
+        }
 
-  .progress-bar {
-    transition: width 0.6s ease;
-  }
-  </style>
+        let settled = false;
+        const onReady = () => {
+            if (settled) return;
+            settled = true;
+            window.removeEventListener('passkey:ready', onReady);
+            if (typeof window.startPasskeyRegistration === 'function') enableButton();
+        };
+
+        const to = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            window.removeEventListener('passkey:ready', onReady);
+            if (typeof window.startPasskeyRegistration === 'function') enableButton();
+        }, 7000);
+        window.addEventListener('passkey:ready', () => {
+            clearTimeout(to);
+            onReady();
+        }, {once: true});
+    }
+
+    // 初回読み込み、Turbo遷移/再描画でも実行
+    document.addEventListener('DOMContentLoaded', enableSetupPasskeyButtonWhenReady);
+    document.addEventListener('turbo:load', enableSetupPasskeyButtonWhenReady);
+    document.addEventListener('turbo:render', enableSetupPasskeyButtonWhenReady);
+    // 既に読み込み済みのケースもカバー
+    enableSetupPasskeyButtonWhenReady();
+</script>
+
+<style nonce="<%= content_security_policy_nonce %>">
+    .passkey-icon {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .progress {
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+</style>
