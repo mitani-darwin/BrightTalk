@@ -1,35 +1,31 @@
 
 <div class="container-fluid p-0">
   <!-- ヘッダー画像エリア -->
-  <div class="position-relative" style="height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+  <div class="position-relative user-header-hero">
     <% if @user.header_image_or_default %>
       <%= image_tag @user.header_image_or_default, 
-          class: "w-100 h-100", 
-          style: "object-fit: cover;" %>
+          class: "w-100 h-100 object-cover" %>
     <% end %>
-    <div class="position-absolute bottom-0 start-0 w-100 h-100" 
-         style="background: linear-gradient(transparent, rgba(0,0,0,0.3));"></div>
+    <div class="position-absolute bottom-0 start-0 w-100 h-100 header-overlay-gradient"></div>
   </div>
   
   <!-- プロフィール画像（ヘッダーに重複表示） -->
   <div class="container">
     <div class="row">
       <div class="col-12">
-        <div class="d-flex align-items-end" style="margin-top: -60px; position: relative; z-index: 1;">
+        <div class="d-flex align-items-end profile-overlap">
           <div class="me-4">
             <% if @user.avatar_or_default %>
               <%= image_tag @user.avatar_or_default, 
-                  class: "rounded-circle border border-4 border-white shadow", 
-                  style: "width: 120px; height: 120px; object-fit: cover;" %>
+                  class: "rounded-circle border border-4 border-white shadow avatar-120 object-cover" %>
             <% else %>
-              <div class="rounded-circle bg-secondary border border-4 border-white shadow d-flex align-items-center justify-content-center" 
-                   style="width: 120px; height: 120px;">
+              <div class="rounded-circle bg-secondary border border-4 border-white shadow d-flex align-items-center justify-content-center avatar-120">
                 <i class="fas fa-user fa-3x text-white"></i>
               </div>
             <% end %>
           </div>
           <div class="pb-3">
-            <h1 class="h2 text-white mb-2" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);"><%= @user.name %></h1>
+            <h1 class="h2 text-white mb-2 text-shadow-soft"><%= @user.name %></h1>
             <% if user_signed_in? && @user == current_user %>
               <%= link_to edit_account_user_path, class: "btn btn-light btn-sm" do %>
                 <i class="fas fa-edit me-1"></i>プロフィール編集
@@ -62,9 +58,9 @@
             <div class="col-md-3 text-center">
               <div class="mb-3">
                 <% if @user.avatar_or_default %>
-                  <%= image_tag @user.avatar_or_default, class: "rounded-circle border", style: "width: 120px; height: 120px; object-fit: cover;" %>
+                  <%= image_tag @user.avatar_or_default, class: "rounded-circle border avatar-120 object-cover" %>
                 <% else %>
-                  <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px;">
+                  <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto avatar-120">
                     <i class="fas fa-user fa-3x text-white"></i>
                   </div>
                 <% end %>

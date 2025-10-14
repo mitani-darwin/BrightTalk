@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 設定値
-REGISTRY="index.docker.io"
+REGISTRY="ghcr.io"
 # DOCKER_HUB_USERNAME should be set in environment (e.g., .env.production)
 REPOSITORY="bright_talk"
 AWS_REGION="ap-northeast-1"
@@ -183,7 +183,9 @@ backup_database() {
 kamal_deploy() {
     echo_info "Kamalでデプロイを開始..."
 
-    if dotenv -f .env.production kamal deploy; then
+    RAILS_ENV=production bin/rails assets:precompile
+
+    if dotenv -f .env.production bundle exec kamal deploy; then
         echo_success "🎉 デプロイが正常に完了しました！"
     else
         echo_error "Kamalデプロイに失敗しました"
@@ -242,8 +244,11 @@ main() {
 
     # 処理実行
     check_prerequisites
+    echo "### チェック処理終了 ###"
     setup_environment
+    echo "### 環境設定終了 ###"
     ghcr_login
+    echo "### ghcrログイン完了 ###"
 
     if [ "$SKIP_BUILD" = false ]; then
         build_and_push

@@ -37,7 +37,7 @@
         </div>
         
         <!-- ステータス表示 -->
-        <div id="status-message" class="alert" style="display: none;" role="alert"></div>
+        <div id="status-message" class="alert d-none" role="alert"></div>
       </div>
     </div>
   </div>
@@ -57,9 +57,9 @@
             function showStatus(message, type = 'info') {
                 statusMessage.textContent = message;
                 statusMessage.className = `alert alert-${type}`;
-                statusMessage.style.display = 'block';
+                statusMessage.classList.remove('d-none');
                 if (type === 'success') {
-                    setTimeout(() => { statusMessage.style.display = 'none'; }, 3000);
+                    setTimeout(() => { statusMessage.classList.add('d-none'); }, 3000);
                 }
             }
 

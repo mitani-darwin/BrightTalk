@@ -7,13 +7,13 @@
   <%= form.collection_select :post_type_id, PostType.all.order(:name), :id, :display_name,
                              { prompt: "投稿タイプを選択してください" },
                              { class: "form-select #{'is-invalid' if post.errors[:post_type_id].any?}", id: "postTypeSelect" } %>
-  <button type="button" class="btn btn-outline-primary btn-sm" id="addPostTypeBtn" style="white-space: nowrap;">
+  <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" id="addPostTypeBtn">
     <i class="fas fa-plus"></i> 追加
   </button>
 </div>
 
 <!-- 新規投稿タイプ追加フォーム（初期は非表示） -->
-<div id="newPostTypeForm" class="card" style="display: none;">
+<div id="newPostTypeForm" class="card d-none">
   <div class="card-body p-3">
     <h6 class="card-title">新しい投稿タイプを追加</h6>
     <div class="mb-2">
@@ -34,8 +34,8 @@
         キャンセル
       </button>
     </div>
-    <div id="postTypeError" class="alert alert-danger mt-2" style="display: none;"></div>
-    <div id="postTypeSuccess" class="alert alert-success mt-2" style="display: none;"></div>
+    <div id="postTypeError" class="alert alert-danger mt-2 d-none"></div>
+    <div id="postTypeSuccess" class="alert alert-success mt-2 d-none"></div>
   </div>
 </div>
 <div class="form-text">この投稿の主な目的を選択してください。</div>

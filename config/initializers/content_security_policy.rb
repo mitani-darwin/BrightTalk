@@ -1,16 +1,17 @@
 # config/initializers/content_security_policy.rb
 Rails.application.configure do
-  if Rails.env.development?
-    # スタイルは inline 許可、スクリプトは nonce を使う
-    config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
-    config.content_security_policy_nonce_directives = %w[script-src] # ← style-src は含めない
+  # すべての環境で CSP の nonce を有効化（script と style の両方）
+  config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+  config.content_security_policy_nonce_directives = %w[script-src style-src]
 
+  if Rails.env.development?
+    # 開発環境: HMR などローカルへの接続を許可
     localhost_http = %w[http://localhost:3036 http://127.0.0.1:3036]
     localhost_ws   = %w[ws://localhost:3036 ws://127.0.0.1:3036]
 
     config.content_security_policy do |policy|
       policy.script_src  :self, :https, *localhost_http, :unsafe_eval
-      policy.style_src   :self, :https, *localhost_http, :unsafe_inline,
+      policy.style_src   :self, :https, *localhost_http,
                          "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
       policy.font_src    :self, :https, :data,
                          "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
@@ -18,6 +19,7 @@ Rails.application.configure do
       policy.connect_src :self, :https, *localhost_http, *localhost_ws
     end
   else
+    # 本番/その他環境: CDN と自己ドメインのみ許可。インラインは nonce によって許可される。
     config.content_security_policy do |policy|
       policy.default_src :self
       policy.script_src  :self, :https

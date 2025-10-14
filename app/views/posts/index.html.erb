@@ -75,8 +75,7 @@
                       <div class="d-flex align-items-center text-muted">
                         <% if post.user&.avatar_or_default %>
                           <%= image_tag post.user.avatar_or_default, 
-                              class: "rounded-circle me-2", 
-                              style: "width: 20px; height: 20px; object-fit: cover;" %>
+                              class: "rounded-circle me-2 avatar-20 object-cover" %>
                         <% else %>
                           <i class="fas fa-user me-1"></i>
                         <% end %>
@@ -120,7 +119,7 @@
                     <% end %>
 
                     <!-- 内容の一部 -->
-                    <p class="card-text text-muted mb-3" style="line-height: 1.6;">
+                    <p class="card-text text-muted mb-3 lh-16">
                       <%= truncate(strip_tags(post.content_as_html), length: 150) %>
                     </p>
 

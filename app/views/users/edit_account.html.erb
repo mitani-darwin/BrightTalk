@@ -53,12 +53,12 @@
                   <label class="form-label">ヘッダー画像</label>
                   <div class="mb-3">
                     <% if @user.header_image_or_default %>
-                      <div style="height: 200px; width: 100%; background-size: cover; background-position: center; border-radius: 8px; background-image: url('<%= url_for(@user.header_image_or_default) %>');" 
+                      <div class="header-preview-box bg-cover-center rounded-8" 
+                           style="background-image: url('<%= url_for(@user.header_image_or_default) %>');" 
                            id="header-preview">
                       </div>
                     <% else %>
-                      <div class="bg-secondary d-flex align-items-center justify-content-center rounded" 
-                           style="height: 200px; width: 100%;" id="header-preview">
+                      <div class="bg-secondary d-flex align-items-center justify-content-center rounded-8 header-preview-box" id="header-preview">
                         <i class="fas fa-image fa-3x text-white"></i>
                       </div>
                     <% end %>
@@ -75,9 +75,9 @@
                   <label class="form-label">プロフィール画像</label>
                   <div class="mb-3">
                     <% if @user.avatar_or_default %>
-                      <%= image_tag @user.avatar_or_default, class: "rounded-circle", style: "width: 150px; height: 150px; object-fit: cover;", id: "avatar-preview" %>
+                      <%= image_tag @user.avatar_or_default, class: "rounded-circle avatar-150 object-cover", id: "avatar-preview" %>
                     <% else %>
-                      <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 150px; height: 150px; margin: 0 auto;" id="avatar-preview">
+                      <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto avatar-150" id="avatar-preview">
                         <i class="fas fa-user fa-4x text-white"></i>
                       </div>
                     <% end %>
@@ -160,7 +160,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('avatar-preview');
-                preview.innerHTML = '<img src="' + e.target.result + '" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">';
+                preview.innerHTML = '<img src="' + e.target.result + '" class="rounded-circle avatar-150 object-cover">';
             }
             reader.readAsDataURL(input.files[0]);
         }
@@ -172,8 +172,6 @@
             reader.onload = function(e) {
                 const preview = document.getElementById('header-preview');
                 preview.style.backgroundImage = 'url(' + e.target.result + ')';
-                preview.style.backgroundSize = 'cover';
-                preview.style.backgroundPosition = 'center';
                 preview.innerHTML = '';
             }
             reader.readAsDataURL(input.files[0]);

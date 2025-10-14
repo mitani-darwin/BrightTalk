@@ -7,13 +7,13 @@
   <%= form.collection_select :category_id, Category.all.order(:name), :id, :full_name,
                              { prompt: "カテゴリーを選択してください" },
                              { class: "form-select #{'is-invalid' if post.errors[:category_id].any?}", id: "categorySelect" } %>
-  <button type="button" class="btn btn-outline-primary btn-sm" id="addCategoryBtn" style="white-space: nowrap;">
+  <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" id="addCategoryBtn">
     <i class="fas fa-plus"></i> 追加
   </button>
 </div>
 
 <!-- 新規カテゴリー追加フォーム（階層構造対応・初期は非表示） -->
-<div id="newCategoryForm" class="card" style="display: none;">
+<div id="newCategoryForm" class="card d-none">
   <div class="card-body p-3">
     <h6 class="card-title">新しいカテゴリーを追加</h6>
     <div class="mb-2">
@@ -43,7 +43,7 @@
         キャンセル
       </button>
     </div>
-    <div id="categoryError" class="alert alert-danger mt-2" style="display: none;"></div>
-    <div id="categorySuccess" class="alert alert-success mt-2" style="display: none;"></div>
+    <div id="categoryError" class="alert alert-danger mt-2 d-none"></div>
+    <div id="categorySuccess" class="alert alert-success mt-2 d-none"></div>
   </div>
 </div>

@@ -9,7 +9,7 @@ set -e
 SSH_KEY_DIR="terraform/ssh-keys"
 DEFAULT_KEY_NAME=$(hostname)
 SSH_KEY_TYPE="ed25519"
-DEFAULT_SERVER="3.115.45.181"
+DEFAULT_SERVER="52.192.149.181"
 SSH_PORT="47583"
 SSH_USER="ec2-user"
 
