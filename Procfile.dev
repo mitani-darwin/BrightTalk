@@ -1,3 +1,2 @@
 web: bin/rails server -p 3000
-css: bin/rails dartsass:watch
-vite: npm run dev -- --debug
+vite: bin/vite dev --port 3036 --strictPort

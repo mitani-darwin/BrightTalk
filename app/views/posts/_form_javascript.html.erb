@@ -339,7 +339,7 @@
         const checkCodeEditor = () => {
             const codeEditorElement = textarea.closest('[data-controller*="code-editor"]');
             if (codeEditorElement && codeEditorElement.classList.contains('codemirror-initialized')) {
-                console.log('CodeEditorは正常に初期化済み（本番環境）');
+                console.log('CodeEditorは正常に初期化済み');
                 return true;
             }
             return false;
@@ -353,7 +353,7 @@
         // 本番環境用：より長い待機時間でフォールバック（CM6/Stimulus を再接続試行）
         setTimeout(() => {
             if (!checkCodeEditor()) {
-                console.warn('本番環境でStimulusコントローラー初期化失敗。手動初期化を実行...');
+                console.warn('Stimulusコントローラー初期化失敗。手動初期化を実行...');
                 forceInitializeCodeEditorFallbackProduction(textarea);
             }
         }, 5000); // 本番環境用に5秒に延長
@@ -362,7 +362,7 @@
     // 本番環境専用のフォールバック初期化（CM6/Stimulus 再接続用）
     async function forceInitializeCodeEditorFallbackProduction(textarea) {
         try {
-            console.log('本番環境用フォールバック初期化開始...');
+            console.log('フォールバック初期化開始...');
 
             const wrapper = textarea.closest('[data-controller*="code-editor"]');
             if (!wrapper) {
@@ -387,12 +387,11 @@
                     return;
                 }
                 attempts++;
-                console.log(`本番環境CodeMirror待機(CM6): ${attempts}/${maxAttempts}`);
             }
 
-            console.error('本番環境でCodeMirror6の初期化を確認できませんでした');
+            console.error('CodeMirror6の初期化を確認できませんでした');
         } catch (error) {
-            console.error('本番環境フォールバック初期化失敗:', error);
+            console.error('フォールバック初期化失敗:', error);
         }
     }
 
@@ -428,20 +427,9 @@
                     indentUnit: 2,
                     tabSize: 2
                 });
-                console.log('✓ フォールバックでCodeEditorを初期化しました（本番環境）');
+                console.log('✓ フォールバックでCodeEditorを初期化しました');
             } else {
                 console.error('CodeMirror could not be loaded in production');
-            }
-        } catch (error) {
-            console.error('フォールバック初期化にも失敗（本番環境）:', error);
-        }
-    }
-
-    async function forceInitializeCodeEditorFallback(textarea) {
-        try {
-            let CodeMirror = window.CodeMirror;
-            if (!CodeMirror && window.loadCodeMirror) {
-                CodeMirror = await window.loadCodeMirror();
             }
         } catch (error) {
             console.error('フォールバック初期化にも失敗:', error);

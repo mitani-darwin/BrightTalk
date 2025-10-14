@@ -1,4 +1,3 @@
-// Vite entrypoint for Rails (vite_rails)
-// Delegates to the existing code under app/javascript
-// Keep the original file location intact to minimize changes.
+// Vite entrypoint for the "new" page
+// Delegate to the existing implementation under app/javascript
 import '../../javascript/entrypoints/new.js'

@@ -45,9 +45,15 @@
             </div>
 
             <!-- カテゴリーバッジ -->
-            <%= link_to posts_path(category_id: @post.category.id),
-                        class: "badge bg-primary text-decoration-none" do %>
-              <i class="fas fa-tag"></i> <%= @post.category.full_name %>
+            <% if @post.category.present? %>
+              <%= link_to posts_path(category_id: @post.category.id),
+                          class: "badge bg-primary text-decoration-none" do %>
+                <i class="fas fa-tag"></i> <%= @post.category.full_name %>
+              <% end %>
+            <% else %>
+              <span class="badge bg-secondary text-decoration-none">
+                <i class="fas fa-tag"></i> 未分類
+              </span>
             <% end %>
           </div>
 

@@ -23,9 +23,6 @@ gem "bcrypt", "~> 3.1.7"
 # ページネーション
 gem "kaminari"
 
-# Sassプリプロセッサ
-gem "dartsass-rails"
-
 gem "devise"
 # Deviseの日本語化
 gem "devise-i18n"

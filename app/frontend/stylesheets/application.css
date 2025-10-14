@@ -1,0 +1,820 @@
+@charset "UTF-8";
+@import url("https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css");
+@import url("https://vjs.zencdn.net/8.3.0/video-js.css");
+.navbar {
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #007bff !important;
+}
+
+.navbar-nav .nav-link {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+.navbar-nav .nav-link:hover {
+  color: #007bff !important;
+}
+
+.dropdown-menu {
+  z-index: 1050;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  transition: background-color 0.3s ease;
+}
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: #007bff;
+}
+
+footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050;
+  width: 100%;
+  margin-left: 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+footer .container-fluid {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+footer h5 {
+  color: #007bff !important;
+  font-weight: bold;
+}
+footer p {
+  margin-bottom: 0.5rem;
+}
+footer small {
+  font-size: 0.8rem;
+}
+footer small a {
+  transition: color 0.3s ease;
+}
+footer small a:hover {
+  color: #007bff !important;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+main {
+  flex: 1;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+
+.post-content-textarea {
+  width: 100% !important;
+  resize: vertical;
+  min-height: 300px !important;
+  max-height: calc(100vh - 500px) !important;
+}
+@media (max-height: 768px) {
+  .post-content-textarea .CodeMirror,
+  .post-content-textarea .CodeMirror-scroll {
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 400px !important;
+  }
+  .post-content-textarea {
+    min-height: 200px !important;
+    max-height: calc(100vh - 400px) !important;
+  }
+}
+@media (max-height: 600px) {
+  .post-content-textarea {
+    min-height: 150px !important;
+    max-height: calc(100vh - 350px) !important;
+  }
+}
+@media (min-height: 1200px) {
+  .post-content-textarea {
+    min-height: 400px !important;
+    max-height: calc(100vh - 600px) !important;
+  }
+}
+
+.CodeMirror {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  font-size: 14px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace;
+  background-color: #ffffff;
+  height: auto !important; /* 固定高さを削除 */
+  min-height: 200px !important; /* 最小高さを小さく */
+  max-height: calc(100vh - 400px) !important; /* 画面に収まる最大高さ */
+  overflow: hidden !important;
+}
+.CodeMirror.CodeMirror-focused {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.CodeMirror .CodeMirror-gutters {
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+}
+.CodeMirror .CodeMirror-linenumber {
+  color: #6c757d;
+}
+.CodeMirror .CodeMirror-cursor {
+  border-left-color: #007bff;
+}
+.CodeMirror .CodeMirror-selected {
+  background: rgba(0, 123, 255, 0.1);
+}
+.CodeMirror .CodeMirror-activeline-background {
+  background: rgba(0, 123, 255, 0.05);
+}
+.CodeMirror .CodeMirror-scroll {
+  height: auto !important; /* 固定高さを削除 */
+  min-height: 400px !important;
+  max-height: 600px !important;
+  overflow-y: auto !important;
+}
+
+.post-form-container {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+
+.pagination .page-item .page-link {
+  color: #007bff;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  margin-left: -1px;
+  line-height: 1.25;
+  text-decoration: none;
+  background-color: #fff;
+}
+.pagination .page-item .page-link:hover {
+  z-index: 2;
+  color: #0056b3;
+  text-decoration: none;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+.pagination .page-item .page-link:focus {
+  z-index: 3;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.pagination .page-item.active .page-link {
+  z-index: 3;
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  cursor: auto;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+.pagination .page-item:first-child .page-link {
+  margin-left: 0;
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+}
+.pagination .page-item:last-child .page-link {
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.card {
+  transition: transform 0.2s ease-in-out;
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.post-content {
+  line-height: 1.6;
+}
+.post-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+.post-content table th, .post-content table td {
+  border: 1px solid #adb5bd;
+  padding: 0.75rem;
+  text-align: left;
+}
+.post-content table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+.post-content table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.btn-outline-primary:hover {
+  transform: translateY(-1px);
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.alert {
+  margin-bottom: 0;
+}
+
+.hover-shadow {
+  transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.text-truncate-2-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  max-height: 2.8em;
+}
+
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
+ * vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any other CSS
+ * files in this directory. Styles in this file should be added after the last require_* statement.
+ * It is generally better to create a new file per style scope.
+ *
+ *= require_tree ../../assets/stylesheets
+ *= require_self
+ */
+.card {
+  transition: all 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.avatar .rounded-circle {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+.btn-outline-primary:not(.active):hover {
+  transform: translateX(5px);
+}
+
+@media (max-width: 768px) {
+  .col-lg-3 {
+    order: 2;
+  }
+  .col-lg-9 {
+    order: 1;
+  }
+  footer {
+    position: static !important;
+    box-shadow: none;
+    z-index: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  h5 {
+    font-size: 1.1rem;
+  }
+  p {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+  small {
+    font-size: 0.7rem;
+  }
+}
+main {
+  padding-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+  footer {
+    position: static !important;
+    box-shadow: none;
+    z-index: auto;
+  }
+  footer .container-fluid {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  footer h5 {
+    font-size: 1rem;
+  }
+  footer p {
+    font-size: 0.8rem;
+  }
+  footer small {
+    font-size: 0.65rem;
+  }
+  main {
+    padding-bottom: 0.5rem;
+  }
+}
+.form-control, .form-select {
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  transform: translateY(-1px);
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+}
+.card .card-header {
+  border-radius: 12px 12px 0 0;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dropdown-menu {
+  z-index: 1050;
+}
+
+.dropdown-toggle::after {
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+
+.dropdown-toggle[aria-expanded=true] {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-posts-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.user-info {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.user-avatar .avatar-lg {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+
+.posts-count {
+  color: #666;
+  margin-top: 10px;
+}
+
+.posts-grid {
+  display: block !important;
+  margin-bottom: 40px;
+}
+
+.post-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.post-card:hover {
+  transform: translateY(-5px);
+}
+
+.post-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.post-content {
+  padding: 20px;
+}
+
+.post-title {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.post-excerpt {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  color: #888;
+}
+
+.author-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s;
+}
+
+.author-link:hover {
+  opacity: 0.8;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.no-posts {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.back-link {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.no-image-placeholder {
+  background-color: #f8f9fa !important;
+  border: 2px dashed #dee2e6;
+}
+
+.post-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-lg {
+  width: 100px;
+  height: 100px;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.user-posts-page .post-title-section {
+  margin-bottom: 15px !important;
+  border-bottom: 3px solid #007bff !important;
+  padding-bottom: 12px !important;
+}
+.user-posts-page .post-title {
+  font-size: 1.5em !important;
+  font-weight: bold !important;
+  color: #2c3e50 !important;
+  margin: 0 !important;
+  line-height: 1.3 !important;
+}
+.user-posts-page .post-content-section {
+  margin-bottom: 20px !important;
+  background-color: #f8f9fa !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  border-left: 4px solid #007bff !important;
+}
+.user-posts-page .post-excerpt {
+  color: #495057 !important;
+  line-height: 1.7 !important;
+  margin: 0 !important;
+  font-size: 1rem !important;
+}
+.user-posts-page .post-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 15px 0 !important;
+  border-top: 2px solid #dee2e6 !important;
+  font-size: 0.9em !important;
+  margin-top: 20px !important;
+}
+.user-posts-page .post-date-section {
+  display: flex !important;
+  align-items: center !important;
+  color: #007bff !important;
+  font-weight: 600 !important;
+  background-color: #e3f2fd !important;
+  padding: 8px 15px !important;
+  border-radius: 20px !important;
+}
+.user-posts-page .post-date-section i {
+  margin-right: 8px !important;
+  color: #007bff !important;
+}
+.user-posts-page .post-category-section {
+  display: flex !important;
+  align-items: center !important;
+  background-color: #28a745 !important;
+  color: white !important;
+  padding: 8px 15px !important;
+  border-radius: 20px !important;
+  font-size: 0.85em !important;
+  font-weight: 600 !important;
+}
+.user-posts-page .post-category-section i {
+  margin-right: 5px !important;
+}
+.user-posts-page .post-content {
+  padding: 30px !important;
+}
+
+#formContainer .mb-3:has(label .text-danger) input.form-control,
+#formContainer .mb-3:has(label .text-danger) textarea.form-control,
+#formContainer .mb-3:has(label .text-danger) select.form-select {
+  background-color: #f7d6e6 !important;
+}
+#formContainer .mb-3 input.form-control[required=required],
+#formContainer .mb-3 textarea.form-control[required=required],
+#formContainer .mb-3 select.form-select[required=required],
+#formContainer .mb-3 input.form-control[required],
+#formContainer .mb-3 textarea.form-control[required],
+#formContainer .mb-3 select.form-select[required] {
+  background-color: #f7d6e6 !important;
+}
+
+#formContainer .sticky-actions {
+  background: #ffffff;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+#contentTextarea {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+#contentTextarea::-webkit-scrollbar { /* Chrome/Safari/Edge (Chromium) */
+  display: none;
+}
+
+.content-text h1, .content-text h2, .content-text h3, .content-text h4, .content-text h5, .content-text h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #2d3748;
+}
+.content-text h1 {
+  font-size: 1.875rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+.content-text h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+.content-text h3 {
+  font-size: 1.25rem;
+}
+.content-text h4 {
+  font-size: 1.125rem;
+}
+.content-text h5 {
+  font-size: 1rem;
+}
+.content-text h6 {
+  font-size: 0.875rem;
+}
+.content-text p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+.content-text ul, .content-text ol {
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+.content-text ul li, .content-text ol li {
+  margin-bottom: 0.25rem;
+}
+.content-text blockquote {
+  border-left: 4px solid #007bff;
+  background-color: #f8f9fa;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  font-style: italic;
+}
+.content-text blockquote p {
+  margin-bottom: 0;
+}
+.content-text code {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.25rem;
+  color: #e83e8c;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.875rem;
+  padding: 0.125rem 0.25rem;
+}
+.content-text pre {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.content-text pre code {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  color: #495057;
+}
+.content-text table {
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+.content-text table th, .content-text table td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+  text-align: left;
+}
+.content-text table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+.content-text a {
+  color: #007bff;
+  text-decoration: none;
+}
+.content-text a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+.content-text hr {
+  border: none;
+  border-top: 2px solid #e9ecef;
+  margin: 2rem 0;
+}
+.content-text del {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+.content-text strong, .content-text b {
+  font-weight: 600;
+}
+.content-text em, .content-text i {
+  font-style: italic;
+}
+
+/* CodeMirror縦サイズをさらに大きく設定 */
+.CodeMirror {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+  overflow: hidden !important;
+}
+
+.CodeMirror-scroll {
+  height: 600px !important;
+  min-height: 600px !important;
+  max-height: 800px !important;
+  overflow-y: auto !important;
+}
+
+/* content用のtextareaをより大きく */
+#contentTextarea {
+  height: auto !important; /* 固定高さを削除 */
+  min-height: 200px !important;
+  max-height: calc(100vh - 400px) !important;
+}
+
+/* CodeMirrorエディター用のレスポンシブスタイル */
+.codemirror-sized .cm-editor {
+  height: 100% !important;
+  width: 100% !important;
+}
+.codemirror-sized .cm-scroller {
+  overflow-y: auto !important;
+}
+
+/* 投稿ボタンを画面下部に固定（常に表示） */
+.post-form-buttons {
+  bottom: 0; /* ビューポート下端に吸着 */
+  background: #fff; /* コンテンツと分離 */
+  padding: 10px 0;
+  border-top: 1px solid #dee2e6;
+  margin-top: 16px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* フォームレイアウトをより大きく最適化 */
+.flex-grow-1.d-flex.flex-column {
+  min-height: auto !important; /* 固定高さを削除 */
+}
+.flex-grow-1.d-flex.flex-column .form-control.flex-grow-1 {
+  flex: 1 1 auto !important; /* 自動サイズに変更 */
+  height: auto !important;
+  min-height: 200px !important; /* 最小高さを小さく */
+}
+
+.video-container {
+  width: 100%; /* 画面幅いっぱい */
+  max-width: 960px; /* 必要なら最大幅制限 */
+  margin: 0 auto; /* 中央寄せ */
+}
+
+.video-container .video-js {
+  width: 100%;
+  height: auto;
+}
+
+/* textarea を使う場合 */
+#contentTextarea {
+  overflow: auto;
+}
+
+/* CodeMirror 側（内部スクロールを確実に表示） */
+.CodeMirror-scroll {
+  overflow-y: scroll !important; /* 常にスクロールバーを出す */
+  scrollbar-gutter: stable both-edges; /* スクロールバー分の揺れ防止（対応ブラウザ） */
+}
+
+/* CodeMirror 6 用（内部スクロールを確実に表示） */
+.cm-scroller {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable both-edges;
+}
+
+
