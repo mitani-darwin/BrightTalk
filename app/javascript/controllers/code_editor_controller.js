@@ -48,7 +48,22 @@ export default class extends Controller {
             }
         }, { dark: false })
 
+        // Editor size/scroll: add vertical scrollbar by constraining height
+        const fixedHeightTheme = EditorView.theme({
+            '&': { maxHeight: '60vh' },
+            '.cm-scroller': { overflowY: 'auto' }
+        })
+
+        // 既存の cm5Highlight 定義の直前・または直上に追記
+        const headingTags = [
+            t.heading,
+            t.heading1, t.heading2, t.heading3, t.heading4, t.heading5, t.heading6
+        ].filter(Boolean) // 未定義要素を除外
+
+        if (t.headingMark) headingTags.push(t.headingMark) // 存在すれば追加
+
         const cm5Highlight = HighlightStyle.define([
+            { tag: headingTags, color: '#00f' },
             { tag: t.keyword, color: '#708' },          // .cm-keyword
             { tag: t.atom, color: '#219' },             // .cm-atom
             { tag: t.number, color: '#164' },           // .cm-number
@@ -65,6 +80,17 @@ export default class extends Controller {
             { tag: t.tagName, color: '#170' },          // .cm-tag
             { tag: t.attributeName, color: '#00c' },    // .cm-attribute
             { tag: t.bracket, color: '#997' },          // .cm-bracket
+            { tag: t.contentSeparator, color: '#888' }, // Markdown horizontal rule ("---")
+
+            // --- Markdown (CM5 default-like) ---
+            // Headers (including the leading '#') — CM5 .cm-header is blue
+            // Blockquote — CM5 .cm-quote is green
+            { tag: t.quote, color: '#090' },
+            // Emphasis/Bold/Strike — CM5 changes font style rather than color
+            { tag: t.strong, fontWeight: 'bold' },
+            { tag: t.emphasis, fontStyle: 'italic' },
+            { tag: t.strikethrough, textDecoration: 'line-through' },
+
             { tag: t.invalid, color: '#f00' }           // .cm-error
         ])
 
@@ -79,7 +105,9 @@ export default class extends Controller {
             basicSetup,
             markdown(),
             cm5Theme,
-            syntaxHighlighting(cm5Highlight, { fallback: true }),
+            fixedHeightTheme,
+            // Use our highlight style with normal precedence so it applies
+            syntaxHighlighting(cm5Highlight),
             syncToTextarea,
         ]
 

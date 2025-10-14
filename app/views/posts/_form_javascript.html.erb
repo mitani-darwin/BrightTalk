@@ -1176,16 +1176,24 @@
             files.forEach((file, index) => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'mb-1 d-flex align-items-center justify-content-between';
-                fileItem.innerHTML = `
-                <span class="small">
+
+                const leftSpan = document.createElement('span');
+                leftSpan.className = 'small';
+                leftSpan.innerHTML = `
                     <i class="fas fa-image text-primary me-1"></i>
                     ${file.name} <span class="text-muted">(${formatFileSize(file.size)})</span>
-                </span>
-                <button type="button" class="btn btn-sm btn-outline-danger"
-                        onclick="removeSelectedFile(${index})" title="削除">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
+                `;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-sm btn-outline-danger';
+                removeBtn.title = '削除';
+                removeBtn.setAttribute('aria-label', '削除');
+                removeBtn.addEventListener('click', () => removeSelectedFile(index));
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+
+                fileItem.appendChild(leftSpan);
+                fileItem.appendChild(removeBtn);
                 filesList.appendChild(fileItem);
             });
         } else {
