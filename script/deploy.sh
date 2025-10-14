@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 設定値
-REGISTRY="index.docker.io"
+REGISTRY="ghcr.io"
 # DOCKER_HUB_USERNAME should be set in environment (e.g., .env.production)
 REPOSITORY="bright_talk"
 AWS_REGION="ap-northeast-1"
@@ -261,7 +261,7 @@ main() {
 
     # docker build --no-cache -t brighttalk .
     pwd
-    kamal_deploy
+    dotenv -f .env.production kamal deploy
 
     echo ""
     echo_success "✨ すべての処理が完了しました！"
