@@ -183,6 +183,8 @@ backup_database() {
 kamal_deploy() {
     echo_info "Kamalでデプロイを開始..."
 
+    RAILS_ENV=production bin/rails assets:precompile
+
     if dotenv -f .env.production bundle exec kamal deploy; then
         echo_success "🎉 デプロイが正常に完了しました！"
     else
