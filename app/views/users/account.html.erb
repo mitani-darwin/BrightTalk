@@ -64,9 +64,9 @@
           <div class="row">
             <div class="col-md-3 text-center">
               <% if @user.avatar_or_default %>
-                <%= image_tag @user.avatar_or_default, class: "rounded-circle", style: "width: 120px; height: 120px; object-fit: cover;" %>
+                <%= image_tag @user.avatar_or_default, class: "rounded-circle avatar-120 object-cover" %>
               <% else %>
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; margin: 0 auto;">
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto avatar-120">
                   <i class="fas fa-user fa-3x text-white"></i>
                 </div>
               <% end %>

@@ -6,22 +6,20 @@
       <!-- いいね済みの場合：削除 -->
       <%= link_to post_like_path(post, like),
                   data: { turbo_method: :delete },
-                  class: "btn btn-sm btn-link text-decoration-none me-2 text-danger",
-                  style: "border: none; padding: 0.25rem 0.5rem;" do %>
+                  class: "btn btn-sm btn-link text-decoration-none me-2 text-danger px-2 py-1" do %>
         <i class="bi bi-heart-fill"></i> <%= post.likes.count %>
       <% end %>
     <% else %>
       <!-- いいねしていない場合：作成 -->
       <%= link_to post_likes_path(post),
                   data: { turbo_method: :post },
-                  class: "btn btn-sm btn-link text-decoration-none me-2 text-muted",
-                  style: "border: none; padding: 0.25rem 0.5rem;" do %>
+                  class: "btn btn-sm btn-link text-decoration-none me-2 text-muted px-2 py-1" do %>
         <i class="bi bi-heart"></i> <%= post.likes.count %>
       <% end %>
     <% end %>
   <% else %>
     <!-- 未ログイン -->
-    <span class="text-muted me-2" style="padding: 0.25rem 0.5rem;">
+    <span class="text-muted me-2 px-2 py-1">
       <i class="bi bi-heart"></i> <%= post.likes.count %>
     </span>
   <% end %>

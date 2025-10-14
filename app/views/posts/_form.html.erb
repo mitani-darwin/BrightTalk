@@ -9,14 +9,14 @@
       <!-- エラーメッセージ表示 -->
       <%= render 'form_errors', post: post %>
 
-      <div class="row" id="formContainer" style="min-height: calc(100vh - 140px);">
+      <div class="row min-h-post-form" id="formContainer">
         <!-- サイドバー（左側） -->
-        <div class="col-md-4" style="height: 100%;">
+        <div class="col-md-4 h-100">
           <%= render 'form_sidebar', form: form, post: post %>
         </div>
 
         <!-- メインコンテンツ（右側） -->
-        <div class="col-md-8 d-flex flex-column" style="height: 100%;">
+        <div class="col-md-8 d-flex flex-column h-100">
           <%= render 'form_main_content', form: form, post: post %>
         </div>
       </div>
