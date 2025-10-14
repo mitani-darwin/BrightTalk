@@ -183,7 +183,7 @@ backup_database() {
 kamal_deploy() {
     echo_info "Kamalでデプロイを開始..."
 
-    if dotenv -f .env.production kamal deploy; then
+    if dotenv -f .env.production bundle exec kamal deploy; then
         echo_success "🎉 デプロイが正常に完了しました！"
     else
         echo_error "Kamalデプロイに失敗しました"
@@ -242,8 +242,11 @@ main() {
 
     # 処理実行
     check_prerequisites
+    echo "### チェック処理終了 ###"
     setup_environment
+    echo "### 環境設定終了 ###"
     ghcr_login
+    echo "### ghcrログイン完了 ###"
 
     if [ "$SKIP_BUILD" = false ]; then
         build_and_push
@@ -261,7 +264,7 @@ main() {
 
     # docker build --no-cache -t brighttalk .
     pwd
-    dotenv -f .env.production kamal deploy
+    kamal_deploy
 
     echo ""
     echo_success "✨ すべての処理が完了しました！"
