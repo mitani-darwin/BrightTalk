@@ -141,9 +141,18 @@ export default class extends Controller {
         // insertText 等で利用する参照（後方互換）
         this.editor = this.cm
 
+        // カスタムイベントでのテキスト挿入（フォーム側からの依頼に対応）
+        if (!this.boundInsertHandler) {
+            this.boundInsertHandler = this.handleInsertText.bind(this)
+            this.element.addEventListener('code-editor:insert-text', this.boundInsertHandler)
+        }
+
         // 初期化完了の通知とフラグ設定（ページ側の確認ロジック向け）
         this.dispatch('ready', { detail: { view: this.cm } })
+        // 互換目的: 以前のリスナー向けイベント名も発火
+        this.dispatch('initialized', { detail: { view: this.cm } })
         this.element.dataset.codemirrorReady = 'true'
+        this.element.classList.add('codemirror-initialized')
         if (!window.codeEditorInstances) window.codeEditorInstances = new WeakMap()
         window.codeEditorInstances.set(this.element, this.cm)
 
@@ -159,8 +168,6 @@ export default class extends Controller {
         if (!el.offsetParent && style.position !== 'fixed') return false
         return true
     }
-
-
 
     insertText(text) {
         console.log('=== CodeEditor insertText called ===');
