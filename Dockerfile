@@ -51,6 +51,8 @@ RUN bundle install --jobs 4 --retry 3 && \
 # Copy application code
 COPY . .
 
+COPY public /app/public
+
 RUN npm ci && npm run build:vite
 
 # Precompile bootsnap code for faster boot times
