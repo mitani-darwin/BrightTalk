@@ -123,6 +123,8 @@ Rails.application.configure do
     policy.connect_src :self, "https://www.brighttalk.jp"
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
+    policy.style_src :self, :https, :unsafe_inline, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
+    policy.style_src_elem :self, :https, :unsafe_inline, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
     policy.img_src :self, :https, :data, :blob, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
   end
 
