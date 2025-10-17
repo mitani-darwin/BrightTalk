@@ -32,6 +32,7 @@
 
   <!-- Vite client (dev only) and application entry -->
   <%= vite_client_tag if Rails.env.development? %>
+  <%= vite_stylesheet_tag 'application' %>
   <%= vite_javascript_tag 'application' %>
 
 </head>

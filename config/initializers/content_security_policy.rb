@@ -12,7 +12,10 @@ Rails.application.configure do
     config.content_security_policy do |policy|
       policy.script_src  :self, :https, *localhost_http, :unsafe_eval
       policy.style_src   :self, :https, *localhost_http,
-                         "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
+                         "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", :unsafe_inline
+      # Explicitly allow element styles for some browsers during dev HMR
+      policy.style_src_elem :self, :https, *localhost_http,
+                            "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", :unsafe_inline
       policy.font_src    :self, :https, :data,
                          "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
       policy.img_src     :self, :https, :data, *localhost_http

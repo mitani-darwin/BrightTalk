@@ -856,8 +856,11 @@ main {
 .progress-4 { height: 4px; }
 .w-33 { width: 33% !important; }
 .avatar-150 { width: 150px; height: 150px; }
-avatar-20 {}
 .avatar-20 { width: 20px; height: 20px; }
 .header-preview-box { height: 200px; width: 100%; border-radius: 8px; }
 .bg-cover-center { background-size: cover; background-position: center; }
 .rounded-8 { border-radius: 8px; }
+
+/* New utilities to replace inline styles */
+.no-resize { resize: none !important; }
+.h-120 { height: 120px; }

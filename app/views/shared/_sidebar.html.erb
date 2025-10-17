@@ -10,7 +10,7 @@
       <div class="card-body">
         <%= form.collection_select :category_id, Category.all, :id, :full_name,
                                    { prompt: "すべてのカテゴリー", selected: params[:category_id] },
-                                   { class: "form-select", onchange: "this.form.submit();" } %>
+                                   { class: "form-select", id: "category_select" } %>
       </div>
 
       <div class="card-header">
@@ -20,7 +20,7 @@
       <div class="card-body">
         <%= form.collection_select :post_type_id, PostType.all, :id, :name,
                                    { prompt: "すべての投稿タイプ", selected: params[:post_type_id] },
-                                   { class: "form-select", onchange: "this.form.submit();" } %>
+                                   { class: "form-select", id: "post_type_select" } %>
       </div>
 
       <div class="card-header">
@@ -47,8 +47,28 @@
             <%= link_to "クリア", posts_path(category_id: params[:category_id], post_type_id: params[:post_type_id]), class: "btn btn-outline-secondary btn-sm ms-1" %>
           <% end %>
         </div>
-      </div>
+</div>
 
-    <% end %>
+<% end %>
   </div>
 </div>
+
+<script nonce="<%= content_security_policy_nonce %>">
+  document.addEventListener('DOMContentLoaded', function() {
+    var category = document.getElementById('category_select');
+    var postType = document.getElementById('post_type_select');
+
+    function submitParentForm(el) {
+      if (!el) return;
+      var form = el.closest('form');
+      if (form) { form.submit(); }
+    }
+
+    if (category) {
+      category.addEventListener('change', function(){ submitParentForm(category); });
+    }
+    if (postType) {
+      postType.addEventListener('change', function(){ submitParentForm(postType); });
+    }
+  });
+</script>
