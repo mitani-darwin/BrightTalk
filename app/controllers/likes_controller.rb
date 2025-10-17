@@ -9,7 +9,9 @@ class LikesController < ApplicationController
 
     if existing_like
       respond_to do |format|
-        format.html { redirect_back(fallback_location: @post, notice: "既にいいねしています。") }
+        # Turbo FrameからのHTML要求に対してもフレームを返す
+        format.html { render partial: 'likes/like_button', locals: { post: @post }, layout: false }
+        format.turbo_stream
         format.json { render json: { status: "already_liked", likes_count: @post.likes.count } }
       end
       return
@@ -19,14 +21,14 @@ class LikesController < ApplicationController
 
     if @like.save
       respond_to do |format|
-        format.html { redirect_back(fallback_location: @post) }
+        format.html { render partial: 'likes/like_button', locals: { post: @post }, layout: false }
         format.turbo_stream
         format.json { render json: { status: "created", likes_count: @post.likes.count } }
       end
     else
       Rails.logger.error "Like save failed: #{@like.errors.full_messages.join(', ')}"
       respond_to do |format|
-        format.html { redirect_back(fallback_location: @post, alert: "いいねできませんでした。") }
+        format.html { render partial: 'likes/like_button', locals: { post: @post }, layout: false, status: :unprocessable_entity }
         format.json { render json: { status: "error", errors: @like.errors.full_messages } }
       end
     end
@@ -58,14 +60,14 @@ class LikesController < ApplicationController
     if @like.destroy
       Rails.logger.info "Like destroyed successfully"
       respond_to do |format|
-        format.html { redirect_back(fallback_location: @post) }
+        format.html { render partial: 'likes/like_button', locals: { post: @post }, layout: false }
         format.turbo_stream
         format.json { render json: { status: "destroyed", likes_count: @post.likes.count } }
       end
     else
       Rails.logger.error "Like destroy failed: #{@like.errors.full_messages.join(', ')}"
       respond_to do |format|
-        format.html { redirect_back(fallback_location: @post, alert: "いいねの取り消しができませんでした。") }
+        format.html { render partial: 'likes/like_button', locals: { post: @post }, layout: false, status: :unprocessable_entity }
         format.json { render json: { status: "error", errors: @like.errors.full_messages } }
       end
     end

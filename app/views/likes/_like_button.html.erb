@@ -5,14 +5,14 @@
     <% if like %>
       <!-- いいね済みの場合：削除 -->
       <%= link_to post_like_path(post, like),
-                  data: { turbo_method: :delete },
+                  data: { turbo_method: :delete, turbo_frame: "like_button_#{post.id}" },
                   class: "btn btn-sm btn-link text-decoration-none me-2 text-danger px-2 py-1" do %>
         <i class="bi bi-heart-fill"></i> <%= post.likes.count %>
       <% end %>
     <% else %>
       <!-- いいねしていない場合：作成 -->
       <%= link_to post_likes_path(post),
-                  data: { turbo_method: :post },
+                  data: { turbo_method: :post, turbo_frame: "like_button_#{post.id}" },
                   class: "btn btn-sm btn-link text-decoration-none me-2 text-muted px-2 py-1" do %>
         <i class="bi bi-heart"></i> <%= post.likes.count %>
       <% end %>
