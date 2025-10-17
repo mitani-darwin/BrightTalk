@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <meta name="csp-nonce" content="<%= content_security_policy_nonce %>">
   <%= favicon_link_tag '/favicon.ico' %>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" nonce="<%= content_security_policy_nonce %>"></script>
@@ -32,7 +33,6 @@
 
   <!-- Vite client (dev only) and application entry -->
   <%= vite_client_tag if Rails.env.development? %>
-  <%= vite_stylesheet_tag 'application' %>
   <%= vite_javascript_tag 'application' %>
 
 </head>

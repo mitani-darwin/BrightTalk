@@ -39,7 +39,7 @@ module PostsHelper
           end
           if matching_image
             actual_url = Rails.application.routes.url_helpers.rails_blob_path(matching_image, only_path: true)
-            %Q(<img src="#{ERB::Util.html_escape(actual_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="img-fluid rounded my-3 clickable-image" style="max-width: 100%; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-image-src="#{ERB::Util.html_escape(actual_url)}" data-image-alt="#{ERB::Util.html_escape(alt_text)}" />)
+            %Q(<img src="#{ERB::Util.html_escape(actual_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="img-fluid rounded my-3 clickable-image cursor-pointer" data-bs-toggle="modal" data-bs-target="#imageModal" data-image-src="#{ERB::Util.html_escape(actual_url)}" data-image-alt="#{ERB::Util.html_escape(alt_text)}" />)
           else
             # Fallback: keep the original markdown text if not found so user still sees something
             match
@@ -50,7 +50,7 @@ module PostsHelper
         end
       else
         # For regular URLs, create proper img tag
-        %Q(<img src="#{ERB::Util.html_escape(image_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="img-fluid rounded my-3 clickable-image" style="max-width: 100%; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-image-src="#{ERB::Util.html_escape(image_url)}" data-image-alt="#{ERB::Util.html_escape(alt_text)}" />)
+        %Q(<img src="#{ERB::Util.html_escape(image_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="img-fluid rounded my-3 clickable-image cursor-pointer" data-bs-toggle="modal" data-bs-target="#imageModal" data-image-src="#{ERB::Util.html_escape(image_url)}" data-image-alt="#{ERB::Util.html_escape(alt_text)}" />)
       end
     end
 
@@ -68,7 +68,7 @@ module PostsHelper
         if matching_video
           video_url = get_cloudfront_video_url(matching_video)
           video_id = "video-#{SecureRandom.hex(8)}"
-          %Q(<div class="video-container my-4" data-controller="video-player" data-video-player-src-value="#{ERB::Util.html_escape(video_url)}" data-video-player-type-value="#{ERB::Util.html_escape(matching_video.content_type)}"><video id="#{video_id}" data-video-player-target="video" class="video-js vjs-default-skin w-100" style="max-width: 100%;" preload="metadata"><source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}"><p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。<br>または<a href="#{ERB::Util.html_escape(video_url)}" download>動画をダウンロード</a>してください。</p></video></div>)
+          %Q(<div class="video-container my-4" data-controller="video-player" data-video-player-src-value="#{ERB::Util.html_escape(video_url)}" data-video-player-type-value="#{ERB::Util.html_escape(matching_video.content_type)}"><video id="#{video_id}" data-video-player-target="video" class="video-js vjs-default-skin w-100" preload="metadata"><source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}"><p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。<br>または<a href="#{ERB::Util.html_escape(video_url)}" download>動画をダウンロード</a>してください。</p></video></div>)
         else
           # Fallback: keep the original markdown text if video not found
           match
@@ -102,6 +102,18 @@ module PostsHelper
 
     # Convert Markdown to HTML
     html_content = markdown.render(processed_content)
+    begin
+      require 'loofah'
+      fragment = Loofah.fragment(html_content)
+      scrubber = Loofah::Scrubber.new do |node|
+        node.remove_attribute('style') if node.respond_to?(:attributes) && node['style']
+      end
+      fragment.scrub!(scrubber)
+      html_content = fragment.to_html
+    rescue LoadError
+      # Fallback: if Loofah is not available, remove inline style attributes with a best-effort regex
+      html_content = html_content.gsub(/\sstyle="[^"]*"/i, '')
+    end
     html_content.html_safe
   end
 
