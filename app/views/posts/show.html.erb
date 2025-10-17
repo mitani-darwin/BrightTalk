@@ -257,7 +257,7 @@
             <% else %>
               <div class="alert alert-warning">
                 <i class="fas fa-mobile-alt me-2"></i>
-                コメント機能はiOSアプリからのみ利用できます。
+                コメント機能はiOSアプリからのみ利用できます。(作成中)
                 <br>
                 <small class="text-muted">iOSアプリをダウンロードしてコメントを投稿してください。</small>
               </div>
@@ -306,11 +306,6 @@
                         </div>
                       </div>
                       <p class="mb-0"><%= simple_format(h(comment.content)) %></p>
-                      <% if comment.latitude && comment.longitude %>
-                        <div class="mt-2">
-                          <small class="text-muted">位置情報: <%= comment.latitude %>, <%= comment.longitude %></small>
-                        </div>
-                      <% end %>
                     </div>
                   </div>
                 </div>
