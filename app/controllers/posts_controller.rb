@@ -45,6 +45,8 @@ class PostsController < ApplicationController
           posts: @posts.map do |post|
             {
               id: post.id,
+              category: post.category&.name,
+              post_type: post.post_type&.name,
               title: post.title,
               content: post.content.to_s.truncate(200),
               user: post.user&.name || "削除されたユーザー", # nil安全性を追加

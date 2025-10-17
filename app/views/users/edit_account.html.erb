@@ -53,17 +53,16 @@
                   <label class="form-label">ヘッダー画像</label>
                   <div class="mb-3">
                     <% if @user.header_image_or_default %>
-                      <div class="header-preview-box bg-cover-center rounded-8" 
-                           style="background-image: url('<%= url_for(@user.header_image_or_default) %>');" 
-                           id="header-preview">
+                      <div class="header-preview-box rounded-8 overflow-hidden" id="header-preview">
+                        <%= image_tag @user.header_image_or_default, class: "w-100 h-100 object-cover", id: "header-preview-img" %>
                       </div>
                     <% else %>
-                      <div class="bg-secondary d-flex align-items-center justify-content-center rounded-8 header-preview-box" id="header-preview">
+                      <div class="bg-secondary d-flex align-items-center justify-content-center rounded-8 header-preview-box overflow-hidden" id="header-preview">
                         <i class="fas fa-image fa-3x text-white"></i>
                       </div>
                     <% end %>
                   </div>
-                  <%= f.file_field :header_image, class: "form-control", accept: "image/*", onchange: "previewHeader(this)" %>
+                  <%= f.file_field :header_image, class: "form-control", accept: "image/*" %>
                   <div class="form-text">
                     JPEG、PNG、GIF形式のファイル 推奨サイズ：1500x500px
                   </div>
@@ -82,7 +81,7 @@
                       </div>
                     <% end %>
                   </div>
-                  <%= f.file_field :avatar, class: "form-control", accept: "image/*", onchange: "previewAvatar(this)" %>
+                  <%= f.file_field :avatar, class: "form-control", accept: "image/*" %>
                   <div class="form-text">
                     JPEG、PNG、GIF形式のファイル（5MB以下）
                   </div>
@@ -171,10 +170,30 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('header-preview');
-                preview.style.backgroundImage = 'url(' + e.target.result + ')';
-                preview.innerHTML = '';
+                let img = document.getElementById('header-preview-img');
+                if (!img) {
+                  img = document.createElement('img');
+                  img.id = 'header-preview-img';
+                  img.className = 'w-100 h-100 object-cover';
+                  // 既存のプレースホルダをクリア
+                  preview.innerHTML = '';
+                  preview.appendChild(img);
+                }
+                img.src = e.target.result;
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
+
+    // イベントバインド（インライン属性を使用しない）
+    document.addEventListener('DOMContentLoaded', function() {
+      var avatarInput = document.querySelector('input[name="user[avatar]"]');
+      var headerInput = document.querySelector('input[name="user[header_image]"]');
+      if (avatarInput) {
+        avatarInput.addEventListener('change', function(){ previewAvatar(avatarInput); });
+      }
+      if (headerInput) {
+        headerInput.addEventListener('change', function(){ previewHeader(headerInput); });
+      }
+    });
 </script>

@@ -21,7 +21,7 @@
       <% post.images.each_with_index do |image, index| %>
         <div class="col-6 col-md-4" id="image-card-<%= image.id %>">
           <div class="card">
-            <%= image_tag image, class: "card-img-top", style: "height: 120px; object-fit: cover;" %>
+            <%= image_tag image, class: "card-img-top h-120 object-cover" %>
             <div class="card-body p-2">
               <small class="text-muted d-block"><%= image.filename %></small>
               <div class="d-flex gap-1 mt-1">

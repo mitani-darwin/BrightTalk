@@ -35,10 +35,9 @@
   <% end %>
   <div data-controller="code-editor" class="flex-grow-1 d-flex flex-column">
     <%= form.text_area :content,
-                       class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?}",
+                       class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?} no-resize font-monospace",
                        id: "contentTextarea",
                        required: true,
-                       style: "resize: none; font-family: Monaco, 'Lucida Console', monospace;",
                        placeholder: "内容を入力してください",
                        data: { code_editor_target: "textarea" } %>
   </div>
