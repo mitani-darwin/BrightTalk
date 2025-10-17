@@ -1,13 +1,15 @@
 class CommentsController < ApplicationController
-  before_action :authenticate_user!
   before_action :set_post
   before_action :set_comment, only: [ :destroy ]
+  before_action :ios_app_only_access!, only: [ :create, :destroy ]
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
 
   def create
     @comment = @post.comments.build(comment_params)
     @comment.user = current_user
+    # クライアントIP保存
+    @comment.client_ip = request.remote_ip
 
     if @comment.save
       redirect_to @post, notice: "コメントが投稿されました。"
@@ -40,7 +42,9 @@ class CommentsController < ApplicationController
   end
 
   def comment_params
-    params.require(:comment).permit(:content)
+    # paidとpointsはサーバー側で受け入れる（将来的に課金連携時に厳密化）
+    # 緯度経度はiOSアプリから送信されることを想定
+    params.require(:comment).permit(:content, :paid, :points, :latitude, :longitude)
   end
 
   def render_not_found
