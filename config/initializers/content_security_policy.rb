@@ -1,8 +1,15 @@
 # config/initializers/content_security_policy.rb
 Rails.application.configure do
-  # すべての環境で CSP の nonce を有効化（script と style の両方）
-  config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
-  config.content_security_policy_nonce_directives = %w[script-src style-src]
+  # 開発環境ではnonceを無効にして、本番環境でのみ有効化
+  if Rails.env.development?
+    # 開発環境: nonceを無効化（Vite、Turbo、Video.js対応のため）
+    config.content_security_policy_nonce_generator = nil
+    config.content_security_policy_nonce_directives = []
+  else
+    # 本番環境: nonceを有効化（セキュリティ強化）
+    config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+    config.content_security_policy_nonce_directives = %w[script-src style-src]
+  end
 
   if Rails.env.development?
     # 開発環境: HMR などローカルへの接続を許可
@@ -10,7 +17,9 @@ Rails.application.configure do
     localhost_ws   = %w[ws://localhost:3036 ws://127.0.0.1:3036]
 
     config.content_security_policy do |policy|
-      policy.script_src  :self, :https, *localhost_http, :unsafe_eval
+      # Development environment needs :unsafe_inline for inline scripts and styles
+      policy.script_src  :self, :https, *localhost_http, :unsafe_eval, :unsafe_inline
+      # Development environment needs :unsafe_inline for Vite HMR, Turbo, and Video.js
       policy.style_src   :self, :https, *localhost_http,
                          "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", :unsafe_inline
       # Explicitly allow element styles for some browsers during dev HMR
