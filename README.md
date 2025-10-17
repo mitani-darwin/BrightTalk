@@ -10,25 +10,27 @@ Markdown エディタ、動画プレイヤー、Passkeyログインなどを統�
 ## 🚀 主な特徴
 
 ### 📝 投稿・編集機能
-- Markdown対応エディタ（CodeMirror 6）
-- 画像・動画アップロード（ActiveStorage + S3）
-- 自動保存／下書き管理  
-- コメント・いいね・カテゴリー分類対応  
+- Markdown対応エディタ（CodeMirror 6、目的/対象読者などの構造化フィールドと同期）
+- 投稿タイプ・カテゴリー・タグの複合管理
+- 画像・動画の複数添付（ActiveStorage + S3、signed_id対応）
+- 自動保存ドラフト／公開ステータスの切り替え
+- 投稿者別の前後記事・関連記事抽出
 
-### 🎥 メディア対応
-- Video.js による動画再生（Stimulusコントローラ制御）
-- 複数画像／動画のアップロード対応  
-- S3上の動画ストリーミング  
+### 🎥 メディア & ファイル
+- Video.js による動画再生（Stimulusコントローラ制御、Playwrightテストで検証）
+- ActiveStorage Direct Upload のチューニング（大容量対応・日本語ファイル名サポート）
+- ruby-vips による EXIF 削除と画像検証
+- Markdown `attachment:` スキームでの埋め込み整形
 
 ### 🔐 認証・ユーザー管理
-- Devise + WebAuthn（Passkey対応）
-- ログイン必須でコメント・投稿
-- プロフィール編集・アバター設定
+- Devise + WebAuthn（Passkey対応、Passkey登録・認証のRESTエンドポイントあり）
+- FriendlyId スラッグ生成、プロフィール編集、SNSリンク検証
+- アバター／ヘッダー画像の添付とバリデーション
 
 ### 💬 コメント機能
-- 有料コメントは上位表示（`paid: true`）  
-- 無料コメントとの差別化（装飾・色変更）  
-- ログインユーザーのみ投稿可能  
+- BrightTalk iOS アプリからの投稿専用（`X-Client-Platform: BrightTalk-iOS` ヘッダーを要求）
+- 有料フラグ（`paid`）・ポイント付与・位置情報（緯度経度）を記録
+- いいね（Turbo対応）とコメント表示順位制御
 
 ### 💻 フロントエンド
 - **Vite + Stimulus + Turbo**
@@ -36,11 +38,18 @@ Markdown エディタ、動画プレイヤー、Passkeyログインなどを統�
 - Flatpickr による日付選択
 - Bootstrap 5 + Font Awesome + Bootstrap Icons
 
+### 📡 配信・連携
+- RSS / Atom フィード（`/feeds/rss`, `/feeds/atom`）
+- サイトマップ生成とキャッシュ配信（`/sitemap.xml` + `SitemapGenerator`）
+- JSON レスポンスを提供する投稿一覧 API（`/posts.json`）
+- AWS SES 経由のお問い合わせメール送信
+
 ### ☁️ インフラ・デプロイ
 - Kamal による AWS EC2 / Lightsail デプロイ
 - S3 + CloudFront 連携
-- SQLite3（軽量構成）または PostgreSQL（本番拡張可）
+- SQLite3（アプリ・Solid Queue・Solid Cache を共通で使用）
 - CI/CD: GitHub Actions
+- Solid Queue / Solid Cache の組み込み
 
 ---
 
@@ -70,6 +79,8 @@ Markdown エディタ、動画プレイヤー、Passkeyログインなどを統�
 - Node.js LTS（18 以上）
 - Yarn or npm
 - libvips（画像処理用）
+- Foreman または Overmind などの Procfile ランナー
+- Playwright が利用するブラウザバイナリ（`npx playwright install` で導入）
 
 ---
 
@@ -85,6 +96,7 @@ cd BrightTalk
 ```bash
 bundle install
 npm install
+npx playwright install --with-deps    # JavaScriptテストで Playwright を利用する場合
 ```
 
 ### 3️⃣ システム依存関係のインストール
@@ -93,34 +105,50 @@ npm install
 brew install vips
 # Ubuntu/Debian
 sudo apt install libvips
+# foreman CLI（ターミナルマルチプロセス管理）
+gem install foreman # 既に入っていれば不要 / または bundle exec foreman で利用
 ```
 
-### 4️⃣ データベース設定
+### 4️⃣ データベース初期化
 ```bash
-bin/rails db:create
-bin/rails db:migrate
-bin/rails db:seed
+bin/rails db:prepare   # create + migrate を実行
+bin/rails db:seed      # 投稿タイプなどのマスターデータ投入
 ```
 
-### 5️⃣ 環境変数設定（`.env`）
-```bash
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-AWS_REGION=ap-northeast-1
-AWS_S3_BUCKET=brighttalk-bucket
-```
+---
+
+## 🔐 環境変数・認証情報
+
+- `.env.development` / `.env.production` はサンプルとして置いてあります。実際の運用では `.env.local` などを作成し、**自身の値で上書きしてください（既存の秘密情報は使用しない）**。
+- 必須項目（環境変数または Rails Credentials いずれか）  
+  - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`（ActiveStorage / SES 用）  
+  - `RAILS_MASTER_KEY`（`config/credentials.yml.enc` の復号に使用）  
+  - `WEBAUTHN_RP_ID`, `WEBAUTHN_RP_NAME`, `WEBAUTHN_ALLOWED_ORIGINS`（WebAuthn設定）  
+  - `MAIL_FROM`, `MAIL_DELIVERY_METHOD` 等のメール設定、`GOOGLE_ANALYTICS_ID`（任意）
+- 開発環境の ActiveStorage は `config/environments/development.rb` で `:amazon` を使用しています。S3 を用意できない場合は `:local` に変更し、`storage/` ディレクトリを利用してください。
+- `config/sitemap.rb` の `SitemapGenerator::Sitemap.default_host` も自身のドメインに置き換えてください。
+- 秘密情報は Git へコミットせず、`.env*` や CI のシークレットストアで安全に管理します。
 
 ---
 
 ## 🧩 開発サーバー起動
 
-Vite + Rails 両方を統合的に動作させる：
+`Procfile.dev` を利用して Rails と Vite を同時起動します。
 ```bash
-bin/dev
+bundle exec foreman start -f Procfile.dev
 ```
 
-アクセス：  
-👉 http://localhost:3000
+またはターミナルを2つ開き、下記を個別に実行してください：
+```bash
+# Terminal 1
+bin/rails server
+# Terminal 2
+bin/vite dev --port 3036 --strictPort
+```
+
+アクセス： 👉 http://localhost:3000
+
+※ Vite クライアントは開発環境のみで自動インジェクトされます。
 
 ---
 
@@ -135,7 +163,24 @@ bin/rails test
 ```bash
 npm run test:all
 ```
-（`package.json` により、各Stimulusコントローラとエディタを個別テスト）
+※ 初回は `npx playwright install --with-deps` を実行してブラウザを導入してください。  
+
+個別に実行したい場合は `npm run test:passkey` などのサブコマンド、または `./run_js_tests.sh [option]` を利用できます。
+
+Rails 側は `RAILS_ENV=test` で ActiveStorage の Disk サービスを使用します（S3 接続は不要）。
+
+---
+
+## 🔍 フィード / API / サイトマップ
+
+- RSS: `GET /feeds/rss`  
+  Atom: `GET /feeds/atom`
+- 投稿一覧 API: `GET /posts.json`  
+  - クエリ: `category_id`, `post_type_id`, `date_range (例: 2025-01-01 から 2025-01-31)`
+- コメント投稿 / 削除 API は iOS アプリ専用です。リクエストヘッダー `X-Client-Platform: BrightTalk-iOS` を付与し、認証済みユーザーのみが利用できます。
+- サイトマップ: `GET /sitemap.xml`  
+  - 24時間以内のキャッシュが存在しない場合 `SitemapGenerator` で再生成します。  
+  - 手動で更新する場合: `bundle exec rake sitemap:refresh`
 
 ---
 
@@ -148,7 +193,17 @@ kamal setup   # 初回セットアップ
 kamal deploy  # 更新デプロイ
 ```
 
-設定は `config/deploy.yml` で管理。
+設定は `config/deploy.yml` で管理。イメージ名・ボリューム・Kamal エイリアス・必要な環境変数（`RAILS_MASTER_KEY`, `AWS_*`, `GITHUB_*`, `SSH_KEY_PATH` など）を適宜更新してください。
+
+---
+
+## 📄 ドキュメント & ツール
+
+- `docs/` … Passkey 実装メモ、Direct Upload の調査レポートなど補足資料
+- `.kamal/` … Kamal で利用する設定・テンプレート群
+- `terraform/` … AWS リソースを構成する Terraform モジュールと環境別設定
+- `run_js_tests.sh` … JavaScript テストをプリセット付きで実行するヘルパースクリプト
+- `Procfile.dev` … 開発時に Rails / Vite を同時起動するための定義
 
 ---
 
@@ -166,25 +221,36 @@ kamal deploy  # 更新デプロイ
 ```
 app/
  ├─ controllers/
- │   ├─ application_controller.rb
+ │   ├─ posts_controller.rb
  │   ├─ comments_controller.rb
- │   └─ video_player_controller.js
+ │   ├─ passkey_authentications_controller.rb
+ │   └─ devise/passkeys_controller.rb
  ├─ views/
  │   ├─ layouts/application.html.erb
- │   └─ posts/
+ │   ├─ posts/
+ │   └─ feeds/
  ├─ javascript/
- │   ├─ controllers/
+ │   ├─ controllers/（CodeMirror / Video.js / Flatpickr）
+ │   ├─ entrypoints/
  │   ├─ application.js
- │   └─ stylesheets/
+ │   └─ passkey.js
+ ├─ frontend/
+ │   └─ entrypoints/（Vite エントリ & CSS）
  ├─ models/
- │   ├─ user.rb
  │   ├─ post.rb
- │   └─ comment.rb
+ │   ├─ user.rb
+ │   └─ webauthn_credential.rb
 config/
  ├─ application.rb
  ├─ environments/
  ├─ deploy.yml
+ ├─ sitemap.rb
  └─ vite.json
+.kamal/
+docs/
+terraform/
+Procfile.dev
+run_js_tests.sh
 package.json
 Gemfile
 ```
@@ -211,12 +277,12 @@ MIT License.
 
 ## 🌟 開発メモ
 
-- `application.js` → Viteエントリ  
-- `Video.js` は Stimulus コントローラ経由で初期化済  
-- `ActiveStorage` は direct upload対応  
-- `Passkey.js` → WebAuthnロジック全体を管理  
-- コメント機能は有料/無料判定を `User#paid?` で制御  
-- iOSアプリ（Swift）連携を想定（APIレスポンス整備済）
+- `app/frontend/entrypoints/application.js` → Vite から Rails アセットを読み込み
+- Stimulus コントローラ（`code_editor` / `video_player` / `flatpickr`）は Playwright で CI テスト済
+- ActiveStorage は Direct Upload + S3 前提で、EXIF 除去などを after_commit で処理
+- `app/javascript/passkey.js` が WebAuthn (Passkey) 登録・認証を一括で担当
+- コメントの表示順は `Comment.ordered_for_display` で制御（有料・ポイント・作成日時）
+- iOS アプリ（Swift）からの投稿を想定し、`X-Client-Platform` ヘッダーでアクセス制御
 
 ---
 
