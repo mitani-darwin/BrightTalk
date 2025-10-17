@@ -52,4 +52,9 @@ module ApplicationHelper
     
     safe_join(meta_tags.compact, "\n")
   end
+
+  # ビューから安全にiOSアプリ判定を呼び出すためのヘルパー
+  def ios_app_request?
+    controller.respond_to?(:ios_app_request?) && controller.send(:ios_app_request?)
+  end
 end

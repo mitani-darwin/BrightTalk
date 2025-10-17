@@ -223,15 +223,43 @@
         <div class="card-body">
           <!-- コメント投稿フォーム -->
           <% if user_signed_in? %>
-            <%= form_with model: [@post, @comment], local: true, class: "mb-4" do |form| %>
-              <div class="mb-3">
-                <%= form.text_area :content,
-                                   class: "form-control",
-                                   rows: 3,
-                                   placeholder: "コメントを入力してください..." %>
-              </div>
-              <div class="d-grid">
-                <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
+            <% if ios_app_request? %>
+              <%= form_with model: [@post, @comment], local: true, class: "mb-4" do |form| %>
+                <div class="mb-3">
+                  <%= form.text_area :content,
+                                     class: "form-control",
+                                     rows: 3,
+                                     placeholder: "コメントを入力してください..." %>
+                </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <div class="form-check">
+                      <%= form.check_box :paid, class: "form-check-input", id: "comment_paid" %>
+                      <label class="form-check-label" for="comment_paid">有料掲載（上位表示）</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <%= form.number_field :points, class: "form-control", min: 0, placeholder: "ポイント加算" %>
+                  </div>
+                </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <%= form.number_field :latitude, step: 0.000001, class: "form-control", placeholder: "緯度(任意)" %>
+                  </div>
+                  <div class="col-6">
+                    <%= form.number_field :longitude, step: 0.000001, class: "form-control", placeholder: "経度(任意)" %>
+                  </div>
+                </div>
+                <div class="d-grid">
+                  <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="alert alert-warning">
+                <i class="fas fa-mobile-alt me-2"></i>
+                コメント機能はiOSアプリからのみ利用できます。(作成中)
+                <br>
+                <small class="text-muted">iOSアプリをダウンロードしてコメントを投稿してください。</small>
               </div>
             <% end %>
           <% else %>
@@ -243,7 +271,7 @@
           <!-- コメント一覧 -->
           <% if @post.comments.any? %>
             <div class="border-top pt-3">
-              <% @post.comments.includes(:user).order(created_at: :desc).each do |comment| %>
+              <% @post.comments.includes(:user).merge(Comment.ordered_for_display).each do |comment| %>
                 <div class="d-flex mb-3">
                   <div class="avatar me-3">
                     <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center avatar-40">
@@ -253,10 +281,29 @@
                   <div class="flex-grow-1">
                     <div class="bg-light rounded p-3">
                       <div class="d-flex justify-content-between align-items-start mb-2">
-                        <strong><%= comment.user&.name || "匿名ユーザー" %></strong>
-                        <small class="text-muted">
-                          <%= time_ago_in_words(comment.created_at) %>前
-                        </small>
+                        <strong>
+                          <%= comment.user&.name || "匿名ユーザー" %>
+                          <% if comment.paid %>
+                            <span class="badge bg-warning text-dark ms-2">PR</span>
+                          <% end %>
+                        </strong>
+                        <div class="d-flex align-items-center gap-2">
+                          <small class="text-muted">
+                            <%= time_ago_in_words(comment.created_at) %>前
+                          </small>
+                          <span class="badge bg-secondary">PT <%= comment.points || 0 %></span>
+                          <% if user_signed_in? && comment.user == current_user && ios_app_request? %>
+                            <%= link_to post_comment_path(@post, comment), 
+                                        method: :delete,
+                                        data: { 
+                                          confirm: "コメントを削除しますか？",
+                                          turbo_method: :delete
+                                        },
+                                        class: "btn btn-sm btn-outline-danger" do %>
+                              <i class="fas fa-trash"></i>
+                            <% end %>
+                          <% end %>
+                        </div>
                       </div>
                       <p class="mb-0"><%= simple_format(h(comment.content)) %></p>
                     </div>

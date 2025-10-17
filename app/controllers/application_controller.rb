@@ -128,4 +128,30 @@ class ApplicationController < ActionController::Base
       Rails.logger.info "========================"
     end
   end
+
+  # iOSアプリからのリクエストかどうかを判定
+  def ios_app_request?
+    # カスタムヘッダーX-Client-Platformで判定
+    request.headers["X-Client-Platform"] == "BrightTalk-iOS"
+  end
+
+  # iOSアプリからのみアクセスを許可するかどうかをチェック（ログイン必須）
+  def ios_app_only_access!
+    unless user_signed_in?
+      respond_to do |format|
+        format.html { redirect_to new_user_session_path, alert: "ログインが必要です。" }
+        format.json { render json: { error: "ログインが必要です。" }, status: :unauthorized }
+      end
+      return
+    end
+
+    unless ios_app_request?
+      respond_to do |format|
+        format.html { redirect_to root_path, alert: "この機能はiOSアプリからのみ利用できます。" }
+        format.json { render json: { error: "この機能はiOSアプリからのみ利用できます。" }, status: :forbidden }
+      end
+    end
+  end
+
+  helper_method :ios_app_request?
 end
