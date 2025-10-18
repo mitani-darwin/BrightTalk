@@ -51,8 +51,7 @@ class PostsController < ApplicationController
               content: post.content.to_s.truncate(200),
               user: post.user&.name || "削除されたユーザー", # nil安全性を追加
               user_icon_url: post.user&.avatar_url,
-              created_at: post.created_at,
-              updated_at: post.updated_at
+              created_at: post.created_at.strftime("%Y年%m月%d日 %H時%M分")
             }
           end,
           total_pages: @posts.total_pages,
