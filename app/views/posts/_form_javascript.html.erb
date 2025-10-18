@@ -438,8 +438,16 @@
 
     // Helper functions
     function toggleForm(form, show) {
-        if (form) {
-            form.style.display = show ? 'block' : 'none';
+        if (!form) return;
+
+        if (show) {
+            form.classList.remove('d-none');
+            form.style.display = '';
+            form.setAttribute('aria-hidden', 'false');
+        } else {
+            form.classList.add('d-none');
+            form.style.display = 'none';
+            form.setAttribute('aria-hidden', 'true');
         }
     }
 
@@ -699,7 +707,100 @@
     }
 
     function saveNewPostType() {
-        // Implementation for saving new post type
+        const nameInput = document.getElementById('newPostTypeName');
+        const descriptionInput = document.getElementById('newPostTypeDescription');
+        const errorAlert = document.getElementById('postTypeError');
+        const successAlert = document.getElementById('postTypeSuccess');
+        const saveBtn = document.getElementById('savePostTypeBtn');
+        const formCard = document.getElementById('newPostTypeForm');
+        const select = document.getElementById('postTypeSelect');
+
+        if (!nameInput || !descriptionInput || !errorAlert || !successAlert || !saveBtn) {
+            console.warn('Post type form elements are missing');
+            return;
+        }
+
+        const name = nameInput.value.trim();
+        const description = descriptionInput.value.trim();
+
+        // Reset alerts
+        errorAlert.classList.add('d-none');
+        errorAlert.textContent = '';
+        successAlert.classList.add('d-none');
+        successAlert.textContent = '';
+
+        if (!name) {
+            errorAlert.textContent = '投稿タイプ名を入力してください';
+            errorAlert.classList.remove('d-none');
+            nameInput.focus();
+            return;
+        }
+
+        const originalBtnHtml = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>保存中...';
+
+        fetch('/post_types.json', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                post_type: {
+                    name: name,
+                    description: description
+                }
+            })
+        })
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || data.success === false) {
+                    const message = data.message || '投稿タイプの作成に失敗しました';
+                    const errors = Array.isArray(data.errors) ? data.errors.join('、') : '';
+                    throw new Error(errors ? `${message}: ${errors}` : message);
+                }
+
+                return data;
+            })
+            .then(data => {
+                const postType = data.post_type;
+
+                showSuccess(data.message || `投稿タイプ「${name}」を作成しました`);
+
+                if (select && postType) {
+                    const option = document.createElement('option');
+                    option.value = postType.id;
+                    option.textContent = postType.name;
+                    option.selected = true;
+                    select.appendChild(option);
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                nameInput.value = '';
+                descriptionInput.value = '';
+
+                successAlert.textContent = data.message || '投稿タイプを追加しました';
+                successAlert.classList.remove('d-none');
+
+                setTimeout(() => {
+                    successAlert.classList.add('d-none');
+                    toggleForm(formCard, false);
+                }, 1200);
+            })
+            .catch(error => {
+                console.error(error);
+                errorAlert.textContent = error.message || '投稿タイプの作成に失敗しました';
+                errorAlert.classList.remove('d-none');
+                showError(errorAlert.textContent);
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnHtml;
+            });
     }
 
     function saveNewCategory() {
