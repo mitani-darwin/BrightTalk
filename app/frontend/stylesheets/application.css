@@ -319,10 +319,6 @@ main {
     font-size: 0.7rem;
   }
 }
-main {
-  padding-bottom: 1rem;
-}
-
 @media (max-width: 480px) {
   footer {
     position: static !important;

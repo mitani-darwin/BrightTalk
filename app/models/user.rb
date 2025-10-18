@@ -46,6 +46,11 @@ class User < ApplicationRecord
     end
   end
 
+  def avatar_url
+    return unless avatar.attached?
+    Rails.application.routes.url_helpers.rails_blob_path(avatar, only_path: true)
+  end
+
   def header_image_or_default
     if header_image.attached?
       header_image

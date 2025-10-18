@@ -50,6 +50,7 @@ class PostsController < ApplicationController
               title: post.title,
               content: post.content.to_s.truncate(200),
               user: post.user&.name || "削除されたユーザー", # nil安全性を追加
+              user_icon_url: post.user&.avatar_url,
               created_at: post.created_at,
               updated_at: post.updated_at
             }
