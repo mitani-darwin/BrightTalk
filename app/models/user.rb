@@ -20,8 +20,7 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :email, presence: true
   validates :avatar, content_type: { in: %w[image/jpeg image/png image/gif],
-                                     message: "JPEG、JPG、PNG、GIF形式のファイルを選択してください" },
-            size: { less_than: 5.megabytes, message: "5MB以下のファイルを選択してください" }
+                                     message: "JPEG、JPG、PNG、GIF形式のファイルを選択してください" }
   validates :header_image, content_type: { in: %w[image/jpeg image/png image/gif],
                                           message: "JPEG、JPG、PNG、GIF形式のファイルを選択してください" }
 
