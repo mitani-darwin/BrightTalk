@@ -2,7 +2,7 @@
 <% content_for :title, page_title(@post.title) %>
 <%= render_meta_tags(meta_tags_for_post(@post)) %>
 
-<div class="container my-4 post-show">
+<div class="container my-4">
   <div class="row">
     <div class="col-lg-12 mx-auto">
       <!-- 投稿カード -->
@@ -15,53 +15,43 @@
           </div>
         <% end %>
         <div class="card-body">
-          <div class="post-body">
-            <aside class="post-summary">
-              <div class="post-summary__meta">
-                <div class="post-summary__avatar">
+          <div class="row g-4 post-body">
+            <aside class="col-lg-4 col-md-5 post-summary">
+              <div class="d-flex align-items-center mb-4">
+                <div class="me-3">
                   <% if @post.user&.avatar_or_default %>
                     <%= image_tag @post.user.avatar_or_default,
-                        class: "rounded-circle avatar-72 object-cover" %>
+                        class: "rounded-circle avatar-60 object-cover" %>
                   <% else %>
-                    <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="fas fa-user fa-lg"></i>
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center avatar-60">
+                      <i class="fas fa-user"></i>
                     </div>
                   <% end %>
                 </div>
-                <div class="post-summary__meta-info">
-                  <div class="post-summary__row">
-                    <span class="post-summary__label">ユーザー名</span>
-                    <span class="post-summary__value">
-                      <% if @post.user %>
-                        <%= link_to @post.user.name, user_path(@post.user), class: "text-decoration-none" %>
-                      <% else %>
-                        削除されたユーザー
-                      <% end %>
-                    </span>
-                  </div>
-                  <div class="post-summary__row">
-                    <span class="post-summary__label">投稿日時</span>
-                    <span class="post-summary__value text-muted">
-                      <i class="fas fa-clock me-1"></i><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
-                    </span>
-                  </div>
+                <div>
+                  <p class="fw-semibold mb-1">
+                    <%= link_to(@post.user&.name || "削除されたユーザー", @post.user ? user_path(@post.user) : "#", class: "text-decoration-none") %>
+                  </p>
+                  <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+                  </small>
                 </div>
               </div>
 
-              <div class="post-summary__grid">
-                <div class="post-summary__cell">
-                  <span class="post-summary__label">タイトル</span>
-                  <span class="post-summary__value post-summary__value--strong"><%= @post.title %></span>
+              <dl class="post-summary__list">
+                <div class="post-summary__item">
+                  <dt>タイトル</dt>
+                  <dd class="post-summary__value post-summary__value--strong"><%= @post.title %></dd>
                 </div>
                 <% if @post.purpose.present? %>
-                  <div class="post-summary__cell">
-                    <span class="post-summary__label">目的</span>
-                    <span class="post-summary__value"><%= simple_format(@post.purpose) %></span>
+                  <div class="post-summary__item">
+                    <dt>目的</dt>
+                    <dd class="post-summary__value"><%= simple_format(@post.purpose) %></dd>
                   </div>
                 <% end %>
-                <div class="post-summary__cell">
-                  <span class="post-summary__label">カテゴリー</span>
-                  <span class="post-summary__value">
+                <div class="post-summary__item">
+                  <dt>カテゴリー</dt>
+                  <dd class="post-summary__value">
                     <% if @post.category.present? %>
                       <%= link_to posts_path(category_id: @post.category.id),
                                   class: "badge bg-primary text-decoration-none" do %>
@@ -72,43 +62,51 @@
                         <i class="fas fa-tag me-1"></i>未分類
                       </span>
                     <% end %>
-                  </span>
+                  </dd>
                 </div>
                 <% if @post.target_audience.present? %>
-                  <div class="post-summary__cell">
-                    <span class="post-summary__label">対象読者</span>
-                    <span class="post-summary__value"><%= simple_format(@post.target_audience) %></span>
+                  <div class="post-summary__item">
+                    <dt>対象読者</dt>
+                    <dd class="post-summary__value"><%= simple_format(@post.target_audience) %></dd>
                   </div>
                 <% end %>
-                <div class="post-summary__cell">
-                  <span class="post-summary__label">投稿タイプ</span>
-                  <span class="post-summary__value">
+                <div class="post-summary__item">
+                  <dt>投稿タイプ</dt>
+                  <dd class="post-summary__value">
                     <% if @post.post_type.present? %>
-                      <span class="badge bg-info fs-6 px-3 py-2">
-                        <i class="fas fa-tag me-1"></i>
-                        <%= @post.post_type.display_name %>
+                      <span class="badge bg-info px-3 py-2">
+                        <i class="fas fa-tag me-1"></i><%= @post.post_type.display_name %>
                       </span>
                     <% else %>
                       <span class="text-muted">未設定</span>
                     <% end %>
-                  </span>
+                  </dd>
                 </div>
                 <% if @post.expected_outcome.present? %>
-                  <div class="post-summary__cell">
-                    <span class="post-summary__label">期待する成果</span>
-                    <span class="post-summary__value"><%= simple_format(@post.expected_outcome) %></span>
+                  <div class="post-summary__item">
+                    <dt>期待する成果</dt>
+                    <dd class="post-summary__value"><%= simple_format(@post.expected_outcome) %></dd>
                   </div>
                 <% end %>
                 <% if @post.key_points.present? %>
-                  <div class="post-summary__cell post-summary__cell--full">
-                    <span class="post-summary__label">要点・ポイント</span>
-                    <span class="post-summary__value"><%= simple_format(@post.key_points) %></span>
+                  <div class="post-summary__item">
+                    <dt>要点・ポイント</dt>
+                    <dd class="post-summary__value"><%= simple_format(@post.key_points) %></dd>
                   </div>
                 <% end %>
-              </div>
+              </dl>
             </aside>
 
-            <section class="post-main">
+            <section class="col-lg-8 col-md-7 post-main">
+              <% if @post.post_type.present? %>
+                <div class="post-main__type mb-3">
+                  <span class="badge bg-info fs-6 px-3 py-2">
+                    <i class="fas fa-tag me-1"></i>
+                    <%= @post.post_type.display_name %>
+                  </span>
+                </div>
+              <% end %>
+
               <% if @post.tags.any? %>
                 <div class="post-main__tags mb-3">
                   <% @post.tags.each do |tag| %>

@@ -228,6 +228,69 @@ main {
   background-color: #f8f9fa;
 }
 
+.post-show .post-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+.post-show .post-summary {
+  flex: 0 0 32%;
+  min-width: 260px;
+}
+.post-show .post-summary .avatar-60 {
+  width: 60px;
+  height: 60px;
+}
+.post-show .post-summary__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+}
+.post-show .post-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.post-show .post-summary__item dt {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.post-show .post-summary__item dd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #212529;
+  line-height: 1.5;
+}
+.post-show .post-summary__value--strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.post-show .post-main {
+  flex: 1 1 60%;
+  min-width: 280px;
+}
+.post-show .post-main__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.post-show .post-content-wrapper {
+  width: 100%;
+}
+.post-show .post-main__footer {
+  margin-top: 1rem;
+}
+@media (max-width: 992px) {
+  .post-show .post-summary,
+  .post-show .post-main {
+    flex: 1 1 100%;
+  }
+}
+
 .posts-index .post-item {
   transition: all 0.3s ease;
   border: 2px solid #e9ecef !important;
@@ -490,143 +553,12 @@ main {
     width: 100%;
   }
 
-.posts-index .post-stats small {
-  display: inline-flex;
-  align-items: center;
-}
+  .posts-index .post-stats small {
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
-.post-show .card-body,
-.post-show .post-header,
-.post-show .structured-info-section {
-  text-align: left;
-}
-.post-show .post-title {
-  line-height: 1.4;
-}
-.post-show .post-type .badge {
-  border-radius: 999px;
-  font-weight: 600;
-}
-.post-show .post-summary {
-  flex: 0 0 28%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.post-show .post-summary__meta {
-  flex: 0 0 20px;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-.post-show .post-summary__avatar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.post-show .avatar-72 {
-  width: 72px;
-  height: 72px;
-}
-.post-show .avatar-placeholder {
-  width: 72px;
-  height: 72px;
-  background-color: #0d6efd;
-  color: #fff;
-}
-.post-show .post-summary__meta-info {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.post-show .post-summary__row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.post-show .post-summary__label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #495057;
-  letter-spacing: 0.02em;
-}
-.post-show .post-summary__value {
-  font-size: 0.95rem;
-  color: #212529;
-  line-height: 1.5;
-  display: inline-flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.post-show .post-summary__grid {
-  flex: 1 1 auto;
-  min-width: 260px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-.post-show .post-summary__cell {
-  border: 1px solid #dee2e6;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.post-show .post-summary__cell--full {
-  grid-column: 1 / -1;
-}
-.post-show .post-summary__value--strong {
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-.post-show .post-summary__value p {
-  margin: 0;
-}
-@media (max-width: 768px) {
-  .post-show .post-summary__meta {
-    flex: 1 1 100%;
-  }
-  .post-show .post-summary__grid {
-    grid-template-columns: 1fr;
-  }
-}
-.post-show .post-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-.post-show .post-main {
-  flex: 1 1 65%;
-  min-width: 340px;
-}
-.post-show .post-content-wrapper {
-  width: 100%;
-}
-.post-show .post-main__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.post-show .post-main__footer {
-  margin-top: 1rem;
-}
-@media (max-width: 992px) {
-  .post-show .post-summary,
-  .post-show .post-main {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
-  .post-show .post-summary__grid {
-    min-width: 100%;
-  }
-}
 .btn-outline-primary:hover {
   transform: translateY(-1px);
 }
