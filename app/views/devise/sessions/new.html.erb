@@ -81,7 +81,7 @@
                     console.log('Platform authenticator available:', platformSupport);
 
                     if (!platformSupport) {
-                        showStatus('このデバイスはTouchID認証に対応していません', 'warning');
+                        showStatus('このデバイスはパスキー認証に対応していません', 'warning');
                         passkeyLoginBtn.disabled = false;
                         return;
                     }
@@ -129,8 +129,8 @@
                     console.log('Authentication options from server:', authData.passkey_options);
                     console.log('AuthenticatorSelection:', authData.passkey_options.authenticatorSelection);
 
-                    // TouchIDプロンプトの表示を明確にする
-                    showStatus('TouchIDでの認証を求められています...', 'info');
+                    // パスキープロンプトの表示を明確にする
+                    showStatus('パスキーでの認証を求められています...', 'info');
 
                     // ここで即座にWebAuthn APIを呼び出す（ユーザーイベント内で実行）
                     const credentialData = await window.startPasskeyAuthentication(authData.passkey_options);
@@ -146,7 +146,7 @@
                     });
 
                     if (!verifyResponse.ok) {
-                        throw new Error('認証の検証に失敗しました');
+                        throw new Error('パスキー認証の検証に失敗しました');
                     }
 
                     const result = await verifyResponse.json();
@@ -191,9 +191,9 @@
                 console.log('Platform authenticator available:', available);
 
                 if (available) {
-                    console.log('Touch ID should be available');
+                    console.log('Pass Key should be available');
                 } else {
-                    console.log('Touch ID is not available on this device/browser');
+                    console.log('Pass Key is not available on this device/browser');
                 }
 
                 // 認証器の詳細情報を取得
