@@ -50,8 +50,8 @@ class PostsController < ApplicationController
               title: post.title,
               content: post.content.to_s.truncate(200),
               user: post.user&.name || "削除されたユーザー", # nil安全性を追加
-              created_at: post.created_at,
-              updated_at: post.updated_at
+              user_icon_url: post.user&.avatar_url,
+              created_at: post.created_at.strftime("%Y年%m月%d日 %H時%M分")
             }
           end,
           total_pages: @posts.total_pages,
@@ -77,6 +77,53 @@ class PostsController < ApplicationController
 
     # コメント投稿フォーム用の新しいコメントインスタンスを作成
     @comment = Comment.new
+
+    respond_to do |format|
+      format.html
+      format.json do
+        author_json = if @post.user
+          {
+            id: @post.user.id,
+            name: @post.user.name,
+            username: @post.user.try(:username),
+            icon_url: @post.user.avatar_url
+          }
+        else
+          {
+            id: nil,
+            name: "削除されたユーザー",
+            username: nil,
+            icon_url: nil
+          }
+        end
+
+        render json: {
+          post: {
+            id: @post.id,
+            slug: @post.slug,
+            title: @post.title,
+            content: @post.content,
+            content_html: ApplicationController.helpers.format_content_with_images(@post.content, @post),
+            purpose: @post.purpose,
+            target_audience: @post.target_audience,
+            status: @post.status,
+            category: @post.category&.as_json(only: [:id, :name], methods: [:full_name]),
+            post_type: @post.post_type&.as_json(only: [:id, :name]),
+            tags: @post.tags.pluck(:name),
+            likes_count: @post.likes.count,
+            comments_count: @post.comments.count,
+            created_at: @post.created_at.strftime("%Y年%m月%d日 %H時%M分"),
+            updated_at: @post.updated_at.strftime("%Y年%m月%d日 %H時%M分")
+          },
+          author: author_json,
+          previous_post: @previous_post&.slice(:id, :slug, :title),
+          next_post: @next_post&.slice(:id, :slug, :title),
+          related_posts: @related_posts.map { |related|
+            related.slice(:id, :slug, :title)
+          }
+        }
+      end
+    end
   end
 
   def new

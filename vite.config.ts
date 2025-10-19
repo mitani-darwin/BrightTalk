@@ -8,6 +8,7 @@ export default defineConfig({
         host: 'localhost',
         port: 3036,
         strictPort: true,
+        hmr: { host: '127.0.0.1', port: 3036 }
         // hmr は host/port のみでOK。path は未指定（推奨）
         // hmr: { host: 'localhost', port: 3036 }
 
