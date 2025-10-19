@@ -15,142 +15,160 @@
           </div>
         <% end %>
         <div class="card-body">
-          <div class="row g-4 post-body">
-            <aside class="col-lg-4 col-md-5 post-summary">
-              <div class="d-flex align-items-center mb-4">
-                <div class="me-3">
-                  <% if @post.user&.avatar_or_default %>
+          <!-- ヘッダー情報 -->
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar me-3">
+                <% if @post.user.present? %>
+                  <% if @post.user.avatar_or_default %>
                     <%= image_tag @post.user.avatar_or_default,
-                        class: "rounded-circle avatar-60 object-cover" %>
+                        class: "rounded-circle avatar-50 object-cover" %>
                   <% else %>
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center avatar-60">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center avatar-50">
                       <i class="fas fa-user"></i>
                     </div>
                   <% end %>
-                </div>
-                <div>
-                  <p class="fw-semibold mb-1">
-                    <%= link_to(@post.user&.name || "削除されたユーザー", @post.user ? user_path(@post.user) : "#", class: "text-decoration-none") %>
-                  </p>
-                  <small class="text-muted">
-                    <i class="fas fa-clock me-1"></i><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
-                  </small>
-                </div>
+                <% end %>
               </div>
+              <div>
+                <h6 class="mb-0">
+                  <%= link_to @post.user.name, user_path(@post.user),
+                      class: "text-decoration-none" if @post.user %>
+                </h6>
+                <small class="text-muted">
+                  <i class="fas fa-clock"></i> <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+                </small>
+              </div>
+            </div>
 
-              <dl class="post-summary__list">
-                <div class="post-summary__item">
-                  <dt>タイトル</dt>
-                  <dd class="post-summary__value post-summary__value--strong"><%= @post.title %></dd>
-                </div>
-                <% if @post.purpose.present? %>
-                  <div class="post-summary__item">
-                    <dt>目的</dt>
-                    <dd class="post-summary__value"><%= simple_format(@post.purpose) %></dd>
-                  </div>
-                <% end %>
-                <div class="post-summary__item">
-                  <dt>カテゴリー</dt>
-                  <dd class="post-summary__value">
-                    <% if @post.category.present? %>
-                      <%= link_to posts_path(category_id: @post.category.id),
-                                  class: "badge bg-primary text-decoration-none" do %>
-                        <i class="fas fa-tag me-1"></i><%= @post.category.full_name %>
-                      <% end %>
-                    <% else %>
-                      <span class="badge bg-secondary text-decoration-none">
-                        <i class="fas fa-tag me-1"></i>未分類
-                      </span>
-                    <% end %>
-                  </dd>
-                </div>
-                <% if @post.target_audience.present? %>
-                  <div class="post-summary__item">
-                    <dt>対象読者</dt>
-                    <dd class="post-summary__value"><%= simple_format(@post.target_audience) %></dd>
-                  </div>
-                <% end %>
-                <div class="post-summary__item">
-                  <dt>投稿タイプ</dt>
-                  <dd class="post-summary__value">
-                    <% if @post.post_type.present? %>
-                      <span class="badge bg-info px-3 py-2">
-                        <i class="fas fa-tag me-1"></i><%= @post.post_type.display_name %>
-                      </span>
-                    <% else %>
-                      <span class="text-muted">未設定</span>
-                    <% end %>
-                  </dd>
-                </div>
-                <% if @post.expected_outcome.present? %>
-                  <div class="post-summary__item">
-                    <dt>期待する成果</dt>
-                    <dd class="post-summary__value"><%= simple_format(@post.expected_outcome) %></dd>
-                  </div>
-                <% end %>
-                <% if @post.key_points.present? %>
-                  <div class="post-summary__item">
-                    <dt>要点・ポイント</dt>
-                    <dd class="post-summary__value"><%= simple_format(@post.key_points) %></dd>
-                  </div>
-                <% end %>
-              </dl>
-            </aside>
+            <!-- カテゴリーバッジ -->
+            <% if @post.category.present? %>
+              <%= link_to posts_path(category_id: @post.category.id),
+                          class: "badge bg-primary text-decoration-none" do %>
+                <i class="fas fa-tag"></i> <%= @post.category.full_name %>
+              <% end %>
+            <% else %>
+              <span class="badge bg-secondary text-decoration-none">
+                <i class="fas fa-tag"></i> 未分類
+              </span>
+            <% end %>
+          </div>
 
-            <section class="col-lg-8 col-md-7 post-main">
-              <% if @post.post_type.present? %>
-                <div class="post-main__type mb-3">
-                  <span class="badge bg-info fs-6 px-3 py-2">
-                    <i class="fas fa-tag me-1"></i>
-                    <%= @post.post_type.display_name %>
-                  </span>
+          <!-- タイトル -->
+          <h1 class="h3 mb-3"><%= @post.title %></h1>
+
+          <!-- 投稿タイプ表示 -->
+          <% if @post.post_type.present? %>
+            <div class="mb-3">
+              <span class="badge bg-info fs-6 px-3 py-2">
+                <i class="fas fa-tag me-1"></i>
+                <%= case @post.post_type.name
+                    when 'knowledge_sharing' then '知識共有'
+                    when 'question' then '質問・相談'
+                    when 'discussion' then '議論・討論'
+                    when 'tutorial' then 'チュートリアル・手順'
+                    when 'experience_sharing' then '体験談・事例'
+                    when 'news_update' then 'ニュース・更新情報'
+                    when 'opinion' then '意見・考察'
+                    else @post.post_type.name
+                    end %>
+              </span>
+            </div>
+          <% end %>
+
+          <!-- 構造化情報 -->
+          <% if @post.purpose.present? || @post.target_audience.present? || @post.key_points.present? || @post.expected_outcome.present? %>
+            <div class="structured-info-section mb-4 p-4 bg-light rounded">
+              <h5 class="text-primary mb-3">
+                <i class="fas fa-info-circle me-2"></i>投稿情報
+              </h5>
+
+              <% if @post.purpose.present? %>
+                <div class="mb-3">
+                  <h6 class="text-primary mb-2">
+                    <i class="fas fa-bullseye me-1"></i>目的
+                  </h6>
+                  <p class="text-muted mb-0"><%= @post.purpose %></p>
                 </div>
               <% end %>
 
-              <% if @post.tags.any? %>
-                <div class="post-main__tags mb-3">
-                  <% @post.tags.each do |tag| %>
-                    <%= link_to posts_path(tag: tag.name),
-                                class: "badge bg-secondary text-decoration-none me-1" do %>
-                      #<%= tag.name %>
-                    <% end %>
-                  <% end %>
+              <% if @post.target_audience.present? %>
+                <div class="mb-3">
+                  <h6 class="text-success mb-2">
+                    <i class="fas fa-users me-1"></i>対象読者
+                  </h6>
+                  <p class="text-muted mb-0"><%= @post.target_audience %></p>
                 </div>
               <% end %>
 
-              <div class="post-content-wrapper mb-4">
-                <div class="post-content">
-                  <%= @post.content_as_html %>
+              <% if @post.key_points.present? %>
+                <div class="mb-3">
+                  <h6 class="text-warning mb-2">
+                    <i class="fas fa-list-ul me-1"></i>要点・ポイント
+                  </h6>
+                  <div class="text-muted">
+                    <%= simple_format(@post.key_points) %>
+                  </div>
                 </div>
+              <% end %>
+
+              <% if @post.expected_outcome.present? %>
+                <div class="mb-0">
+                  <h6 class="text-info mb-2">
+                    <i class="fas fa-target me-1"></i>期待する成果
+                  </h6>
+                  <p class="text-muted mb-0"><%= @post.expected_outcome %></p>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <!-- タグ表示 -->
+          <% if @post.tags.any? %>
+            <div class="mb-3">
+              <% @post.tags.each do |tag| %>
+                <%= link_to posts_path(tag: tag.name),
+                            class: "badge bg-secondary text-decoration-none me-1" do %>
+                  #<%= tag.name %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+
+          <!-- コンテンツ -->
+          <div class="mb-4">
+            <div class="post-content">
+              <%= @post.content_as_html %>
+            </div>
+          </div>
+
+          <!-- いいねとコメント数 -->
+          <div class="d-flex justify-content-between align-items-center border-top pt-3">
+            <div class="d-flex align-items-center gap-3">
+              <%= render 'likes/like_button', post: @post %>
+              <div class="d-flex align-items-center text-muted">
+                <i class="bi bi-chat-left me-1 fs-1-1rem"></i>
+                <span><%= @post.comments.count %> コメント</span>
               </div>
+            </div>
 
-              <div class="post-main__footer d-flex justify-content-between align-items-center border-top pt-3">
-                <div class="d-flex align-items-center gap-3">
-                  <%= render 'likes/like_button', post: @post %>
-                  <div class="d-flex align-items-center text-muted">
-                    <i class="bi bi-chat-left me-1 fs-1-1rem"></i>
-                    <span><%= @post.comments.count %> コメント</span>
-                  </div>
-                </div>
+            <!-- アクションボタン -->
+            <% if current_user == @post.user %>
+              <div class="btn-group" role="group">
+                <%= link_to edit_post_path(@post), class: "btn btn-outline-secondary btn-sm" do %>
+                  <i class="fas fa-edit"></i> 編集
+                <% end %>
 
-                <% if current_user == @post.user %>
-                  <div class="btn-group" role="group">
-                    <%= link_to edit_post_path(@post), class: "btn btn-outline-secondary btn-sm" do %>
-                      <i class="fas fa-edit"></i> 編集
-                    <% end %>
-
-                    <%= link_to @post, method: :delete,
-                                data: {
-                                  confirm: "本当に削除しますか？",
-                                  turbo_method: :delete
-                                },
-                                class: "btn btn-outline-danger btn-sm" do %>
-                      <i class="fas fa-trash"></i> 削除
-                    <% end %>
-                  </div>
+                <%= link_to @post, method: :delete,
+                            data: {
+                              confirm: "本当に削除しますか？",
+                              turbo_method: :delete
+                            },
+                            class: "btn btn-outline-danger btn-sm" do %>
+                  <i class="fas fa-trash"></i> 削除
                 <% end %>
               </div>
-            </section>
+            <% end %>
           </div>
         </div>
       </div>
