@@ -228,6 +228,201 @@ main {
   background-color: #f8f9fa;
 }
 
+.posts-index .post-item {
+  border: 1px solid #e8ecf4 !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08) !important;
+  border-radius: 14px;
+}
+.posts-index .post-item .card-body {
+  padding: 2rem;
+}
+.posts-index .post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+}
+.posts-index .post-card-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+.posts-index .post-card-date-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.posts-index .post-card-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+.posts-index .post-card-author {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+.posts-index .post-card-author-info {
+  text-align: center;
+}
+.posts-index .post-card-author-info small {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+.posts-index .avatar-36 {
+  width: 36px;
+  height: 36px;
+}
+.posts-index .avatar-24 {
+  width: 24px;
+  height: 24px;
+}
+.posts-index .post-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  flex: none;
+  min-width: 0;
+}
+.posts-index .post-card-title a {
+  color: #212529;
+  text-decoration: none;
+  display: inline-block;
+}
+.posts-index .post-card-title a:hover {
+  text-decoration: underline;
+}
+.posts-index .post-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.posts-index .post-card-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.posts-index .post-card-detail-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  flex: 0 0 6rem;
+  white-space: nowrap;
+  text-align: left;
+}
+.posts-index .post-card-detail-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.95rem;
+  color: #1f2937;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.posts-index .post-card-detail-value .text-muted {
+  white-space: nowrap;
+}
+.posts-index .post-card-detail-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.posts-index .post-card-detail-link:hover {
+  text-decoration: underline;
+}
+.posts-index .post-card-content-card {
+  margin: 1rem 0;
+  border: 1px solid #e6ecf5;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdfdff 0%, #f4f7ff 100%);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+.posts-index .post-card-content-body {
+  padding: 1.2rem 1.4rem;
+}
+.posts-index .post-card-excerpt {
+  font-size: 0.98rem;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0;
+}
+.posts-index .post-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid #e7ecf3;
+}
+.posts-index .post-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.posts-index .post-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #f1f5ff;
+  color: #1d4ed8;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.posts-index .post-card-tag--more {
+  background: #e2e8f0;
+  color: #475569;
+}
+.posts-index .post-card-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+}
+.posts-index .post-card-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #475569;
+  font-weight: 500;
+}
+.posts-index .post-card-stat i {
+  font-size: 0.95rem;
+}
+@media (max-width: 768px) {
+  .posts-index .post-item .card-body {
+    padding: 1.5rem;
+  }
+  .posts-index .post-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .posts-index .post-card-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+
 .btn-outline-primary:hover {
   transform: translateY(-1px);
 }
