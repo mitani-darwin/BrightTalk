@@ -50,7 +50,8 @@ class PostsController < ApplicationController
               title: post.title,
               content: post.content.to_s.truncate(200),
               user: post.user&.name || "削除されたユーザー", # nil安全性を追加
-              user_icon_url: post.user&.avatar_url,
+              user_icon_url: avatar_url_for(post.user),
+              image_urls: image_urls_for(post),
               created_at: post.created_at.strftime("%Y年%m月%d日 %H時%M分")
             }
           end,
@@ -86,7 +87,7 @@ class PostsController < ApplicationController
             id: @post.user.id,
             name: @post.user.name,
             username: @post.user.try(:username),
-            icon_url: @post.user.avatar_url
+            icon_url: avatar_url_for(@post.user)
           }
         else
           {
@@ -112,6 +113,7 @@ class PostsController < ApplicationController
             tags: @post.tags.pluck(:name),
             likes_count: @post.likes.count,
             comments_count: @post.comments.count,
+            image_urls: image_urls_for(@post),
             created_at: @post.created_at.strftime("%Y年%m月%d日 %H時%M分"),
             updated_at: @post.updated_at.strftime("%Y年%m月%d日 %H時%M分")
           },
@@ -812,4 +814,25 @@ class PostsController < ApplicationController
       end
     end
   end
+
+    def avatar_url_for(user)
+    return unless user&.avatar&.attached?
+    rails_blob_url(
+      user.avatar,
+      host: request.host_with_port,
+      protocol: request.protocol.delete_suffix("://")
+    )
+  end
+
+  def image_urls_for(post)
+    return [] unless post&.images&.attached?
+    post.images.map do |image|
+      rails_blob_url(
+        image,
+        host: request.host_with_port,
+        protocol: request.protocol.delete_suffix("://")
+      )
+    end
+  end
+
 end
