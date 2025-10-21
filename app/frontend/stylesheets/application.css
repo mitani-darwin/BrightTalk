@@ -1059,3 +1059,28 @@ main {
 /* New utilities to replace inline styles */
 .no-resize { resize: none !important; }
 .h-120 { height: 120px; }
+
+.flatpickr-current-month {
+  display: flex;
+  flex-direction: row;
+  justify-content: center; /* 中央寄せ */
+  align-items: center;
+  gap: 0.75rem; /* 年と月の間に余白をつける */
+}
+
+.flatpickr-current-month .flatpickr-yearDropdown {
+  order: 0;
+}
+
+.flatpickr-current-month .numInputWrapper {
+  display: none;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month .cur-month {
+  order: 1;
+}
+
+.flatpickr-current-month .flatpickr-yearDropdown {
+  min-width: 5.5rem;
+}
