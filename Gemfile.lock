@@ -475,7 +475,7 @@ GEM
       activemodel (>= 6.0.0)
       bindex (>= 0.4.0)
       railties (>= 6.0.0)
-    webauthn (3.4.2)
+    webauthn (3.4.3)
       android_key_attestation (~> 0.3.0)
       bindata (~> 2.4)
       cbor (~> 0.5.9)
@@ -544,7 +544,7 @@ DEPENDENCIES
   uglifier
   vite_rails!
   web-console
-  webauthn (~> 3.0)
+  webauthn (~> 3.4)
 
 BUNDLED WITH
    2.7.1
