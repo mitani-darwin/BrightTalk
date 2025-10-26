@@ -10,7 +10,11 @@
 const fs = require("fs");
 const path = require("path");
 
-const targetPath = path.resolve(__dirname, "..", "node_modules", "video.js", "dist", "video-js", "video.js");
+const candidatePaths = [
+  path.resolve(__dirname, "..", "node_modules", "video.js", "dist", "video.js"),
+  path.resolve(__dirname, "..", "node_modules", "video.js", "dist", "video-js", "video.js")
+];
+const targetPath = candidatePaths.find((p) => fs.existsSync(p));
 const variants = [
   "var Ba=this;",
   "var Ba = this;"
@@ -18,7 +22,7 @@ const variants = [
 const replacement = 'var Ba = typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this);';
 
 try {
-  if (!fs.existsSync(targetPath)) {
+  if (!targetPath) {
     process.exit(0);
   }
 
