@@ -10,7 +10,7 @@ class LikesController < ApplicationController
     if existing_like
       respond_to do |format|
         # Turbo FrameからのHTML要求に対してもフレームを返す
-        format.html { render partial: 'likes/like_button', locals: { post: @post }, layout: false }
+        format.html { redirect_to @post }
         format.turbo_stream
         format.json { render json: { status: "already_liked", likes_count: @post.likes.count } }
       end

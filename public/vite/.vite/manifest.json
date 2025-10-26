@@ -1,10 +1,22 @@
 {
+  "../../node_modules/video.js/dist/video-js/font/vjs.eot": {
+    "file": "assets/vjs-DKAQxigT.eot",
+    "src": "../../node_modules/video.js/dist/video-js/font/vjs.eot"
+  },
+  "../../node_modules/video.js/dist/video-js/font/vjs.svg": {
+    "file": "assets/vjs-DbX7KH4O.svg",
+    "src": "../../node_modules/video.js/dist/video-js/font/vjs.svg"
+  },
+  "../../node_modules/video.js/dist/video-js/font/vjs.ttf": {
+    "file": "assets/vjs-HeAI3oOL.ttf",
+    "src": "../../node_modules/video.js/dist/video-js/font/vjs.ttf"
+  },
   "_passkey-r8IpbBKX.js": {
     "file": "assets/passkey-r8IpbBKX.js",
     "name": "passkey"
   },
   "entrypoints/application.js": {
-    "file": "assets/application-DE2u155j.js",
+    "file": "assets/application-CERu3wvu.js",
     "name": "entrypoints/application.js",
     "src": "entrypoints/application.js",
     "isEntry": true,
@@ -15,7 +27,12 @@
       "entrypoints/new.js"
     ],
     "css": [
-      "assets/application-RZVKeSrc.css"
+      "assets/application-CBhVF1ZF.css"
+    ],
+    "assets": [
+      "assets/vjs-DKAQxigT.eot",
+      "assets/vjs-HeAI3oOL.ttf",
+      "assets/vjs-DbX7KH4O.svg"
     ]
   },
   "entrypoints/new.js": {

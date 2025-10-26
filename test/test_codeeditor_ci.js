@@ -76,21 +76,15 @@ function testApplicationJsConfiguration() {
         const appJsContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/application.js'), 'utf8');
         
         // 必要なimport文の確認
-        const requiredImports = [
-            'import CodeMirror from \'codemirror\'',
+        const expectedImports = [
             'import { Application } from "@hotwired/stimulus"',
             'import CodeEditorController from "./controllers/code_editor_controller"'
         ];
         
-        requiredImports.forEach(importStatement => {
+        expectedImports.forEach(importStatement => {
             const exists = appJsContent.includes(importStatement.replace(/'/g, '"')) || appJsContent.includes(importStatement);
             addTestResult(`Import確認: ${importStatement}`, exists);
         });
-        
-        // CodeMirrorの初期化確認
-        const hasCodeMirrorInit = appJsContent.includes('window.CodeMirror = CodeMirror') ||
-                                 appJsContent.includes('loadCodeMirror');
-        addTestResult('CodeMirror初期化設定', hasCodeMirrorInit);
         
         // Stimulusコントローラー登録確認
         const hasControllerRegistration = appJsContent.includes('register("code-editor", CodeEditorController)');
@@ -110,6 +104,17 @@ function testCodeEditorController() {
     try {
         const controllerContent = fs.readFileSync(path.join(__dirname, '..', 'app/javascript/controllers/code_editor_controller.js'), 'utf8');
         
+        // CodeMirror v6系のimport確認
+        const requiredImports = [
+            "import { EditorView } from '@codemirror/view'",
+            "import { markdown } from '@codemirror/lang-markdown'",
+            "import { basicSetup } from 'codemirror'"
+        ];
+        requiredImports.forEach(importStatement => {
+            const exists = controllerContent.includes(importStatement);
+            addTestResult(`Import確認: ${importStatement}`, exists);
+        });
+
         // 必要なメソッドの確認
         const requiredMethods = [
             'connect()',
@@ -128,8 +133,8 @@ function testCodeEditorController() {
         addTestResult('Stimulus target設定', hasTextareaTarget);
         
         // CodeMirror初期化ロジック確認
-        const hasInitLogic = controllerContent.includes('CodeMirror.fromTextArea') &&
-                            controllerContent.includes('mode: \'markdown\'');
+        const hasInitLogic = controllerContent.includes('new EditorView') &&
+                             controllerContent.includes('markdown(');
         addTestResult('CodeMirror初期化ロジック', hasInitLogic);
         
     } catch (error) {

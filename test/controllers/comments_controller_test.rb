@@ -6,6 +6,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     @user = users(:test_user)
     @another_user = users(:another_user)
     @post = posts(:first_post)
+    @ios_headers = { "X-Client-Platform" => "BrightTalk-iOS" }
     @comment = Comment.create!(
       content: "テストコメント",
       user: @user,
@@ -21,7 +22,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
         comment: {
           content: "新しいコメント"
         }
-      }
+      }, headers: @ios_headers
     end
 
     assert_redirected_to @post
@@ -35,7 +36,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
         comment: {
           content: "未ログインコメント"
         }
-      }
+      }, headers: @ios_headers
     end
 
     assert_redirected_to new_user_session_path
@@ -49,7 +50,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
         comment: {
           content: "" # 空のコンテンツ
         }
-      }
+      }, headers: @ios_headers
     end
 
     # CommentsControllerではリダイレクトでエラーを処理しているため
@@ -62,7 +63,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     assert_difference("Comment.count", -1) do
-      delete post_comment_path(@post, @comment)
+      delete post_comment_path(@post, @comment), headers: @ios_headers
     end
 
     assert_redirected_to @post
@@ -77,7 +78,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     )
 
     assert_no_difference("Comment.count") do
-      delete post_comment_path(@post, other_comment)
+      delete post_comment_path(@post, other_comment), headers: @ios_headers
     end
 
     assert_redirected_to @post
@@ -87,7 +88,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
 
   test "未ログインユーザーはコメントを削除できないこと" do
     assert_no_difference("Comment.count") do
-      delete post_comment_path(@post, @comment)
+      delete post_comment_path(@post, @comment), headers: @ios_headers
     end
 
     assert_redirected_to new_user_session_path
@@ -96,7 +97,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   test "存在しないコメントの削除で404エラーになること" do
     sign_in @user
 
-    delete post_comment_path(@post, 99999)
+    delete post_comment_path(@post, 99999), headers: @ios_headers
     assert_response :not_found
   end
 
@@ -110,7 +111,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
         comment: {
           content: long_content
         }
-      }
+      }, headers: @ios_headers
     end
 
     # CommentsControllerではリダイレクトでエラーを処理
@@ -128,7 +129,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       comment: {
         content: malicious_content
       }
-    }
+    }, headers: @ios_headers
 
     assert_redirected_to @post
     follow_redirect!
@@ -146,7 +147,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       comment: {
         content: "存在しない投稿へのコメント"
       }
-    }
+    }, headers: @ios_headers
     assert_response :not_found
   end
 
@@ -154,7 +155,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     # 存在しない投稿IDでコメント削除を試行
-    delete "/posts/99999/comments/#{@comment.id}"
+    delete "/posts/99999/comments/#{@comment.id}", headers: @ios_headers
     assert_response :not_found
   end
 
@@ -165,7 +166,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       comment: {
         content: "正常なコメント"
       }
-    }
+    }, headers: @ios_headers
 
     assert_redirected_to @post
     follow_redirect!
@@ -175,7 +176,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
   test "コメント削除時にフラッシュメッセージが表示されること" do
     sign_in @user
 
-    delete post_comment_path(@post, @comment)
+    delete post_comment_path(@post, @comment), headers: @ios_headers
 
     assert_redirected_to @post
     follow_redirect!
@@ -191,7 +192,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       comment: {
         content: "Deviseヘルパーテスト"
       }
-    }
+    }, headers: @ios_headers
 
     assert_redirected_to @post
 
@@ -218,7 +219,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       comment: {
         content: "ユーザーIDテスト"
       }
-    }
+    }, headers: @ios_headers
 
     comment = Comment.last
     assert_equal @user.id, comment.user_id
@@ -237,12 +238,12 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
 
     # 自分のコメントは削除できる
     assert_difference("Comment.count", -1) do
-      delete post_comment_path(@post, @comment)
+      delete post_comment_path(@post, @comment), headers: @ios_headers
     end
 
     # 他人のコメントは削除できない（権限チェック）
     assert_no_difference("Comment.count") do
-      delete post_comment_path(@post, other_comment)
+      delete post_comment_path(@post, other_comment), headers: @ios_headers
     end
 
     assert_redirected_to @post
@@ -252,7 +253,7 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     # 存在する投稿だが存在しないコメントIDで削除を試行
-    delete post_comment_path(@post, 99999)
+    delete post_comment_path(@post, 99999), headers: @ios_headers
     assert_response :not_found
   end
 
@@ -260,11 +261,11 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     # 直接URLで存在しないリソースにアクセス
-    delete "/posts/#{@post.id}/comments/99999"
+    delete "/posts/#{@post.id}/comments/99999", headers: @ios_headers
     assert_response :not_found
 
     # 存在しない投稿の存在しないコメント
-    delete "/posts/99999/comments/99999"
+    delete "/posts/99999/comments/99999", headers: @ios_headers
     assert_response :not_found
   end
 end

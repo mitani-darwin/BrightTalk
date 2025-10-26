@@ -681,7 +681,9 @@
         const messageSpan = document.getElementById('autoSaveMessage');
 
         if (alert && messageSpan) {
-            messageSpan.textContent = message + ' ' + new Date().toLocaleTimeString();
+            const now = new Date();
+            const timeLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            messageSpan.textContent = `${timeLabel} ${message}`;
             alert.className = 'alert alert-success alert-dismissible fade show';
             alert.style.display = 'block';
 
