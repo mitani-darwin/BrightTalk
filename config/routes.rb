@@ -14,6 +14,9 @@ Rails.application.routes.draw do
   # 投稿機能（投稿、いいね、コメント）
   draw(:posts)
 
+  # ブックマーク機能
+  draw(:bookmarks)
+
   # ユーザー機能（プロフィール、アカウント設定）
   draw(:users)
 

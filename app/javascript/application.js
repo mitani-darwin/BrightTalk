@@ -3,7 +3,11 @@ import { Application } from "@hotwired/stimulus"
 import "@hotwired/turbo"
 import * as ActiveStorage from "@rails/activestorage"
 import videojs from 'video.js';
+<<<<<<< HEAD
 import 'video.js/dist/video-js/video-js.css';  // CSS追加
+=======
+import 'video.js/dist/video-js/video-js.css';
+>>>>>>> main
 import { startPasskeyAuthentication, startPasskeyRegistration } from './passkey.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
