@@ -145,6 +145,7 @@
                           <i class="fas fa-heart text-danger"></i>
                           <span><%= post.likes.count %></span>
                         </div>
+                        <%= render 'bookmarks/bookmark_button', post: post, style: :stat %>
                         <div class="post-card-stat">
                           <i class="fas fa-comment text-info"></i>
                           <span><%= post.comments.count %></span>

@@ -9,6 +9,8 @@ class User < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :liked_posts, through: :likes, source: :post
+  has_many :bookmarks, dependent: :destroy
+  has_many :bookmarked_posts, through: :bookmarks, source: :post
 
   # WebAuthn/Passkey認証
   has_many :webauthn_credentials, dependent: :destroy
@@ -36,6 +38,10 @@ class User < ApplicationRecord
 
   def liked?(post)
     likes.exists?(post: post)
+  end
+
+  def bookmarked?(post)
+    bookmarks.exists?(post: post)
   end
 
   def avatar_or_default
@@ -71,6 +77,7 @@ class User < ApplicationRecord
       comments_count: comments.count,
       likes_given: likes.count,
       likes_received: Like.joins(:post).where(posts: { user: self }).count,
+      bookmarks_count: bookmarks.count,
       most_liked_post: posts.joins(:likes).group("posts.id").order("COUNT(likes.id) DESC").first
     }
   end

@@ -7,7 +7,7 @@ class PostsController < ApplicationController
 
   def index
     # 公開済みの投稿のみ表示
-    @posts = Post.published.includes(:user, :category, :tags).recent
+    @posts = Post.published.includes(:user, :category, :tags, :likes, :bookmarks).recent
 
     # カテゴリー・投稿タイプでの検索（個別に条件を適用）
     if params[:category_id].present?
@@ -52,7 +52,10 @@ class PostsController < ApplicationController
               user: post.user&.name || "削除されたユーザー", # nil安全性を追加
               user_icon_url: avatar_url_for(post.user),
               image_urls: image_urls_for(post),
-              created_at: post.created_at.strftime("%Y年%m月%d日 %H時%M分")
+              created_at: post.created_at.strftime("%Y年%m月%d日 %H時%M分"),
+              likes_count: post.likes.size,
+              bookmarks_count: post.bookmarks.size,
+              bookmarked_by_current_user: current_user.present? ? current_user.bookmarked?(post) : false
             }
           end,
           total_pages: @posts.total_pages,
@@ -112,10 +115,12 @@ class PostsController < ApplicationController
             post_type: @post.post_type&.as_json(only: [:id, :name]),
             tags: @post.tags.pluck(:name),
             likes_count: @post.likes.count,
+            bookmarks_count: @post.bookmarks.count,
             comments_count: @post.comments.count,
             image_urls: image_urls_for(@post),
             created_at: @post.created_at.strftime("%Y年%m月%d日 %H時%M分"),
-            updated_at: @post.updated_at.strftime("%Y年%m月%d日 %H時%M分")
+            updated_at: @post.updated_at.strftime("%Y年%m月%d日 %H時%M分"),
+            bookmarked_by_current_user: current_user.present? ? current_user.bookmarked?(@post) : false
           },
           author: author_json,
           previous_post: @previous_post&.slice(:id, :slug, :title),
@@ -445,7 +450,7 @@ class PostsController < ApplicationController
   end
 
   def set_post
-    @post = Post.friendly.find(params[:id])
+    @post = Post.includes(:bookmarks, :likes).friendly.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     if Rails.env.test?
       raise ActiveRecord::RecordNotFound
