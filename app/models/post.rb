@@ -14,6 +14,8 @@ class Post < ApplicationRecord
   has_many :tags, through: :post_tags
   has_many :likes, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :bookmarks, dependent: :destroy
+  has_many :bookmarked_users, through: :bookmarks, source: :user
 
   # Active Storage for images
   has_many_attached :images

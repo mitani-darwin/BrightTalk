@@ -45,7 +45,8 @@ class UsersController < ApplicationController
       posts_count: current_user.posts.count,
       comments_count: current_user.comments.count,
       likes_given: current_user.likes.count,
-      likes_received: Like.joins(:post).where(posts: { user: current_user }).count
+      likes_received: Like.joins(:post).where(posts: { user: current_user }).count,
+      bookmarks_count: current_user.bookmarks.count
     }
   end
 
