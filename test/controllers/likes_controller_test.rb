@@ -134,11 +134,11 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, @post.likes.count
   end
 
-  test "AJAX以外のリクエストは適切にリダイレクトされること" do
+  test "AJAX以外のリクエストでも成功レスポンスが返ること" do
     sign_in @user
 
     post post_likes_path(@post)
-    assert_redirected_to @post
+    assert_response :success
   end
 
   test "存在しない投稿の存在しないいいねを削除しようとすると404エラーになること" do

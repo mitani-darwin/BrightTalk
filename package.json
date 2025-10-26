@@ -18,7 +18,8 @@
     "test:codeeditor": "node test/test_codeeditor_ci.js",
     "test:codeeditor-markdown": "node test/test_codeeditor_markdown_ci.js",
     "test:videoplayer": "node test/test_videoplayer_ci.js",
-    "test:all": "node test/test_application_js.js && node test/test_passkey_js.js && node test/test_code_editor_controller_js.js && node test/test_video_player_controller_js.js && node test/test_flatpickr_controller_js.js && node test/test_codeeditor_ci.js && node test/test_codeeditor_markdown_ci.js && node test/test_videoplayer_ci.js"
+    "test:bookmarks": "node test/test_bookmarks_ci.js",
+    "test:all": "node test/test_application_js.js && node test/test_passkey_js.js && node test/test_code_editor_controller_js.js && node test/test_video_player_controller_js.js && node test/test_flatpickr_controller_js.js && node test/test_codeeditor_ci.js && node test/test_codeeditor_markdown_ci.js && node test/test_videoplayer_ci.js && node test/test_bookmarks_ci.js"
   },
   "repository": {
     "type": "git",

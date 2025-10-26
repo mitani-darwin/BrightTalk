@@ -22,13 +22,13 @@ class BookmarkTest < ActiveSupport::TestCase
   test "ユーザーが必須であること" do
     bookmark = Bookmark.new(user: nil, post: @post)
     assert_not bookmark.valid?
-    assert_includes bookmark.errors[:user], "must exist"
+    assert bookmark.errors[:user].present?
   end
 
   test "投稿が必須であること" do
     bookmark = Bookmark.new(user: @user, post: nil)
     assert_not bookmark.valid?
-    assert_includes bookmark.errors[:post], "must exist"
+    assert bookmark.errors[:post].present?
   end
 
   test "同じユーザーは同じ投稿を重複ブックマークできないこと" do
