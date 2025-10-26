@@ -1035,6 +1035,7 @@ main {
 .img-max-h-80vh { max-height: 80vh; }
 .auto-save-status-container { top: 80px; right: 20px; z-index: 1050; max-width: 280px; }
 .alert-success-soft { padding: 8px 12px; font-size: 12px; background-color: rgba(212, 237, 218, 0.95) !important; border: 1px solid rgba(195, 230, 203, 0.9) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.alert-success-compact { padding: 4px 8px !important; font-size: 11px !important; min-height: auto !important; }
 .fs-8px { font-size: 8px; }
 .p-2px { padding: 2px; }
 .progress-8 { height: 8px; }

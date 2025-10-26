@@ -11,7 +11,10 @@ const fs = require("fs");
 const path = require("path");
 
 const targetPath = path.resolve(__dirname, "..", "node_modules", "video.js", "dist", "video-js", "video.js");
-const search = "var Ba = this;";
+const variants = [
+  "var Ba=this;",
+  "var Ba = this;"
+];
 const replacement = 'var Ba = typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this);';
 
 try {
@@ -21,7 +24,9 @@ try {
 
   const original = fs.readFileSync(targetPath, "utf8");
 
-  if (!original.includes(search)) {
+  const match = variants.find((variant) => original.includes(variant));
+
+  if (!match) {
     process.exit(0);
   }
 
@@ -29,7 +34,7 @@ try {
     process.exit(0);
   }
 
-  const patched = original.replace(search, replacement);
+  const patched = original.replace(match, replacement);
   fs.writeFileSync(targetPath, patched, "utf8");
   console.log("[patch-videojs] Applied global context fallback to video.js");
 } catch (error) {
