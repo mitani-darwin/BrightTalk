@@ -16,7 +16,7 @@
     "name": "passkey"
   },
   "entrypoints/application.js": {
-    "file": "assets/application-CERu3wvu.js",
+    "file": "assets/application-r853pATi.js",
     "name": "entrypoints/application.js",
     "src": "entrypoints/application.js",
     "isEntry": true,
@@ -27,7 +27,7 @@
       "entrypoints/new.js"
     ],
     "css": [
-      "assets/application-CBhVF1ZF.css"
+      "assets/application-B7aXVLWB.css"
     ],
     "assets": [
       "assets/vjs-DKAQxigT.eot",
