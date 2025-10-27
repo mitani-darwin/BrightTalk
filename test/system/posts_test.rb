@@ -440,16 +440,22 @@ class PostsTest < ApplicationSystemTestCase
     sign_in @user
     visit edit_post_path(post_with_image)
 
-    # 画像が表示されていることを確認
-    assert_selector "img", wait: 10
+    # 画像カードが表示されていることを確認
+    post_with_image.reload
+    attachment = post_with_image.images.first
+    image_card_selector = "#image-card-#{attachment.id}"
+
+    assert_selector image_card_selector, wait: 10
 
     # 削除ボタンまたはリンクをクリック
-    if page.has_button?("削除")
-      click_button "削除"
-    elsif page.has_link?("削除")
-      click_link "削除"
-    elsif page.has_css?(".delete-image, .remove-image")
-      page.find(".delete-image, .remove-image").click
+    within image_card_selector do
+      if page.has_button?("削除")
+        click_button "削除"
+      elsif page.has_css?(".delete-image-btn")
+        page.find(".delete-image-btn").click
+      elsif page.has_link?("削除")
+        click_link "削除"
+      end
     end
 
     # 確認ダイアログがある場合は承認
@@ -462,8 +468,8 @@ class PostsTest < ApplicationSystemTestCase
     end
 
     # 画像が削除されたことを確認
-    assert_no_selector "img", wait: 10
     assert_text "削除しました", wait: 5
+    assert_no_selector image_card_selector, wait: 10
   end
 
   test "投稿更新時に新しい画像を追加できること" do
