@@ -53,8 +53,8 @@ jobs:
           CI: true
           PARALLEL_WORKERS: 1
         run: |
-          bin/rails test --verbose PARALLEL_WORKERS=1
-          bin/rails test:system --verbose PARALLEL_WORKERS=1
+          bin/rails test --verbose
+          bin/rails test:system --verbose
 
       - name: Run RuboCop
         run: bundle exec rubocop
