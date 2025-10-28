@@ -55,7 +55,6 @@ aliases:
 # Use a persistent storage volume
 volumes:
   - "bright_talk_storage:/rails/storage"
-  - "bright_talk_db:/rails/db"
 
 # Bridge fingerprinted assets
 asset_path: /rails/public/assets
