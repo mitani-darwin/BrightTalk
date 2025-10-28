@@ -333,8 +333,8 @@ class PostsTest < ApplicationSystemTestCase
     # 画像ファイルをアップロード
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
 
-    # アップロード確認要素が表示されるまで待機
-    assert_selector ".upload-preview, .file-upload-success, img", wait: 10
+    # Markdownの自動挿入を確認
+    assert page.has_field?("post[content]", with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/, wait: 5)
 
     # 投稿を送信
     click_button "投稿"
@@ -353,8 +353,8 @@ class PostsTest < ApplicationSystemTestCase
     # 動画ファイルをアップロード（Direct Upload対応）
     attach_file "videoInput", Rails.root.join("test", "fixtures", "files", "test_video.mp4")
 
-    # Direct Uploadの完了を待機
-    assert_selector ".upload-success, .video-upload-complete", wait: 15
+    # Markdownの自動挿入を確認
+    assert page.has_field?("post[content]", with: /\[test_video\.mp4\]\(attachment:test_video\.mp4\)/, wait: 10)
 
     # 投稿を送信
     click_button "投稿"
@@ -372,15 +372,15 @@ class PostsTest < ApplicationSystemTestCase
 
     # 画像をアップロード
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
-    
-    # 画像のアップロード完了を待機
-    assert_selector ".upload-preview, img", wait: 10
+    assert page.has_field?("post[content]", with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/, wait: 5)
 
     # 動画をアップロード
     attach_file "videoInput", Rails.root.join("test", "fixtures", "files", "test_video.mp4")
-    
-    # 動画のアップロード完了を待機
-    assert_selector ".video-upload-complete, .upload-success", wait: 15
+    assert page.has_field?(
+      "post[content]",
+      with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\).*?\[test_video\.mp4\]\(attachment:test_video\.mp4\)/m,
+      wait: 10
+    )
 
     click_button "投稿"
 
@@ -401,7 +401,7 @@ class PostsTest < ApplicationSystemTestCase
     sleep 6 # 自動保存は5秒間隔で実行される
 
     # 自動保存の確認メッセージまたはインジケーターをチェック
-    assert_text "自動保存されました", wait: 5
+    assert_text "自動保存が完了しました", wait: 5
 
     # 内容を追加
     fill_in_content_field("自動保存中の投稿内容")
@@ -444,8 +444,11 @@ class PostsTest < ApplicationSystemTestCase
     post_with_image.reload
     attachment = post_with_image.images.first
     image_card_selector = "#image-card-#{attachment.id}"
+    filename = attachment.filename.to_s
 
     assert_selector image_card_selector, wait: 10
+
+    page.execute_script("window.confirm = () => true;")
 
     # 削除ボタンまたはリンクをクリック
     within image_card_selector do
@@ -458,17 +461,8 @@ class PostsTest < ApplicationSystemTestCase
       end
     end
 
-    # 確認ダイアログがある場合は承認
-    begin
-      if page.driver.browser.switch_to.alert
-        page.driver.browser.switch_to.alert.accept
-      end
-    rescue
-      # アラートがない場合は何もしない
-    end
-
     # 画像が削除されたことを確認
-    assert_text "削除しました", wait: 5
+    assert_text "画像「#{filename}」を削除しました", wait: 5
     assert_no_selector image_card_selector, wait: 10
   end
 
@@ -492,7 +486,7 @@ class PostsTest < ApplicationSystemTestCase
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
     
     # アップロード完了を待機
-    assert_selector ".upload-preview, img", wait: 10
+    assert page.has_field?("post[content]", with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/, wait: 5)
 
     # タイトルを更新
     fill_in_title_field("画像が追加された投稿")
@@ -525,6 +519,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "下書き一覧で複数選択して一括削除できること" do
     sign_in @user
+    clear_existing_drafts
 
     # テスト用下書きを3件作成
     draft1 = Post.create!(
@@ -567,13 +562,13 @@ class PostsTest < ApplicationSystemTestCase
     delete_button = find("#bulk_delete_btn")
     assert_not delete_button.disabled?
 
+    page.execute_script("window.confirm = () => true;")
+
     # 確認ダイアログを受け入れて削除実行
-    accept_confirm do
-      click_button "選択した下書きを削除"
-    end
+    click_button "選択した下書きを削除"
 
     # 削除完了メッセージの確認
-    assert_text "2件の下書きを削除しました"
+    assert_text "2件の下書きを削除しました。"
 
     # 削除された下書きが表示されていないことを確認
     assert_no_text "下書き1"
@@ -585,6 +580,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "すべて選択チェックボックスが正常に動作すること" do
     sign_in @user
+    clear_existing_drafts
 
     # テスト用下書きを2件作成
     2.times do |i|
@@ -629,6 +625,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "下書きが存在しない場合は適切なメッセージが表示されること" do
     sign_in @user
+    clear_existing_drafts
     visit drafts_posts_path
 
     assert_text "下書きがありません"
@@ -638,6 +635,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "チェックボックス未選択で削除ボタンを押してもエラーになること" do
     sign_in @user
+    clear_existing_drafts
 
     # テスト用下書きを1件作成
     Post.create!(
@@ -658,6 +656,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "一部の下書きを選択して削除できること" do
     sign_in @user
+    clear_existing_drafts
 
     # テスト用下書きを4件作成
     drafts = []
@@ -678,16 +677,19 @@ class PostsTest < ApplicationSystemTestCase
     check "post_#{drafts[0].id}"
     check "post_#{drafts[2].id}"
 
+    delete_button = find("#bulk_delete_btn")
+    assert_not delete_button.disabled?
+
+    page.execute_script("window.confirm = () => true;")
+
     # すべて選択チェックボックスは中間状態（indeterminate）になるはず
     # （JavaScriptで制御されているため、視覚的な確認は困難）
 
     # 削除実行
-    accept_confirm do
-      click_button "選択した下書きを削除"
-    end
+    click_button "選択した下書きを削除"
 
     # 削除完了メッセージの確認
-    assert_text "2件の下書きを削除しました"
+    assert_text "2件の下書きを削除しました。"
 
     # 選択された下書きが削除されていることを確認
     assert_no_text "下書き1"
@@ -764,5 +766,9 @@ class PostsTest < ApplicationSystemTestCase
     elsif page.has_css?("select[name*='category']")
       page.find("select[name*='category']").select(@category.name)
     end
+  end
+
+  def clear_existing_drafts
+    @user.posts.draft.destroy_all
   end
 end
