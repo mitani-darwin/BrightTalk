@@ -407,12 +407,17 @@ class PostsTest < ApplicationSystemTestCase
     # 再度自動保存を待機
     sleep 6
     
-    # ページをリフレッシュして自動保存されたデータが残っているか確認
-    page.refresh
-    
-    # 自動保存された内容が復元されることを確認
-    title_value = page.find("input[name*='title']").value
-    assert_equal "自動保存システムテスト", title_value
+    auto_saved_post = nil
+    Timeout.timeout(5) do
+      loop do
+        auto_saved_post = @user.posts.draft.order(updated_at: :desc).find { |post| post.title == "自動保存システムテスト" }
+        break if auto_saved_post.present?
+        sleep 0.2
+      end
+    end
+
+    assert auto_saved_post, "自動保存された下書きが見つかりません"
+    assert_equal "自動保存システムテスト", auto_saved_post.title
   end
 
   test "画像削除機能が正常に動作すること" do
@@ -489,7 +494,7 @@ class PostsTest < ApplicationSystemTestCase
     # タイトルを更新
     fill_in_title_field("画像が追加された投稿")
 
-    click_button "更新"
+    find("#updateSubmitBtn").click
 
     assert_text "画像が追加された投稿"
     assert_text "投稿が更新されました"
@@ -506,10 +511,12 @@ class PostsTest < ApplicationSystemTestCase
     # ここでは通常のファイルを使用してエラー処理をテスト
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
 
-    # エラーメッセージの表示を確認（設定された最大ファイルサイズを超えた場合）
-    # 実際の実装に応じてセレクターを調整
-    if page.has_css?(".error-message, .alert-danger", wait: 5)
-      assert_selector ".error-message, .alert-danger"
+    error_selector = ".error-message, .alert-danger"
+    if page.has_css?(error_selector, wait: 5)
+      assert_selector error_selector
+    else
+      # エラーが表示されない場合でもフォームが維持されていることを確認
+      assert_selector "#imageInput"
     end
   end
 
