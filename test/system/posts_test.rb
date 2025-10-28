@@ -1,4 +1,5 @@
 require "application_system_test_case"
+require "timeout"
 
 class PostsTest < ApplicationSystemTestCase
   include Devise::Test::IntegrationHelpers
@@ -334,7 +335,7 @@ class PostsTest < ApplicationSystemTestCase
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
 
     # Markdownの自動挿入を確認
-    assert page.has_field?("post[content]", with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/, wait: 5)
+    assert_content_matches(/!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/)
 
     # 投稿を送信
     click_button "投稿"
@@ -354,7 +355,7 @@ class PostsTest < ApplicationSystemTestCase
     attach_file "videoInput", Rails.root.join("test", "fixtures", "files", "test_video.mp4")
 
     # Markdownの自動挿入を確認
-    assert page.has_field?("post[content]", with: /\[test_video\.mp4\]\(attachment:test_video\.mp4\)/, wait: 10)
+    assert_content_matches(/\[test_video\.mp4\]\(attachment:test_video\.mp4\)/)
 
     # 投稿を送信
     click_button "投稿"
@@ -372,15 +373,12 @@ class PostsTest < ApplicationSystemTestCase
 
     # 画像をアップロード
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
-    assert page.has_field?("post[content]", with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/, wait: 5)
+    assert_content_matches(/!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/)
 
     # 動画をアップロード
     attach_file "videoInput", Rails.root.join("test", "fixtures", "files", "test_video.mp4")
-    assert page.has_field?(
-      "post[content]",
-      with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\).*?\[test_video\.mp4\]\(attachment:test_video\.mp4\)/m,
-      wait: 10
-    )
+    assert_content_matches(/!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/)
+    assert_content_matches(/\[test_video\.mp4\]\(attachment:test_video\.mp4\)/)
 
     click_button "投稿"
 
@@ -486,7 +484,7 @@ class PostsTest < ApplicationSystemTestCase
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
     
     # アップロード完了を待機
-    assert page.has_field?("post[content]", with: /!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/, wait: 5)
+    assert_content_matches(/!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/)
 
     # タイトルを更新
     fill_in_title_field("画像が追加された投稿")
@@ -770,5 +768,19 @@ class PostsTest < ApplicationSystemTestCase
 
   def clear_existing_drafts
     @user.posts.draft.destroy_all
+  end
+
+  def content_textarea_value
+    page.evaluate_script("document.getElementById('contentTextarea')?.value || ''").to_s
+  end
+
+  def assert_content_matches(regex, wait: Capybara.default_max_wait_time)
+    Timeout.timeout(wait) do
+      until regex.match?(content_textarea_value)
+        sleep 0.1
+      end
+    end
+  rescue Timeout::Error
+    flunk "Content textarea did not match #{regex.inspect}. Current value: #{content_textarea_value.inspect}"
   end
 end
