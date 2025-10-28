@@ -1,6 +1,8 @@
 require "application_system_test_case"
 
 class UpdateProgressModalTest < ApplicationSystemTestCase
+  include Devise::Test::IntegrationHelpers
+
   setup do
     @user = users(:test_user)
     sign_in @user
@@ -127,14 +129,5 @@ class UpdateProgressModalTest < ApplicationSystemTestCase
     error_logs = logs.select { |log| log.message.include?("Required elements not found") }
     
     assert error_logs.any?, "Should handle missing modal elements gracefully"
-  end
-
-  private
-
-  def sign_in(user)
-    visit new_user_session_path
-    fill_in "user_email", with: user.email
-    fill_in "user_password", with: "password"
-    click_button "ログイン"
   end
 end

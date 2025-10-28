@@ -85,6 +85,8 @@ class UpdateProgressModalSimpleTest < ApplicationSystemTestCase
 
   def visit_test_page
     # テスト用の簡単なHTMLページを作成
+    script_content = ApplicationController.render(partial: "posts/form_javascript")
+
     test_html = <<~HTML
       <!DOCTYPE html>
       <html>
@@ -129,9 +131,7 @@ class UpdateProgressModalSimpleTest < ApplicationSystemTestCase
           <button type="submit" id="updateSubmitBtn" class="btn btn-primary">投稿</button>
         </form>
 
-        <script>
-          #{File.read(Rails.root.join('app/views/posts/_form_javascript.html.erb')).gsub(/<\/?script[^>]*>/, '')}
-        </script>
+        #{script_content}
       </body>
       </html>
     HTML

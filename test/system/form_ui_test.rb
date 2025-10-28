@@ -1,4 +1,5 @@
 require "application_system_test_case"
+require "timeout"
 
 class FormUITest < ApplicationSystemTestCase
   include Devise::Test::IntegrationHelpers
@@ -18,12 +19,12 @@ class FormUITest < ApplicationSystemTestCase
     
     # Check that submit buttons are in the main content area (right side)
     within ".col-md-8" do
-      assert_selector ".row .col-6", count: 2, text: "投稿"
-      assert_selector ".row .col-6", text: "キャンセル"
-      
-      # Verify buttons are full width within their columns
-      assert_selector ".btn.w-100", text: "投稿"
-      assert_selector ".btn.w-100", text: "キャンセル"
+      within ".post-form-buttons" do
+        buttons = all(".btn", minimum: 2)
+        assert_equal "投稿", buttons.first.text.strip
+        assert_equal "キャンセル", buttons.second.text.strip
+        assert buttons.all? { |btn| btn[:class].to_s.include?("flex-fill") }, "Buttons should expand equally"
+      end
     end
   end
 
@@ -46,11 +47,7 @@ class FormUITest < ApplicationSystemTestCase
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
     
     # Wait for JavaScript to process the file
-    sleep 1
-    
-    # Check that Markdown link was inserted
-    content_value = page.evaluate_script("document.getElementById('contentTextarea').value")
-    assert_includes content_value, "![test_image.jpg](attachment:test_image.jpg)"
+    assert_markdown_inserted(/!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/)
   end
 
   test "動画ファイル選択時にマークダウンリンクが挿入されること" do
@@ -72,11 +69,7 @@ class FormUITest < ApplicationSystemTestCase
     attach_file "videoInput", Rails.root.join("test", "fixtures", "files", "test_video.mp4")
     
     # Wait for JavaScript to process the file
-    sleep 1
-    
-    # Check that Markdown link was inserted
-    content_value = page.evaluate_script("document.getElementById('contentTextarea').value")
-    assert_includes content_value, "[test_video.mp4](attachment:test_video.mp4)"
+    assert_markdown_inserted(/\[test_video\.mp4\]\(attachment:test_video\.mp4\)/)
   end
 
   test "既存画像の挿入ボタンが動作すること" do
@@ -112,12 +105,7 @@ class FormUITest < ApplicationSystemTestCase
     # Click insert button
     find(".insert-existing-image").click
     
-    # Wait for insertion
-    sleep 1
-    
-    # Check that image was inserted into textarea
-    content_value = page.evaluate_script("document.getElementById('contentTextarea').value")
-    assert_includes content_value, "![existing_image.jpg](attachment:existing_image.jpg)"
+    assert_markdown_inserted(/!\[existing_image\.jpg\]\(attachment:existing_image\.jpg\)/)
     
     # Check for success message
     assert_selector "#dynamicAlerts .alert-success", wait: 5
@@ -156,12 +144,7 @@ class FormUITest < ApplicationSystemTestCase
     # Click insert button
     find(".insert-existing-video").click
     
-    # Wait for insertion
-    sleep 1
-    
-    # Check that video was inserted into textarea
-    content_value = page.evaluate_script("document.getElementById('contentTextarea').value")
-    assert_includes content_value, "[existing_video.mp4](attachment:existing_video.mp4)"
+    assert_markdown_inserted(/\[existing_video\.mp4\]\(attachment:existing_video\.mp4\)/)
     
     # Check for success message
     assert_selector "#dynamicAlerts .alert-success", wait: 5
@@ -272,11 +255,26 @@ class FormUITest < ApplicationSystemTestCase
     attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
     
     # Wait for JavaScript to process
-    sleep 1
-    
-    # Check that markdown was inserted at the correct position
-    content_value = page.evaluate_script("document.getElementById('contentTextarea').value")
+    assert_markdown_inserted(/!\[test_image\.jpg\]\(attachment:test_image\.jpg\)/)
+
     expected_content = "Before\n\n![test_image.jpg](attachment:test_image.jpg)\n\nAfter"
-    assert_equal expected_content, content_value
+    assert_equal expected_content, content_textarea_value
+
+  end
+
+  private
+
+  def content_textarea_value
+    page.evaluate_script("document.getElementById('contentTextarea')?.value || ''").to_s
+  end
+
+  def assert_markdown_inserted(regex, wait: Capybara.default_max_wait_time)
+    Timeout.timeout(wait) do
+      until regex.match?(content_textarea_value)
+        sleep 0.1
+      end
+    end
+  rescue Timeout::Error
+    flunk "Content textarea did not match #{regex.inspect}. Current value: #{content_textarea_value.inspect}"
   end
 end

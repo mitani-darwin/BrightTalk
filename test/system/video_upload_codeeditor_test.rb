@@ -1,14 +1,16 @@
 require "application_system_test_case"
 
 class VideoUploadCodeeditorTest < ApplicationSystemTestCase
+  include Devise::Test::IntegrationHelpers
+
   setup do
     @user = users(:test_user)
     @post = posts(:first_post)
     @post.update!(user: @user)
+    sign_in @user
   end
 
   test "動画選択時にCodeEditorにMarkdownが挿入される" do
-    login_as(@user)
     visit edit_post_path(@post)
 
     # CodeEditorが正しく初期化されていることを確認
@@ -79,8 +81,6 @@ class VideoUploadCodeeditorTest < ApplicationSystemTestCase
   end
 
   test "既存動画の挿入ボタンが正常に動作する" do
-    login_as(@user)
-    
     # 動画付きの投稿を作成
     @post.videos.attach(
       io: File.open(Rails.root.join("test", "fixtures", "files", "test_video.mp4")),
@@ -122,7 +122,6 @@ class VideoUploadCodeeditorTest < ApplicationSystemTestCase
   end
 
   test "CodeEditor未初期化時のフォールバック動作" do
-    login_as(@user)
     visit edit_post_path(@post)
 
     # CodeMirrorを一時的に無効化
@@ -158,7 +157,6 @@ class VideoUploadCodeeditorTest < ApplicationSystemTestCase
   end
 
   test "insertMarkdownAtCursor関数の複数の取得方法をテスト" do
-    login_as(@user)
     visit edit_post_path(@post)
 
     # CodeEditorの初期化を待機
