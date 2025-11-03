@@ -21,6 +21,9 @@ Rails.application.routes.draw do
     resources :comments, only: [ :create, :destroy ]
   end
 
+  # ユーザーごとの投稿一覧
+  get 'users/:user_id/posts', to: 'posts#user_posts', as: :user_posts
+
   # Handle POST requests to /posts/:id (which should be PATCH/PUT for updates)
   # This fixes forms that incorrectly use POST method for updating existing posts
   #  post '/posts/:id', to: 'posts#update', constraints: { id: /(?!auto_save)[^\/]+/ }
