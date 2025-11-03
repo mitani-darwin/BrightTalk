@@ -41,9 +41,17 @@
                 <div class="card-body p-4">
                     <div class="post-card-header">
                       <div class="post-card-author">
-                        <% if post.user&.avatar_or_default %>
-                          <%= image_tag post.user.avatar_or_default,
-                              class: "rounded-circle avatar-36 object-cover" %>
+                        <% if post.user.present? %>
+                          <%= link_to user_posts_path(post.user), class: "d-inline-block" do %>
+                            <% if post.user.avatar_or_default %>
+                              <%= image_tag post.user.avatar_or_default,
+                                  class: "rounded-circle avatar-36 object-cover" %>
+                            <% else %>
+                              <span class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center avatar-36">
+                                <i class="fas fa-user text-white"></i>
+                              </span>
+                            <% end %>
+                          <% end %>
                         <% else %>
                           <span class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center avatar-36">
                             <i class="fas fa-user text-white"></i>
@@ -51,7 +59,7 @@
                         <% end %>
                         <div class="post-card-author-info">
                           <%= link_to(post.user&.name || "削除されたユーザー",
-                                      post.user ? user_path(post.user) : "#",
+                                      post.user ? user_posts_path(post.user) : "#",
                                       class: "text-decoration-none fw-semibold text-dark") %>
                         </div>
                       </div>

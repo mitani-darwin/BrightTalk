@@ -143,6 +143,13 @@ class PostsControllerTest < ActionDispatch::IntegrationTest
     assert_match @post.title, response.body
   end
 
+  test "ユーザーごとの投稿一覧が表示されること" do
+    get user_posts_path(@user)
+    assert_response :success
+    assert_match @post.title, response.body
+    assert_no_match posts(:another_post).title, response.body
+  end
+
   test "カテゴリフィルターが機能すること" do
     # テストデータが正しく設定されていることを確認
     assert @post.persisted?, "テスト投稿が保存されていません"

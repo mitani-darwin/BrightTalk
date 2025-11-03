@@ -1,5 +1,5 @@
 class PostsController < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show]
+  before_action :authenticate_user!, except: [ :index, :show, :user_posts ]
   before_action :set_post, only: [:show, :edit, :update, :destroy, :delete_image, :delete_video]
   before_action :set_post_for_auto_save, only: [:auto_save]
   before_action :check_post_owner, only: [:edit, :update, :destroy, :delete_image, :delete_video]
@@ -63,6 +63,24 @@ class PostsController < ApplicationController
         }
       }
     end
+  end
+
+  def user_posts
+    @user = User.friendly.find(params[:user_id])
+    @posts = @user.posts
+                  .published
+                  .includes(:category, :tags)
+                  .with_attached_images
+                  .recent
+
+    respond_to do |format|
+      format.html { render :user_posts }
+      format.pdf do
+        render template: "posts/user_posts_pdf", layout: false
+      end
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to posts_path, alert: "指定されたユーザーは存在しません。"
   end
 
   def show
