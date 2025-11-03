@@ -77,7 +77,12 @@ setup_environment() {
 
     echo "GITHUB_USERNAME:" . $GITHUB_USERNAME
     echo "APP_NAME:" . $APP_NAME
-    echo "GITHUB_TOKEN" . $GITHUB_TOKEN
+    if [ -n "$GITHUB_TOKEN" ]; then
+        local masked_token="${GITHUB_TOKEN:0:4}****"
+        echo "GITHUB_TOKEN: ${masked_token} (masked)"
+    else
+        echo_warning "GITHUB_TOKEN が設定されていません"
+    fi
 
     if [ -z "$SSH_KEY_PATH" ]; then
         echo_warning "SSH_KEY_PATHが設定されていません。~/.ssh/id_rsaを使用します。"
@@ -203,6 +208,7 @@ main() {
     # 引数の処理
     SKIP_BUILD=false
     SKIP_PUSH=false
+    SKIP_GHCR_LOGIN=false
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -212,6 +218,10 @@ main() {
                 ;;
             --skip-push)
                 SKIP_PUSH=true
+                shift
+                ;;
+            --skip-ghcr-login)
+                SKIP_GHCR_LOGIN=true
                 shift
                 ;;
             --deploy-only)
@@ -225,6 +235,7 @@ main() {
                 echo "OPTIONS:"
                 echo "  --skip-build    Dockerビルドをスキップ"
                 echo "  --skip-push     Docker Hubプッシュをスキップ"
+                echo "  --skip-ghcr-login GitHub Container Registryへのログインをスキップ"
                 echo "  --deploy-only   ビルドとプッシュをスキップ、デプロイのみ実行"
                 echo "  -h, --help      このヘルプを表示"
                 echo ""
@@ -247,8 +258,12 @@ main() {
     echo "### チェック処理終了 ###"
     setup_environment
     echo "### 環境設定終了 ###"
-    ghcr_login
-    echo "### ghcrログイン完了 ###"
+    if [ "$SKIP_GHCR_LOGIN" = false ]; then
+        ghcr_login
+        echo "### ghcrログイン完了 ###"
+    else
+        echo_warning "GitHub Container Registry へのログインをスキップします"
+    fi
 
     if [ "$SKIP_BUILD" = false ]; then
         build_and_push
