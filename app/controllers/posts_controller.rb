@@ -323,18 +323,20 @@ class PostsController < ApplicationController
         
         # update!ではなくupdateを使用してバリデーションエラーを回避
         if @post.update(safe_params)
+          success_message = auto_save_success_message
           render json: {
             success: true,
-            message: "自動保存が完了しました",
+            message: success_message,
             post_id: @post.id,
             updated_at: @post.updated_at
           }
         else
           # バリデーションエラーがあっても自動保存は成功とみなす
           Rails.logger.info "Auto-save validation errors (ignored): #{@post.errors.full_messages}"
+          fallback_message = "#{auto_save_success_message}（一部項目は未入力）"
           render json: {
             success: true,
-            message: "自動保存が完了しました（一部項目は未入力）",
+            message: fallback_message,
             post_id: @post.id,
             updated_at: @post.updated_at,
             validation_errors: @post.errors.full_messages
@@ -437,12 +439,12 @@ class PostsController < ApplicationController
 
     if params[:post_id].present?
       Rails.logger.info "Finding post by post_id: #{params[:post_id]}"
-      @post = current_user.posts.friendly.find(params[:post_id])
-      @post.auto_save = true  # 既存の投稿にもauto_saveフラグを設定
+      existing_post = current_user.posts.friendly.find(params[:post_id])
+      @post = auto_save_target_for(existing_post)
     elsif params[:id].present?
       Rails.logger.info "Finding post by id: #{params[:id]}"
-      @post = current_user.posts.friendly.find(params[:id])
-      @post.auto_save = true  # 既存の投稿にもauto_saveフラグを設定
+      existing_post = current_user.posts.friendly.find(params[:id])
+      @post = auto_save_target_for(existing_post)
     else
       Rails.logger.info "Creating new post for auto_save"
       # auto_save時は新しい投稿を作成（バリデーション回避のためcreateではなく手動作成）
@@ -453,7 +455,7 @@ class PostsController < ApplicationController
       @post.save(validate: false)
     end
 
-    Rails.logger.info "Post found/created: ID=#{@post.id}, Title=#{@post.title}"
+    Rails.logger.info "Post found/created: ID=#{@post.id}, Title=#{@post.title}, Draft?: #{@post.draft?}"
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error "Post not found, creating new: #{e.message}"
     @post = current_user.posts.new(status: 'draft', title: "無題の下書き")
@@ -598,6 +600,73 @@ class PostsController < ApplicationController
       Rails.logger.error "Auto-save: Error backtrace: #{e.backtrace.first(5).join('\n')}"
       Rails.logger.error "Auto-save: Full params structure: #{params.inspect}"
       raise e
+    end
+  end
+
+  def auto_save_target_for(post)
+    if post.draft?
+      Rails.logger.info "Auto-save: Using existing draft #{post.id}"
+      post.auto_save = true
+      post
+    else
+      Rails.logger.info "Auto-save: Duplicating published post #{post.id}"
+      duplicate_post_for_auto_save(post)
+    end
+  end
+
+  def duplicate_post_for_auto_save(original_post)
+    duplicate_attrs = original_post.attributes.slice(*auto_save_cloneable_attributes)
+    new_post = current_user.posts.new(duplicate_attrs)
+    new_post.status = :draft
+    new_post.draft = true if new_post.respond_to?(:draft=)
+    new_post.published = false if new_post.respond_to?(:published=)
+    new_post.slug = nil
+    new_post.auto_save = true
+
+    if new_post.save(validate: false)
+      copy_auto_save_tags(original_post, new_post)
+      copy_auto_save_attachments(original_post, new_post)
+      @auto_save_created_new_post = true
+      Rails.logger.info "Auto-save: Draft copy created (ID=#{new_post.id})"
+    else
+      Rails.logger.warn "Auto-save: Failed to duplicate post #{original_post.id}, falling back to original"
+      return original_post.tap { |post| post.auto_save = true }
+    end
+
+    new_post
+  end
+
+  def auto_save_cloneable_attributes
+    %w[
+      title content purpose target_audience category_id post_type_id
+      key_points expected_outcome meta_description og_title og_description og_image
+    ]
+  end
+
+  def copy_auto_save_tags(source_post, target_post)
+    return unless source_post.tags.any?
+    target_post.tag_ids = source_post.tag_ids
+  end
+
+  def copy_auto_save_attachments(source_post, target_post)
+    if source_post.images.attached?
+      source_post.images.each do |image|
+        target_post.images.attach(image.blob)
+      end
+    end
+
+    if source_post.videos.attached?
+      source_post.videos.each do |video|
+        target_post.videos.attach(video.blob)
+      end
+    end
+  end
+
+  def auto_save_success_message
+    if @auto_save_created_new_post
+      "新しい下書きとして自動保存しました"
+    else
+      "自動保存が完了しました"
     end
   end
 
