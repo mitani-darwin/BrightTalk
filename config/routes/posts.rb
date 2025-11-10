@@ -24,6 +24,9 @@ Rails.application.routes.draw do
   # ユーザーごとの投稿一覧
   get 'users/:user_id/posts', to: 'posts#user_posts', as: :user_posts
 
+  # DELETE /posts（ID無し）のフォールバック（外部からの誤ったDELETEリクエスト対策）
+  delete '/posts', to: 'posts#bulk_destroy'
+
   # Handle POST requests to /posts/:id (which should be PATCH/PUT for updates)
   # This fixes forms that incorrectly use POST method for updating existing posts
   #  post '/posts/:id', to: 'posts#update', constraints: { id: /(?!auto_save)[^\/]+/ }
