@@ -41,6 +41,7 @@
         const imageInput = document.getElementById('imageInput');
         const videoInput = document.getElementById('videoInput');
         const textarea = document.getElementById('contentTextarea');
+        const directUploadEventsAlreadyBound = window._directUploadEventsRegistered;
 
         const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
 
@@ -75,12 +76,20 @@
 
         if (imageInput) {
             imageInput.addEventListener('change', handleImageUpload);
-            // direct-uploadイベントリスナーを削除（即座にアップロードしないため）
         }
 
         if (videoInput) {
             videoInput.addEventListener('change', handleVideoUpload);
-            // direct-uploadイベントリスナーを削除（即座にアップロードしないため）
+        }
+
+        if (!directUploadEventsAlreadyBound && (imageInput || videoInput)) {
+            document.addEventListener('direct-upload:start', handleDirectUploadStart);
+            document.addEventListener('direct-upload:end', (event) => {
+                handleDirectUploadEnd(event);
+                clearFileInputAfterDirectUpload(event);
+            });
+            document.addEventListener('direct-upload:error', handleDirectUploadError);
+            window._directUploadEventsRegistered = true;
         }
     }
 
@@ -526,6 +535,14 @@
     function handleDirectUploadError(event) {
         updateUploadStatus('アップロードエラー', 0);
         showError('ファイルのアップロードに失敗しました。');
+    }
+
+    // Direct Upload完了後はinputの値を空にし、フォーム送信時に大きなバイナリを含めない
+    function clearFileInputAfterDirectUpload(event) {
+        const input = event.target;
+        if (input && input.type === 'file') {
+            input.value = '';
+        }
     }
 
     function showUploadProgress() {
