@@ -147,8 +147,12 @@ module PostsHelper
       video_key = video_attachment.blob.key
       "#{cloudfront_base_url.chomp('/')}/#{video_key}"
     else
-      # Fallback to direct s3/Rails URL
-      Rails.application.routes.url_helpers.rails_blob_path(video_attachment, only_path: true)
+      # Fallback to署名付きS3 URL（プロキシ経由を避け、Largeファイルのタイムアウトを防ぐ）
+      video_attachment.blob.service_url(
+        disposition: :inline,
+        expires_in: 1.hour,
+        content_type: video_attachment.content_type
+      )
     end
   end
 end
