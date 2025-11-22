@@ -17,7 +17,7 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_production_cors" {
   cors_rule {
     allowed_headers = ["*"]
     # Rangeリクエストやプリフライトを通すためにHEAD/OPTIONSも許可
-    allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "DELETE"]
+    allowed_methods = ["GET", "HEAD", "PUT", "POST", "DELETE"]
     allowed_origins = ["http://localhost:3000", "https://www.brighttalk.jp"]
     expose_headers  = ["ETag", "Content-Type", "Content-Length", "Accept-Ranges", "Content-Range"]
     max_age_seconds = 3600
