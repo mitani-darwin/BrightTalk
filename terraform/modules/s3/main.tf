@@ -68,7 +68,7 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_development_cors" {
   cors_rule {
     allowed_headers = ["*"]
     # Rangeリクエストやプリフライトを通すためにHEAD/OPTIONSも許可
-    allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "DELETE"]
+    allowed_methods = ["GET", "HEAD", "PUT", "POST", "DELETE"]
     allowed_origins = [
       "http://localhost:3000",
       "http://127.0.0.1:3000"
