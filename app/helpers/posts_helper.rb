@@ -147,27 +147,14 @@ module PostsHelper
       video_key = video_attachment.blob.key
       "#{cloudfront_base_url.chomp('/')}/#{video_key}"
     else
-      # Fallback: 署名付きS3 URL（プロキシ経由を避け、Largeファイルのタイムアウトを防ぐ）
-      blob = video_attachment.blob
-      service = blob.service
-      if service.respond_to?(:url)
-        service.url(
-          blob.key,
-          expires_in: 1.hour,
-          disposition: :inline,
-          filename: blob.filename,
-          content_type: blob.content_type
-        )
-      else
-        # 旧環境向け: ActiveStorageのリダイレクトルートを使ったURLを返す
-        Rails.application.routes.url_helpers.rails_storage_redirect_url(
-          blob,
-          disposition: :inline,
-          filename: blob.filename,
-          host: Rails.application.config.action_mailer.default_url_options[:host],
-          protocol: Rails.application.config.action_mailer.default_url_options[:protocol]
-        )
-      end
+      # Fallback: ActiveStorageのリダイレクトURLで署名付きS3 URLに302で誘導（proxy経由を避ける）
+      Rails.application.routes.url_helpers.rails_storage_redirect_url(
+        video_attachment.blob,
+        disposition: :inline,
+        filename: video_attachment.blob.filename,
+        host: Rails.application.config.action_mailer.default_url_options[:host],
+        protocol: Rails.application.config.action_mailer.default_url_options[:protocol]
+      )
     end
   end
 end
