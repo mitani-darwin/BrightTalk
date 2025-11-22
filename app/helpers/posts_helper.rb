@@ -147,11 +147,15 @@ module PostsHelper
       video_key = video_attachment.blob.key
       "#{cloudfront_base_url.chomp('/')}/#{video_key}"
     else
-      # Fallback to署名付きS3 URL（プロキシ経由を避け、Largeファイルのタイムアウトを防ぐ）
-      video_attachment.blob.service_url(
-        disposition: :inline,
+      # Fallback: 署名付きS3 URL（プロキシ経由を避け、Largeファイルのタイムアウトを防ぐ）
+      blob = video_attachment.blob
+      service = blob.service
+      service.url(
+        blob.key,
         expires_in: 1.hour,
-        content_type: video_attachment.content_type
+        disposition: :inline,
+        filename: blob.filename,
+        content_type: blob.content_type
       )
     end
   end
