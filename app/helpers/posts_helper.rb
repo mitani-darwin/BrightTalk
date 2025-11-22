@@ -147,11 +147,9 @@ module PostsHelper
       video_key = video_attachment.blob.key
       "#{cloudfront_base_url.chomp('/')}/#{video_key}"
     else
-      # Fallback: ActiveStorageのリダイレクトURLで署名付きS3 URLに302で誘導（proxy経由を避ける）
+      # Fallback: ActiveStorageの標準リダイレクトURL（パラメータ最小限で署名ずれを防止）
       Rails.application.routes.url_helpers.rails_storage_redirect_url(
-        video_attachment.blob,
-        disposition: :inline,
-        filename: video_attachment.blob.filename,
+        video_attachment,
         host: Rails.application.config.action_mailer.default_url_options[:host],
         protocol: Rails.application.config.action_mailer.default_url_options[:protocol]
       )
