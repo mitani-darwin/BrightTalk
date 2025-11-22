@@ -22,15 +22,19 @@ class VideoUploadJob < ApplicationJob
 
         # ファイルサイズの整合性チェック（オプション）
         begin
-          # より安全なファイルサイズ取得方法
-          actual_size = video_attachment.blob.service.service.head_object(
-            bucket: video_attachment.blob.service.bucket.name,
-            key: video_attachment.blob.key
-          ).content_length
-          expected_size = video_attachment.blob.byte_size
+          service = video_attachment.blob.service
+          client = service.respond_to?(:client) ? service.client : nil
+          bucket_name = service.try(:bucket)&.name
 
-          if actual_size != expected_size
-            Rails.logger.warn "File size mismatch for #{video_attachment.blob.filename}: expected #{expected_size}, got #{actual_size}"
+          if client && bucket_name
+            actual_size = client.head_object(bucket: bucket_name, key: video_attachment.blob.key).content_length
+            expected_size = video_attachment.blob.byte_size
+
+            if actual_size != expected_size
+              Rails.logger.warn "File size mismatch for #{video_attachment.blob.filename}: expected #{expected_size}, got #{actual_size}"
+            end
+          else
+            Rails.logger.warn "Could not verify file size: S3 client or bucket is unavailable (service: #{service.class.name})"
           end
         rescue => size_check_error
           Rails.logger.warn "Could not verify file size: #{size_check_error.message}"
