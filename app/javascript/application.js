@@ -20,11 +20,14 @@ console.log('Passkey functions loaded globally:', {
     reg: !!window.startPasskeyRegistration
 });
 
-// ActiveStorageの簡単な初期化
+// ActiveStorageの初期化を必ず実行（多重読み込みを防ぎつつ start を確実に呼ぶ）
 if (!window.ActiveStorage) {
     window.ActiveStorage = ActiveStorage;
+}
+if (!window.__activeStorageStarted) {
     ActiveStorage.start();
-    console.log('ActiveStorage initialized');
+    window.__activeStorageStarted = true;
+    console.log('ActiveStorage initialized (forced start)');
 }
 
 // Video.jsの読み込み関数（修正版 - 動的インポートを削除）
