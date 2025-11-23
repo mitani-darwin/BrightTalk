@@ -88,6 +88,9 @@ setup_environment() {
         echo_warning "SSH_KEY_PATHが設定されていません。~/.ssh/id_rsaを使用します。"
         export SSH_KEY_PATH="~/.ssh/id_rsa"
     fi
+    if [ -z "$EBS_VOLUME_ID" ]; then
+        echo_warning "EBS_VOLUME_ID が未設定です。スナップショットをスキップします。"
+    fi
 
     echo_success "環境変数の設定完了"
     echo_info "SSH_KEY_PATH: $SSH_KEY_PATH"
@@ -180,6 +183,38 @@ backup_database() {
         done
     else
         echo_error "バックアップファイルのアップロードに失敗しました"
+        exit 1
+    fi
+}
+
+# デプロイ前にEBSスナップショットを取得
+create_ebs_snapshot() {
+    if [ -z "$EBS_VOLUME_ID" ]; then
+        echo_warning "EBS_VOLUME_ID が設定されていないためスナップショットをスキップします"
+        return 0
+    fi
+
+    echo_info "EBSスナップショットを作成します (volume: $EBS_VOLUME_ID)"
+    local timestamp=$(date +"%Y-%m-%d_%H%M%S")
+    local snap_tags="ResourceType=snapshot,Tags=[{Key=Name,Value=brighttalk-predeploy},{Key=Project,Value=brighttalk},{Key=CreatedAt,Value=$timestamp}]"
+
+    if ! snapshot_id=$(aws ec2 create-snapshot \
+        --volume-id "$EBS_VOLUME_ID" \
+        --description "pre-deploy $timestamp" \
+        --tag-specifications "$snap_tags" \
+        --region "$AWS_REGION" \
+        --query 'SnapshotId' --output text); then
+        echo_error "スナップショット作成に失敗しました"
+        exit 1
+    fi
+
+    echo_info "スナップショット作成完了: $snapshot_id"
+    echo_info "完了を待機中..."
+
+    if aws ec2 wait snapshot-completed --snapshot-id "$snapshot_id" --region "$AWS_REGION"; then
+        echo_success "スナップショットが利用可能になりました: $snapshot_id"
+    else
+        echo_error "スナップショットの完了待ちに失敗しました"
         exit 1
     fi
 }
@@ -278,6 +313,9 @@ main() {
 
     # デプロイ前にデータベースをバックアップ
     # backup_database
+
+    # デプロイ前にEBSスナップショットを取得
+    create_ebs_snapshot
 
     # docker build --no-cache -t brighttalk .
     pwd
