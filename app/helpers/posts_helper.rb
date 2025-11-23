@@ -68,7 +68,7 @@ module PostsHelper
         if matching_video
           video_url = get_cloudfront_video_url(matching_video)
           video_id = "video-#{SecureRandom.hex(8)}"
-          %Q(<div class="video-container my-4" data-controller="video-player" data-video-player-src-value="#{ERB::Util.html_escape(video_url)}" data-video-player-type-value="#{ERB::Util.html_escape(matching_video.content_type)}"><video id="#{video_id}" data-video-player-target="video" class="video-js vjs-default-skin w-100" preload="metadata"><source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}"><p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。<br>または<a href="#{ERB::Util.html_escape(video_url)}" download>動画をダウンロード</a>してください。</p></video></div>)
+          %Q(<div class="video-container my-4" data-controller="video-player" data-video-player-src-value="#{ERB::Util.html_escape(video_url)}" data-video-player-type-value="#{ERB::Util.html_escape(matching_video.content_type)}"><video id="#{video_id}" data-video-player-target="video" class="video-js vjs-default-skin w-100" preload="metadata" crossorigin="anonymous"><source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}"><p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。<br>または<a href="#{ERB::Util.html_escape(video_url)}" download>動画をダウンロード</a>してください。</p></video></div>)
         else
           # Fallback: keep the original markdown text if video not found
           match
@@ -147,8 +147,12 @@ module PostsHelper
       video_key = video_attachment.blob.key
       "#{cloudfront_base_url.chomp('/')}/#{video_key}"
     else
-      # Fallback to direct s3/Rails URL
-      Rails.application.routes.url_helpers.rails_blob_path(video_attachment, only_path: true)
+      # Fallback: ActiveStorageの標準リダイレクトURL（パラメータ最小限で署名ずれを防止）
+      Rails.application.routes.url_helpers.rails_storage_redirect_url(
+        video_attachment,
+        host: Rails.application.config.action_mailer.default_url_options[:host],
+        protocol: Rails.application.config.action_mailer.default_url_options[:protocol]
+      )
     end
   end
 end

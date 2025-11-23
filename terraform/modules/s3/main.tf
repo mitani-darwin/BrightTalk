@@ -16,9 +16,10 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_production_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["PUT", "POST", "GET", "DELETE"]
+    # Rangeリクエストやプリフライトを通すためにHEAD/OPTIONSも許可
+    allowed_methods = ["GET", "HEAD", "PUT", "POST", "DELETE"]
     allowed_origins = ["http://localhost:3000", "https://www.brighttalk.jp"]
-    expose_headers  = ["ETag"]
+    expose_headers  = ["ETag", "Content-Type", "Content-Length", "Accept-Ranges", "Content-Range"]
     max_age_seconds = 3600
   }
 }
@@ -66,12 +67,13 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_development_cors" {
 
   cors_rule {
     allowed_headers = ["*"]
-    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]  # HEADを追加
+    # Rangeリクエストやプリフライトを通すためにHEAD/OPTIONSも許可
+    allowed_methods = ["GET", "HEAD", "PUT", "POST", "DELETE"]
     allowed_origins = [
       "http://localhost:3000",
       "http://127.0.0.1:3000"
     ]  # セキュリティ向上のため特定のオリジンに制限
-    expose_headers  = ["ETag", "x-amz-meta-custom-header"]  # カスタムヘッダーを追加
+    expose_headers  = ["ETag", "Content-Type", "Content-Length", "Accept-Ranges", "Content-Range", "x-amz-meta-custom-header"]
     max_age_seconds = 3600
   }
 }
