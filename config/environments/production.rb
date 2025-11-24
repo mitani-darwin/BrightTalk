@@ -120,13 +120,14 @@ Rails.application.configure do
 
   # Add Content Security Policy for importmaps with CDN support
   config.content_security_policy do |policy|
+    policy.default_src :self, :https, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com", "https://*.s3.ap-northeast-1.amazonaws.com"
     policy.connect_src :self, "https://www.brighttalk.jp"
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.style_src :self, :https, :unsafe_inline, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
     policy.style_src_elem :self, :https, :unsafe_inline, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
     policy.img_src :self, :https, :data, :blob, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
-    policy.media_src :self, :https, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
+    policy.media_src :self, :https, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com", "https://*.s3.ap-northeast-1.amazonaws.com"
   end
 
   config.assets.js_compressor = :uglifier
