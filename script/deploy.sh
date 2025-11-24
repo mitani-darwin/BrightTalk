@@ -315,7 +315,7 @@ main() {
     # backup_database
 
     # デプロイ前にEBSスナップショットを取得
-    create_ebs_snapshot
+    #create_ebs_snapshot
 
     # docker build --no-cache -t brighttalk .
     pwd

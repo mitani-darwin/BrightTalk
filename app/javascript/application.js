@@ -21,13 +21,14 @@ console.log('Passkey functions loaded globally:', {
 });
 
 // ActiveStorageの初期化を必ず実行（多重読み込みを防ぎつつ start を確実に呼ぶ）
-if (!window.ActiveStorage) {
-    window.ActiveStorage = ActiveStorage;
-}
-if (!window.__activeStorageStarted) {
+window.ActiveStorage = ActiveStorage;
+try {
     ActiveStorage.start();
     window.__activeStorageStarted = true;
+    window.ActiveStorage.started = true; // 状態確認用フラグ
     console.log('ActiveStorage initialized (forced start)');
+} catch (e) {
+    console.error('ActiveStorage initialization failed:', e);
 }
 
 // Video.jsの読み込み関数（修正版 - 動的インポートを削除）
@@ -73,7 +74,7 @@ window.checkActiveStorageStatus = function() {
     const status = {
         available: typeof window.ActiveStorage !== 'undefined',
         directUpload: typeof window.ActiveStorage?.DirectUpload === 'function',
-        started: window.ActiveStorage?.started || false
+        started: window.ActiveStorage?.started || window.__activeStorageStarted || false
     };
     console.log('ActiveStorage Status:', status);
     return status;
