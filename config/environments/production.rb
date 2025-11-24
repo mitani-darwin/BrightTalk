@@ -120,14 +120,18 @@ Rails.application.configure do
 
   # Add Content Security Policy for importmaps with CDN support
   config.content_security_policy do |policy|
-    policy.default_src :self, :https, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com", "https://*.s3.ap-northeast-1.amazonaws.com"
-    policy.connect_src :self, "https://www.brighttalk.jp"
+    s3_bucket = "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
+    s3_wild   = "https://*.s3.ap-northeast-1.amazonaws.com"
+    amazon_wild = "https://*.amazonaws.com"
+
+    policy.default_src :self, :https, s3_bucket, s3_wild, amazon_wild, :data, :blob
+    policy.connect_src :self, "https://www.brighttalk.jp", s3_bucket, s3_wild, amazon_wild
     policy.script_src :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.script_src_elem :self, :unsafe_inline, "https://www.brighttalk.jp", "https://cdn.jsdelivr.net"
     policy.style_src :self, :https, :unsafe_inline, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
     policy.style_src_elem :self, :https, :unsafe_inline, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
-    policy.img_src :self, :https, :data, :blob, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
-    policy.media_src :self, :https, "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com", "https://*.s3.ap-northeast-1.amazonaws.com"
+    policy.img_src :self, :https, :data, :blob, s3_bucket, s3_wild, amazon_wild
+    policy.media_src :self, :https, :data, :blob, s3_bucket, s3_wild, amazon_wild
   end
 
   config.assets.js_compressor = :uglifier
