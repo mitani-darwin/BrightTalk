@@ -519,7 +519,46 @@
                     insertMarkdownAtCursor(textarea, markdownLink);
                 }, 1000);
             }
+
+            // Direct Uploadを即時実行して大きなファイルをフォーム送信に含めない
+            startVideoDirectUpload(file, event.target);
         }
+    }
+
+    // ActiveStorage Direct Uploadを即時実行し、signed_idをhiddenフィールドに追加する
+    function startVideoDirectUpload(file, inputElement) {
+        if (!window.ActiveStorage || typeof window.ActiveStorage.DirectUpload !== 'function') {
+            console.error('ActiveStorage.DirectUpload is unavailable, skipping direct upload for video');
+            return;
+        }
+
+        const directUploadUrl = inputElement.dataset.directUploadUrl;
+        if (!directUploadUrl) {
+            console.error('No direct upload URL found on input element');
+            return;
+        }
+
+        const upload = new ActiveStorage.DirectUpload(file, directUploadUrl);
+        console.log('Starting Direct Upload for video:', file.name);
+
+        upload.create((error, blob) => {
+            if (error) {
+                console.error('Direct upload failed:', error);
+                alert('動画のアップロードに失敗しました。ネットワークを確認して再試行してください。');
+                return;
+            }
+
+            // signed_id を hidden に追加
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'post[video_signed_ids][]';
+            hiddenInput.value = blob.signed_id;
+            inputElement.form.appendChild(hiddenInput);
+
+            console.log('Direct upload completed. signed_id appended and input cleared.');
+            // フォーム送信時に大きなファイルが入らないようクリア
+            inputElement.value = '';
+        });
     }
 
     function handleDirectUploadStart(event) {
