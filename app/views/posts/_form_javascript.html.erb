@@ -42,6 +42,8 @@
         const videoInput = document.getElementById('videoInput');
         const textarea = document.getElementById('contentTextarea');
         const directUploadEventsAlreadyBound = window._directUploadEventsRegistered;
+        const form = document.querySelector('form[data-turbo="false"]') || document.querySelector('form');
+        window._videoDirectUploadInProgress = false;
 
         const codeEditorElement = textarea?.closest('[data-controller*="code-editor"]');
 
@@ -90,6 +92,24 @@
             });
             document.addEventListener('direct-upload:error', handleDirectUploadError);
             window._directUploadEventsRegistered = true;
+        }
+
+        // フォーム送信時、大容量ファイルがそのまま送られないようガード
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (window._videoDirectUploadInProgress) {
+                    alert('動画アップロード中です。完了後に送信してください。');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                if (videoInput && videoInput.files && videoInput.files.length > 0) {
+                    alert('動画を直接送信しようとしています。アップロード完了までお待ちください。');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            });
         }
     }
 
@@ -540,8 +560,12 @@
 
         const upload = new ActiveStorage.DirectUpload(file, directUploadUrl);
         console.log('Starting Direct Upload for video:', file.name);
+        window._videoDirectUploadInProgress = true;
+        toggleSubmitButton(true, '動画アップロード中...');
 
         upload.create((error, blob) => {
+            window._videoDirectUploadInProgress = false;
+            toggleSubmitButton(false);
             if (error) {
                 console.error('Direct upload failed:', error);
                 alert('動画のアップロードに失敗しました。ネットワークを確認して再試行してください。');
@@ -559,6 +583,26 @@
             // フォーム送信時に大きなファイルが入らないようクリア
             inputElement.value = '';
         });
+    }
+
+    function toggleSubmitButton(disable, text) {
+        const form = document.querySelector('form[data-turbo="false"]') || document.querySelector('form');
+        const submitButton = form ? form.querySelector('button[type="submit"], input[type="submit"]') : null;
+        if (!submitButton) return;
+
+        if (disable) {
+            submitButton.dataset.originalText = submitButton.innerText || submitButton.value;
+            if (submitButton.innerText !== undefined) submitButton.innerText = text || '処理中...';
+            if (submitButton.value !== undefined) submitButton.value = text || '処理中...';
+            submitButton.disabled = true;
+        } else {
+            const originalText = submitButton.dataset.originalText;
+            if (originalText) {
+                if (submitButton.innerText !== undefined) submitButton.innerText = originalText;
+                if (submitButton.value !== undefined) submitButton.value = originalText;
+            }
+            submitButton.disabled = false;
+        }
     }
 
     function handleDirectUploadStart(event) {
