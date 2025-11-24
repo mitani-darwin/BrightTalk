@@ -26,13 +26,18 @@ Rails.application.configure do
   else
     # 本番/その他環境: CDN と自己ドメインのみ許可。インラインは :unsafe_inline によって許可される。
     config.content_security_policy do |policy|
-      policy.default_src :self
+      s3_bucket   = "https://brighttalk-prod-image-production.s3.ap-northeast-1.amazonaws.com"
+      s3_wild     = "https://*.s3.ap-northeast-1.amazonaws.com"
+      amazon_wild = "https://*.amazonaws.com"
+
+      policy.default_src :self, :https, s3_bucket, s3_wild, amazon_wild, :data, :blob
       policy.script_src  :self, :https, :unsafe_inline
       policy.style_src   :self, :https, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", :unsafe_inline
       policy.style_src_elem :self, :https, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", :unsafe_inline
-      policy.img_src     :self, :https, :data
+      policy.img_src     :self, :https, :data, :blob, s3_bucket, s3_wild, amazon_wild
+      policy.media_src   :self, :https, :data, :blob, s3_bucket, s3_wild, amazon_wild
       policy.font_src    :self, :https, :data, "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"
-      policy.connect_src :self, :https
+      policy.connect_src :self, :https, s3_bucket, s3_wild, amazon_wild
     end
   end
 end
