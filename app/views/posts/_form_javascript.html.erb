@@ -133,11 +133,19 @@
             window.autoSaveInterval = setInterval(performAutoSave, 5000);
             console.log('Auto-save enabled with 5-second interval');
 
-            // フォーム送信時に自動保存を停止
+            // 投稿操作が始まったら自動保存を停止
             if (form) {
                 form.addEventListener('submit', function (event) {
                     console.log('Form submit detected, stopping auto-save');
                     stopAutoSave();
+                });
+
+                const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                submitButtons.forEach((button) => {
+                    button.addEventListener('click', () => {
+                        console.log('Submit button clicked, stopping auto-save');
+                        stopAutoSave();
+                    });
                 });
             }
         } else {
