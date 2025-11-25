@@ -9,9 +9,9 @@
     <% if @posts.any? %>
       <% @posts.each do |post| %>
         <div class="post-card">
-          <% if post.image.attached? %>
+          <% if post.images.attached? %>
             <div class="post-image">
-              <%= image_tag(post.image, alt: post.title, class: 'post-thumbnail') %>
+              <%= image_tag(post.images.first, alt: post.title, class: 'post-thumbnail') %>
             </div>
           <% end %>
           <div class="post-content">

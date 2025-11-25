@@ -1,6 +1,8 @@
 <script nonce="<%= content_security_policy_nonce %>">
     // Global variables
     window.selectedFiles = window.selectedFiles || [];
+    window._videoUploadPromise = window._videoUploadPromise || null;
+    window._postFormSubmitting = window._postFormSubmitting || false;
 
     function initPostForm() {
         // Initialize form functionality
@@ -166,28 +168,28 @@
     function initializeFormValidation() {
         const form = document.querySelector('.needs-validation');
         if (form) {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-
-                // Custom ordered validation
-                const validationResult = performOrderedValidation();
-
-                if (validationResult.isValid) {
-                    // Remove validation classes and proceed with submission
-                    form.classList.remove('was-validated');
-                    clearValidationErrors();
-
-                    // Allow form submission
-                    event.target.removeEventListener('submit', arguments.callee);
-                    event.target.submit();
-                } else {
-                    // Show the first error in order
-                    showValidationError(validationResult.firstError);
-                    form.classList.add('was-validated');
-                }
-            });
+            form.removeEventListener('submit', handleValidatedSubmit);
+            form.addEventListener('submit', handleValidatedSubmit);
         }
+    }
+
+    async function handleValidatedSubmit(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const form = event.target;
+        const validationResult = performOrderedValidation();
+
+        if (!validationResult.isValid) {
+            showValidationError(validationResult.firstError);
+            form.classList.add('was-validated');
+            return;
+        }
+
+        form.classList.remove('was-validated');
+        clearValidationErrors();
+
+        await submitWithProgress(form);
     }
 
     // Perform ordered validation as specified in the issue
@@ -566,7 +568,18 @@
             return;
         }
 
-        const upload = new ActiveStorage.DirectUpload(file, directUploadUrl);
+        window._videoUploadPromise = new Promise((resolve, reject) => {
+            const upload = new ActiveStorage.DirectUpload(file, directUploadUrl, {
+            directUploadWillStoreFileWithXHR: (xhr) => {
+                showUploadProgress('動画をアップロード中...', file.name);
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (!event.lengthComputable) return;
+                    const percent = Math.round((event.loaded / event.total) * 100);
+                    const detail = `${file.name} (${formatFileSize(event.loaded)} / ${formatFileSize(event.total)})`;
+                    updateUploadStatus('動画をアップロード中...', percent, detail);
+                });
+            }
+        });
         console.log('Starting Direct Upload for video:', file.name);
         window._videoDirectUploadInProgress = true;
         toggleSubmitButton(true, '動画アップロード中...');
@@ -576,7 +589,12 @@
             toggleSubmitButton(false);
             if (error) {
                 console.error('Direct upload failed:', error);
+                updateUploadStatus('動画アップロードに失敗しました', 0, file.name);
+                const progressBar = document.getElementById('uploadProgressBar');
+                if (progressBar) progressBar.classList.add('bg-danger');
                 alert('動画のアップロードに失敗しました。ネットワークを確認して再試行してください。');
+                reject(error);
+                window._videoUploadPromise = null;
                 return;
             }
 
@@ -590,6 +608,11 @@
             console.log('Direct upload completed. signed_id appended and input cleared.');
             // フォーム送信時に大きなファイルが入らないようクリア
             inputElement.value = '';
+            updateUploadStatus('動画のアップロード完了', 100, file.name);
+            setTimeout(hideUploadProgress, 1200);
+            resolve(blob.signed_id);
+            window._videoUploadPromise = null;
+        });
         });
     }
 
@@ -614,17 +637,22 @@
     }
 
     function handleDirectUploadStart(event) {
-        showUploadProgress();
-        updateUploadStatus('アップロード開始中...', 0);
+        const fileName = event?.detail?.file?.name;
+        showUploadProgress('アップロード開始中...', fileName || 'ファイル準備中...');
+        updateUploadStatus('アップロード開始中...', 0, fileName);
     }
 
     function handleDirectUploadEnd(event) {
-        updateUploadStatus('アップロード完了', 100);
-        setTimeout(hideUploadProgress, 2000);
+        const fileName = event?.detail?.file?.name;
+        updateUploadStatus('アップロード完了', 100, fileName);
+        setTimeout(hideUploadProgress, 1500);
     }
 
     function handleDirectUploadError(event) {
-        updateUploadStatus('アップロードエラー', 0);
+        const fileName = event?.detail?.file?.name;
+        updateUploadStatus('アップロードエラー', 0, fileName);
+        const progressBar = document.getElementById('uploadProgressBar');
+        if (progressBar) progressBar.classList.add('bg-danger');
         showError('ファイルのアップロードに失敗しました。');
     }
 
@@ -636,28 +664,36 @@
         }
     }
 
-    function showUploadProgress() {
+    function showUploadProgress(statusText, detailText) {
         const container = document.getElementById('uploadProgressContainer');
         if (container) {
-            container.style.display = 'block';
+            container.classList.remove('d-none');
+            container.style.display = '';
         }
+        updateUploadStatus(statusText || 'アップロード中...', 0, detailText);
     }
 
     function hideUploadProgress() {
         const container = document.getElementById('uploadProgressContainer');
         if (container) {
+            container.classList.add('d-none');
             container.style.display = 'none';
         }
     }
 
-    function updateUploadStatus(text, progress) {
+    function updateUploadStatus(text, progress, detail) {
         const statusText = document.getElementById('uploadStatusText');
         const progressBar = document.getElementById('uploadProgressBar');
+        const details = document.getElementById('uploadDetails');
 
         if (statusText) statusText.textContent = text;
         if (progressBar) {
             progressBar.style.width = progress + '%';
             progressBar.setAttribute('aria-valuenow', progress);
+            progressBar.classList.remove('bg-danger');
+        }
+        if (details && detail) {
+            details.textContent = detail;
         }
     }
 
@@ -1337,43 +1373,52 @@
     async function handleUpdateSubmit(event) {
         console.log('Update submit button clicked');
 
-        // デフォルトの送信を一時停止
         event.preventDefault();
+        const form = document.querySelector('form[data-turbo="false"]');
+        if (!form) return;
+
+        // submitイベントに委譲してバリデーションとプログレス表示を統合
+        form.requestSubmit();
+    }
+
+    async function submitWithProgress(form) {
+        if (window._postFormSubmitting) {
+            return;
+        }
+        window._postFormSubmitting = true;
+
+        // 動画アップロードがまだ進行中なら完了まで待つ
+        if (window._videoDirectUploadInProgress || window._videoUploadPromise) {
+            showUploadProgress('動画をアップロード中...', 'アップロード完了までお待ちください');
+            try {
+                await window._videoUploadPromise;
+            } catch (e) {
+                showUpdateError();
+                window._postFormSubmitting = false;
+                return;
+            }
+        }
 
         const progressModal = document.getElementById('updateProgressModal');
-        const form = document.querySelector('form[data-turbo="false"]');
+        let modal = null;
 
-        if (!progressModal || !form) {
-            console.error('Required elements not found');
-            form?.submit();
-            return;
+        if (progressModal && typeof bootstrap !== 'undefined') {
+            modal = bootstrap.Modal.getInstance(progressModal) ||
+                new bootstrap.Modal(progressModal, {backdrop: 'static', keyboard: false});
+            modal.show();
+            startUpdateProgress();
         }
 
         try {
-            // モーダルを表示
-            const modal = new bootstrap.Modal(progressModal, {
-                backdrop: 'static',
-                keyboard: false
-            });
-            modal.show();
-
-            console.log('Modal shown, starting file upload and form submission');
-
-            // 進捗アニメーション開始
-            startUpdateProgress();
-
-            // ファイルアップロードを実行してからフォーム送信
             await uploadFilesToS3();
-
-            // 少し遅延してからフォーム送信
-            setTimeout(() => {
-                console.log('Submitting form...');
-                form.submit();
-            }, 100);
-
+            setTimeout(() => form.submit(), 100);
         } catch (error) {
             console.error('Error during upload or form submission:', error);
             showUpdateError();
+        } finally {
+            setTimeout(() => {
+                window._postFormSubmitting = false;
+            }, 300);
         }
     }
 
