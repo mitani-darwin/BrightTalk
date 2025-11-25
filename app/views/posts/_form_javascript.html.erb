@@ -1,6 +1,7 @@
 <script nonce="<%= content_security_policy_nonce %>">
     // Global variables
     window.selectedFiles = window.selectedFiles || [];
+    window._videoUploadPromise = window._videoUploadPromise || null;
     window._postFormSubmitting = window._postFormSubmitting || false;
 
     function initPostForm() {
@@ -567,7 +568,8 @@
             return;
         }
 
-        const upload = new ActiveStorage.DirectUpload(file, directUploadUrl, {
+        window._videoUploadPromise = new Promise((resolve, reject) => {
+            const upload = new ActiveStorage.DirectUpload(file, directUploadUrl, {
             directUploadWillStoreFileWithXHR: (xhr) => {
                 showUploadProgress('動画をアップロード中...', file.name);
                 xhr.upload.addEventListener('progress', (event) => {
@@ -591,6 +593,8 @@
                 const progressBar = document.getElementById('uploadProgressBar');
                 if (progressBar) progressBar.classList.add('bg-danger');
                 alert('動画のアップロードに失敗しました。ネットワークを確認して再試行してください。');
+                reject(error);
+                window._videoUploadPromise = null;
                 return;
             }
 
@@ -606,6 +610,9 @@
             inputElement.value = '';
             updateUploadStatus('動画のアップロード完了', 100, file.name);
             setTimeout(hideUploadProgress, 1200);
+            resolve(blob.signed_id);
+            window._videoUploadPromise = null;
+        });
         });
     }
 
@@ -1379,6 +1386,18 @@
             return;
         }
         window._postFormSubmitting = true;
+
+        // 動画アップロードがまだ進行中なら完了まで待つ
+        if (window._videoDirectUploadInProgress || window._videoUploadPromise) {
+            showUploadProgress('動画をアップロード中...', 'アップロード完了までお待ちください');
+            try {
+                await window._videoUploadPromise;
+            } catch (e) {
+                showUpdateError();
+                window._postFormSubmitting = false;
+                return;
+            }
+        }
 
         const progressModal = document.getElementById('updateProgressModal');
         let modal = null;
