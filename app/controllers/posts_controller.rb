@@ -214,7 +214,7 @@ class PostsController < ApplicationController
     # 保存とリダイレクト処理（1箇所のみ）
     if @post.save
       if @post.published?
-        redirect_to @post, notice: "投稿が作成されました。"
+        redirect_to posts_path, notice: "投稿が作成されました。"
       else
         redirect_to drafts_posts_path, notice: "下書きが保存されました。"
       end
@@ -249,7 +249,7 @@ class PostsController < ApplicationController
     if update_with_additional_images
       respond_to do |format|
         format.html {
-          redirect_to @post, notice: "投稿が更新されました。" # render :edit から redirect に変更
+          redirect_to posts_path, notice: "投稿が更新されました。" # render :edit から redirect に変更
         }
         format.json {
           render json: {
