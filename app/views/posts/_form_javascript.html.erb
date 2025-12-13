@@ -801,21 +801,20 @@
             });
     }
 
+    const autoSaveBaseClass = 'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-soft';
+
     function showAutoSaveError(message) {
         const alert = document.getElementById('autoSaveAlert');
         const messageSpan = document.getElementById('autoSaveMessage');
 
         if (alert && messageSpan) {
             messageSpan.textContent = message;
-            alert.className = 'alert alert-danger alert-dismissible fade show'; // エラー用スタイル
-            alert.style.display = 'block';
+            alert.className = `${autoSaveBaseClass} border border-rose-200 bg-rose-50 text-rose-900`;
+            alert.classList.remove('hidden');
 
             setTimeout(() => {
-                alert.classList.remove('show');
-                setTimeout(() => {
-                    alert.style.display = 'none';
-                    alert.className = 'alert alert-success alert-dismissible fade'; // 元に戻す
-                }, 300);
+                alert.classList.add('hidden');
+                alert.className = `${autoSaveBaseClass} border border-emerald-200 bg-emerald-50 text-emerald-900`;
             }, 8000); // エラーは少し長めに表示
         }
     }
@@ -828,14 +827,11 @@
             const now = new Date();
             const timeLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             messageSpan.textContent = `${timeLabel} ${message}`;
-            alert.className = 'alert alert-success alert-dismissible fade show';
-            alert.style.display = 'block';
+            alert.className = `${autoSaveBaseClass} border border-emerald-200 bg-emerald-50 text-emerald-900`;
+            alert.classList.remove('hidden');
 
             setTimeout(() => {
-                alert.classList.remove('show');
-                setTimeout(() => {
-                    alert.style.display = 'none';
-                }, 300);
+                alert.classList.add('hidden');
             }, 3000);
         }
     }
@@ -1312,19 +1308,20 @@
         if (!alertContainer) {
             alertContainer = document.createElement('div');
             alertContainer.id = 'dynamicAlerts';
-            alertContainer.className = 'position-fixed top-0 start-50 translate-middle-x';
-            alertContainer.style.zIndex = '1060';
-            alertContainer.style.marginTop = '20px';
+            alertContainer.className = 'toast-container';
             document.body.appendChild(alertContainer);
         }
 
         const alertElement = document.createElement('div');
-        alertElement.className = `alert alert-${type} alert-dismissible fade show`;
+        const isSuccess = type === 'success';
+        alertElement.className = `toast ${isSuccess ? 'border border-emerald-200 bg-emerald-50 text-emerald-900' : 'border border-rose-200 bg-rose-50 text-rose-900'}`;
         alertElement.innerHTML = `
-    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-    ${message}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  `;
+      <i class="fas ${isSuccess ? 'fa-check-circle text-emerald-500' : 'fa-exclamation-circle text-rose-500'}"></i>
+      <span class="flex-1">${message}</span>
+      <button type="button" aria-label="Close" class="text-slate-500 hover:text-slate-700" onclick="this.parentElement.remove()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    `;
 
         alertContainer.appendChild(alertElement);
 
@@ -1347,26 +1344,33 @@
         console.log('Elements found:', {
             form: !!form,
             submitBtn: !!submitBtn,
-            progressModal: !!progressModal,
-            bootstrap: typeof bootstrap !== 'undefined'
+            progressModal: !!progressModal
         });
 
         if (form && submitBtn && progressModal) {
-            // Bootstrap 5の確認
-            if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap is not loaded. Modal will not work.');
-                return;
-            }
-
-            // 既存のイベントリスナーを削除
             submitBtn.removeEventListener('click', handleUpdateSubmit);
-
-            // 新しいイベントリスナーを追加
             submitBtn.addEventListener('click', handleUpdateSubmit);
+            progressModal.classList.add('hidden');
+            progressModal.classList.remove('flex');
             console.log('Update progress modal initialized successfully');
         } else {
             console.warn('Required elements not found for update progress modal');
         }
+    }
+
+    function showProgressModal() {
+        const progressModal = document.getElementById('updateProgressModal');
+        if (!progressModal) return null;
+        progressModal.classList.remove('hidden');
+        progressModal.classList.add('flex');
+        return progressModal;
+    }
+
+    function hideProgressModal() {
+        const progressModal = document.getElementById('updateProgressModal');
+        if (!progressModal) return;
+        progressModal.classList.add('hidden');
+        progressModal.classList.remove('flex');
     }
 
     // フォーム送信ハンドラーを修正
@@ -1399,13 +1403,8 @@
             }
         }
 
-        const progressModal = document.getElementById('updateProgressModal');
-        let modal = null;
-
-        if (progressModal && typeof bootstrap !== 'undefined') {
-            modal = bootstrap.Modal.getInstance(progressModal) ||
-                new bootstrap.Modal(progressModal, {backdrop: 'static', keyboard: false});
-            modal.show();
+        const progressModal = showProgressModal();
+        if (progressModal) {
             startUpdateProgress();
         }
 
@@ -1428,6 +1427,14 @@
         const progressText = document.getElementById('updateProgressText');
         const statusText = document.getElementById('updateStatusText');
         const details = document.getElementById('updateDetails');
+
+        if (!progressBar || !progressText || !statusText || !details) return;
+
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0);
+        progressText.textContent = '0%';
+        statusText.textContent = '準備中...';
+        details.textContent = '投稿データを処理しています...';
 
         let progress = 0;
         const steps = [
@@ -1468,12 +1475,13 @@
     // フォーム送信完了時の処理
     function handleUpdateComplete(success = true) {
         const progressModal = document.getElementById('updateProgressModal');
-        const modal = bootstrap.Modal.getInstance(progressModal);
+
+        if (!progressModal) return;
 
         if (success) {
             // 成功時は自動的にモーダルを閉じる
             setTimeout(() => {
-                modal.hide();
+                hideProgressModal();
             }, 1000);
         } else {
             // エラー時はエラー表示に変更
@@ -1483,7 +1491,6 @@
 
     // エラー時の表示変更
     function showUpdateError() {
-        // progressModal要素を関数内で取得
         const progressModal = document.getElementById('updateProgressModal');
 
         const progressBar = document.getElementById('updateProgressBar');
@@ -1492,26 +1499,21 @@
         const details = document.getElementById('updateDetails');
         const modalTitle = document.getElementById('updateProgressModalLabel');
 
-        // エラー表示に変更
-        progressBar.className = 'progress-bar bg-danger';
+        if (!progressModal || !progressBar || !progressText || !statusText || !details || !modalTitle) return;
+
+        progressBar.className = 'h-full w-full rounded-full bg-rose-500 transition-none';
         progressBar.style.width = '100%';
         progressText.textContent = 'エラー';
         statusText.textContent = '更新に失敗しました';
         details.textContent = 'もう一度お試しください';
-        modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラーが発生しました';
+        modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle text-rose-500 mr-2"></i>エラーが発生しました';
 
-        // 閉じるボタンを追加
-        if (progressModal) {
-            const modalBody = progressModal.querySelector('.modal-body');
+        const modalBody = progressModal.querySelector('.space-y-4');
+        if (modalBody && !modalBody.querySelector('.update-close-btn')) {
             const closeButton = document.createElement('button');
-            closeButton.className = 'btn btn-secondary mt-3';
+            closeButton.className = 'update-close-btn btn btn-secondary mt-3';
             closeButton.textContent = '閉じる';
-            closeButton.onclick = () => {
-                const modal = bootstrap.Modal.getInstance(progressModal);
-                if (modal) {
-                    modal.hide();
-                }
-            };
+            closeButton.onclick = () => hideProgressModal();
             modalBody.appendChild(closeButton);
         }
     }

@@ -1,8 +1,14 @@
 
 <!-- Flash Messages -->
 <% flash.each do |type, message| %>
-  <div class="alert alert-<%= type == 'notice' ? 'success' : 'danger' %> alert-dismissible fade m-2 show" role="alert">
-    <%= message %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  <% is_success = type == 'notice' %>
+  <div class="mb-4 flex items-start gap-3 rounded-xl border px-4 py-3 shadow-soft <%= is_success ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-rose-200 bg-rose-50 text-rose-900' %>">
+    <div class="mt-0.5">
+      <i class="<%= is_success ? 'fa-solid fa-circle-check text-emerald-500' : 'fa-solid fa-circle-exclamation text-rose-500' %>"></i>
+    </div>
+    <div class="flex-1 text-sm font-semibold leading-6"><%= message %></div>
+    <button type="button" class="text-slate-500 transition hover:text-slate-700" aria-label="Close" onclick="this.closest('div').remove()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
 <% end %>

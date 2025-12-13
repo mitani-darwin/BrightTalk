@@ -1,75 +1,103 @@
-<!-- Bootstrap 5 Navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <%= link_to "BrightTalk", root_path, class: "navbar-brand" %>
-
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <%= link_to "投稿一覧", posts_path, class: "nav-link" %>
-        </li>
-        <% if user_signed_in? %>
-          <li class="nav-item">
-            <%= link_to new_post_path, class: "nav-link" do %>
-              <i class="fas fa-plus me-1"></i>投稿作成
-            <% end %>
-          </li>
-          <li class="nav-item">
-            <%= link_to drafts_posts_path, class: "nav-link" do %>
-              <i class="fas fa-file-alt me-1"></i>下書き
-            <% end %>
-          </li>
-        <% end %>
-        <li class="nav-item">
-          <%= link_to "お問い合わせ", new_contact_path, class: "nav-link" %>
-        </li>
-      </ul>
-
-      <!-- 検索フォーム -->
-      <div class="d-flex me-3">
-        <%= form_with url: posts_path, method: :get, local: true, class: "d-flex" do |f| %>
-          <%= f.text_field :search,
-                           value: params[:search],
-                           placeholder: "投稿を検索...",
-                           class: "form-control form-control-sm me-2",
-                           style: "width: 200px;" %>
-          <%= f.submit "検索", class: "btn btn-outline-light btn-sm" %>
+<nav class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg">
+  <div class="mx-auto flex max-w-screen-xl flex-col px-4 py-3 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <button id="navToggle"
+                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20 lg:hidden"
+                aria-label="メニューを開く">
+          <i class="fas fa-bars"></i>
+        </button>
+        <%= link_to root_path, class: "inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-lg font-semibold tracking-tight text-white hover:bg-white/20" do %>
+          <i class="fa-solid fa-sun"></i>
+          BrightTalk
         <% end %>
       </div>
 
-      <ul class="navbar-nav">
-        <% if user_signed_in? %>
-          <li class="nav-item dropdown">
-            <!-- Bootstrap 5 Dropdown Toggle -->
-            <a class="nav-link dropdown-toggle"
-               href="#"
-               role="button"
-               data-bs-toggle="dropdown"
-               aria-expanded="false"
-               id="navbarDropdown">
-              <i class="fas fa-user-circle me-1"></i>
-              <%= current_user.name || current_user.email %>
-            </a>
-            <!-- Bootstrap 5 Dropdown Menu -->
-            <ul class="dropdown-menu">
-              <li><%= link_to "マイページ", user_path(current_user), class: "dropdown-item" %></li>
-              <li><%= link_to "ブックマーク一覧", bookmarks_path, class: "dropdown-item" %></li>
-              <li><%= link_to "ログアウト", destroy_user_session_path, data: { "turbo-method": :delete }, class: "dropdown-item" %></li>
-            </ul>
-          </li>
-        <% else %>
-          <li class="nav-item">
-            <%= link_to "ログイン", new_user_session_path, class: "nav-link" %>
-          </li>
-          <li class="nav-item">
-            <%= link_to "新規登録", new_passkey_registration_path, class: "btn btn-outline-light ms-2", data: { turbo: false } %>
-          </li>
+      <div class="hidden lg:flex lg:flex-1 lg:justify-center">
+        <%= form_with url: posts_path, method: :get, local: true, class: "flex w-full max-w-lg items-center gap-2" do |f| %>
+          <%= f.text_field :search,
+                           value: params[:search],
+                           placeholder: "投稿を検索...",
+                           class: "input bg-white/90 text-slate-900 placeholder:text-slate-400" %>
+          <%= f.submit "検索", class: "btn btn-secondary" %>
         <% end %>
-      </ul>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <% unless user_signed_in? %>
+          <%= link_to "ログイン", new_user_session_path, class: "nav-link hidden sm:inline-flex" %>
+        <% end %>
+        <%= link_to "投稿一覧", posts_path, class: "nav-link hidden lg:inline-flex" %>
+        <% if user_signed_in? %>
+          <%= link_to new_post_path, class: "btn nav-link--primary hidden sm:inline-flex" do %>
+            <i class="fas fa-plus"></i>
+            投稿作成
+          <% end %>
+        <% end %>
+        <div class="relative">
+          <% if user_signed_in? %>
+            <details class="group">
+              <summary class="flex cursor-pointer items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
+                <i class="fas fa-user-circle text-lg"></i>
+                <span class="hidden sm:inline"><%= current_user.name || current_user.email %></span>
+                <i class="fas fa-chevron-down text-xs transition group-open:rotate-180"></i>
+              </summary>
+              <div class="absolute right-0 mt-2 w-56 rounded-2xl bg-white p-2 text-slate-900 shadow-xl ring-1 ring-slate-200">
+                <%= link_to "マイページ", user_path(current_user), class: "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50" %>
+                <%= link_to "ブックマーク一覧", bookmarks_path, class: "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50" %>
+                <%= link_to "ログアウト", destroy_user_session_path, data: { "turbo-method": :delete }, class: "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50" %>
+              </div>
+            </details>
+          <% else %>
+            <%= link_to "新規登録", new_passkey_registration_path, class: "btn btn-primary text-sm", data: { turbo: false } %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div id="navMenu" class="mt-4 hidden flex-col gap-4 lg:mt-6 lg:flex lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+        <%= link_to posts_path, class: "nav-link" do %>
+          <i class="fas fa-home"></i>
+          <span class="ml-1">投稿一覧</span>
+        <% end %>
+        <% if user_signed_in? %>
+          <%= link_to new_post_path, class: "nav-link" do %>
+            <i class="fas fa-plus-circle"></i>
+            <span class="ml-1">投稿作成</span>
+          <% end %>
+          <%= link_to drafts_posts_path, class: "nav-link" do %>
+            <i class="fas fa-file-alt"></i>
+            <span class="ml-1">下書き</span>
+          <% end %>
+        <% end %>
+        <%= link_to new_contact_path, class: "nav-link" do %>
+          <i class="fas fa-envelope"></i>
+          <span class="ml-1">お問い合わせ</span>
+        <% end %>
+      </div>
+
+      <div class="lg:hidden">
+        <%= form_with url: posts_path, method: :get, local: true, class: "flex w-full flex-col gap-3 sm:flex-row sm:items-center" do |f| %>
+          <%= f.text_field :search,
+                           value: params[:search],
+                           placeholder: "投稿を検索...",
+                           class: "input bg-white text-slate-900 placeholder:text-slate-400" %>
+          <%= f.submit "検索", class: "btn btn-secondary w-full sm:w-auto" %>
+        <% end %>
+      </div>
     </div>
   </div>
 </nav>
+
+<script nonce="<%= content_security_policy_nonce %>">
+  (() => {
+    const toggle = document.getElementById('navToggle');
+    const menu = document.getElementById('navMenu');
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  })();
+</script>

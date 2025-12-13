@@ -51,10 +51,6 @@ class UpdateProgressModalTest < ApplicationSystemTestCase
     fill_in "post_title", with: "Updated Title"
     fill_in "post_content", with: "Updated content"
 
-    # Bootstrap が読み込まれていることを確認
-    bootstrap_loaded = page.evaluate_script("typeof bootstrap !== 'undefined'")
-    assert bootstrap_loaded, "Bootstrap should be loaded"
-
     # 更新ボタンをクリック
     click_button "投稿"
 
@@ -89,22 +85,6 @@ class UpdateProgressModalTest < ApplicationSystemTestCase
     # ステータステキストが更新されていることを確認
     status_text = page.evaluate_script("document.getElementById('updateStatusText').textContent")
     assert_not_equal "準備中...", status_text
-  end
-
-  test "handles bootstrap unavailable gracefully" do
-    visit edit_post_path(@post)
-
-    # Bootstrapを一時的に無効化
-    page.execute_script("window.bootstrap = undefined")
-
-    # 初期化を実行
-    page.execute_script("initializeUpdateProgressModal()")
-
-    # エラーログが出力されることを確認
-    logs = page.driver.browser.logs.get(:browser)
-    error_logs = logs.select { |log| log.message.include?("Bootstrap is not loaded") }
-    
-    assert error_logs.any?, "Should log Bootstrap unavailable error"
   end
 
   test "form submission continues even when modal fails" do
