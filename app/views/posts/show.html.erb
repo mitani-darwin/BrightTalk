@@ -35,7 +35,7 @@
                   <%= link_to @post.user.name, user_path(@post.user),
                       class: "text-decoration-none" if @post.user %>
                 </h6>
-                <small class="text-muted">
+                <small class="text-muted text-sm leading-6">
                   <i class="fas fa-clock"></i> <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
                 </small>
               </div>
@@ -55,12 +55,12 @@
           </div>
 
           <!-- タイトル -->
-          <h1 class="h3 mb-3"><%= @post.title %></h1>
+          <h1 class="text-3xl leading-tight font-semibold tracking-tight text-slate-900 mb-3"><%= @post.title %></h1>
 
           <!-- 投稿タイプ表示 -->
           <% if @post.post_type.present? %>
             <div class="mb-3">
-              <span class="badge bg-info fs-6 px-3 py-2">
+              <span class="badge bg-info text-base leading-7 px-3 py-2">
                 <i class="fas fa-tag me-1"></i>
                 <%= case @post.post_type.name
                     when 'knowledge_sharing' then '知識共有'
@@ -85,25 +85,25 @@
 
               <% if @post.purpose.present? %>
                 <div class="mb-3">
-                  <h6 class="text-primary mb-2">
+              <h6 class="text-primary mb-2 text-base leading-7 font-semibold">
                     <i class="fas fa-bullseye me-1"></i>目的
                   </h6>
-                  <p class="text-muted mb-0"><%= @post.purpose %></p>
+                  <p class="text-muted mb-0 text-base leading-7"><%= @post.purpose %></p>
                 </div>
               <% end %>
 
               <% if @post.target_audience.present? %>
                 <div class="mb-3">
-                  <h6 class="text-success mb-2">
+              <h6 class="text-success mb-2 text-base leading-7 font-semibold">
                     <i class="fas fa-users me-1"></i>対象読者
                   </h6>
-                  <p class="text-muted mb-0"><%= @post.target_audience %></p>
+                  <p class="text-muted mb-0 text-base leading-7"><%= @post.target_audience %></p>
                 </div>
               <% end %>
 
               <% if @post.key_points.present? %>
                 <div class="mb-3">
-                  <h6 class="text-warning mb-2">
+                  <h6 class="text-warning mb-2 text-base leading-7 font-semibold">
                     <i class="fas fa-list-ul me-1"></i>要点・ポイント
                   </h6>
                   <div class="text-muted">
@@ -114,10 +114,10 @@
 
               <% if @post.expected_outcome.present? %>
                 <div class="mb-0">
-                  <h6 class="text-info mb-2">
+                  <h6 class="text-info mb-2 text-base leading-7 font-semibold">
                     <i class="fas fa-target me-1"></i>期待する成果
                   </h6>
-                  <p class="text-muted mb-0"><%= @post.expected_outcome %></p>
+                  <p class="text-muted mb-0 text-base leading-7"><%= @post.expected_outcome %></p>
                 </div>
               <% end %>
             </div>
@@ -138,7 +138,7 @@
           <!-- コンテンツ -->
           <div class="mb-4">
             <!-- 移行中ゾーン: 記事本文は既存HTMLを維持 -->
-            <div class="post-content" data-ui="legacy">
+            <div class="post-content text-base leading-7 text-slate-700" data-ui="legacy">
               <%= @post.content_as_html %>
             </div>
           </div>
