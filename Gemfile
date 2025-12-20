@@ -81,3 +81,4 @@ group :production do
 end
 
 gem "vite_rails", github: "ElMassimo/vite_ruby", branch: "main"
+gem "tailwindcss-rails"

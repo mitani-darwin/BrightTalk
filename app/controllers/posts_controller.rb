@@ -1,4 +1,5 @@
 class PostsController < ApplicationController
+  layout "tailwind", only: [:index]
   before_action :authenticate_user!, except: [ :index, :show, :user_posts ]
   before_action :set_post, only: [:show, :edit, :update, :destroy, :delete_image, :delete_video]
   before_action :set_post_for_auto_save, only: [:auto_save]

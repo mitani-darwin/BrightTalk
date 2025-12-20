@@ -34,19 +34,13 @@
 
 </head>
 
-<body>
-<div class="tw">
-  <%= render 'shared/navigation' %>
-</div>
+<body class="tw min-h-screen bg-slate-50 text-slate-900 antialiased flex flex-col">
+<%= render 'shared/navigation' %>
 
-<main>
-  <div class="tw">
-    <%= render 'shared/flash_messages' %>
-  </div>
+<main class="flex-1 w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
+  <%= render 'shared/flash_messages' %>
   <%= yield %>
 </main>
-<div class="tw">
-  <%= render 'shared/footer' %>
-</div>
+<%= render 'shared/footer' %>
 </body>
 </html>

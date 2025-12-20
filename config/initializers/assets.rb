@@ -12,6 +12,7 @@ Rails.application.config.assets.precompile = [
   "application.js",
   "application.css",
   "application.scss",
+  "tailwind.css",
 
   # ローカルのStimulusファイルのみ
   "stimulus-loading.js",

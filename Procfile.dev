@@ -1,2 +1,3 @@
 web: bin/rails server -p 3000
 vite: bin/vite dev --port 3036 --strictPort
+tailwind: bin/rails tailwindcss:watch
