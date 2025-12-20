@@ -1,0 +1,9 @@
+<div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+  <h2 class="text-lg font-semibold text-slate-900">記事がまだありません</h2>
+  <p class="mt-2 text-sm text-slate-600">最初の記事を投稿して、ブログを始めましょう。</p>
+  <% if user_signed_in? %>
+    <div class="mt-6">
+      <%= link_to "新規投稿", new_post_path, class: "inline-flex items-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2" %>
+    </div>
+  <% end %>
+</div>

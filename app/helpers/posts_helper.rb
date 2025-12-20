@@ -1,5 +1,70 @@
 module PostsHelper
   require "cgi"
+  def post_title(post)
+    post.title.presence || post.name.presence || "無題"
+  end
+
+  def post_date(post)
+    (post.respond_to?(:published_at) && post.published_at.present? ? post.published_at : nil) || post.created_at
+  end
+
+  def post_excerpt(post)
+    text = post.respond_to?(:excerpt) ? post.excerpt : nil
+    text = post.summary if text.blank? && post.respond_to?(:summary)
+    if text.blank?
+      body = post.respond_to?(:body) ? post.body : post.respond_to?(:content) ? post.content : nil
+      text = strip_tags(body.to_s)
+    end
+    text.present? ? truncate(text, length: 140) : nil
+  end
+
+  def post_thumbnail_url(post)
+    url = post.respond_to?(:thumbnail_url) ? post.thumbnail_url : nil
+    return url if url.present?
+
+    if post.respond_to?(:image)
+      image = post.image
+      if image.respond_to?(:attached?) && image.attached?
+        return url_for(image)
+      elsif image.present? && image.is_a?(String)
+        return image
+      end
+    end
+
+    if post.respond_to?(:images) && post.images.respond_to?(:attached?) && post.images.attached?
+      return url_for(post.images.first)
+    end
+
+    nil
+  end
+
+  if defined?(WillPaginate)
+    class TailwindPaginationRenderer < WillPaginate::ActionView::LinkRenderer
+      def container_attributes
+        { class: "inline-flex items-center gap-1 text-sm" }
+      end
+
+      def page_number(page)
+        if page == current_page
+          tag(:span, page, class: "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-brand-600 bg-brand-600 px-3 py-1.5 font-semibold text-white")
+        else
+          link(page, page, class: "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50")
+        end
+      end
+
+      def gap
+        tag(:span, @template.raw("&hellip;"), class: "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-slate-400")
+      end
+
+      def previous_or_next_page(page, text, classname)
+        if page
+          link(text, page, class: "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50")
+        else
+          tag(:span, text, class: "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-slate-300")
+        end
+      end
+    end
+  end
 
   # Convert Markdown content to HTML with support for images and videos
   def format_content_with_images(content, post = nil)

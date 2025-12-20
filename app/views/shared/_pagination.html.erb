@@ -1,0 +1,10 @@
+<% collection = local_assigns.fetch(:collection) %>
+
+<% if defined?(Kaminari) && collection.respond_to?(:current_page) %>
+  <%= paginate collection, theme: "tailwind" %>
+<% elsif defined?(WillPaginate) && collection.respond_to?(:current_page) %>
+  <%= will_paginate collection,
+                    renderer: PostsHelper::TailwindPaginationRenderer,
+                    previous_label: "前へ",
+                    next_label: "次へ" %>
+<% end %>
