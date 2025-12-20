@@ -1,14 +1,10 @@
-<% tailwind_asset_available = Rails.env.production? %>
-<% unless tailwind_asset_available %>
-  <% begin %>
-    <% tailwind_asset_available = Rails.application.assets&.find("tailwind.css").present? %>
-  <% rescue StandardError %>
-    <% tailwind_asset_available = false %>
-  <% end %>
-<% end %>
+<% tailwind_build_path = Rails.root.join("app/assets/builds/tailwind.css") %>
+<% tailwind_asset_available = tailwind_build_path.exist? %>
 
-<% if tailwind_asset_available %>
+<% if Rails.env.production? %>
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+<% elsif tailwind_asset_available %>
+  <style data-turbo-track="reload"><%= raw File.read(tailwind_build_path) %></style>
 <% else %>
   <!-- Tailwind CSS 4.1 (CDN fallback; run `bin/rails tailwindcss:build` to generate tailwind.css) -->
   <script nonce="<%= content_security_policy_nonce %>" src="https://cdn.tailwindcss.com?plugins=forms,typography&version=4.1.0"></script>
