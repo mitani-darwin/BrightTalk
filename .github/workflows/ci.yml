@@ -48,7 +48,7 @@ jobs:
         run: npm test
 
       - name: Check Bootstrap ban zones
-        run: scripts/check_bootstrap_ban_zones.sh
+        run: scripts/check_no_bootstrap_in_tw.sh
 
       - name: Run Rails tests (sequential execution for CI)
         env:

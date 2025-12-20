@@ -137,7 +137,8 @@
 
           <!-- コンテンツ -->
           <div class="mb-4">
-            <div class="post-content">
+            <!-- 移行中ゾーン: 記事本文は既存HTMLを維持 -->
+            <div class="post-content" data-ui="legacy">
               <%= @post.content_as_html %>
             </div>
           </div>

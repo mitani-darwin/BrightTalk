@@ -1,5 +1,6 @@
 class PostsController < ApplicationController
   layout "tailwind", only: [:index]
+  before_action :use_tailwind_view_path, only: [:index]
   before_action :authenticate_user!, except: [ :index, :show, :user_posts ]
   before_action :set_post, only: [:show, :edit, :update, :destroy, :delete_image, :delete_video]
   before_action :set_post_for_auto_save, only: [:auto_save]
@@ -908,7 +909,11 @@ class PostsController < ApplicationController
     end
   end
 
-    def avatar_url_for(user)
+  def use_tailwind_view_path
+    prepend_view_path Rails.root.join("app/views/tw")
+  end
+
+  def avatar_url_for(user)
     return unless user&.avatar&.attached?
     rails_blob_url(
       user.avatar,
