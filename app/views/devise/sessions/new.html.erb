@@ -7,6 +7,10 @@
         </h3>
       </div>
       <div class="card-body">
+        <div class="alert alert-info" role="note">
+          <strong>推奨：</strong>パスキーはフィッシング耐性が高く、パスワードより安全です。
+        </div>
+
         <!-- エラーメッセージの表示 -->
         <% if resource.errors.any? %>
           <div class="alert alert-danger" role="alert">
@@ -30,14 +34,36 @@
         </div>
         
         <!-- パスキー認証ボタン -->
-        <div class="d-grid gap-2 mb-4">
+        <div class="d-grid gap-2 mb-3">
           <button type="button" id="passkey-login-btn" class="btn btn-primary btn-lg">
-            <i class="fas fa-fingerprint me-2"></i>パスキーでログイン
+            <i class="fas fa-fingerprint me-2"></i>パスキーでログイン（推奨）
           </button>
         </div>
         
         <!-- ステータス表示 -->
         <div id="status-message" class="alert d-none" role="alert"></div>
+
+        <details class="mt-3">
+          <summary class="text-muted">その他の方法でログイン</summary>
+          <div class="mt-3">
+            <p class="small text-muted mb-3">
+              パスキーが利用できない場合はメールアドレスとパスワードでログインできます。
+            </p>
+            <%= form_with scope: resource_name, url: session_path(resource_name), local: true do |f| %>
+              <div class="mb-3">
+                <%= f.label :email, "メールアドレス", class: "form-label" %>
+                <%= f.email_field :email, class: "form-control", autocomplete: "email" %>
+              </div>
+              <div class="mb-3">
+                <%= f.label :password, "パスワード", class: "form-label" %>
+                <%= f.password_field :password, class: "form-control", autocomplete: "current-password" %>
+              </div>
+              <div class="d-grid">
+                <%= f.submit "メールとパスワードでログイン", class: "btn btn-outline-primary" %>
+              </div>
+            <% end %>
+          </div>
+        </details>
       </div>
     </div>
   </div>
