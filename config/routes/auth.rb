@@ -47,6 +47,6 @@ Rails.application.routes.draw do
   # POST /passkeys を受けるルート（エラー解消のため）
   # パスキー管理ルーティング
   devise_scope :user do
-    resources :passkeys, only: [ :index, :create, :destroy ], controller: "devise/passkeys"
+    resources :passkeys, only: [ :index, :new, :create, :destroy ], controller: "devise/passkeys"
   end
 end

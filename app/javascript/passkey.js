@@ -128,7 +128,7 @@ async function startPasskeyAuthentication(passkeyOptions) {
 }
 
 // Passkey登録用の関数
-function startPasskeyRegistration(passkeyOptions, label) {
+function startPasskeyRegistration(passkeyOptions, label, options = {}) {
     console.log('Passkey registration started');
 
     if (!navigator.credentials || !navigator.credentials.create) {
@@ -163,6 +163,8 @@ function startPasskeyRegistration(passkeyOptions, label) {
     console.log('Converted options:', convertedOptions);
     console.log('Starting Passkey registration...');
 
+    const verifyUrl = options.verifyUrl || '/passkey_registrations/verify_passkey';
+
     return navigator.credentials.create({
         publicKey: convertedOptions
     }).then(credential => {
@@ -184,7 +186,7 @@ function startPasskeyRegistration(passkeyOptions, label) {
         }
         const csrfToken = csrfTokenElement.getAttribute('content');
 
-        return fetch('/passkey_registrations/verify_passkey', {
+        return fetch(verifyUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
