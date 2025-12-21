@@ -1,54 +1,60 @@
-<!-- 要点・ポイント -->
-<div class="mb-3">
-  <%= form.label :key_points, "要点・ポイント", class: "form-label" %>
-  <%= form.text_area :key_points, class: "form-control", rows: 4,
-                     placeholder: "例：\n1. 環境構築の手順\n2. 基本的なコマンドの使い方\n3. よくあるエラーとその対処法" %>
-  <div class="form-text">読者に伝えたい主要なポイントを箇条書きで記入してください。</div>
-</div>
+<% input_base = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200" %>
+<% input_error = "border-rose-300 focus:border-rose-300 focus:ring-rose-200" %>
 
-<!-- タイトル -->
-<div class="mb-3">
-  <%= form.label :title, class: "form-label" do %>
-    タイトル
-    <span class="text-danger">*</span>
-    <small class="text-muted">(常に必須)</small>
-  <% end %>
-  <%= form.text_field :title, class: "form-control #{'is-invalid' if post.errors[:title].any?}", required: true, placeholder: "投稿タイトル" %>
-  <div class="invalid-feedback">
-    必須項目を入力または選択してください
+<div class="space-y-6 flex-1">
+  <div>
+    <%= form.label :key_points, "要点・ポイント", class: "text-sm font-medium text-slate-700" %>
+    <%= form.text_area :key_points,
+                       class: input_base,
+                       rows: 4,
+                       placeholder: "例：\n1. 環境構築の手順\n2. 基本的なコマンドの使い方\n3. よくあるエラーとその対処法" %>
+    <p id="post_key_points_help" class="mt-2 text-xs text-slate-500">読者に伝えたい主要なポイントを箇条書きで記入してください。</p>
+  </div>
+
+  <div>
+    <%= form.label :title, class: "text-sm font-medium text-slate-700" do %>
+      タイトル
+      <span class="text-rose-500">*</span>
+      <small class="text-slate-400">(常に必須)</small>
+    <% end %>
+    <%= form.text_field :title,
+                        class: "#{input_base} #{post.errors[:title].any? ? input_error : ''}",
+                        required: true,
+                        placeholder: "投稿タイトル" %>
+    <% if post.errors[:title].any? %>
+      <div class="mt-2 text-xs text-rose-500">必須項目を入力または選択してください</div>
+    <% end %>
+  </div>
+
+  <div class="flex-1 flex flex-col">
+    <%= form.label :content, class: "text-sm font-medium text-slate-700" do %>
+      内容
+      <span class="text-rose-500">*</span>
+      <small class="text-slate-400">(常に必須)</small>
+      <span class="mt-1 block text-xs text-slate-500">
+        <%= link_to markdown_guide_path,
+                    target: "_blank",
+                    class: "inline-flex items-center gap-1 text-slate-600 underline decoration-slate-200 underline-offset-4 hover:text-slate-900" do %>
+          <i class="fas fa-book"></i>Markdown記法ガイド（日本語）
+        <% end %>
+      </span>
+    <% end %>
+    <div data-controller="code-editor" class="mt-2 flex-1 flex flex-col">
+      <%= form.text_area :content,
+                         class: "#{input_base} flex-1 resize-none font-mono #{post.errors[:content].any? ? input_error : ''}",
+                         id: "contentTextarea",
+                         required: true,
+                         placeholder: "内容を入力してください",
+                         data: { code_editor_target: "textarea" } %>
+    </div>
   </div>
 </div>
 
-<!-- 内容 -->
-<div class="mb-3 flex-grow-1 d-flex flex-column">
-  <%= form.label :content, class: "form-label" do %>
-    内容
-    <span class="text-danger">*</span>
-    <small class="text-muted">(常に必須)</small>
-    <small class="text-muted d-block">
-      <%= link_to markdown_guide_path,
-                  target: "_blank",
-                  class: "text-decoration-none" do %>
-        <i class="fas fa-book me-1"></i>Markdown記法ガイド（日本語）
-      <% end %>
-    </small>
-  <% end %>
-  <div data-controller="code-editor" class="flex-grow-1 d-flex flex-column">
-    <%= form.text_area :content,
-                       class: "form-control flex-grow-1 #{'is-invalid' if post.errors[:content].any?} no-resize font-monospace",
-                       id: "contentTextarea",
-                       required: true,
-                       placeholder: "内容を入力してください",
-                       data: { code_editor_target: "textarea" } %>
-  </div>
-</div>
-<!-- 投稿ボタンとキャンセルボタン（CodeEditorの直下に配置） -->
-<div class="d-flex gap-2 post-form-buttons">
+<div class="post-form-buttons mt-6 flex flex-wrap gap-2">
   <%= form.submit "投稿",
-                  class: "btn btn-primary flex-fill",
+                  class: "inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
                   id: "updateSubmitBtn",
-                  data: {
-                    disable_with: "更新中..."
-                  } %>
-  <%= link_to "キャンセル", post.persisted? ? post : posts_path, class: "btn btn-outline-secondary flex-fill" %>
+                  data: { disable_with: "更新中..." } %>
+  <%= link_to "キャンセル", post.persisted? ? post : posts_path,
+              class: "inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" %>
 </div>

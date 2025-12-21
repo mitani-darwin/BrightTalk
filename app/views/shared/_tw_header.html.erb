@@ -21,6 +21,7 @@
      elsif respond_to?(:new_registration_path)
        new_registration_path
      end %>
+<% new_post_link = respond_to?(:new_post_path) ? new_post_path : nil %>
 
 <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur"
         data-controller="mobile-nav">
@@ -50,6 +51,11 @@
       <% end %>
 
       <% if user_signed_in? %>
+        <% if new_post_link %>
+          <%= link_to "新規投稿",
+                      new_post_link,
+                      class: "inline-flex h-10 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2" %>
+        <% end %>
         <details class="relative">
           <summary class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300">
             <i class="fas fa-user-circle text-base text-slate-500"></i>

@@ -1,5 +1,5 @@
 class PostsController < ApplicationController
-  layout "tailwind", only: [:index, :show]
+  layout "tailwind", only: [:index, :show, :new, :edit, :drafts]
   before_action :use_tailwind_view_path, only: [:index, :show]
   before_action :authenticate_user!, except: [ :index, :show, :user_posts ]
   before_action :set_post, only: [:show, :edit, :update, :destroy, :delete_image, :delete_video]

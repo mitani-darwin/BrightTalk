@@ -1,15 +1,11 @@
-<!-- 送信ボタンエリア -->
-<div class="row mt-4">
-  <div class="col-12 d-flex justify-content-between align-items-center">
-    <div class="d-flex gap-2">
-      <%= form.submit "投稿", class: "btn btn-primary", data: { disable_with: "投稿中..." } %>
-      <%= link_to "キャンセル", post.persisted? ? post : posts_path, class: "btn btn-outline-secondary" %>
-    </div>
-    
-    <!-- 自動保存インジケーター -->
-    <div id="autoSaveIndicator" class="text-muted d-none">
-      <i class="fas fa-save me-1"></i>
-      <span id="autoSaveText">自動保存中...</span>
-    </div>
+<div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+  <div class="flex flex-wrap gap-2">
+    <%= form.submit "投稿", class: "inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800", data: { disable_with: "投稿中..." } %>
+    <%= link_to "キャンセル", post.persisted? ? post : posts_path, class: "inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" %>
+  </div>
+
+  <div id="autoSaveIndicator" class="hidden items-center gap-2 text-xs text-slate-500">
+    <i class="fas fa-save"></i>
+    <span id="autoSaveText">自動保存中...</span>
   </div>
 </div>

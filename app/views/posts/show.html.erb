@@ -1,500 +1,390 @@
-
 <% content_for :title, page_title(@post.title) %>
 <%= render_meta_tags(meta_tags_for_post(@post)) %>
 
-<div class="container my-4">
-  <div class="row">
-    <div class="col-lg-12 mx-auto">
-      <!-- 投稿カード -->
-      <div class="card shadow-sm">
-        <!-- 投稿者のヘッダー画像 -->
-        <% if @post.user&.header_image_or_default %>
-          <div class="card-header p-0 user-header-image-container">
-            <%= image_tag @post.user.header_image_or_default, 
-                class: "w-100 h-100 object-cover" %>
-          </div>
-        <% end %>
-        <div class="card-body">
-          <!-- ヘッダー情報 -->
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center">
-              <div class="avatar me-3">
-                <% if @post.user.present? %>
-                  <% if @post.user.avatar_or_default %>
-                    <%= image_tag @post.user.avatar_or_default,
-                        class: "rounded-circle avatar-50 object-cover" %>
-                  <% else %>
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center avatar-50">
-                      <i class="fas fa-user"></i>
-                    </div>
-                  <% end %>
-                <% end %>
-              </div>
-              <div>
-                <h6 class="mb-0">
-                  <%= link_to @post.user.name, user_path(@post.user),
-                      class: "text-decoration-none" if @post.user %>
-                </h6>
-                <small class="text-muted text-sm leading-6">
-                  <i class="fas fa-clock"></i> <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
-                </small>
-              </div>
-            </div>
-
-            <!-- カテゴリーバッジ -->
-            <% if @post.category.present? %>
-              <%= link_to posts_path(category_id: @post.category.id),
-                          class: "badge bg-primary text-decoration-none" do %>
-                <i class="fas fa-tag"></i> <%= @post.category.full_name %>
-              <% end %>
-            <% else %>
-              <span class="badge bg-secondary text-decoration-none">
-                <i class="fas fa-tag"></i> 未分類
-              </span>
-            <% end %>
-          </div>
-
-          <!-- タイトル -->
-          <h1 class="text-3xl leading-tight font-semibold tracking-tight text-slate-900 mb-3"><%= @post.title %></h1>
-
-          <!-- 投稿タイプ表示 -->
-          <% if @post.post_type.present? %>
-            <div class="mb-3">
-              <span class="badge bg-info text-base leading-7 px-3 py-2">
-                <i class="fas fa-tag me-1"></i>
-                <%= case @post.post_type.name
-                    when 'knowledge_sharing' then '知識共有'
-                    when 'question' then '質問・相談'
-                    when 'discussion' then '議論・討論'
-                    when 'tutorial' then 'チュートリアル・手順'
-                    when 'experience_sharing' then '体験談・事例'
-                    when 'news_update' then 'ニュース・更新情報'
-                    when 'opinion' then '意見・考察'
-                    else @post.post_type.name
-                    end %>
-              </span>
-            </div>
-          <% end %>
-
-          <!-- 構造化情報 -->
-          <% if @post.purpose.present? || @post.target_audience.present? || @post.key_points.present? || @post.expected_outcome.present? %>
-            <div class="structured-info-section mb-4 p-4 bg-light rounded">
-              <h5 class="text-primary mb-3">
-                <i class="fas fa-info-circle me-2"></i>投稿情報
-              </h5>
-
-              <% if @post.purpose.present? %>
-                <div class="mb-3">
-              <h6 class="text-primary mb-2 text-base leading-7 font-semibold">
-                    <i class="fas fa-bullseye me-1"></i>目的
-                  </h6>
-                  <p class="text-muted mb-0 text-base leading-7"><%= @post.purpose %></p>
-                </div>
-              <% end %>
-
-              <% if @post.target_audience.present? %>
-                <div class="mb-3">
-              <h6 class="text-success mb-2 text-base leading-7 font-semibold">
-                    <i class="fas fa-users me-1"></i>対象読者
-                  </h6>
-                  <p class="text-muted mb-0 text-base leading-7"><%= @post.target_audience %></p>
-                </div>
-              <% end %>
-
-              <% if @post.key_points.present? %>
-                <div class="mb-3">
-                  <h6 class="text-warning mb-2 text-base leading-7 font-semibold">
-                    <i class="fas fa-list-ul me-1"></i>要点・ポイント
-                  </h6>
-                  <div class="text-muted">
-                    <%= simple_format(@post.key_points) %>
-                  </div>
-                </div>
-              <% end %>
-
-              <% if @post.expected_outcome.present? %>
-                <div class="mb-0">
-                  <h6 class="text-info mb-2 text-base leading-7 font-semibold">
-                    <i class="fas fa-target me-1"></i>期待する成果
-                  </h6>
-                  <p class="text-muted mb-0 text-base leading-7"><%= @post.expected_outcome %></p>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-
-          <!-- タグ表示 -->
-          <% if @post.tags.any? %>
-            <div class="mb-3">
-              <% @post.tags.each do |tag| %>
-                <%= link_to posts_path(tag: tag.name),
-                            class: "badge bg-secondary text-decoration-none me-1" do %>
-                  #<%= tag.name %>
-                <% end %>
-              <% end %>
-            </div>
-          <% end %>
-
-          <!-- コンテンツ -->
-          <div class="mb-4">
-            <!-- 移行中ゾーン: 記事本文は既存HTMLを維持 -->
-            <div class="post-content text-base leading-7 text-slate-700" data-ui="legacy">
-              <%= @post.content_as_html %>
-            </div>
-          </div>
-
-          <!-- いいねとコメント数 -->
-          <div class="d-flex justify-content-between align-items-center border-top pt-3">
-            <div class="d-flex align-items-center gap-3">
-              <%= render 'likes/like_button', post: @post %>
-              <%= render 'bookmarks/bookmark_button', post: @post %>
-              <div class="d-flex align-items-center text-muted">
-                <i class="bi bi-chat-left me-1 fs-1-1rem"></i>
-                <span><%= @post.comments.count %> コメント</span>
-              </div>
-            </div>
-
-            <!-- アクションボタン -->
-            <% if current_user == @post.user %>
-              <div class="btn-group" role="group">
-                <%= link_to edit_post_path(@post), class: "btn btn-outline-secondary btn-sm" do %>
-                  <i class="fas fa-edit"></i> 編集
-                <% end %>
-
-                <%= link_to @post, method: :delete,
-                            data: {
-                              confirm: "本当に削除しますか？",
-                              turbo_method: :delete
-                            },
-                            class: "btn btn-outline-danger btn-sm" do %>
-                  <i class="fas fa-trash"></i> 削除
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        </div>
+<section class="mx-auto w-full max-w-screen-xl px-4 py-8 sm:px-6 lg:px-10">
+  <article class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <% if @post.user&.header_image_or_default %>
+      <div class="h-40 overflow-hidden rounded-t-2xl sm:h-56">
+        <%= image_tag @post.user.header_image_or_default, class: "h-full w-full object-cover" %>
       </div>
+    <% end %>
 
-      <!-- 同じ投稿者の前・次の投稿ナビゲーション -->
-      <% if @previous_post || @next_post %>
-        <div class="card mt-4 shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="flex-grow-1">
-                <% if @previous_post %>
-                  <%= link_to post_path(@previous_post), class: "btn btn-outline-primary btn-sm d-flex align-items-center" do %>
-                    <i class="fas fa-chevron-left me-2"></i>
-                    <div class="text-start">
-                      <div class="fw-bold">前の投稿</div>
-                      <div class="text-truncate small max-w-200"><%= @previous_post.title %></div>
-                    </div>
-                  <% end %>
-                <% end %>
-              </div>
-              
-              <div class="text-center mx-3">
-                <small class="text-muted">
-                  <i class="fas fa-user me-1"></i>
-                  <%= @post.user.name %>さんの他の投稿
-                </small>
-              </div>
-              
-              <div class="flex-grow-1 text-end">
-                <% if @next_post %>
-                  <%= link_to post_path(@next_post), class: "btn btn-outline-primary btn-sm d-flex align-items-center justify-content-end" do %>
-                    <div class="text-end">
-                      <div class="fw-bold">次の投稿</div>
-                      <div class="text-truncate small max-w-200"><%= @next_post.title %></div>
-                    </div>
-                    <i class="fas fa-chevron-right ms-2"></i>
-                  <% end %>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-      <% end %>
-
-      <!-- コメントセクション -->
-      <div class="card mt-4 shadow-sm">
-        <div class="card-header">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-comments"></i> コメント (<%= @post.comments.count %>)
-          </h5>
-        </div>
-        <div class="card-body">
-          <!-- コメント投稿フォーム -->
-          <% if user_signed_in? %>
-            <% if ios_app_request? %>
-              <%= form_with model: [@post, @comment], local: true, class: "mb-4" do |form| %>
-                <div class="mb-3">
-                  <%= form.text_area :content,
-                                     class: "form-control",
-                                     rows: 3,
-                                     placeholder: "コメントを入力してください..." %>
-                </div>
-                <div class="row g-2 mb-3">
-                  <div class="col-6">
-                    <div class="form-check">
-                      <%= form.check_box :paid, class: "form-check-input", id: "comment_paid" %>
-                      <label class="form-check-label" for="comment_paid">有料掲載（上位表示）</label>
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <%= form.number_field :points, class: "form-control", min: 0, placeholder: "ポイント加算" %>
-                  </div>
-                </div>
-                <div class="row g-2 mb-3">
-                  <div class="col-6">
-                    <%= form.number_field :latitude, step: 0.000001, class: "form-control", placeholder: "緯度(任意)" %>
-                  </div>
-                  <div class="col-6">
-                    <%= form.number_field :longitude, step: 0.000001, class: "form-control", placeholder: "経度(任意)" %>
-                  </div>
-                </div>
-                <div class="d-grid">
-                  <%= form.submit "コメントを投稿", class: "btn btn-primary" %>
-                </div>
-              <% end %>
+    <div class="px-6 py-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <% if @post.user.present? %>
+            <% if @post.user.avatar_or_default %>
+              <%= image_tag @post.user.avatar_or_default, class: "h-12 w-12 rounded-full object-cover" %>
             <% else %>
-              <div class="alert alert-warning">
-                <i class="fas fa-mobile-alt me-2"></i>
-                コメント機能はiOSアプリからのみ利用できます。(作成中)
-                <br>
-                <small class="text-muted">iOSアプリをダウンロードしてコメントを投稿してください。</small>
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                <i class="fas fa-user"></i>
               </div>
             <% end %>
-          <% else %>
-            <div class="alert alert-info">
-              コメントを投稿するには<%= link_to "ログイン", new_user_session_path %>が必要です。
-            </div>
           <% end %>
-
-          <!-- コメント一覧 -->
-          <% if @post.comments.any? %>
-            <div class="border-top pt-3">
-              <% @post.comments.includes(:user).merge(Comment.ordered_for_display).each do |comment| %>
-                <div class="d-flex mb-3">
-                  <div class="avatar me-3">
-                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center avatar-40">
-                      <span><%= comment.user&.name&.first || "?" %></span>
-                    </div>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="bg-light rounded p-3">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <strong>
-                          <%= comment.user&.name || "匿名ユーザー" %>
-                          <% if comment.paid %>
-                            <span class="badge bg-warning text-dark ms-2">PR</span>
-                          <% end %>
-                        </strong>
-                        <div class="d-flex align-items-center gap-2">
-                          <small class="text-muted">
-                            <%= time_ago_in_words(comment.created_at) %>前
-                          </small>
-                          <span class="badge bg-secondary">PT <%= comment.points || 0 %></span>
-                          <% if user_signed_in? && comment.user == current_user && ios_app_request? %>
-                            <%= link_to post_comment_path(@post, comment), 
-                                        method: :delete,
-                                        data: { 
-                                          confirm: "コメントを削除しますか？",
-                                          turbo_method: :delete
-                                        },
-                                        class: "btn btn-sm btn-outline-danger" do %>
-                              <i class="fas fa-trash"></i>
-                            <% end %>
-                          <% end %>
-                        </div>
-                      </div>
-                      <p class="mb-0"><%= simple_format(h(comment.content)) %></p>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-          <% else %>
-            <div class="text-center text-muted py-4">
-              <i class="fas fa-comment-slash fa-2x mb-2"></i>
-              <p>まだコメントがありません。最初のコメントを投稿しませんか？</p>
-            </div>
-          <% end %>
-        </div>
-      </div>
-
-      <!-- 関連記事セクション -->
-      <% if @related_posts.any? %>
-        <div class="card mt-4 shadow-sm">
-          <div class="card-header">
-            <h5 class="card-title mb-0">
-              <i class="fas fa-lightbulb"></i> 関連記事
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <% @related_posts.each do |related_post| %>
-                <div class="col-md-6 col-lg-4 mb-3">
-                  <%= link_to post_path(related_post), class: "text-decoration-none" do %>
-                    <div class="card h-100 border-0 shadow-sm hover-shadow">
-                      <div class="card-body">
-                        <h6 class="card-title text-dark mb-2 text-truncate-2-lines">
-                          <%= related_post.title %>
-                        </h6>
-                        <div class="d-flex align-items-center mb-2">
-                          <div class="avatar me-2 avatar-24">
-                            <% if related_post.user&.avatar_or_default %>
-                              <%= image_tag related_post.user.avatar_or_default, 
-                                  class: "rounded-circle w-100 h-100 object-cover" %>
-                            <% else %>
-                              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center h-100">
-                                <i class="fas fa-user fs-10px"></i>
-                              </div>
-                            <% end %>
-                          </div>
-                          <small class="text-muted">
-                            <%= related_post.user&.name || "匿名ユーザー" %>
-                          </small>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                          <% if related_post.category %>
-                            <span class="badge bg-primary text-white small">
-                              <%= related_post.category.name %>
-                            </span>
-                          <% end %>
-                          <small class="text-muted">
-                            <%= time_ago_in_words(related_post.created_at) %>前
-                          </small>
-                        </div>
-                        <% if related_post.tags.any? %>
-                          <div class="mt-2">
-                            <% related_post.tags.limit(3).each do |tag| %>
-                              <span class="badge bg-secondary text-white me-1 small">
-                                #<%= tag.name %>
-                              </span>
-                            <% end %>
-                          </div>
-                        <% end %>
-                      </div>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      <% end %>
-
-      <!-- 同じ投稿者の前/次の投稿ナビゲーション -->
-      <% prev_post = @post.previous_post_by_author %>
-      <% next_post = @post.next_post_by_author %>
-      <% if prev_post || next_post %>
-        <div class="card mt-4 shadow-sm">
-          <div class="card-header">
-            <h6 class="mb-0">
-              <i class="fas fa-user"></i> <%= @post.user.name %>さんの他の投稿
+          <div>
+            <h6 class="text-sm font-semibold text-slate-900">
+              <%= link_to @post.user.name, user_path(@post.user), class: "hover:text-slate-700" if @post.user %>
             </h6>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <% if prev_post %>
-                  <%= link_to post_path(prev_post), class: "text-decoration-none" do %>
-                    <div class="d-flex align-items-center p-2 rounded border hover-bg-light">
-                      <div class="me-3">
-                        <i class="fas fa-chevron-left text-primary"></i>
-                      </div>
-                      <div class="flex-grow-1">
-                        <small class="text-muted">前の投稿</small>
-                        <div class="fw-bold text-truncate max-w-200">
-                          <%= prev_post.title %>
-                        </div>
-                        <small class="text-muted">
-                          <%= prev_post.created_at.strftime("%Y年%m月%d日") %>
-                        </small>
-                      </div>
-                    </div>
-                  <% end %>
-                <% else %>
-                  <div class="text-muted text-center p-3">
-                    <i class="fas fa-chevron-left"></i>
-                    前の投稿はありません
-                  </div>
-                <% end %>
-              </div>
-              <div class="col-md-6">
-                <% if next_post %>
-                  <%= link_to post_path(next_post), class: "text-decoration-none" do %>
-                    <div class="d-flex align-items-center p-2 rounded border hover-bg-light">
-                      <div class="flex-grow-1 text-end">
-                        <small class="text-muted">次の投稿</small>
-                        <div class="fw-bold text-truncate max-w-200">
-                          <%= next_post.title %>
-                        </div>
-                        <small class="text-muted">
-                          <%= next_post.created_at.strftime("%Y年%m月%d日") %>
-                        </small>
-                      </div>
-                      <div class="ms-3">
-                        <i class="fas fa-chevron-right text-primary"></i>
-                      </div>
-                    </div>
-                  <% end %>
-                <% else %>
-                  <div class="text-muted text-center p-3">
-                    次の投稿はありません
-                    <i class="fas fa-chevron-right"></i>
-                  </div>
-                <% end %>
-              </div>
+            <div class="text-xs text-slate-500">
+              <i class="fas fa-clock mr-1"></i><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
             </div>
+          </div>
+        </div>
+
+        <% if @post.category.present? %>
+          <%= link_to posts_path(category_id: @post.category.id),
+                      class: "inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white" do %>
+            <i class="fas fa-tag mr-1"></i><%= @post.category.full_name %>
+          <% end %>
+        <% else %>
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <i class="fas fa-tag mr-1"></i>未分類
+          </span>
+        <% end %>
+      </div>
+
+      <h1 class="mt-5 text-2xl font-semibold leading-tight text-slate-900 sm:text-3xl"><%= @post.title %></h1>
+
+      <% if @post.post_type.present? %>
+        <div class="mt-3">
+          <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <i class="fas fa-tag mr-1"></i>
+            <%= case @post.post_type.name
+                when 'knowledge_sharing' then '知識共有'
+                when 'question' then '質問・相談'
+                when 'discussion' then '議論・討論'
+                when 'tutorial' then 'チュートリアル・手順'
+                when 'experience_sharing' then '体験談・事例'
+                when 'news_update' then 'ニュース・更新情報'
+                when 'opinion' then '意見・考察'
+                else @post.post_type.name
+                end %>
+          </span>
+        </div>
+      <% end %>
+
+      <% if @post.purpose.present? || @post.target_audience.present? || @post.key_points.present? || @post.expected_outcome.present? %>
+        <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+          <h2 class="text-sm font-semibold text-slate-700">
+            <i class="fas fa-info-circle mr-2 text-slate-400"></i>投稿情報
+          </h2>
+          <div class="mt-4 space-y-3 text-sm text-slate-600">
+            <% if @post.purpose.present? %>
+              <div>
+                <div class="font-semibold text-slate-700"><i class="fas fa-bullseye mr-1 text-slate-400"></i>目的</div>
+                <p class="mt-1"><%= @post.purpose %></p>
+              </div>
+            <% end %>
+            <% if @post.target_audience.present? %>
+              <div>
+                <div class="font-semibold text-slate-700"><i class="fas fa-users mr-1 text-slate-400"></i>対象読者</div>
+                <p class="mt-1"><%= @post.target_audience %></p>
+              </div>
+            <% end %>
+            <% if @post.key_points.present? %>
+              <div>
+                <div class="font-semibold text-slate-700"><i class="fas fa-list-ul mr-1 text-slate-400"></i>要点・ポイント</div>
+                <div class="mt-1"><%= simple_format(@post.key_points) %></div>
+              </div>
+            <% end %>
+            <% if @post.expected_outcome.present? %>
+              <div>
+                <div class="font-semibold text-slate-700"><i class="fas fa-target mr-1 text-slate-400"></i>期待する成果</div>
+                <p class="mt-1"><%= @post.expected_outcome %></p>
+              </div>
+            <% end %>
           </div>
         </div>
       <% end %>
 
-      <!-- 戻るボタン -->
-      <div class="mt-4">
-        <%= link_to posts_path, class: "btn btn-outline-secondary" do %>
-          <i class="fas fa-arrow-left"></i> 投稿一覧に戻る
+      <% if @post.tags.any? %>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <% @post.tags.each do |tag| %>
+            <%= link_to posts_path(tag: tag.name), class: "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200" do %>
+              #<%= tag.name %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="mt-6">
+        <div class="post-content text-base leading-7 text-slate-700" data-ui="legacy">
+          <%= @post.content_as_html %>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <%= render 'likes/like_button', post: @post %>
+          <%= render 'bookmarks/bookmark_button', post: @post %>
+          <div class="inline-flex items-center gap-1 text-sm text-slate-500">
+            <i class="bi bi-chat-left"></i>
+            <span><%= @post.comments.count %> コメント</span>
+          </div>
+        </div>
+
+        <% if current_user == @post.user %>
+          <div class="flex flex-wrap gap-2">
+            <%= link_to edit_post_path(@post), class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+              <i class="fas fa-edit mr-1"></i>編集
+            <% end %>
+            <%= link_to @post,
+                        method: :delete,
+                        data: { confirm: "本当に削除しますか？", turbo_method: :delete },
+                        class: "inline-flex items-center rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50" do %>
+              <i class="fas fa-trash mr-1"></i>削除
+            <% end %>
+          </div>
         <% end %>
       </div>
     </div>
-  </div>
-</div>
+  </article>
 
-<!-- 画像拡大表示用モーダル -->
-<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="imageModalLabel">画像</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img id="modalImage" src="" alt="" class="img-fluid img-max-h-80vh">
+  <% if @previous_post || @next_post %>
+    <div class="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4 text-sm">
+        <div class="flex-1">
+          <% if @previous_post %>
+            <%= link_to post_path(@previous_post), class: "flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+              <i class="fas fa-chevron-left"></i>
+              <div>
+                <div class="text-xs text-slate-500">前の投稿</div>
+                <div class="font-semibold"><%= @previous_post.title %></div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="text-xs text-slate-400">
+          <i class="fas fa-user mr-1"></i><%= @post.user.name %>さんの他の投稿
+        </div>
+
+        <div class="flex-1 text-right">
+          <% if @next_post %>
+            <%= link_to post_path(@next_post), class: "ml-auto inline-flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">次の投稿</div>
+                <div class="font-semibold"><%= @next_post.title %></div>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+            <% end %>
+          <% end %>
+        </div>
       </div>
     </div>
+  <% end %>
+
+  <section class="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-6 py-4">
+      <h2 class="text-base font-semibold text-slate-900">
+        <i class="fas fa-comments mr-2 text-slate-400"></i>コメント (<%= @post.comments.count %>)
+      </h2>
+    </div>
+    <div class="px-6 py-6">
+      <% if user_signed_in? %>
+        <% if ios_app_request? %>
+          <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |form| %>
+            <div>
+              <%= form.text_area :content,
+                                 class: "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200",
+                                 rows: 3,
+                                 placeholder: "コメントを入力してください..." %>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label class="flex items-center gap-2 text-sm text-slate-600">
+                <%= form.check_box :paid, class: "h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-300", id: "comment_paid" %>
+                有料掲載（上位表示）
+              </label>
+              <%= form.number_field :points, class: "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", min: 0, placeholder: "ポイント加算" %>
+              <%= form.number_field :latitude, step: 0.000001, class: "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", placeholder: "緯度(任意)" %>
+              <%= form.number_field :longitude, step: 0.000001, class: "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", placeholder: "経度(任意)" %>
+            </div>
+            <div>
+              <%= form.submit "コメントを投稿", class: "inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800" %>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <i class="fas fa-mobile-alt mr-2"></i>
+            コメント機能はiOSアプリからのみ利用できます。(作成中)
+            <div class="mt-1 text-xs text-amber-600">iOSアプリをダウンロードしてコメントを投稿してください。</div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          コメントを投稿するには<%= link_to "ログイン", new_user_session_path, class: "font-semibold text-slate-700 hover:text-slate-900" %>が必要です。
+        </div>
+      <% end %>
+
+      <% if @post.comments.any? %>
+        <div class="mt-6 space-y-4 border-t border-slate-200 pt-6">
+          <% @post.comments.includes(:user).merge(Comment.ordered_for_display).each do |comment| %>
+            <div class="flex gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500">
+                <%= comment.user&.name&.first || "?" %>
+              </div>
+              <div class="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="text-sm font-semibold text-slate-700">
+                    <%= comment.user&.name || "匿名ユーザー" %>
+                    <% if comment.paid %>
+                      <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">PR</span>
+                    <% end %>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-slate-500">
+                    <span><%= time_ago_in_words(comment.created_at) %>前</span>
+                    <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs">PT <%= comment.points || 0 %></span>
+                    <% if user_signed_in? && comment.user == current_user && ios_app_request? %>
+                      <%= link_to post_comment_path(@post, comment),
+                                  method: :delete,
+                                  data: { confirm: "コメントを削除しますか？", turbo_method: :delete },
+                                  class: "inline-flex items-center rounded-full border border-rose-200 px-2 py-0.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50" do %>
+                        <i class="fas fa-trash"></i>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="mt-2 text-sm text-slate-700"><%= simple_format(h(comment.content)) %></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+          <i class="fas fa-comment-slash text-2xl"></i>
+          <p class="mt-2">まだコメントがありません。最初のコメントを投稿しませんか？</p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <% if @related_posts.any? %>
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-6 py-4">
+        <h2 class="text-base font-semibold text-slate-900"><i class="fas fa-lightbulb mr-2 text-slate-400"></i>関連記事</h2>
+      </div>
+      <div class="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
+        <% @related_posts.each do |related_post| %>
+          <%= link_to post_path(related_post), class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300" do %>
+            <h3 class="text-sm font-semibold text-slate-900 line-clamp-2"><%= related_post.title %></h3>
+            <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
+              <div class="h-6 w-6 overflow-hidden rounded-full bg-slate-100">
+                <% if related_post.user&.avatar_or_default %>
+                  <%= image_tag related_post.user.avatar_or_default, class: "h-full w-full object-cover" %>
+                <% else %>
+                  <div class="flex h-full w-full items-center justify-center text-slate-400">
+                    <i class="fas fa-user text-xs"></i>
+                  </div>
+                <% end %>
+              </div>
+              <span><%= related_post.user&.name || "匿名ユーザー" %></span>
+            </div>
+            <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+              <% if related_post.category %>
+                <span class="rounded-full bg-slate-100 px-2 py-0.5"><%= related_post.category.name %></span>
+              <% end %>
+              <span><%= time_ago_in_words(related_post.created_at) %>前</span>
+            </div>
+            <% if related_post.tags.any? %>
+              <div class="mt-2 flex flex-wrap gap-1">
+                <% related_post.tags.limit(3).each do |tag| %>
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">#<%= tag.name %></span>
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% prev_post = @post.previous_post_by_author %>
+  <% next_post = @post.next_post_by_author %>
+  <% if prev_post || next_post %>
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
+      <h2 class="text-sm font-semibold text-slate-700"><i class="fas fa-user mr-2"></i><%= @post.user.name %>さんの他の投稿</h2>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <% if prev_post %>
+          <%= link_to post_path(prev_post), class: "flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+            <i class="fas fa-chevron-left text-slate-400"></i>
+            <div>
+              <div class="text-xs text-slate-500">前の投稿</div>
+              <div class="font-semibold line-clamp-1"><%= prev_post.title %></div>
+              <div class="text-xs text-slate-400"><%= prev_post.created_at.strftime("%Y年%m月%d日") %></div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">前の投稿はありません</div>
+        <% end %>
+
+        <% if next_post %>
+          <%= link_to post_path(next_post), class: "flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+            <div class="text-right">
+              <div class="text-xs text-slate-500">次の投稿</div>
+              <div class="font-semibold line-clamp-1"><%= next_post.title %></div>
+              <div class="text-xs text-slate-400"><%= next_post.created_at.strftime("%Y年%m月%d日") %></div>
+            </div>
+            <i class="fas fa-chevron-right text-slate-400"></i>
+          <% end %>
+        <% else %>
+          <div class="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400 text-right">次の投稿はありません</div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <div class="mt-6">
+    <%= link_to posts_path, class: "inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+      <i class="fas fa-arrow-left mr-2"></i>投稿一覧に戻る
+    <% end %>
+  </div>
+</section>
+
+<div id="imageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 px-4">
+  <div class="relative w-full max-w-4xl rounded-2xl bg-white p-4 shadow-xl">
+    <button type="button" id="imageModalClose" class="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-slate-500 transition hover:text-slate-700" aria-label="閉じる">
+      <i class="fas fa-times"></i>
+    </button>
+    <img id="modalImage" src="" alt="" class="mx-auto max-h-[70vh] w-auto rounded-xl object-contain">
+    <div id="modalCaption" class="mt-3 text-center text-sm text-slate-500"></div>
   </div>
 </div>
 
 <script nonce="<%= content_security_policy_nonce %>">
-document.addEventListener('DOMContentLoaded', function() {
-  // 画像モーダルの初期化
-  const imageModal = document.getElementById('imageModal');
-  const modalImage = document.getElementById('modalImage');
-  const modalTitle = document.getElementById('imageModalLabel');
-  
-  if (imageModal) {
-    imageModal.addEventListener('show.bs.modal', function (event) {
-      // クリックされた画像から情報を取得
-      const clickedImage = event.relatedTarget;
-      const imageSrc = clickedImage.getAttribute('data-image-src') || clickedImage.src;
-      const imageAlt = clickedImage.getAttribute('data-image-alt') || clickedImage.alt || '画像';
-      
-      // モーダル内の画像を更新
-      modalImage.src = imageSrc;
-      modalImage.alt = imageAlt;
-      modalTitle.textContent = imageAlt || '画像';
+  document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalCaption = document.getElementById('modalCaption');
+    const closeBtn = document.getElementById('imageModalClose');
+    const postContent = document.querySelector('.post-content');
+
+    if (!modal || !postContent) return;
+
+    postContent.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+
+      const src = target.getAttribute('data-image-src') || target.src;
+      const alt = target.getAttribute('data-image-alt') || target.alt || '画像';
+
+      modalImage.src = src;
+      modalImage.alt = alt;
+      modalCaption.textContent = alt;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
     });
-  }
-});
+
+    const closeModal = () => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      modalImage.src = '';
+      document.body.classList.remove('overflow-hidden');
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+  });
 </script>

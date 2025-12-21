@@ -20,6 +20,19 @@
         <%= link_to category.full_name, posts_path(category_id: category.id), class: "inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200" %>
       <% end %>
     </div>
+    <% if current_user == @post.user %>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to edit_post_path(@post), class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+          <i class="fas fa-edit mr-1"></i>編集
+        <% end %>
+        <%= link_to @post,
+                    method: :delete,
+                    data: { confirm: "本当に削除しますか？", turbo_method: :delete },
+                    class: "inline-flex items-center rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50" do %>
+          <i class="fas fa-trash mr-1"></i>削除
+        <% end %>
+      </div>
+    <% end %>
     <% if tags.present? %>
       <div class="flex flex-wrap gap-2">
         <% tags.limit(5).each do |tag| %>
@@ -39,6 +52,20 @@
           <p>本文がありません。</p>
         <% end %>
       </article>
+
+      <% if current_user == @post.user %>
+        <div class="flex flex-wrap gap-2">
+          <%= link_to edit_post_path(@post), class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+            <i class="fas fa-edit mr-1"></i>編集
+          <% end %>
+          <%= link_to @post,
+                      method: :delete,
+                      data: { confirm: "本当に削除しますか？", turbo_method: :delete },
+                      class: "inline-flex items-center rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50" do %>
+            <i class="fas fa-trash mr-1"></i>削除
+          <% end %>
+        </div>
+      <% end %>
 
       <section class="flex flex-wrap items-center gap-4 text-sm text-slate-600">
         <%= render "likes/like_button", post: @post %>
