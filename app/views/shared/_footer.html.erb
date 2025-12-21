@@ -1,17 +1,24 @@
-<footer class="mt-auto bg-slate-900 text-white">
+<% terms_link = respond_to?(:terms_of_service_path) ? terms_of_service_path : nil %>
+<% privacy_link = respond_to?(:privacy_policy_path) ? privacy_policy_path : nil %>
+
+<footer class="mt-auto border-t border-slate-200 bg-white">
   <div class="mx-auto flex max-w-screen-xl flex-col gap-4 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10">
     <div>
-      <h3 class="text-lg font-semibold tracking-tight">BrightTalk</h3>
-      <p class="mt-1 text-sm leading-6 text-slate-200">コミュニティ投稿プラットフォーム</p>
+      <h3 class="text-lg font-semibold tracking-tight text-slate-900">BrightTalk</h3>
+      <p class="mt-1 text-sm leading-6 text-slate-500">コミュニティ投稿プラットフォーム</p>
     </div>
-    <div class="text-sm leading-6 text-slate-300">
-      <p class="font-semibold">&copy; 2025 BrightTalk. All rights reserved.</p>
+    <div class="text-sm leading-6 text-slate-500">
+      <p class="font-semibold text-slate-600">&copy; 2025 BrightTalk. All rights reserved.</p>
       <div class="mt-1 flex flex-wrap items-center gap-2 text-slate-400">
         <span>Powered by Ruby on Rails</span>
-        <span class="text-slate-600">|</span>
-        <%= link_to "利用規約", terms_of_service_path, class: "text-slate-200 underline decoration-white/30 underline-offset-4 transition hover:text-white" %>
-        <span class="text-slate-600">|</span>
-        <%= link_to "プライバシーポリシー", privacy_policy_path, class: "text-slate-200 underline decoration-white/30 underline-offset-4 transition hover:text-white" %>
+        <% if terms_link %>
+          <span class="text-slate-300">|</span>
+          <%= link_to "利用規約", terms_link, class: "text-slate-500 underline decoration-slate-200 underline-offset-4 transition hover:text-slate-900" %>
+        <% end %>
+        <% if privacy_link %>
+          <span class="text-slate-300">|</span>
+          <%= link_to "プライバシーポリシー", privacy_link, class: "text-slate-500 underline decoration-slate-200 underline-offset-4 transition hover:text-slate-900" %>
+        <% end %>
       </div>
     </div>
   </div>

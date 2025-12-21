@@ -36,7 +36,11 @@
 
 <body class="ui-bs" data-ui="bs">
 <div class="tw">
-  <%= render 'shared/navigation' %>
+  <% if devise_controller? || controller_name == "passkey_registrations" %>
+    <%= render 'shared/tw_header' %>
+  <% else %>
+    <%= render 'shared/navigation' %>
+  <% end %>
 </div>
 
 <main>

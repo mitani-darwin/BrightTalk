@@ -12,7 +12,9 @@
        new_session_path
      end %>
 <% signup_link =
-     if respond_to?(:new_user_registration_path)
+     if respond_to?(:new_passkey_registration_path)
+       new_passkey_registration_path
+     elsif respond_to?(:new_user_registration_path)
        new_user_registration_path
      elsif respond_to?(:signup_path)
        signup_path
