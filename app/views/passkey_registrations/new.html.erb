@@ -143,7 +143,11 @@
 <script nonce="<%= content_security_policy_nonce %>">
     console.log('Script block starting...');
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function initPasskeyRegistrationFlow() {
+        const root = document.getElementById('basic-info-form');
+        if (!root || root.dataset.passkeyInit === 'true') return;
+        root.dataset.passkeyInit = 'true';
+
         if (typeof window.startPasskeyRegistration === 'function') {
             console.log('Passkey module loaded successfully');
         } else {
@@ -459,7 +463,7 @@
         } catch (error) {
             console.error('Error creating PasskeyRegistrationFlow:', error);
         }
-    });
+    }
 
     function enableSetupPasskeyButtonWhenReady() {
         const setupBtn = document.getElementById('setup-passkey-btn');
@@ -495,9 +499,19 @@
         }, {once: true});
     }
 
-    document.addEventListener('DOMContentLoaded', enableSetupPasskeyButtonWhenReady);
-    document.addEventListener('turbo:load', enableSetupPasskeyButtonWhenReady);
-    document.addEventListener('turbo:render', enableSetupPasskeyButtonWhenReady);
+    document.addEventListener('DOMContentLoaded', () => {
+        initPasskeyRegistrationFlow();
+        enableSetupPasskeyButtonWhenReady();
+    });
+    document.addEventListener('turbo:load', () => {
+        initPasskeyRegistrationFlow();
+        enableSetupPasskeyButtonWhenReady();
+    });
+    document.addEventListener('turbo:render', () => {
+        initPasskeyRegistrationFlow();
+        enableSetupPasskeyButtonWhenReady();
+    });
+    initPasskeyRegistrationFlow();
     enableSetupPasskeyButtonWhenReady();
 </script>
 

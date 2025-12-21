@@ -40,11 +40,18 @@
       </nav>
 
       <div class="space-y-2 border-t border-slate-200 pt-4">
-        <% if login_link %>
-          <%= link_to "ログイン", login_link, class: "block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200" %>
-        <% end %>
-        <% if signup_link %>
-          <%= link_to "新規登録", signup_link, class: "block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200" %>
+        <% if user_signed_in? %>
+          <%= link_to "ログアウト",
+                      destroy_user_session_path,
+                      data: { "turbo-method": :delete },
+                      class: "block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200" %>
+        <% else %>
+          <% if login_link %>
+            <%= link_to "ログイン", login_link, class: "block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200" %>
+          <% end %>
+          <% if signup_link %>
+            <%= link_to "新規登録", signup_link, class: "block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200" %>
+          <% end %>
         <% end %>
       </div>
 

@@ -40,19 +40,6 @@
       <% end %>
     </div>
 
-    <nav class="hidden items-center gap-4 text-sm text-slate-600 lg:flex" aria-label="主要ナビゲーション">
-      <%= link_to "記事一覧", posts_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
-      <% if categories_link %>
-        <%= link_to "カテゴリ", categories_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
-      <% end %>
-      <% if tags_link %>
-        <%= link_to "タグ", tags_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
-      <% end %>
-      <% if about_link %>
-        <%= link_to "About", about_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
-      <% end %>
-    </nav>
-
     <div class="hidden items-center gap-3 lg:flex">
       <%= form_with url: posts_link, method: :get, local: true, class: "flex items-center gap-2" do |f| %>
         <%= f.text_field :q,
@@ -62,17 +49,31 @@
         <%= f.submit "検索", class: "h-10 rounded-xl border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2" %>
       <% end %>
 
-      <% if login_link %>
-        <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
-      <% end %>
-      <% if signup_link %>
-        <%= link_to "新規登録", signup_link, class: "rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% if user_signed_in? %>
+        <%= link_to "ログアウト",
+                    destroy_user_session_path,
+                    data: { "turbo-method": :delete },
+                    class: "text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% else %>
+        <% if login_link %>
+          <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+        <% end %>
+        <% if signup_link %>
+          <%= link_to "新規登録", signup_link, class: "rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+        <% end %>
       <% end %>
     </div>
 
     <div class="flex items-center gap-2 lg:hidden">
-      <% if login_link %>
-        <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+      <% if user_signed_in? %>
+        <%= link_to "ログアウト",
+                    destroy_user_session_path,
+                    data: { "turbo-method": :delete },
+                    class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+      <% else %>
+        <% if login_link %>
+          <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+        <% end %>
       <% end %>
     </div>
   </div>
