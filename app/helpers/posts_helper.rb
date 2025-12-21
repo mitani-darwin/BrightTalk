@@ -38,6 +38,115 @@ module PostsHelper
     nil
   end
 
+  def post_body_html(post)
+    html = if post.respond_to?(:body_html) && post.body_html.present?
+      post.body_html
+    elsif post.respond_to?(:body) && post.body.present?
+      format_content_with_images_tailwind(post.body, post)
+    elsif post.respond_to?(:content) && post.content.present?
+      format_content_with_images_tailwind(post.content, post)
+    else
+      ""
+    end
+    html.to_s.html_safe
+  end
+
+  # Tailwind版: Bootstrap由来のクラスやdata-bsを使わずにHTMLへ変換する
+  def format_content_with_images_tailwind(content, post = nil)
+    return "" if content.blank?
+
+    normalize_name = ->(name) do
+      s = name.to_s.strip
+      begin
+        s = CGI.unescape(s)
+      rescue
+      end
+      s = s.unicode_normalize(:nfc) if s.respond_to?(:unicode_normalize)
+      s
+    end
+
+    processed_content = content.dup
+
+    processed_content = processed_content.gsub(/!\[([^\]]*)\]\(([^)]+)\)/) do |match|
+      alt_text = $1
+      image_url = $2
+      normalized_url = image_url.to_s.strip
+      if normalized_url.start_with?("attachment:")
+        raw = normalized_url.sub(/^attachment:/, "")
+        placeholder_name = normalize_name.call(raw)
+        if post&.images&.attached?
+          matching_image = post.images.find do |img|
+            normalize_name.call(img.filename.to_s) == placeholder_name
+          end
+          if matching_image
+            actual_url = Rails.application.routes.url_helpers.rails_blob_path(matching_image, only_path: true)
+            %Q(<img src="#{ERB::Util.html_escape(actual_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="my-6 w-full rounded-xl border border-slate-200 shadow-sm" loading="lazy" />)
+          else
+            match
+          end
+        else
+          match
+        end
+      else
+        %Q(<img src="#{ERB::Util.html_escape(image_url)}" alt="#{ERB::Util.html_escape(alt_text)}" class="my-6 w-full rounded-xl border border-slate-200 shadow-sm" loading="lazy" />)
+      end
+    end
+
+    processed_content = processed_content.gsub(/\[([^\]]*\.(?:mp4|avi|mov|wmv|flv|webm|mkv|m4v))\]\(attachment:([^)]+)\)/i) do |match|
+      attachment_filename = $1.strip
+      normalized_filename = normalize_name.call(attachment_filename)
+      if post&.videos&.attached?
+        matching_video = post.videos.find do |vid|
+          normalize_name.call(vid.filename.to_s) == normalized_filename
+        end
+
+        if matching_video
+          video_url = get_cloudfront_video_url(matching_video)
+          video_id = "video-#{SecureRandom.hex(8)}"
+          %Q(<div class="my-6" data-controller="video-player" data-video-player-src-value="#{ERB::Util.html_escape(video_url)}" data-video-player-type-value="#{ERB::Util.html_escape(matching_video.content_type)}"><video id="#{video_id}" data-video-player-target="video" class="video-js vjs-default-skin w-full rounded-xl overflow-hidden" preload="metadata" crossorigin="anonymous"><source src="#{ERB::Util.html_escape(video_url)}" type="#{matching_video.content_type}"><p class="vjs-no-js">Video.jsを有効にするには、<a href="https://videojs.com/html5-video-support/" target="_blank">ブラウザでJavaScriptを有効</a>にしてください。<br>または<a href="#{ERB::Util.html_escape(video_url)}" download>動画をダウンロード</a>してください。</p></video></div>)
+        else
+          match
+        end
+      else
+        match
+      end
+    end
+
+    renderer = Redcarpet::Render::HTML.new(
+      filter_html: false,
+      no_links: false,
+      no_images: false,
+      hard_wrap: true,
+      link_attributes: { target: "_blank", rel: "noopener" }
+    )
+
+    markdown = Redcarpet::Markdown.new(renderer,
+      autolink: true,
+      tables: true,
+      fenced_code_blocks: true,
+      strikethrough: true,
+      superscript: true,
+      underline: true,
+      quote: true,
+      footnotes: true,
+      space_after_headers: true
+    )
+
+    html_content = markdown.render(processed_content)
+    begin
+      require 'loofah'
+      fragment = Loofah.fragment(html_content)
+      scrubber = Loofah::Scrubber.new do |node|
+        node.remove_attribute('style') if node.respond_to?(:attributes) && node['style']
+      end
+      fragment.scrub!(scrubber)
+      html_content = fragment.to_html
+    rescue LoadError
+      html_content = html_content.gsub(/\sstyle="[^"]*"/i, '')
+    end
+    html_content.html_safe
+  end
+
   if defined?(WillPaginate)
     class TailwindPaginationRenderer < WillPaginate::ActionView::LinkRenderer
       def container_attributes

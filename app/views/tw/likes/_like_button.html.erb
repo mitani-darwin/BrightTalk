@@ -1,0 +1,25 @@
+<%= turbo_frame_tag "like_button_#{post.id}" do %>
+  <% if user_signed_in? %>
+    <% like = current_user.likes.find_by(post: post) %>
+    <% if like %>
+      <%= link_to post_like_path(post, like),
+                  data: { turbo_method: :delete, turbo_frame: "like_button_#{post.id}" },
+                  class: "inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-100" do %>
+        <i class="bi bi-heart-fill"></i>
+        <span><%= post.likes.count %></span>
+      <% end %>
+    <% else %>
+      <%= link_to post_likes_path(post),
+                  data: { turbo_method: :post, turbo_frame: "like_button_#{post.id}" },
+                  class: "inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200" do %>
+        <i class="bi bi-heart"></i>
+        <span><%= post.likes.count %></span>
+      <% end %>
+    <% end %>
+  <% else %>
+    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">
+      <i class="bi bi-heart"></i>
+      <span><%= post.likes.count %></span>
+    </span>
+  <% end %>
+<% end %>
