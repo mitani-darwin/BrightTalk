@@ -1,45 +1,79 @@
-<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+<% root_link = respond_to?(:root_path) ? root_path : "/" %>
+<% posts_link = respond_to?(:posts_path) ? posts_path : (respond_to?(:articles_path) ? articles_path : root_link) %>
+<% categories_link = respond_to?(:categories_path) ? categories_path : nil %>
+<% tags_link = respond_to?(:tags_path) ? tags_path : nil %>
+<% about_link = respond_to?(:about_path) ? about_path : nil %>
+<% login_link =
+     if respond_to?(:new_user_session_path)
+       new_user_session_path
+     elsif respond_to?(:login_path)
+       login_path
+     elsif respond_to?(:new_session_path)
+       new_session_path
+     end %>
+<% signup_link =
+     if respond_to?(:new_user_registration_path)
+       new_user_registration_path
+     elsif respond_to?(:signup_path)
+       signup_path
+     elsif respond_to?(:new_registration_path)
+       new_registration_path
+     end %>
+
+<header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur"
+        data-controller="mobile-nav">
   <div class="mx-auto flex max-w-screen-xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
     <div class="flex items-center gap-3">
-      <button data-controller="mobile-nav"
-              data-action="mobile-nav#open"
-              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 lg:hidden"
+      <button data-action="mobile-nav#open"
+              data-mobile-nav-target="trigger"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 lg:hidden"
               aria-label="メニューを開く"
               aria-controls="twMobileNav"
               aria-expanded="false">
         <i class="fas fa-bars"></i>
       </button>
-      <%= link_to root_path, class: "inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900 hover:text-brand-600" do %>
+      <%= link_to root_link, class: "inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900 hover:text-brand-600" do %>
         <i class="fa-solid fa-sun text-brand-600"></i>
         BrightTalk
       <% end %>
     </div>
 
-    <nav class="hidden lg:flex lg:items-center lg:gap-4" aria-label="主要カテゴリ">
-      <% if defined?(Category) && Category.exists? %>
-        <% Category.order(:name).limit(5).each do |category| %>
-          <%= link_to category.full_name, posts_path(category_id: category.id), class: "text-sm font-semibold text-slate-600 hover:text-slate-900" %>
-        <% end %>
-      <% else %>
-        <!-- 未接続: カテゴリが無い場合はリンクを省略 -->
+    <nav class="hidden items-center gap-4 text-sm text-slate-600 lg:flex" aria-label="主要ナビゲーション">
+      <%= link_to "記事一覧", posts_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% if categories_link %>
+        <%= link_to "カテゴリ", categories_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% end %>
+      <% if tags_link %>
+        <%= link_to "タグ", tags_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% end %>
+      <% if about_link %>
+        <%= link_to "About", about_link, class: "font-medium hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
       <% end %>
     </nav>
 
     <div class="hidden items-center gap-3 lg:flex">
-      <%= form_with url: posts_path, method: :get, local: true, class: "flex items-center gap-2" do |f| %>
+      <%= form_with url: posts_link, method: :get, local: true, class: "flex items-center gap-2" do |f| %>
         <%= f.text_field :q,
                          value: params[:q],
                          placeholder: "記事を検索",
-                         class: "h-10 w-64 rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-200" %>
-        <%= f.submit "検索", class: "h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2" %>
+                         class: "h-10 w-56 rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200" %>
+        <%= f.submit "検索", class: "h-10 rounded-xl border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2" %>
       <% end %>
-      <%= link_to "新着", posts_path, class: "text-sm font-semibold text-slate-600 hover:text-slate-900" %>
+
+      <% if login_link %>
+        <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% end %>
+      <% if signup_link %>
+        <%= link_to "新規登録", signup_link, class: "rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+      <% end %>
     </div>
 
     <div class="flex items-center gap-2 lg:hidden">
-      <%= link_to "検索", posts_path, class: "text-sm font-semibold text-slate-600 hover:text-slate-900" %>
+      <% if login_link %>
+        <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+      <% end %>
     </div>
   </div>
 
-  <%= render "shared/tw_mobile_nav" %>
+  <%= render "shared/tw_mobile_nav", posts_link: posts_link, categories_link: categories_link, tags_link: tags_link, about_link: about_link, login_link: login_link, signup_link: signup_link %>
 </header>
