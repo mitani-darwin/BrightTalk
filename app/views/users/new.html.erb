@@ -1,42 +1,42 @@
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow-sm">
-      <div class="card-header text-center">
-        <h4 class="mb-0">新規登録</h4>
-      </div>
-      <div class="card-body">
-        <%= form_with model: @user, local: true do |form| %>
-          <% if @user&.errors&.any? %>
-            <div class="alert alert-danger">
-              <h6><%= @user.errors.count %>件のエラーのため、ユーザーの保存ができませんでした:</h6>
-              <ul class="mb-0">
-                <% @user.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
+<section class="mx-auto w-full max-w-lg px-4 py-10 sm:px-6 lg:px-8">
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-6 py-5 text-center">
+      <h4 class="text-lg font-semibold text-slate-900">新規登録</h4>
+      <p class="mt-2 text-sm text-slate-500">必要な情報を入力してアカウントを作成します。</p>
+    </div>
 
-          <div class="mb-3">
-            <%= form.label :name, "ユーザー名", class: "form-label" %>
-            <%= form.text_field :name, class: "form-control", placeholder: "あなたの名前" %>
-          </div>
-
-          <div class="mb-3">
-            <%= form.label :email, "メールアドレス", class: "form-label" %>
-            <%= form.email_field :email, class: "form-control", placeholder: "your@example.com" %>
-          </div>
-
-
-          <div class="d-grid">
-            <%= form.submit "アカウントを作成", class: "btn btn-primary" %>
+    <div class="px-6 py-6">
+      <%= form_with model: @user, local: true, class: "space-y-5" do |form| %>
+        <% if @user&.errors&.any? %>
+          <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <strong class="font-semibold"><%= @user.errors.count %>件のエラーのため、ユーザーの保存ができませんでした:</strong>
+            <ul class="mt-2 list-disc pl-5">
+              <% @user.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
           </div>
         <% end %>
 
-        <div class="text-center mt-3">
-          <p class="mb-0">すでにアカウントをお持ちですか？ <%= link_to "ログイン", new_user_session_path %></p>
+        <div>
+          <%= form.label :name, "ユーザー名", class: "text-sm font-medium text-slate-700" %>
+          <%= form.text_field :name, class: "mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", placeholder: "あなたの名前" %>
         </div>
+
+        <div>
+          <%= form.label :email, "メールアドレス", class: "text-sm font-medium text-slate-700" %>
+          <%= form.email_field :email, class: "mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", placeholder: "your@example.com" %>
+        </div>
+
+        <div>
+          <%= form.submit "パスキーを登録", class: "inline-flex h-11 w-full items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2" %>
+        </div>
+      <% end %>
+
+      <div class="mt-6 text-center text-sm text-slate-600">
+        すでにアカウントをお持ちですか？
+        <%= link_to "ログイン", new_user_session_path, class: "font-semibold text-slate-900 hover:text-slate-700" %>
       </div>
     </div>
   </div>
-</div>
+</section>

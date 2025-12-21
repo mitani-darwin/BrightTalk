@@ -1,197 +1,109 @@
+<section class="bg-slate-900">
+</section>
 
-<div class="container-fluid p-0">
-  <!-- ヘッダー画像エリア -->
-  <div class="position-relative user-header-hero">
-    <% if @user.header_image_or_default %>
-      <%= image_tag @user.header_image_or_default, 
-          class: "w-100 h-100 object-cover" %>
-    <% end %>
-    <div class="position-absolute bottom-0 start-0 w-100 h-100 header-overlay-gradient"></div>
-  </div>
-  
-  <!-- プロフィール画像（ヘッダーに重複表示） -->
-  <div class="container">
-    <div class="row">
-      <div class="col-12">
-        <div class="d-flex align-items-end profile-overlap">
-          <div class="me-4">
-            <% if @user.avatar_or_default %>
-              <%= image_tag @user.avatar_or_default, 
-                  class: "rounded-circle border border-4 border-white shadow avatar-120 object-cover" %>
-            <% else %>
-              <div class="rounded-circle bg-secondary border border-4 border-white shadow d-flex align-items-center justify-content-center avatar-120">
-                <i class="fas fa-user fa-3x text-white"></i>
-              </div>
-            <% end %>
-          </div>
-          <div class="pb-3">
-            <h1 class="h2 text-white mb-2 text-shadow-soft"><%= @user.name %></h1>
+<section class="mx-auto w-full max-w-screen-xl px-4 py-8 sm:px-6 lg:px-10">
+  <div class="grid gap-6 lg:grid-cols-12">
+    <div class="lg:col-span-8 space-y-6">
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-6 py-4">
+          <h2 class="text-base font-semibold text-slate-900">
             <% if user_signed_in? && @user == current_user %>
-              <%= link_to edit_account_user_path, class: "btn btn-light btn-sm" do %>
-                <i class="fas fa-edit me-1"></i>プロフィール編集
-              <% end %>
-            <% end %>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-lg-10 mx-auto">
-      <!-- マイページヘッダー -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h1 class="h3 mb-0">
-            <% if user_signed_in? && @user == current_user %>
-              <i class="fas fa-user-circle me-2"></i>マイページ
+              <i class="fas fa-user-circle mr-2 text-slate-500"></i>マイページ
             <% else %>
               <%= @user.name %>さんのプロフィール詳細
             <% end %>
-          </h1>
+          </h2>
         </div>
-        <div class="card-body">
-          <div class="row">
-            <!-- プロフィール画像エリア -->
-            <div class="col-md-3 text-center">
-              <div class="mb-3">
-                <% if @user.avatar_or_default %>
-                  <%= image_tag @user.avatar_or_default, class: "rounded-circle border avatar-120 object-cover" %>
-                <% else %>
-                  <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto avatar-120">
-                    <i class="fas fa-user fa-3x text-white"></i>
-                  </div>
-                <% end %>
-              </div>
-              
+        <div class="px-6 py-6">
+          <div class="grid gap-6 sm:grid-cols-[auto,1fr]">
+            <div class="text-center">
+              <% if @user.avatar_or_default %>
+                <%= image_tag @user.avatar_or_default, class: "h-24 w-24 rounded-full border border-slate-200 object-cover" %>
+              <% else %>
+                <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-400">
+                  <i class="fas fa-user text-2xl"></i>
+                </div>
+              <% end %>
+
               <% if user_signed_in? && @user == current_user %>
-                <div class="mb-3">
-                  <%= link_to edit_account_user_path, class: "btn btn-outline-primary btn-sm" do %>
-                    <i class="fas fa-edit me-1"></i>アイコン編集
+                <div class="mt-3">
+                  <%= link_to edit_account_user_path, class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+                    <i class="fas fa-edit mr-2"></i>アイコン編集
                   <% end %>
                 </div>
               <% end %>
             </div>
 
-            <!-- ユーザー情報エリア -->
-            <div class="col-md-9">
-              <div class="row">
-                <div class="col-md-8">
-                  <h4 class="mb-3"><%= @user.name %></h4>
-                  
-                  <!-- 自己紹介エリア -->
-                  <div class="mb-3">
-                    <h6 class="text-muted mb-2">自己紹介</h6>
-                    <% if @user.bio.present? %>
-                      <div class="p-3 bg-light rounded">
-                        <%= simple_format(@user.bio) %>
-                      </div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900"><%= @user.name %></h3>
+
+              <div class="mt-4">
+                <h4 class="text-sm font-semibold text-slate-700">自己紹介</h4>
+                <% if @user.bio.present? %>
+                  <div class="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <%= simple_format(@user.bio) %>
+                  </div>
+                <% else %>
+                  <div class="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                    <% if user_signed_in? && @user == current_user %>
+                      自己紹介がまだ登録されていません。
+                      <%= link_to "編集する", edit_account_user_path, class: "font-semibold text-slate-700 hover:text-slate-900" %>
                     <% else %>
-                      <div class="p-3 bg-light rounded text-muted">
-                        <% if user_signed_in? && @user == current_user %>
-                          自己紹介がまだ登録されていません。
-                          <%= link_to "編集する", edit_account_user_path, class: "text-decoration-none" %>
-                        <% else %>
-                          自己紹介は登録されていません。
-                        <% end %>
-                      </div>
+                      自己紹介は登録されていません。
                     <% end %>
                   </div>
+                <% end %>
+              </div>
 
-                  <!-- ソーシャルリンクエリア -->
-                  <% if @user.has_social_links? %>
-                    <div class="mb-3">
-                      <h6 class="text-muted mb-2">ソーシャルリンク</h6>
-                      <div class="d-flex flex-wrap gap-2">
-                        <% if @user.twitter_url.present? %>
-                          <%= link_to @user.twitter_url, target: "_blank", class: "btn btn-sm btn-outline-info" do %>
-                            <i class="fab fa-twitter me-1"></i>Twitter
-                          <% end %>
-                        <% end %>
-                        <% if @user.github_url.present? %>
-                          <%= link_to @user.github_url, target: "_blank", class: "btn btn-sm btn-outline-dark" do %>
-                            <i class="fab fa-github me-1"></i>GitHub
-                          <% end %>
-                        <% end %>
-                      </div>
-                    </div>
-                  <% end %>
-
-                  <div class="user-info">
-                    <p class="mb-2"><strong>メール:</strong> <%= @user.email if user_signed_in? && @user == current_user %></p>
-                    <p class="mb-2"><strong>登録日:</strong> <%= @user.created_at.strftime("%Y年%m月%d日") %></p>
+              <% if @user.has_social_links? %>
+                <div class="mt-4">
+                  <h4 class="text-sm font-semibold text-slate-700">ソーシャルリンク</h4>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <% if @user.twitter_url.present? %>
+                      <%= link_to @user.twitter_url, target: "_blank", class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+                        <i class="fab fa-twitter mr-2"></i>Twitter
+                      <% end %>
+                    <% end %>
+                    <% if @user.github_url.present? %>
+                      <%= link_to @user.github_url, target: "_blank", class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+                        <i class="fab fa-github mr-2"></i>GitHub
+                      <% end %>
+                    <% end %>
                   </div>
                 </div>
+              <% end %>
 
-                <!-- 統計エリア -->
-                <div class="col-md-4">
-                  <div class="card">
-                    <div class="card-header">
-                      <h6 class="mb-0">アクティビティ統計</h6>
-                    </div>
-                    <div class="card-body">
-                      <% stats = @user.extended_stats %>
-                      <div class="row text-center">
-                        <div class="col-6 mb-3">
-                          <div class="stat">
-                            <h4 class="mb-0 text-primary"><%= stats[:posts_count] %></h4>
-                            <small class="text-muted">総投稿数</small>
-                          </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                          <div class="stat">
-                            <h4 class="mb-0 text-success"><%= stats[:likes_received] %></h4>
-                            <small class="text-muted">受けたいいね</small>
-                          </div>
-                        </div>
-                        <div class="col-6 mb-2">
-                          <div class="stat">
-                            <h5 class="mb-0 text-info"><%= stats[:comments_count] %></h5>
-                            <small class="text-muted">コメント</small>
-                          </div>
-                        </div>
-                        <div class="col-6 mb-2">
-                          <div class="stat">
-                            <h5 class="mb-0 text-warning"><%= stats[:likes_given] %></h5>
-                            <small class="text-muted">付けたいいね</small>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div class="mt-4 space-y-1 text-sm text-slate-600">
+                <% if user_signed_in? && @user == current_user %>
+                  <div><span class="font-semibold text-slate-700">メール:</span> <%= @user.email %></div>
+                <% end %>
+                <div><span class="font-semibold text-slate-700">登録日:</span> <%= @user.created_at.strftime("%Y年%m月%d日") %></div>
               </div>
             </div>
           </div>
 
-          <!-- マイページ専用ボタン群 -->
           <% if user_signed_in? && @user == current_user %>
-            <hr>
-            <div class="row">
-              <div class="col-md-8">
-                <div class="d-flex flex-wrap gap-2">
-                  <%= link_to edit_account_user_path, class: "btn btn-primary" do %>
-                    <i class="fas fa-user-edit me-1"></i>プロフィール編集
-                  <% end %>
-                  <%= link_to new_post_path, class: "btn btn-success" do %>
-                    <i class="fas fa-plus me-1"></i>新規投稿
-                  <% end %>
-                  <%= link_to drafts_posts_path, class: "btn btn-outline-secondary" do %>
-                    <i class="fas fa-file-alt me-1"></i>下書き
-                  <% end %>
-                </div>
+            <div class="mt-6 border-t border-slate-200 pt-6">
+              <div class="flex flex-wrap gap-2">
+                <%= link_to edit_account_user_path, class: "inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800" do %>
+                  <i class="fas fa-user-edit mr-2"></i>プロフィール編集
+                <% end %>
+                <%= link_to new_post_path, class: "inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500" do %>
+                  <i class="fas fa-plus mr-2"></i>新規投稿
+                <% end %>
+                <%= link_to drafts_posts_path, class: "inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+                  <i class="fas fa-file-alt mr-2"></i>下書き
+                <% end %>
               </div>
-              <div class="col-md-4 text-end">
-                <%= link_to destroy_account_user_path(@user), 
+              <div class="mt-4">
+                <%= link_to destroy_account_user_path(@user),
                     method: :delete,
-                    class: "btn btn-outline-danger",
-                    data: { 
+                    class: "inline-flex items-center rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50",
+                    data: {
                       confirm: "本当にアカウントを削除しますか？この操作は取り消すことができません。",
                       turbo_method: :delete
                     } do %>
-                  <i class="fas fa-user-times me-1"></i>アカウント削除
+                  <i class="fas fa-user-times mr-2"></i>アカウント削除
                 <% end %>
               </div>
             </div>
@@ -199,47 +111,67 @@
         </div>
       </div>
 
-      <!-- ユーザーの投稿一覧 -->
-      <div class="card mt-4">
-        <div class="card-header">
-          <h5 class="mb-0"><%= @user.name %>さんの投稿</h5>
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-6 py-4">
+          <h3 class="text-base font-semibold text-slate-900"><%= @user.name %>さんの投稿</h3>
         </div>
-        <div class="card-body">
+        <div class="px-6 py-6">
           <% if @user.posts.any? %>
-            <% @user.posts.order(created_at: :desc).each do |post| %>
-              <div class="border-bottom py-3">
-                <h6 class="mb-2">
-                  <%= link_to post.title, post_path(post), class: "text-decoration-none" %>
-                </h6>
-                <div class="text-muted small mb-2">
-                  <i class="bi bi-calendar"></i> <%= post.created_at.strftime("%Y年%m月%d日") %>
-                  <% if post.category %>
-                    <span class="mx-2">|</span>
-                    <i class="bi bi-folder"></i> <%= post.category.name %>
-                  <% end %>
-                  <span class="mx-2">|</span>
-                  <i class="bi bi-heart"></i> <%= post.likes.count %>
-                  <span class="mx-2">|</span>
-                  <i class="bi bi-chat"></i> <%= post.comments.count %>
+            <div class="space-y-4">
+              <% @user.posts.order(created_at: :desc).each do |post| %>
+                <div class="border-b border-slate-100 pb-4 last:border-none last:pb-0">
+                  <h4 class="text-sm font-semibold text-slate-900">
+                    <%= link_to post.title, post_path(post), class: "hover:text-slate-700" %>
+                  </h4>
+                  <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    <span><i class="bi bi-calendar mr-1"></i><%= post.created_at.strftime("%Y年%m月%d日") %></span>
+                    <% if post.category %>
+                      <span><i class="bi bi-folder mr-1"></i><%= post.category.name %></span>
+                    <% end %>
+                    <span><i class="bi bi-heart mr-1"></i><%= post.likes.count %></span>
+                    <span><i class="bi bi-chat mr-1"></i><%= post.comments.count %></span>
+                  </div>
+                  <p class="mt-2 text-sm text-slate-500"><%= truncate(strip_tags(post.content_as_html), length: 100) %></p>
                 </div>
-                <p class="mb-0 text-muted">
-                  <%= truncate(strip_tags(post.content_as_html), length: 100) %>
-                </p>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           <% else %>
-            <p class="text-muted text-center py-4">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
               <i class="bi bi-file-text"></i><br>
               まだ投稿がありません。
-            </p>
+            </div>
           <% end %>
         </div>
       </div>
 
-      <!-- 戻るボタン -->
-      <div class="mt-4 text-center">
-        <%= link_to "トップページに戻る", root_path, class: "btn btn-secondary" %>
+      <div class="text-center">
+        <%= link_to "トップページに戻る", root_path, class: "inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" %>
       </div>
     </div>
+
+    <aside class="lg:col-span-4">
+      <% stats = @user.extended_stats %>
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-700">アクティビティ統計</h3>
+        <div class="mt-4 grid grid-cols-2 gap-4 text-center">
+          <div class="rounded-xl bg-slate-50 px-3 py-3">
+            <div class="text-lg font-semibold text-slate-900"><%= stats[:posts_count] %></div>
+            <div class="text-xs text-slate-500">総投稿数</div>
+          </div>
+          <div class="rounded-xl bg-slate-50 px-3 py-3">
+            <div class="text-lg font-semibold text-slate-900"><%= stats[:likes_received] %></div>
+            <div class="text-xs text-slate-500">受けたいいね</div>
+          </div>
+          <div class="rounded-xl bg-slate-50 px-3 py-3">
+            <div class="text-lg font-semibold text-slate-900"><%= stats[:comments_count] %></div>
+            <div class="text-xs text-slate-500">コメント</div>
+          </div>
+          <div class="rounded-xl bg-slate-50 px-3 py-3">
+            <div class="text-lg font-semibold text-slate-900"><%= stats[:likes_given] %></div>
+            <div class="text-xs text-slate-500">付けたいいね</div>
+          </div>
+        </div>
+      </div>
+    </aside>
   </div>
-</div>
+</section>

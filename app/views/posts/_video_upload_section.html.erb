@@ -1,43 +1,40 @@
-<%= form.label :videos, "動画", class: "form-label" %>
+<% input_base = "mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200" %>
 
-<!-- 既存の動画を表示（編集時のみ） -->
+<%= form.label :videos, "動画", class: "text-sm font-medium text-slate-700" %>
+
 <% if post.persisted? && post.videos.attached? %>
-  <div class="mb-3">
-    <small class="text-muted d-block mb-2">現在アップロード済みの動画:</small>
-    <div class="row g-2">
-      <% post.videos.each_with_index do |video, index| %>
-        <div class="col-6 col-md-4" id="video-card-<%= video.id %>">
-          <div class="card">
-            <div class="card-body p-2 text-center">
-              <i class="fas fa-video fa-3x text-muted mb-2"></i>
-              <small class="text-muted d-block"><%= video.filename %></small>
-              <div class="d-flex gap-1 mt-1">
-                <button type="button" class="btn btn-outline-primary btn-sm flex-fill insert-existing-video"
-                        data-filename="<%= video.filename %>"
-                        data-url="attachment:<%= video.filename %>">
-                  <i class="fas fa-plus"></i> 挿入
-                </button>
-                <button type="button" class="btn btn-outline-danger btn-sm delete-video-btn"
-                        data-post-id="<%= post.id %>"
-                        data-attachment-id="<%= video.id %>"
-                        data-filename="<%= video.filename %>">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
+  <div class="mt-3">
+    <div class="text-xs font-semibold text-slate-500">現在アップロード済みの動画:</div>
+    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <% post.videos.each do |video| %>
+        <div id="video-card-<%= video.id %>" class="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
+          <i class="fas fa-video text-2xl text-slate-400"></i>
+          <div class="mt-2 text-xs text-slate-500 truncate"><%= video.filename %></div>
+          <div class="mt-3 flex gap-2">
+            <button type="button" class="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 insert-existing-video"
+                    data-filename="<%= video.filename %>"
+                    data-url="attachment:<%= video.filename %>">
+              <i class="fas fa-plus mr-1"></i>挿入
+            </button>
+            <button type="button" class="inline-flex items-center justify-center rounded-xl border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 delete-video-btn"
+                    data-post-id="<%= post.id %>"
+                    data-attachment-id="<%= video.id %>"
+                    data-filename="<%= video.filename %>">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         </div>
       <% end %>
     </div>
-    <small class="text-info d-block mt-2">
-      <i class="fas fa-info-circle"></i>
+    <p class="mt-3 text-xs text-slate-500">
+      <i class="fas fa-info-circle mr-1"></i>
       既存の動画は自動的に保持されます。新しい動画を追加する場合のみ下のファイル選択を使用してください。
-    </small>
+    </p>
   </div>
 <% end %>
 
 <%= form.file_field :videos, accept: "video/*", direct_upload: true,
-                    class: "form-control", id: "videoInput" %>
-<div class="form-text">
+                    class: input_base, id: "videoInput" %>
+<p class="mt-2 text-xs text-slate-500">
   動画は1つのみ選択できます（MP4, WebM など）。選択すると、内容欄のカーソル位置に動画のプレースホルダを自動で挿入します（プレビューは表示しません）。
-</div>
+</p>

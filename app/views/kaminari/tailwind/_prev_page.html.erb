@@ -1,0 +1,12 @@
+<% if current_page.first? %>
+  <li>
+    <span class="inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-slate-300">
+      <%= raw(t 'views.pagination.previous') %>
+    </span>
+  </li>
+<% else %>
+  <li>
+    <%= link_to raw(t 'views.pagination.previous'), url, rel: 'prev', remote: remote,
+                class: "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50" %>
+  </li>
+<% end %>

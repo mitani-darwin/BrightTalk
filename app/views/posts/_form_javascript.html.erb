@@ -265,14 +265,14 @@
         // Clear previous validation errors
         clearValidationErrors();
 
-        // Add invalid class to the problematic field
-        error.element.classList.add('is-invalid');
+        const invalidClasses = ['border-rose-300', 'focus:border-rose-300', 'focus:ring-rose-200'];
+        invalidClasses.forEach((cls) => error.element.classList.add(cls));
 
         // Find or create error message element
-        let errorDiv = error.element.parentNode.querySelector('.invalid-feedback');
+        let errorDiv = error.element.parentNode.querySelector('.js-validation-message');
         if (!errorDiv) {
             errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback';
+            errorDiv.className = 'js-validation-message mt-2 text-xs text-rose-500';
             error.element.parentNode.appendChild(errorDiv);
         }
 
@@ -296,12 +296,12 @@
 
     // Clear all validation errors
     function clearValidationErrors() {
-        const invalidElements = document.querySelectorAll('.is-invalid');
+        const invalidElements = document.querySelectorAll('.border-rose-300');
         invalidElements.forEach(element => {
-            element.classList.remove('is-invalid');
+            element.classList.remove('border-rose-300', 'focus:border-rose-300', 'focus:ring-rose-200');
         });
 
-        const errorDivs = document.querySelectorAll('.invalid-feedback');
+        const errorDivs = document.querySelectorAll('.js-validation-message');
         errorDivs.forEach(div => {
             div.style.display = 'none';
         });
@@ -480,11 +480,11 @@
         if (!form) return;
 
         if (show) {
-            form.classList.remove('d-none');
+            form.classList.remove('hidden');
             form.style.display = '';
             form.setAttribute('aria-hidden', 'false');
         } else {
-            form.classList.add('d-none');
+            form.classList.add('hidden');
             form.style.display = 'none';
             form.setAttribute('aria-hidden', 'true');
         }
@@ -667,7 +667,7 @@
     function showUploadProgress(statusText, detailText) {
         const container = document.getElementById('uploadProgressContainer');
         if (container) {
-            container.classList.remove('d-none');
+            container.classList.remove('hidden');
             container.style.display = '';
         }
         updateUploadStatus(statusText || 'アップロード中...', 0, detailText);
@@ -676,7 +676,7 @@
     function hideUploadProgress() {
         const container = document.getElementById('uploadProgressContainer');
         if (container) {
-            container.classList.add('d-none');
+            container.classList.add('hidden');
             container.style.display = 'none';
         }
     }
@@ -801,21 +801,20 @@
             });
     }
 
+    const autoSaveBaseClass = 'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-soft';
+
     function showAutoSaveError(message) {
         const alert = document.getElementById('autoSaveAlert');
         const messageSpan = document.getElementById('autoSaveMessage');
 
         if (alert && messageSpan) {
             messageSpan.textContent = message;
-            alert.className = 'alert alert-danger alert-dismissible fade show'; // エラー用スタイル
-            alert.style.display = 'block';
+            alert.className = `${autoSaveBaseClass} border border-rose-200 bg-rose-50 text-rose-900`;
+            alert.classList.remove('hidden');
 
             setTimeout(() => {
-                alert.classList.remove('show');
-                setTimeout(() => {
-                    alert.style.display = 'none';
-                    alert.className = 'alert alert-success alert-dismissible fade'; // 元に戻す
-                }, 300);
+                alert.classList.add('hidden');
+                alert.className = `${autoSaveBaseClass} border border-emerald-200 bg-emerald-50 text-emerald-900`;
             }, 8000); // エラーは少し長めに表示
         }
     }
@@ -828,14 +827,11 @@
             const now = new Date();
             const timeLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             messageSpan.textContent = `${timeLabel} ${message}`;
-            alert.className = 'alert alert-success alert-dismissible fade show';
-            alert.style.display = 'block';
+            alert.className = `${autoSaveBaseClass} border border-emerald-200 bg-emerald-50 text-emerald-900`;
+            alert.classList.remove('hidden');
 
             setTimeout(() => {
-                alert.classList.remove('show');
-                setTimeout(() => {
-                    alert.style.display = 'none';
-                }, 300);
+                alert.classList.add('hidden');
             }, 3000);
         }
     }
@@ -870,14 +866,14 @@
         const description = descriptionInput.value.trim();
 
         // Reset alerts
-        errorAlert.classList.add('d-none');
+        errorAlert.classList.add('hidden');
         errorAlert.textContent = '';
-        successAlert.classList.add('d-none');
+        successAlert.classList.add('hidden');
         successAlert.textContent = '';
 
         if (!name) {
             errorAlert.textContent = '投稿タイプ名を入力してください';
-            errorAlert.classList.remove('d-none');
+            errorAlert.classList.remove('hidden');
             nameInput.focus();
             return;
         }
@@ -930,17 +926,17 @@
                 descriptionInput.value = '';
 
                 successAlert.textContent = data.message || '投稿タイプを追加しました';
-                successAlert.classList.remove('d-none');
+                successAlert.classList.remove('hidden');
 
                 setTimeout(() => {
-                    successAlert.classList.add('d-none');
+                    successAlert.classList.add('hidden');
                     toggleForm(formCard, false);
                 }, 1200);
             })
             .catch(error => {
                 console.error(error);
                 errorAlert.textContent = error.message || '投稿タイプの作成に失敗しました';
-                errorAlert.classList.remove('d-none');
+                errorAlert.classList.remove('hidden');
                 showError(errorAlert.textContent);
             })
             .finally(() => {
@@ -968,14 +964,14 @@
         const name = nameInput.value.trim();
         const description = descriptionInput.value.trim();
 
-        errorAlert.classList.add('d-none');
+        errorAlert.classList.add('hidden');
         errorAlert.textContent = '';
-        successAlert.classList.add('d-none');
+        successAlert.classList.add('hidden');
         successAlert.textContent = '';
 
         if (!name) {
             errorAlert.textContent = 'カテゴリー名を入力してください';
-            errorAlert.classList.remove('d-none');
+            errorAlert.classList.remove('hidden');
             nameInput.focus();
             return;
         }
@@ -1039,17 +1035,17 @@
                 }
 
                 successAlert.textContent = data.message || 'カテゴリーを追加しました';
-                successAlert.classList.remove('d-none');
+                successAlert.classList.remove('hidden');
 
                 setTimeout(() => {
-                    successAlert.classList.add('d-none');
+                    successAlert.classList.add('hidden');
                     toggleForm(formCard, false);
                 }, 1200);
             })
             .catch(error => {
                 console.error(error);
                 errorAlert.textContent = error.message || 'カテゴリーの作成に失敗しました';
-                errorAlert.classList.remove('d-none');
+                errorAlert.classList.remove('hidden');
                 showError(errorAlert.textContent);
             })
             .finally(() => {
@@ -1312,19 +1308,21 @@
         if (!alertContainer) {
             alertContainer = document.createElement('div');
             alertContainer.id = 'dynamicAlerts';
-            alertContainer.className = 'position-fixed top-0 start-50 translate-middle-x';
-            alertContainer.style.zIndex = '1060';
-            alertContainer.style.marginTop = '20px';
+            alertContainer.className = 'fixed right-4 top-4 z-50 flex flex-col gap-2';
             document.body.appendChild(alertContainer);
         }
 
         const alertElement = document.createElement('div');
-        alertElement.className = `alert alert-${type} alert-dismissible fade show`;
+        const isSuccess = type === 'success';
+        const baseClass = 'flex items-center gap-2 rounded-xl border px-4 py-3 text-sm shadow-lg';
+        alertElement.className = `${baseClass} ${isSuccess ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-rose-200 bg-rose-50 text-rose-900'}`;
         alertElement.innerHTML = `
-    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-    ${message}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  `;
+      <i class="fas ${isSuccess ? 'fa-check-circle text-emerald-500' : 'fa-exclamation-circle text-rose-500'}"></i>
+      <span class="flex-1">${message}</span>
+      <button type="button" aria-label="Close" class="text-slate-500 hover:text-slate-700" onclick="this.parentElement.remove()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    `;
 
         alertContainer.appendChild(alertElement);
 
@@ -1347,26 +1345,33 @@
         console.log('Elements found:', {
             form: !!form,
             submitBtn: !!submitBtn,
-            progressModal: !!progressModal,
-            bootstrap: typeof bootstrap !== 'undefined'
+            progressModal: !!progressModal
         });
 
         if (form && submitBtn && progressModal) {
-            // Bootstrap 5の確認
-            if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap is not loaded. Modal will not work.');
-                return;
-            }
-
-            // 既存のイベントリスナーを削除
             submitBtn.removeEventListener('click', handleUpdateSubmit);
-
-            // 新しいイベントリスナーを追加
             submitBtn.addEventListener('click', handleUpdateSubmit);
+            progressModal.classList.add('hidden');
+            progressModal.classList.remove('flex');
             console.log('Update progress modal initialized successfully');
         } else {
             console.warn('Required elements not found for update progress modal');
         }
+    }
+
+    function showProgressModal() {
+        const progressModal = document.getElementById('updateProgressModal');
+        if (!progressModal) return null;
+        progressModal.classList.remove('hidden');
+        progressModal.classList.add('flex');
+        return progressModal;
+    }
+
+    function hideProgressModal() {
+        const progressModal = document.getElementById('updateProgressModal');
+        if (!progressModal) return;
+        progressModal.classList.add('hidden');
+        progressModal.classList.remove('flex');
     }
 
     // フォーム送信ハンドラーを修正
@@ -1399,13 +1404,8 @@
             }
         }
 
-        const progressModal = document.getElementById('updateProgressModal');
-        let modal = null;
-
-        if (progressModal && typeof bootstrap !== 'undefined') {
-            modal = bootstrap.Modal.getInstance(progressModal) ||
-                new bootstrap.Modal(progressModal, {backdrop: 'static', keyboard: false});
-            modal.show();
+        const progressModal = showProgressModal();
+        if (progressModal) {
             startUpdateProgress();
         }
 
@@ -1428,6 +1428,14 @@
         const progressText = document.getElementById('updateProgressText');
         const statusText = document.getElementById('updateStatusText');
         const details = document.getElementById('updateDetails');
+
+        if (!progressBar || !progressText || !statusText || !details) return;
+
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0);
+        progressText.textContent = '0%';
+        statusText.textContent = '準備中...';
+        details.textContent = '投稿データを処理しています...';
 
         let progress = 0;
         const steps = [
@@ -1468,12 +1476,13 @@
     // フォーム送信完了時の処理
     function handleUpdateComplete(success = true) {
         const progressModal = document.getElementById('updateProgressModal');
-        const modal = bootstrap.Modal.getInstance(progressModal);
+
+        if (!progressModal) return;
 
         if (success) {
             // 成功時は自動的にモーダルを閉じる
             setTimeout(() => {
-                modal.hide();
+                hideProgressModal();
             }, 1000);
         } else {
             // エラー時はエラー表示に変更
@@ -1483,7 +1492,6 @@
 
     // エラー時の表示変更
     function showUpdateError() {
-        // progressModal要素を関数内で取得
         const progressModal = document.getElementById('updateProgressModal');
 
         const progressBar = document.getElementById('updateProgressBar');
@@ -1492,26 +1500,21 @@
         const details = document.getElementById('updateDetails');
         const modalTitle = document.getElementById('updateProgressModalLabel');
 
-        // エラー表示に変更
-        progressBar.className = 'progress-bar bg-danger';
+        if (!progressModal || !progressBar || !progressText || !statusText || !details || !modalTitle) return;
+
+        progressBar.className = 'h-full w-full rounded-full bg-rose-500 transition-none';
         progressBar.style.width = '100%';
         progressText.textContent = 'エラー';
         statusText.textContent = '更新に失敗しました';
         details.textContent = 'もう一度お試しください';
-        modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>エラーが発生しました';
+        modalTitle.innerHTML = '<i class="fas fa-exclamation-triangle text-rose-500 mr-2"></i>エラーが発生しました';
 
-        // 閉じるボタンを追加
-        if (progressModal) {
-            const modalBody = progressModal.querySelector('.modal-body');
+        const modalBody = progressModal.querySelector('.space-y-4');
+        if (modalBody && !modalBody.querySelector('.update-close-btn')) {
             const closeButton = document.createElement('button');
-            closeButton.className = 'btn btn-secondary mt-3';
+            closeButton.className = 'update-close-btn mt-3 inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900';
             closeButton.textContent = '閉じる';
-            closeButton.onclick = () => {
-                const modal = bootstrap.Modal.getInstance(progressModal);
-                if (modal) {
-                    modal.hide();
-                }
-            };
+            closeButton.onclick = () => hideProgressModal();
             modalBody.appendChild(closeButton);
         }
     }
@@ -1531,23 +1534,23 @@
         const filesList = document.getElementById('selectedFilesList');
 
         if (files.length > 0) {
-            displayArea.style.display = 'block';
+            displayArea.classList.remove('hidden');
             filesList.innerHTML = '';
 
             files.forEach((file, index) => {
                 const fileItem = document.createElement('div');
-                fileItem.className = 'mb-1 d-flex align-items-center justify-content-between';
+                fileItem.className = 'flex items-center justify-between gap-2 text-sm text-slate-600';
 
                 const leftSpan = document.createElement('span');
-                leftSpan.className = 'small';
+                leftSpan.className = 'flex items-center gap-2';
                 leftSpan.innerHTML = `
-                    <i class="fas fa-image text-primary me-1"></i>
-                    ${file.name} <span class="text-muted">(${formatFileSize(file.size)})</span>
+                    <i class="fas fa-image text-slate-400"></i>
+                    ${file.name} <span class="text-xs text-slate-400">(${formatFileSize(file.size)})</span>
                 `;
 
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
-                removeBtn.className = 'btn btn-sm btn-outline-danger';
+                removeBtn.className = 'inline-flex items-center justify-center rounded-xl border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50';
                 removeBtn.title = '削除';
                 removeBtn.setAttribute('aria-label', '削除');
                 removeBtn.addEventListener('click', () => removeSelectedFile(index));
@@ -1558,7 +1561,7 @@
                 filesList.appendChild(fileItem);
             });
         } else {
-            displayArea.style.display = 'none';
+            displayArea.classList.add('hidden');
         }
     }
 
@@ -1680,11 +1683,11 @@
 
         // 計測対象
         // 計測対象
-        const headerH    = elH('nav.navbar');
+        const headerH    = elH('header');
         const footerH    = elH('footer');
         const kpLabelH   = elH('label[for="post_key_points"]');
         const kpInputH   = elH('#post_key_points');
-        const kpHelpH    = elH('#post_key_points ~ .form-text'); // ← 要点・ポイントの補足テキスト
+        const kpHelpH    = elH('#post_key_points_help'); // ← 要点・ポイントの補足テキスト
         const titleLblH  = elH('label[for="post_title"]');
         const titleInpH  = elH('#post_title');
         const contentLblH= elH('label[for="post_content"]');    // ← 内容ラベル（Markdownガイド含む）

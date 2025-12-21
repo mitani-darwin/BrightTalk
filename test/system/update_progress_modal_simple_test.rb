@@ -6,11 +6,11 @@ class UpdateProgressModalSimpleTest < ApplicationSystemTestCase
     visit_test_page
 
     # モーダル要素が存在することを確認
-    assert_selector "#updateProgressModal", visible: false
-    assert_selector "#updateProgressBar", visible: false
-    assert_selector "#updateStatusText", visible: false
-    assert_selector "#updateDetails", visible: false
-    assert_selector "#updateProgressText", visible: false
+    assert_selector "#updateProgressModal", visible: :hidden
+    assert_selector "#updateProgressBar", visible: :hidden
+    assert_selector "#updateStatusText", visible: :hidden
+    assert_selector "#updateDetails", visible: :hidden
+    assert_selector "#updateProgressText", visible: :hidden
   end
 
   test "JavaScript functions are defined" do
@@ -62,23 +62,14 @@ class UpdateProgressModalSimpleTest < ApplicationSystemTestCase
     assert warning_logs.any?, "Should handle missing elements gracefully"
   end
 
-  test "bootstrap dependency check works" do
+  test "modal toggles visibility without bootstrap" do
     visit_test_page
 
-    # Bootstrap を一時的に無効化
-    page.execute_script("window.bootstrapBackup = window.bootstrap; window.bootstrap = undefined")
-
-    # 初期化実行
-    page.execute_script("initializeUpdateProgressModal()")
-
-    # エラーログが出力されることを確認
-    logs = page.driver.browser.logs.get(:browser)
-    bootstrap_error_logs = logs.select { |log| log.message.include?("Bootstrap is not loaded") }
-    
-    assert bootstrap_error_logs.any?, "Should detect Bootstrap unavailability"
-
-    # Bootstrap を復元
-    page.execute_script("window.bootstrap = window.bootstrapBackup")
+    assert_selector "#updateProgressModal", visible: :hidden
+    page.execute_script("showProgressModal()")
+    assert_selector "#updateProgressModal", visible: :visible
+    page.execute_script("hideProgressModal()")
+    assert_selector "#updateProgressModal", visible: :hidden
   end
 
   private
@@ -86,49 +77,18 @@ class UpdateProgressModalSimpleTest < ApplicationSystemTestCase
   def visit_test_page
     # テスト用の簡単なHTMLページを作成
     script_content = ApplicationController.render(partial: "posts/form_javascript")
+    modal_content = ApplicationController.render(partial: "posts/upload_progress_modal")
 
     test_html = <<~HTML
       <!DOCTYPE html>
       <html>
       <head>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,typography&version=4.1.0"></script>
       </head>
-      <body>
-        <!-- 更新進捗モーダル -->
-        <div class="modal fade" id="updateProgressModal" tabindex="-1" aria-labelledby="updateProgressModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header border-0">
-                <h5 class="modal-title" id="updateProgressModalLabel">
-                  <i class="fas fa-sync fa-spin me-2"></i>更新中...
-                </h5>
-              </div>
-              <div class="modal-body text-center py-4">
-                <div class="progress mb-3" style="height: 12px;">
-                  <div id="updateProgressBar"
-                       class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                       role="progressbar"
-                       style="width: 0%"
-                       aria-valuenow="0"
-                       aria-valuemin="0"
-                       aria-valuemax="100">
-                    <span id="updateProgressText">0%</span>
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <span id="updateStatusText" class="text-muted">準備中...</span>
-                </div>
-                <div class="small text-muted">
-                  <div id="updateDetails">投稿データを処理しています...</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <body class="bg-slate-50">
+        #{modal_content}
         <form data-turbo="false">
-          <button type="submit" id="updateSubmitBtn" class="btn btn-primary">投稿</button>
+          <button type="submit" id="updateSubmitBtn" class="btn btn-primary mt-4">投稿</button>
         </form>
 
         #{script_content}

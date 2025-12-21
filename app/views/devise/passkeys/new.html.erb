@@ -1,0 +1,72 @@
+<section class="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 px-6 py-5">
+      <h1 class="text-lg font-semibold text-slate-900">パスキーを追加</h1>
+      <p class="mt-2 text-sm text-slate-500">新しいデバイスにパスキーを登録します。</p>
+    </div>
+
+    <div class="px-6 py-6">
+      <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <i class="fas fa-shield-alt mr-2 text-emerald-500"></i>
+        生体認証（指紋・顔認証）やセキュリティキーでログインできるようになります。
+      </div>
+
+      <div id="passkey-status" class="mt-4 hidden rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600"></div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <button type="button"
+                id="passkey-start"
+                class="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+          <i class="fas fa-fingerprint mr-2"></i>パスキーを設定
+        </button>
+        <%= link_to "キャンセル", passkeys_path, class: "inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script nonce="<%= content_security_policy_nonce %>">
+  document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('passkey-start');
+    const statusEl = document.getElementById('passkey-status');
+    if (!startButton || !statusEl) return;
+
+    const passkeyOptions = <%= raw(@passkey_options.to_json) %>;
+    const label = <%= @label.to_json %>;
+
+    const setStatus = (message, tone = 'info') => {
+      statusEl.classList.remove('hidden');
+      const toneClasses = {
+        info: 'border-slate-200 bg-white text-slate-600',
+        success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        error: 'border-rose-200 bg-rose-50 text-rose-700'
+      };
+      statusEl.className = `mt-4 rounded-xl px-4 py-3 text-sm ${toneClasses[tone] || toneClasses.info}`;
+      statusEl.textContent = message;
+    };
+
+    startButton.addEventListener('click', async () => {
+      if (typeof window.startPasskeyRegistration !== 'function') {
+        setStatus('パスキー機能が読み込まれていません。ページを再読み込みしてください。', 'error');
+        return;
+      }
+
+      startButton.disabled = true;
+      startButton.classList.add('opacity-60', 'cursor-not-allowed');
+      setStatus('パスキー登録を開始しています...', 'info');
+
+      try {
+        const response = await window.startPasskeyRegistration(passkeyOptions, label, { verifyUrl: '<%= passkeys_path %>' });
+        if (response && response.success) {
+          setStatus('パスキーの登録に成功しました。', 'success');
+        }
+      } catch (error) {
+        console.error('Passkey add failed:', error);
+        setStatus(`パスキー登録に失敗しました: ${error.message}`, 'error');
+      } finally {
+        startButton.disabled = false;
+        startButton.classList.remove('opacity-60', 'cursor-not-allowed');
+      }
+    });
+  });
+</script>

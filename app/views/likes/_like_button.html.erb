@@ -1,26 +1,26 @@
 
 <%= turbo_frame_tag "like_button_#{post.id}" do %>
-  <% if user_signed_in? %>
-    <% like = current_user.likes.find_by(post: post) %>
-    <% if like %>
-      <!-- いいね済みの場合：削除 -->
-      <%= link_to post_like_path(post, like),
-                  data: { turbo_method: :delete, turbo_frame: "like_button_#{post.id}" },
-                  class: "btn btn-sm btn-link text-decoration-none me-2 text-danger px-2 py-1" do %>
+<% if user_signed_in? %>
+  <% like = current_user.likes.find_by(post: post) %>
+  <% if like %>
+    <!-- いいね済みの場合：削除 -->
+    <%= link_to post_like_path(post, like),
+                data: { turbo_method: :delete, turbo_frame: "like_button_#{post.id}" },
+                class: "btn btn-secondary text-xs text-rose-600" do %>
         <i class="bi bi-heart-fill"></i> <%= post.likes.count %>
-      <% end %>
-    <% else %>
-      <!-- いいねしていない場合：作成 -->
-      <%= link_to post_likes_path(post),
-                  data: { turbo_method: :post, turbo_frame: "like_button_#{post.id}" },
-                  class: "btn btn-sm btn-link text-decoration-none me-2 text-muted px-2 py-1" do %>
-        <i class="bi bi-heart"></i> <%= post.likes.count %>
-      <% end %>
     <% end %>
   <% else %>
-    <!-- 未ログイン -->
-    <span class="text-muted me-2 px-2 py-1">
-      <i class="bi bi-heart"></i> <%= post.likes.count %>
-    </span>
+    <!-- いいねしていない場合：作成 -->
+    <%= link_to post_likes_path(post),
+                data: { turbo_method: :post, turbo_frame: "like_button_#{post.id}" },
+                class: "btn btn-secondary text-xs text-slate-600" do %>
+        <i class="bi bi-heart"></i> <%= post.likes.count %>
+    <% end %>
   <% end %>
+<% else %>
+  <!-- 未ログイン -->
+  <span class="text-slate-500">
+    <i class="bi bi-heart"></i> <%= post.likes.count %>
+  </span>
+<% end %>
 <% end %>

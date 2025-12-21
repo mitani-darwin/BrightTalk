@@ -95,6 +95,12 @@ class User < ApplicationRecord
     webauthn_credentials.count
   end
 
+  # パスキーがある場合はパスワード必須を解除する
+  def password_required?
+    return false if has_passkeys? && password.blank? && password_confirmation.blank?
+    super
+  end
+
   # 重複する確認メール送信を防ぐメソッド
   def send_confirmation_instructions_once
     # 確認済みの場合は送信しない

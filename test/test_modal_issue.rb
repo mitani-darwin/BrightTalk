@@ -40,10 +40,6 @@ class ModalTest
     if submit_btn_exists
       puts "Clicking submit button..."
       
-      # Execute JavaScript to check Bootstrap availability before clicking
-      bootstrap_available = page.evaluate_script('typeof bootstrap !== "undefined"')
-      puts "Bootstrap available: #{bootstrap_available}"
-      
       # Click the submit button
       find('#updateSubmitBtn').click
       

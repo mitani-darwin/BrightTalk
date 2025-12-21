@@ -1,0 +1,99 @@
+<% root_link = respond_to?(:root_path) ? root_path : "/" %>
+<% posts_link = respond_to?(:posts_path) ? posts_path : (respond_to?(:articles_path) ? articles_path : root_link) %>
+<% categories_link = respond_to?(:categories_path) ? categories_path : nil %>
+<% tags_link = respond_to?(:tags_path) ? tags_path : nil %>
+<% about_link = respond_to?(:about_path) ? about_path : nil %>
+<% login_link =
+     if respond_to?(:new_user_session_path)
+       new_user_session_path
+     elsif respond_to?(:login_path)
+       login_path
+     elsif respond_to?(:new_session_path)
+       new_session_path
+     end %>
+<% signup_link =
+     if respond_to?(:new_passkey_registration_path)
+       new_passkey_registration_path
+     elsif respond_to?(:new_user_registration_path)
+       new_user_registration_path
+     elsif respond_to?(:signup_path)
+       signup_path
+     elsif respond_to?(:new_registration_path)
+       new_registration_path
+     end %>
+<% new_post_link = respond_to?(:new_post_path) ? new_post_path : nil %>
+
+<header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur"
+        data-controller="mobile-nav">
+  <div class="mx-auto flex max-w-screen-xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
+    <div class="flex items-center gap-3">
+      <button data-action="mobile-nav#open"
+              data-mobile-nav-target="trigger"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 lg:hidden"
+              aria-label="メニューを開く"
+              aria-controls="twMobileNav"
+              aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <%= link_to root_link, class: "inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900 hover:text-brand-600" do %>
+        <i class="fa-solid fa-sun text-brand-600"></i>
+        BrightTalk
+      <% end %>
+    </div>
+
+    <div class="hidden items-center gap-3 lg:flex">
+      <%= form_with url: posts_link, method: :get, local: true, class: "flex items-center gap-2" do |f| %>
+        <%= f.text_field :q,
+                         value: params[:q],
+                         placeholder: "記事を検索",
+                         class: "h-10 w-56 rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200" %>
+        <%= f.submit "検索", class: "h-10 rounded-xl border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2" %>
+      <% end %>
+
+      <% if user_signed_in? %>
+        <% if new_post_link %>
+          <%= link_to "新規投稿",
+                      new_post_link,
+                      class: "inline-flex h-10 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2" %>
+        <% end %>
+        <details class="relative">
+          <summary class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300">
+            <i class="fas fa-user-circle text-base text-slate-500"></i>
+            <span><%= current_user.name.presence || current_user.email %></span>
+            <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+          </summary>
+          <div class="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl">
+            <%= link_to "マイページ", user_path(current_user), class: "flex items-center gap-2 rounded-xl px-3 py-2 font-semibold hover:bg-slate-50" %>
+            <%= link_to "ブックマーク", bookmarks_path, class: "flex items-center gap-2 rounded-xl px-3 py-2 font-semibold hover:bg-slate-50" %>
+            <%= link_to "ログアウト",
+                        destroy_user_session_path,
+                        data: { "turbo-method": :delete },
+                        class: "flex items-center gap-2 rounded-xl px-3 py-2 font-semibold text-rose-600 hover:bg-rose-50" %>
+          </div>
+        </details>
+      <% else %>
+        <% if login_link %>
+          <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+        <% end %>
+        <% if signup_link %>
+          <%= link_to "新規登録", signup_link, class: "rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="flex items-center gap-2 lg:hidden">
+      <% if user_signed_in? %>
+        <%= link_to "ログアウト",
+                    destroy_user_session_path,
+                    data: { "turbo-method": :delete },
+                    class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+      <% else %>
+        <% if login_link %>
+          <%= link_to "ログイン", login_link, class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "shared/tw_mobile_nav", posts_link: posts_link, categories_link: categories_link, tags_link: tags_link, about_link: about_link, login_link: login_link, signup_link: signup_link %>
+</header>

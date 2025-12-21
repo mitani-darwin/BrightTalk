@@ -22,10 +22,6 @@ class ModalTest < ApplicationSystemTestCase
     # Check if submit button exists
     assert_selector '#updateSubmitBtn'
     
-    # Execute JavaScript to check Bootstrap availability before clicking
-    bootstrap_available = page.evaluate_script('typeof bootstrap !== "undefined"')
-    assert bootstrap_available, "Bootstrap should be available"
-    
     # Click the submit button
     find('#updateSubmitBtn').click
     
@@ -41,17 +37,13 @@ class ModalTest < ApplicationSystemTestCase
     assert error_logs.empty?, "No console errors should occur: #{error_logs.map(&:message).join(', ')}"
   end
 
-  test "modal functionality works without errors when bootstrap is available" do
+  test "modal functionality works without errors" do
     visit '/posts/new'
     
     # Fill in form
     fill_in 'post[title]', with: 'Test Modal Post'
     fill_in 'post[content]', with: 'This is a test post to check modal functionality'
-    
-    # Verify Bootstrap is loaded
-    bootstrap_loaded = page.evaluate_script('typeof bootstrap !== "undefined"')
-    assert bootstrap_loaded, "Bootstrap should be loaded for modal functionality"
-    
+
     # Check that modal-related JavaScript functions exist if they're defined globally
     has_modal_functions = page.evaluate_script('typeof initializeUpdateProgressModal === "function" || typeof handleUpdateSubmit === "function"')
     

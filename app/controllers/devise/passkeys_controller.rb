@@ -59,7 +59,7 @@ class Devise::PasskeysController < DeviseController
         Rails.logger.error "Creation challenge not found in session"
 
         respond_to do |format|
-          format.html { redirect_to new_user_passkey_path, alert: error_message }
+          format.html { redirect_to new_passkey_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_content }
         end
         return
@@ -71,7 +71,7 @@ class Devise::PasskeysController < DeviseController
         Rails.logger.error "Credential data is blank"
 
         respond_to do |format|
-          format.html { redirect_to new_user_passkey_path, alert: error_message }
+          format.html { redirect_to new_passkey_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_content }
         end
         return
@@ -116,7 +116,7 @@ class Devise::PasskeysController < DeviseController
         error_message = "パスキー認証の保存に失敗しました: #{new_passkey.errors.full_messages.join(', ')}"
 
         respond_to do |format|
-          format.html { redirect_to new_user_passkey_path, alert: error_message }
+          format.html { redirect_to new_passkey_path, alert: error_message }
           format.json { render json: { error: error_message }, status: :unprocessable_content }
         end
       end
@@ -126,7 +126,7 @@ class Devise::PasskeysController < DeviseController
       error_message = "パスキー認証の登録に失敗しました: #{e.message}"
 
       respond_to do |format|
-        format.html { redirect_to new_user_passkey_path, alert: error_message }
+        format.html { redirect_to new_passkey_path, alert: error_message }
         format.json { render json: { error: error_message }, status: :unprocessable_content }
       end
     end

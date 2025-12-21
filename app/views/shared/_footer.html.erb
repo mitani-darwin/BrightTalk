@@ -1,20 +1,24 @@
-<!-- Footer -->
-<footer class="bg-dark text-light py-3 mt-auto">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-6">
-        <h5>BrightTalk</h5>
-        <p class="mb-0">コミュニティ投稿プラットフォーム</p>
-      </div>
-      <div class="col-md-6 text-md-end">
-        <p class="mb-0">
-          &copy; 2025 BrightTalk. All rights reserved.
-        </p>
-        <small class="text-muted">
-          Powered by Ruby on Rails |
-          <%= link_to "利用規約", terms_of_service_path, class: "text-light text-decoration-none" %> |
-          <%= link_to "プライバシーポリシー", privacy_policy_path, class: "text-light text-decoration-none" %>
-        </small>
+<% terms_link = respond_to?(:terms_of_service_path) ? terms_of_service_path : nil %>
+<% privacy_link = respond_to?(:privacy_policy_path) ? privacy_policy_path : nil %>
+
+<footer class="mt-auto border-t border-slate-200 bg-white">
+  <div class="mx-auto flex max-w-screen-xl flex-col gap-4 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10">
+    <div>
+      <h3 class="text-lg font-semibold tracking-tight text-slate-900">BrightTalk</h3>
+      <p class="mt-1 text-sm leading-6 text-slate-500">コミュニティ投稿プラットフォーム</p>
+    </div>
+    <div class="text-sm leading-6 text-slate-500">
+      <p class="font-semibold text-slate-600">&copy; 2025 BrightTalk. All rights reserved.</p>
+      <div class="mt-1 flex flex-wrap items-center gap-2 text-slate-400">
+        <span>Powered by Ruby on Rails</span>
+        <% if terms_link %>
+          <span class="text-slate-300">|</span>
+          <%= link_to "利用規約", terms_link, class: "text-slate-500 underline decoration-slate-200 underline-offset-4 transition hover:text-slate-900" %>
+        <% end %>
+        <% if privacy_link %>
+          <span class="text-slate-300">|</span>
+          <%= link_to "プライバシーポリシー", privacy_link, class: "text-slate-500 underline decoration-slate-200 underline-offset-4 transition hover:text-slate-900" %>
+        <% end %>
       </div>
     </div>
   </div>

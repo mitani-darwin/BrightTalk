@@ -1,8 +1,15 @@
 <!-- 自動保存ステータス表示（右上に小さく表示） -->
-<div id="autoSaveStatus" class="position-fixed auto-save-status-container">
-  <div id="autoSaveAlert" class="alert alert-success alert-dismissible fade d-none alert-success-soft alert-success-compact" role="alert">
-    <i class="fas fa-check-circle me-1 auto-save-icon"></i>
-    <span id="autoSaveMessage" class="auto-save-message">自動保存されました</span>
-    <button type="button" class="btn-close fs-8px p-2px" data-bs-dismiss="alert" aria-label="Close"></button>
+<div id="autoSaveStatus" class="fixed right-4 top-4 z-50">
+  <div id="autoSaveAlert"
+       class="hidden items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-900 shadow-soft"
+       role="alert">
+    <i class="fas fa-check-circle text-emerald-500"></i>
+    <span id="autoSaveMessage">自動保存されました</span>
+    <button type="button"
+            class="text-slate-500 transition hover:text-slate-700"
+            aria-label="Close"
+            onclick="this.closest('#autoSaveAlert').classList.add('hidden')">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
 </div>

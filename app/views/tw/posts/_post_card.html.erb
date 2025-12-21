@@ -1,0 +1,46 @@
+<article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-brand-400">
+  <% thumbnail_url = post_thumbnail_url(post) %>
+  <div class="aspect-[16/9] w-full overflow-hidden bg-slate-100">
+    <% if thumbnail_url.present? %>
+      <%= image_tag thumbnail_url, alt: post_title(post), class: "h-full w-full object-cover transition duration-300 group-hover:scale-105" %>
+    <% else %>
+      <div class="flex h-full items-center justify-center text-sm font-semibold text-slate-400">No Image</div>
+    <% end %>
+  </div>
+
+  <div class="flex flex-1 flex-col gap-4 p-5">
+    <div class="flex items-center justify-between text-xs text-slate-500">
+      <% if post.respond_to?(:category) && post.category.present? %>
+        <%= link_to post.category.full_name, posts_path(category_id: post.category.id), class: "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600 transition hover:bg-slate-200" %>
+      <% else %>
+        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-500">未分類</span>
+      <% end %>
+      <% date = post_date(post) %>
+      <% if date.present? %>
+        <time datetime="<%= date.iso8601 %>"><%= l(date.to_date) %></time>
+      <% end %>
+    </div>
+
+    <div class="space-y-2">
+      <h2 class="text-xl font-semibold leading-snug text-slate-900">
+        <%= link_to post_title(post), post, class: "transition hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" %>
+      </h2>
+      <% excerpt = post_excerpt(post) %>
+      <% if excerpt.present? %>
+        <p class="text-sm leading-relaxed text-slate-600"><%= excerpt %></p>
+      <% end %>
+    </div>
+
+    <% tags = post.respond_to?(:tags) ? post.tags : [] %>
+    <% if tags.present? %>
+      <div class="mt-auto flex flex-wrap gap-2">
+        <% tags.limit(3).each do |tag| %>
+          <%= link_to "##{tag.name}", posts_path(tag: tag.name), class: "inline-flex items-center rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50" %>
+        <% end %>
+        <% if tags.count > 3 %>
+          <span class="inline-flex items-center rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-400">+<%= tags.count - 3 %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</article>

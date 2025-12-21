@@ -5,38 +5,38 @@
 <%= turbo_frame_tag "bookmark_button_#{post.id}", **frame_options do %>
   <% bookmark_count = post.bookmarks.size %>
 
-  <% if user_signed_in? %>
-    <% bookmark = current_user.bookmarks.find_by(post: post) %>
-    <% link_path = bookmark ? post_bookmark_path(post, bookmark) : post_bookmarks_path(post) %>
-    <% link_method = bookmark ? :delete : :post %>
+<% if user_signed_in? %>
+  <% bookmark = current_user.bookmarks.find_by(post: post) %>
+  <% link_path = bookmark ? post_bookmark_path(post, bookmark) : post_bookmarks_path(post) %>
+  <% link_method = bookmark ? :delete : :post %>
 
-    <% if is_stat %>
-      <% link_classes = "d-flex align-items-center text-decoration-none #{bookmark ? 'text-warning' : 'text-muted'}" %>
-      <% icon_class = bookmark ? "bi bi-bookmark-fill" : "bi bi-bookmark" %>
-      <% count_class = "ms-1" %>
-    <% else %>
-      <% link_classes = "btn btn-sm btn-link text-decoration-none me-2 #{bookmark ? 'text-warning' : 'text-muted'} px-2 py-1" %>
-      <% icon_class = bookmark ? "bi bi-bookmark-fill" : "bi bi-bookmark" %>
-      <% count_class = "ms-1" %>
-    <% end %>
-
-    <%= link_to link_path,
-                data: { turbo_method: link_method, turbo_frame: "bookmark_button_#{post.id}" },
-                class: link_classes do %>
-      <i class="<%= icon_class %>"></i>
-      <span class="<%= count_class %>"><%= bookmark_count %></span>
-    <% end %>
+  <% if is_stat %>
+    <% link_classes = "flex items-center gap-1 text-sm font-semibold #{bookmark ? 'text-amber-600' : 'text-slate-500'} hover:text-amber-500 transition" %>
+    <% icon_class = bookmark ? "bi bi-bookmark-fill" : "bi bi-bookmark" %>
+    <% count_class = "" %>
   <% else %>
-    <% if is_stat %>
-      <span class="d-flex align-items-center text-muted">
-        <i class="bi bi-bookmark"></i>
-        <span class="ms-1"><%= bookmark_count %></span>
-      </span>
-    <% else %>
-      <span class="text-muted me-2 px-2 py-1">
-        <i class="bi bi-bookmark"></i>
-        <span class="ms-1"><%= bookmark_count %></span>
-      </span>
-    <% end %>
+    <% link_classes = "btn btn-secondary text-xs #{bookmark ? 'text-amber-600' : 'text-slate-600'}" %>
+    <% icon_class = bookmark ? "bi bi-bookmark-fill" : "bi bi-bookmark" %>
+    <% count_class = "" %>
   <% end %>
+
+  <%= link_to link_path,
+              data: { turbo_method: link_method, turbo_frame: "bookmark_button_#{post.id}" },
+              class: link_classes do %>
+    <i class="<%= icon_class %>"></i>
+    <span class="<%= count_class %>"><%= bookmark_count %></span>
+  <% end %>
+<% else %>
+  <% if is_stat %>
+    <span class="flex items-center gap-1 text-slate-500">
+      <i class="bi bi-bookmark"></i>
+      <span><%= bookmark_count %></span>
+    </span>
+  <% else %>
+    <span class="text-slate-500">
+      <i class="bi bi-bookmark"></i>
+      <span class="ms-1"><%= bookmark_count %></span>
+    </span>
+  <% end %>
+<% end %>
 <% end %>
