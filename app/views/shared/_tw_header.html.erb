@@ -1,0 +1,45 @@
+<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+  <div class="mx-auto flex max-w-screen-xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
+    <div class="flex items-center gap-3">
+      <button data-controller="mobile-nav"
+              data-action="mobile-nav#open"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 lg:hidden"
+              aria-label="メニューを開く"
+              aria-controls="twMobileNav"
+              aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <%= link_to root_path, class: "inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900 hover:text-brand-600" do %>
+        <i class="fa-solid fa-sun text-brand-600"></i>
+        BrightTalk
+      <% end %>
+    </div>
+
+    <nav class="hidden lg:flex lg:items-center lg:gap-4" aria-label="主要カテゴリ">
+      <% if defined?(Category) && Category.exists? %>
+        <% Category.order(:name).limit(5).each do |category| %>
+          <%= link_to category.full_name, posts_path(category_id: category.id), class: "text-sm font-semibold text-slate-600 hover:text-slate-900" %>
+        <% end %>
+      <% else %>
+        <!-- 未接続: カテゴリが無い場合はリンクを省略 -->
+      <% end %>
+    </nav>
+
+    <div class="hidden items-center gap-3 lg:flex">
+      <%= form_with url: posts_path, method: :get, local: true, class: "flex items-center gap-2" do |f| %>
+        <%= f.text_field :q,
+                         value: params[:q],
+                         placeholder: "記事を検索",
+                         class: "h-10 w-64 rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-700 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-200" %>
+        <%= f.submit "検索", class: "h-10 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2" %>
+      <% end %>
+      <%= link_to "新着", posts_path, class: "text-sm font-semibold text-slate-600 hover:text-slate-900" %>
+    </div>
+
+    <div class="flex items-center gap-2 lg:hidden">
+      <%= link_to "検索", posts_path, class: "text-sm font-semibold text-slate-600 hover:text-slate-900" %>
+    </div>
+  </div>
+
+  <%= render "shared/tw_mobile_nav" %>
+</header>

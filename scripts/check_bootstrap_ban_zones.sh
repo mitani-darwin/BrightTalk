@@ -27,7 +27,8 @@ files=(
   "$repo_root/app/views/tw/posts/_post_card.html.erb"
   "$repo_root/app/views/tw/shared/_empty_state.html.erb"
   "$repo_root/app/views/tw/shared/_pagination.html.erb"
-  "$repo_root/app/views/shared/_navigation.html.erb"
+  "$repo_root/app/views/shared/_tw_header.html.erb"
+  "$repo_root/app/views/shared/_tw_mobile_nav.html.erb"
   "$repo_root/app/views/shared/_footer.html.erb"
 )
 

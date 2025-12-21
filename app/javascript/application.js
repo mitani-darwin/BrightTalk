@@ -63,10 +63,12 @@ window.Stimulus = application
 import CodeEditorController from "./controllers/code_editor_controller"
 import VideoPlayerController from "./controllers/video_player_controller"
 import FlatpickrController from "./controllers/flatpickr_controller"
+import MobileNavController from "./controllers/mobile_nav_controller"
 
 application.register("code-editor", CodeEditorController)
 application.register("video-player", VideoPlayerController)
 application.register("flatpickr", FlatpickrController)
+application.register("mobile-nav", MobileNavController)
 
 console.log('Application loaded with esbuild (CodeMirror dynamic)')
 
