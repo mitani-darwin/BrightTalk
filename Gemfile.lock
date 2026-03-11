@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/ElMassimo/vite_ruby.git
-  revision: a4a08095125c70d62d64af12d411eb15db491f13
+  revision: 0fc0eefcccf67b04409926fba91fe0041871d245
   branch: main
   specs:
-    vite_rails (3.0.19)
+    vite_rails (3.0.20)
       railties (>= 5.1, < 9)
       vite_ruby (~> 3.0, >= 3.2.2)
     vite_ruby (3.9.2)
