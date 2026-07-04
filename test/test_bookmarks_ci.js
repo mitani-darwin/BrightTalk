@@ -87,7 +87,7 @@ function testBookmarksIndexView() {
   try {
     const indexView = readFile('app/views/bookmarks/index.html.erb');
     addResult('ページタイトル', indexView.includes('ブックマーク一覧'));
-    addResult('posts-index クラス適用', indexView.includes('posts-index'));
+    addResult('投稿カード表示', indexView.includes('<article'));
     addResult('投稿リンク', indexView.includes('link_to post.title'));
   } catch (error) {
     addResult('一覧ビュー読込', false, error.message);

@@ -1,390 +1,215 @@
-<% content_for :title, page_title(@post.title) %>
-<%= render_meta_tags(meta_tags_for_post(@post)) %>
+<% title = post_title(@post) %>
+<% date = post_date(@post) %>
+<% category = @post.try(:category) || (@post.respond_to?(:categories) ? @post.categories.first : nil) %>
+<% tags = @post.respond_to?(:tags) ? @post.tags : [] %>
 
-<section class="mx-auto w-full max-w-screen-xl px-4 py-8 sm:px-6 lg:px-10">
-  <article class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <% if @post.user&.header_image_or_default %>
-      <div class="h-40 overflow-hidden rounded-t-2xl sm:h-56">
-        <%= image_tag @post.user.header_image_or_default, class: "h-full w-full object-cover" %>
+<div class="space-y-10">
+  <nav class="text-sm text-slate-500">
+    <%= link_to "Home", root_path, class: "hover:text-slate-700" %>
+    <span class="mx-2 text-slate-300">/</span>
+    <span>記事詳細</span>
+  </nav>
+
+  <header class="space-y-4">
+    <h1 class="text-3xl font-semibold leading-tight tracking-tight text-slate-900 md:text-4xl"><%= title %></h1>
+    <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+      <% if date.present? %>
+        <time datetime="<%= date.iso8601 %>" class="text-sm leading-6"><%= l(date.to_date) %></time>
+      <% end %>
+      <% if category.present? %>
+        <%= link_to category.full_name, posts_path(category_id: category.id), class: "inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200" %>
+      <% end %>
+    </div>
+    <% if current_user == @post.user %>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to edit_post_path(@post), class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+          <i class="fas fa-edit mr-1"></i>編集
+        <% end %>
+        <%= link_to @post,
+                    method: :delete,
+                    data: { confirm: "本当に削除しますか？", turbo_method: :delete },
+                    class: "inline-flex items-center rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50" do %>
+          <i class="fas fa-trash mr-1"></i>削除
+        <% end %>
       </div>
     <% end %>
-
-    <div class="px-6 py-6">
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <% if @post.user.present? %>
-            <% if @post.user.avatar_or_default %>
-              <%= image_tag @post.user.avatar_or_default, class: "h-12 w-12 rounded-full object-cover" %>
-            <% else %>
-              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                <i class="fas fa-user"></i>
-              </div>
-            <% end %>
-          <% end %>
-          <div>
-            <h6 class="text-sm font-semibold text-slate-900">
-              <%= link_to @post.user.name, user_path(@post.user), class: "hover:text-slate-700" if @post.user %>
-            </h6>
-            <div class="text-xs text-slate-500">
-              <i class="fas fa-clock mr-1"></i><%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
-            </div>
-          </div>
-        </div>
-
-        <% if @post.category.present? %>
-          <%= link_to posts_path(category_id: @post.category.id),
-                      class: "inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white" do %>
-            <i class="fas fa-tag mr-1"></i><%= @post.category.full_name %>
-          <% end %>
-        <% else %>
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            <i class="fas fa-tag mr-1"></i>未分類
-          </span>
+    <% if tags.present? %>
+      <div class="flex flex-wrap gap-2">
+        <% tags.limit(5).each do |tag| %>
+          <%= link_to "##{tag.name}", posts_path(tag: tag.name), class: "inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:bg-slate-50" %>
         <% end %>
       </div>
+    <% end %>
+  </header>
 
-      <h1 class="mt-5 text-2xl font-semibold leading-tight text-slate-900 sm:text-3xl"><%= @post.title %></h1>
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+    <div class="space-y-10">
+      <article class="prose prose-slate max-w-none prose-p:leading-7 prose-headings:scroll-mt-24 prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline">
+        <% body_html = post_body_html(@post) %>
+        <% if body_html.present? %>
+          <%= body_html %>
+        <% else %>
+          <p>本文がありません。</p>
+        <% end %>
+      </article>
 
-      <% if @post.post_type.present? %>
-        <div class="mt-3">
-          <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <i class="fas fa-tag mr-1"></i>
-            <%= case @post.post_type.name
-                when 'knowledge_sharing' then '知識共有'
-                when 'question' then '質問・相談'
-                when 'discussion' then '議論・討論'
-                when 'tutorial' then 'チュートリアル・手順'
-                when 'experience_sharing' then '体験談・事例'
-                when 'news_update' then 'ニュース・更新情報'
-                when 'opinion' then '意見・考察'
-                else @post.post_type.name
-                end %>
-          </span>
-        </div>
-      <% end %>
-
-      <% if @post.purpose.present? || @post.target_audience.present? || @post.key_points.present? || @post.expected_outcome.present? %>
-        <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <h2 class="text-sm font-semibold text-slate-700">
-            <i class="fas fa-info-circle mr-2 text-slate-400"></i>投稿情報
-          </h2>
-          <div class="mt-4 space-y-3 text-sm text-slate-600">
-            <% if @post.purpose.present? %>
-              <div>
-                <div class="font-semibold text-slate-700"><i class="fas fa-bullseye mr-1 text-slate-400"></i>目的</div>
-                <p class="mt-1"><%= @post.purpose %></p>
-              </div>
-            <% end %>
-            <% if @post.target_audience.present? %>
-              <div>
-                <div class="font-semibold text-slate-700"><i class="fas fa-users mr-1 text-slate-400"></i>対象読者</div>
-                <p class="mt-1"><%= @post.target_audience %></p>
-              </div>
-            <% end %>
-            <% if @post.key_points.present? %>
-              <div>
-                <div class="font-semibold text-slate-700"><i class="fas fa-list-ul mr-1 text-slate-400"></i>要点・ポイント</div>
-                <div class="mt-1"><%= simple_format(@post.key_points) %></div>
-              </div>
-            <% end %>
-            <% if @post.expected_outcome.present? %>
-              <div>
-                <div class="font-semibold text-slate-700"><i class="fas fa-target mr-1 text-slate-400"></i>期待する成果</div>
-                <p class="mt-1"><%= @post.expected_outcome %></p>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-
-      <% if @post.tags.any? %>
-        <div class="mt-4 flex flex-wrap gap-2">
-          <% @post.tags.each do |tag| %>
-            <%= link_to posts_path(tag: tag.name), class: "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200" do %>
-              #<%= tag.name %>
-            <% end %>
+      <% if current_user == @post.user %>
+        <div class="flex flex-wrap gap-2">
+          <%= link_to edit_post_path(@post), class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
+            <i class="fas fa-edit mr-1"></i>編集
+          <% end %>
+          <%= link_to @post,
+                      method: :delete,
+                      data: { confirm: "本当に削除しますか？", turbo_method: :delete },
+                      class: "inline-flex items-center rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50" do %>
+            <i class="fas fa-trash mr-1"></i>削除
           <% end %>
         </div>
       <% end %>
 
-      <div class="mt-6">
-        <div class="post-content text-base leading-7 text-slate-700" data-ui="legacy">
-          <%= @post.content_as_html %>
-        </div>
-      </div>
+      <section class="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+        <%= render "likes/like_button", post: @post %>
+        <%= render "bookmarks/bookmark_button", post: @post, style: :stat %>
+        <span class="inline-flex items-center gap-1 text-slate-500">
+          <i class="fas fa-comment"></i>
+          <span><%= @post.comments.count %> コメント</span>
+        </span>
+      </section>
 
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <%= render 'likes/like_button', post: @post %>
-          <%= render 'bookmarks/bookmark_button', post: @post %>
-          <div class="inline-flex items-center gap-1 text-sm text-slate-500">
-            <i class="bi bi-chat-left"></i>
-            <span><%= @post.comments.count %> コメント</span>
-          </div>
-        </div>
-
-        <% if current_user == @post.user %>
+      <% if tags.present? %>
+        <section class="space-y-2">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500">タグ</h2>
           <div class="flex flex-wrap gap-2">
-            <%= link_to edit_post_path(@post), class: "inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
-              <i class="fas fa-edit mr-1"></i>編集
-            <% end %>
-            <%= link_to @post,
-                        method: :delete,
-                        data: { confirm: "本当に削除しますか？", turbo_method: :delete },
-                        class: "inline-flex items-center rounded-xl border border-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50" do %>
-              <i class="fas fa-trash mr-1"></i>削除
+            <% tags.each do |tag| %>
+              <%= link_to "##{tag.name}", posts_path(tag: tag.name), class: "inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:bg-slate-50" %>
             <% end %>
           </div>
-        <% end %>
-      </div>
-    </div>
-  </article>
+        </section>
+      <% end %>
 
-  <% if @previous_post || @next_post %>
-    <div class="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
-      <div class="flex flex-wrap items-center justify-between gap-4 text-sm">
-        <div class="flex-1">
+      <% if @previous_post || @next_post %>
+        <nav class="grid gap-4 sm:grid-cols-2">
           <% if @previous_post %>
-            <%= link_to post_path(@previous_post), class: "flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
-              <i class="fas fa-chevron-left"></i>
-              <div>
-                <div class="text-xs text-slate-500">前の投稿</div>
-                <div class="font-semibold"><%= @previous_post.title %></div>
-              </div>
+            <%= link_to post_path(@previous_post), class: "rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50" do %>
+              <span class="block text-xs text-slate-500">← 前の記事</span>
+              <span class="mt-1 block font-semibold text-slate-900"><%= @previous_post.title %></span>
             <% end %>
           <% end %>
-        </div>
-
-        <div class="text-xs text-slate-400">
-          <i class="fas fa-user mr-1"></i><%= @post.user.name %>さんの他の投稿
-        </div>
-
-        <div class="flex-1 text-right">
           <% if @next_post %>
-            <%= link_to post_path(@next_post), class: "ml-auto inline-flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
-              <div class="text-right">
-                <div class="text-xs text-slate-500">次の投稿</div>
-                <div class="font-semibold"><%= @next_post.title %></div>
-              </div>
-              <i class="fas fa-chevron-right"></i>
+            <%= link_to post_path(@next_post), class: "rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50" do %>
+              <span class="block text-xs text-slate-500">次の記事 →</span>
+              <span class="mt-1 block font-semibold text-slate-900"><%= @next_post.title %></span>
             <% end %>
           <% end %>
-        </div>
-      </div>
-    </div>
-  <% end %>
+        </nav>
+      <% end %>
 
-  <section class="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <div class="border-b border-slate-200 px-6 py-4">
-      <h2 class="text-base font-semibold text-slate-900">
-        <i class="fas fa-comments mr-2 text-slate-400"></i>コメント (<%= @post.comments.count %>)
-      </h2>
-    </div>
-    <div class="px-6 py-6">
-      <% if user_signed_in? %>
-        <% if ios_app_request? %>
-          <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |form| %>
-            <div>
-              <%= form.text_area :content,
-                                 class: "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200",
-                                 rows: 3,
-                                 placeholder: "コメントを入力してください..." %>
-            </div>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <label class="flex items-center gap-2 text-sm text-slate-600">
-                <%= form.check_box :paid, class: "h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-300", id: "comment_paid" %>
-                有料掲載（上位表示）
-              </label>
-              <%= form.number_field :points, class: "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", min: 0, placeholder: "ポイント加算" %>
-              <%= form.number_field :latitude, step: 0.000001, class: "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", placeholder: "緯度(任意)" %>
-              <%= form.number_field :longitude, step: 0.000001, class: "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-slate-300 focus:ring-2 focus:ring-slate-200", placeholder: "経度(任意)" %>
-            </div>
-            <div>
-              <%= form.submit "コメントを投稿", class: "inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800" %>
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">コメント (<%= @post.comments.count %>)</h2>
+
+        <% if user_signed_in? %>
+          <% if ios_app_request? %>
+            <%= form_with model: [@post, @comment], local: true, class: "mt-6 space-y-4" do |form| %>
+              <div>
+                <%= form.text_area :content,
+                                   class: "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base leading-7 text-slate-700 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-200",
+                                   rows: 3,
+                                   placeholder: "コメントを入力してください..." %>
+              </div>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                  <%= form.check_box :paid, class: "h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400", id: "comment_paid" %>
+                  有料掲載（上位表示）
+                </label>
+                <%= form.number_field :points,
+                                      class: "w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-200",
+                                      min: 0,
+                                      placeholder: "ポイント加算" %>
+              </div>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <%= form.number_field :latitude,
+                                      step: 0.000001,
+                                      class: "w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-200",
+                                      placeholder: "緯度(任意)" %>
+                <%= form.number_field :longitude,
+                                      step: 0.000001,
+                                      class: "w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-200",
+                                      placeholder: "経度(任意)" %>
+              </div>
+              <div>
+                <%= form.submit "コメントを投稿", class: "inline-flex items-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2" %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              コメント機能はiOSアプリからのみ利用できます。(作成中)
             </div>
           <% end %>
         <% else %>
-          <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            <i class="fas fa-mobile-alt mr-2"></i>
-            コメント機能はiOSアプリからのみ利用できます。(作成中)
-            <div class="mt-1 text-xs text-amber-600">iOSアプリをダウンロードしてコメントを投稿してください。</div>
+          <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            コメントを投稿するには<%= link_to "ログイン", new_user_session_path, class: "font-semibold text-brand-600 hover:text-brand-500" %>が必要です。
           </div>
         <% end %>
-      <% else %>
-        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          コメントを投稿するには<%= link_to "ログイン", new_user_session_path, class: "font-semibold text-slate-700 hover:text-slate-900" %>が必要です。
-        </div>
-      <% end %>
 
-      <% if @post.comments.any? %>
-        <div class="mt-6 space-y-4 border-t border-slate-200 pt-6">
-          <% @post.comments.includes(:user).merge(Comment.ordered_for_display).each do |comment| %>
-            <div class="flex gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500">
-                <%= comment.user&.name&.first || "?" %>
-              </div>
-              <div class="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <div class="text-sm font-semibold text-slate-700">
+        <% if @post.comments.any? %>
+          <div class="mt-6 space-y-4">
+            <% @post.comments.includes(:user).merge(Comment.ordered_for_display).each do |comment| %>
+              <div class="rounded-xl border border-slate-200 bg-white p-4">
+                <div class="flex flex-wrap items-start justify-between gap-2 text-sm">
+                  <div class="font-semibold text-slate-800">
                     <%= comment.user&.name || "匿名ユーザー" %>
                     <% if comment.paid %>
-                      <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">PR</span>
+                      <span class="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">PR</span>
                     <% end %>
                   </div>
-                  <div class="flex items-center gap-2 text-xs text-slate-500">
+                  <div class="flex items-center gap-3 text-xs text-slate-500">
                     <span><%= time_ago_in_words(comment.created_at) %>前</span>
-                    <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs">PT <%= comment.points || 0 %></span>
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">PT <%= comment.points || 0 %></span>
                     <% if user_signed_in? && comment.user == current_user && ios_app_request? %>
                       <%= link_to post_comment_path(@post, comment),
-                                  method: :delete,
                                   data: { confirm: "コメントを削除しますか？", turbo_method: :delete },
-                                  class: "inline-flex items-center rounded-full border border-rose-200 px-2 py-0.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50" do %>
-                        <i class="fas fa-trash"></i>
+                                  class: "text-rose-600 hover:text-rose-500" do %>
+                        削除
                       <% end %>
                     <% end %>
                   </div>
                 </div>
-                <div class="mt-2 text-sm text-slate-700"><%= simple_format(h(comment.content)) %></div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-          <i class="fas fa-comment-slash text-2xl"></i>
-          <p class="mt-2">まだコメントがありません。最初のコメントを投稿しませんか？</p>
-        </div>
-      <% end %>
-    </div>
-  </section>
-
-  <% if @related_posts.any? %>
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div class="border-b border-slate-200 px-6 py-4">
-        <h2 class="text-base font-semibold text-slate-900"><i class="fas fa-lightbulb mr-2 text-slate-400"></i>関連記事</h2>
-      </div>
-      <div class="grid gap-4 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
-        <% @related_posts.each do |related_post| %>
-          <%= link_to post_path(related_post), class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300" do %>
-            <h3 class="text-sm font-semibold text-slate-900 line-clamp-2"><%= related_post.title %></h3>
-            <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
-              <div class="h-6 w-6 overflow-hidden rounded-full bg-slate-100">
-                <% if related_post.user&.avatar_or_default %>
-                  <%= image_tag related_post.user.avatar_or_default, class: "h-full w-full object-cover" %>
-                <% else %>
-                  <div class="flex h-full w-full items-center justify-center text-slate-400">
-                    <i class="fas fa-user text-xs"></i>
-                  </div>
-                <% end %>
-              </div>
-              <span><%= related_post.user&.name || "匿名ユーザー" %></span>
-            </div>
-            <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
-              <% if related_post.category %>
-                <span class="rounded-full bg-slate-100 px-2 py-0.5"><%= related_post.category.name %></span>
-              <% end %>
-              <span><%= time_ago_in_words(related_post.created_at) %>前</span>
-            </div>
-            <% if related_post.tags.any? %>
-              <div class="mt-2 flex flex-wrap gap-1">
-                <% related_post.tags.limit(3).each do |tag| %>
-                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">#<%= tag.name %></span>
-                <% end %>
+                <p class="mt-3 text-sm leading-relaxed text-slate-700"><%= simple_format(h(comment.content)) %></p>
               </div>
             <% end %>
-          <% end %>
-        <% end %>
-      </div>
-    </section>
-  <% end %>
-
-  <% prev_post = @post.previous_post_by_author %>
-  <% next_post = @post.next_post_by_author %>
-  <% if prev_post || next_post %>
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
-      <h2 class="text-sm font-semibold text-slate-700"><i class="fas fa-user mr-2"></i><%= @post.user.name %>さんの他の投稿</h2>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        <% if prev_post %>
-          <%= link_to post_path(prev_post), class: "flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
-            <i class="fas fa-chevron-left text-slate-400"></i>
-            <div>
-              <div class="text-xs text-slate-500">前の投稿</div>
-              <div class="font-semibold line-clamp-1"><%= prev_post.title %></div>
-              <div class="text-xs text-slate-400"><%= prev_post.created_at.strftime("%Y年%m月%d日") %></div>
-            </div>
-          <% end %>
+          </div>
         <% else %>
-          <div class="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">前の投稿はありません</div>
+          <p class="mt-6 text-sm text-slate-500">まだコメントがありません。</p>
         <% end %>
+      </section>
+    </div>
 
-        <% if next_post %>
-          <%= link_to post_path(next_post), class: "flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
-            <div class="text-right">
-              <div class="text-xs text-slate-500">次の投稿</div>
-              <div class="font-semibold line-clamp-1"><%= next_post.title %></div>
-              <div class="text-xs text-slate-400"><%= next_post.created_at.strftime("%Y年%m月%d日") %></div>
-            </div>
-            <i class="fas fa-chevron-right text-slate-400"></i>
-          <% end %>
-        <% else %>
-          <div class="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400 text-right">次の投稿はありません</div>
-        <% end %>
+    <aside class="hidden lg:block">
+      <div class="sticky top-24 space-y-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500">カテゴリー</h2>
+          <div class="mt-4 space-y-2 text-sm">
+            <% if defined?(Category) && Category.exists? %>
+              <% Category.order(:name).limit(8).each do |cat| %>
+                <%= link_to cat.full_name, posts_path(category_id: cat.id), class: "block rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-50" %>
+              <% end %>
+            <% else %>
+              <p class="text-slate-500">カテゴリーはまだありません。</p>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500">最新記事</h2>
+          <div class="mt-4 space-y-3 text-sm">
+            <% if defined?(Post) %>
+              <% Post.published.order(created_at: :desc).limit(5).each do |recent_post| %>
+                <%= link_to recent_post.title.presence || recent_post.name, post_path(recent_post), class: "block text-slate-700 hover:text-slate-900" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
       </div>
-    </section>
-  <% end %>
-
-  <div class="mt-6">
-    <%= link_to posts_path, class: "inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900" do %>
-      <i class="fas fa-arrow-left mr-2"></i>投稿一覧に戻る
-    <% end %>
-  </div>
-</section>
-
-<div id="imageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 px-4">
-  <div class="relative w-full max-w-4xl rounded-2xl bg-white p-4 shadow-xl">
-    <button type="button" id="imageModalClose" class="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-slate-500 transition hover:text-slate-700" aria-label="閉じる">
-      <i class="fas fa-times"></i>
-    </button>
-    <img id="modalImage" src="" alt="" class="mx-auto max-h-[70vh] w-auto rounded-xl object-contain">
-    <div id="modalCaption" class="mt-3 text-center text-sm text-slate-500"></div>
+    </aside>
   </div>
 </div>
-
-<script nonce="<%= content_security_policy_nonce %>">
-  document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const modalCaption = document.getElementById('modalCaption');
-    const closeBtn = document.getElementById('imageModalClose');
-    const postContent = document.querySelector('.post-content');
-
-    if (!modal || !postContent) return;
-
-    postContent.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLImageElement)) return;
-
-      const src = target.getAttribute('data-image-src') || target.src;
-      const alt = target.getAttribute('data-image-alt') || target.alt || '画像';
-
-      modalImage.src = src;
-      modalImage.alt = alt;
-      modalCaption.textContent = alt;
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.classList.add('overflow-hidden');
-    });
-
-    const closeModal = () => {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      modalImage.src = '';
-      document.body.classList.remove('overflow-hidden');
-    };
-
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) closeModal();
-    });
-  });
-</script>
