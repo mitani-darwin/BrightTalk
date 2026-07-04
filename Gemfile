@@ -18,7 +18,7 @@ gem "solid_queue"
 gem "solid_cable"
 
 # パスワードハッシュ化のため
-gem "bcrypt", "~> 3.1.21"
+gem "bcrypt", "~> 3.1.22"
 
 # ページネーション
 gem "kaminari"
