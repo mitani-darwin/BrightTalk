@@ -1,12 +1,12 @@
 GIT
   remote: https://github.com/ElMassimo/vite_ruby.git
-  revision: 060707a0a67eb106b5d80237830e40be23f8f584
+  revision: 51e3320d33f5ce9d63cbfe5acdfcd37a7280a583
   branch: main
   specs:
-    vite_rails (3.0.20)
+    vite_rails (3.10.0)
       railties (>= 5.1, < 9)
       vite_ruby (~> 3.0, >= 3.2.2)
-    vite_ruby (3.9.3)
+    vite_ruby (3.10.2)
       dry-cli (>= 0.7, < 2)
       logger (~> 1.6)
       mutex_m
