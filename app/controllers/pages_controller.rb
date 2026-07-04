@@ -1,7 +1,6 @@
 class PagesController < ApplicationController
   # 静的ページ用のコントローラー
   # Static pages controller
-  layout "tailwind", only: [ :privacy_policy, :terms_of_service ]
 
   def privacy_policy
     # プライバシーポリシーページ

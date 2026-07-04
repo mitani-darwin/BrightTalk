@@ -1,149 +1,134 @@
 <% content_for :title, page_title("ブックマーク一覧") %>
 
-<div class="container-fluid posts-index my-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<section class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <h1 class="h3 mb-1">ブックマーク一覧</h1>
-      <p class="text-muted mb-0">あとで読みたい投稿をまとめて確認できます。</p>
+      <h1 class="text-2xl font-semibold leading-snug text-slate-900">ブックマーク一覧</h1>
+      <p class="mt-1 text-sm text-slate-500">あとで読みたい投稿をまとめて確認できます。</p>
     </div>
-    <%= link_to "投稿一覧に戻る", posts_path, class: "btn btn-outline-secondary" %>
+    <%= link_to "投稿一覧に戻る", posts_path, class: "inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" %>
   </div>
 
   <% if @posts.any? %>
-    <div class="post-list">
+    <div class="space-y-6">
       <% @posts.each do |post| %>
-        <article class="post-item border rounded-3 mb-4 bg-white shadow-sm">
-          <div class="row g-0">
-            <div class="col-12">
-              <div class="card-body p-4">
-                <div class="post-card-header">
-                  <div class="post-card-author">
-                    <% if post.user&.avatar_or_default %>
-                      <%= image_tag post.user.avatar_or_default,
-                          class: "rounded-circle avatar-36 object-cover" %>
-                    <% else %>
-                      <span class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center avatar-36">
-                        <i class="fas fa-user text-white"></i>
-                      </span>
-                    <% end %>
-                    <div class="post-card-author-info">
-                      <%= link_to(post.user&.name || "削除されたユーザー",
-                                  post.user ? user_path(post.user) : "#",
-                                  class: "text-decoration-none fw-semibold text-dark") %>
-                    </div>
-                  </div>
-                  <div class="post-card-date-title">
-                    <h3 class="post-card-title mb-0">
-                      <%= link_to post.title.presence || "無題", post %>
-                    </h3>
-                    <span class="post-card-date text-muted">
-                      <i class="fas fa-calendar-alt me-1"></i>
-                      <%= post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
-                    </span>
-                  </div>
-                </div>
+        <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <% if post.user&.avatar_or_default %>
+                <%= image_tag post.user.avatar_or_default, class: "h-9 w-9 rounded-full object-cover" %>
+              <% else %>
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-400">
+                  <i class="fas fa-user text-white"></i>
+                </span>
+              <% end %>
+              <%= link_to(post.user&.name || "削除されたユーザー",
+                          post.user ? user_path(post.user) : "#",
+                          class: "text-sm font-semibold text-slate-800 hover:text-slate-900") %>
+            </div>
+            <div class="text-right">
+              <h3 class="text-lg font-semibold leading-snug text-slate-900">
+                <%= link_to post.title.presence || "無題", post, class: "hover:text-brand-600" %>
+              </h3>
+              <span class="mt-1 inline-flex items-center gap-1 text-xs text-slate-500">
+                <i class="fas fa-calendar-alt"></i>
+                <%= post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+              </span>
+            </div>
+          </div>
 
-                <div class="post-card-details">
-                  <div class="post-card-detail">
-                    <span class="post-card-detail-label">投稿タイプ</span>
-                    <span class="post-card-detail-value">
-                      <% if post.post_type.present? %>
-                        <%= case post.post_type.name
-                            when 'knowledge_sharing' then '知識共有'
-                            when 'question' then '質問・相談'
-                            when 'discussion' then '議論・討論'
-                            when 'tutorial' then 'チュートリアル'
-                            when 'experience_sharing' then '体験談・事例'
-                            when 'news_update' then 'ニュース・更新'
-                            when 'opinion' then '意見・考察'
-                            else post.post_type.name
-                            end %>
-                      <% else %>
-                        <span class="text-muted">未設定</span>
-                      <% end %>
-                    </span>
-                  </div>
-                  <div class="post-card-detail">
-                    <span class="post-card-detail-label">カテゴリー</span>
-                    <span class="post-card-detail-value">
-                      <% if post.category %>
-                        <%= link_to post.category.full_name,
-                                    posts_path(category_id: post.category.id),
-                                    class: "post-card-detail-link" %>
-                      <% else %>
-                        <span class="text-muted">未分類</span>
-                      <% end %>
-                    </span>
-                  </div>
-                  <div class="post-card-detail">
-                    <span class="post-card-detail-label">目的</span>
-                    <span class="post-card-detail-value">
-                      <% if post.purpose.present? %>
-                        <%= truncate(post.purpose, length: 80) %>
-                      <% else %>
-                        <span class="text-muted">未設定</span>
-                      <% end %>
-                    </span>
-                  </div>
-                  <div class="post-card-detail">
-                    <span class="post-card-detail-label">対象読者</span>
-                    <span class="post-card-detail-value">
-                      <% if post.target_audience.present? %>
-                        <%= truncate(post.target_audience, length: 60) %>
-                      <% else %>
-                        <span class="text-muted">未設定</span>
-                      <% end %>
-                    </span>
-                  </div>
-                </div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <span class="block text-xs font-semibold uppercase tracking-wide text-slate-400">投稿タイプ</span>
+              <span class="mt-1 block text-sm text-slate-700">
+                <% if post.post_type.present? %>
+                  <%= case post.post_type.name
+                      when 'knowledge_sharing' then '知識共有'
+                      when 'question' then '質問・相談'
+                      when 'discussion' then '議論・討論'
+                      when 'tutorial' then 'チュートリアル'
+                      when 'experience_sharing' then '体験談・事例'
+                      when 'news_update' then 'ニュース・更新'
+                      when 'opinion' then '意見・考察'
+                      else post.post_type.name
+                      end %>
+                <% else %>
+                  <span class="text-slate-400">未設定</span>
+                <% end %>
+              </span>
+            </div>
+            <div>
+              <span class="block text-xs font-semibold uppercase tracking-wide text-slate-400">カテゴリー</span>
+              <span class="mt-1 block text-sm text-slate-700">
+                <% if post.category %>
+                  <%= link_to post.category.full_name, posts_path(category_id: post.category.id), class: "text-brand-600 hover:text-brand-500" %>
+                <% else %>
+                  <span class="text-slate-400">未分類</span>
+                <% end %>
+              </span>
+            </div>
+            <div>
+              <span class="block text-xs font-semibold uppercase tracking-wide text-slate-400">目的</span>
+              <span class="mt-1 block text-sm text-slate-700">
+                <% if post.purpose.present? %>
+                  <%= truncate(post.purpose, length: 80) %>
+                <% else %>
+                  <span class="text-slate-400">未設定</span>
+                <% end %>
+              </span>
+            </div>
+            <div>
+              <span class="block text-xs font-semibold uppercase tracking-wide text-slate-400">対象読者</span>
+              <span class="mt-1 block text-sm text-slate-700">
+                <% if post.target_audience.present? %>
+                  <%= truncate(post.target_audience, length: 60) %>
+                <% else %>
+                  <span class="text-slate-400">未設定</span>
+                <% end %>
+              </span>
+            </div>
+          </div>
 
-                <div class="post-card-content-card">
-                  <div class="post-card-content-body">
-                    <p class="post-card-excerpt">
-                      <%= truncate(strip_tags(post.content_as_html), length: 160) %>
-                    </p>
-                  </div>
-                </div>
+          <p class="mt-4 text-sm leading-relaxed text-slate-600">
+            <%= truncate(strip_tags(post.content_as_html), length: 160) %>
+          </p>
 
-                <div class="post-card-footer">
-                  <div class="post-card-tags">
-                    <% if post.tags.any? %>
-                      <% post.tags.limit(3).each do |tag| %>
-                        <%= link_to "##{tag.name}", posts_path(tag: tag.name), class: "post-card-tag" %>
-                      <% end %>
-                      <% if post.tags.count > 3 %>
-                        <span class="post-card-tag post-card-tag--more">+<%= post.tags.count - 3 %></span>
-                      <% end %>
-                    <% end %>
-                  </div>
+          <div class="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
+            <div class="flex flex-wrap gap-2">
+              <% if post.tags.any? %>
+                <% post.tags.limit(3).each do |tag| %>
+                  <%= link_to "##{tag.name}", posts_path(tag: tag.name), class: "inline-flex items-center rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50" %>
+                <% end %>
+                <% if post.tags.count > 3 %>
+                  <span class="inline-flex items-center rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-400">+<%= post.tags.count - 3 %></span>
+                <% end %>
+              <% end %>
+            </div>
 
-                  <div class="post-card-stats">
-                    <div class="post-card-stat">
-                      <i class="fas fa-heart text-danger"></i>
-                      <span><%= post.likes.count %></span>
-                    </div>
-                    <%= render 'bookmarks/bookmark_button', post: post, style: :stat %>
-                    <div class="post-card-stat">
-                      <i class="fas fa-comment text-info"></i>
-                      <span><%= post.comments.count %></span>
-                    </div>
-                    <%= link_to "続きを読む", post, class: "btn btn-outline-primary btn-sm" %>
-                  </div>
-                </div>
-              </div>
+            <div class="flex items-center gap-4 text-sm text-slate-500">
+              <span class="inline-flex items-center gap-1">
+                <i class="fas fa-heart text-rose-500"></i>
+                <span><%= post.likes.count %></span>
+              </span>
+              <%= render "bookmarks/bookmark_button", post: post, style: :stat %>
+              <span class="inline-flex items-center gap-1">
+                <i class="fas fa-comment text-sky-500"></i>
+                <span><%= post.comments.count %></span>
+              </span>
+              <%= link_to "続きを読む", post, class: "inline-flex items-center rounded-xl border border-brand-500 bg-transparent px-3 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50" %>
             </div>
           </div>
         </article>
       <% end %>
     </div>
   <% else %>
-    <div class="card shadow-sm border">
-      <div class="card-body text-center py-5">
-        <i class="fas fa-bookmark fa-3x text-muted mb-3"></i>
-        <h4 class="text-muted">ブックマークがまだありません</h4>
-        <p class="text-muted mb-4">気になる投稿のブックマークボタンを押して、あとで読み返しましょう。</p>
-        <%= link_to "投稿一覧を見る", posts_path, class: "btn btn-primary" %>
+    <div class="rounded-2xl border border-slate-200 bg-white py-16 text-center shadow-sm">
+      <i class="fas fa-bookmark text-4xl text-slate-300"></i>
+      <h4 class="mt-4 text-lg font-semibold text-slate-500">ブックマークがまだありません</h4>
+      <p class="mt-2 text-sm text-slate-500">気になる投稿のブックマークボタンを押して、あとで読み返しましょう。</p>
+      <div class="mt-6">
+        <%= link_to "投稿一覧を見る", posts_path, class: "inline-flex items-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500" %>
       </div>
     </div>
   <% end %>
-</div>
+</section>

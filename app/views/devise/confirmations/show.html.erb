@@ -1,32 +1,28 @@
-<div class="container mt-4">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-body text-center">
-          <div class="mb-4">
-            <i class="fas fa-check-circle text-success fs-4rem"></i>
-          </div>
+<section class="mx-auto w-full max-w-lg px-4 py-10 sm:px-6 lg:px-8">
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="px-6 py-8 text-center">
+      <div class="mb-4 flex justify-center">
+        <i class="fas fa-check-circle text-5xl text-emerald-500"></i>
+      </div>
 
-          <h2 class="card-title text-success mb-3">メール認証完了</h2>
+      <h2 class="text-lg font-semibold text-emerald-600">メール認証完了</h2>
 
-          <p class="card-text mb-4">
-            メールアドレスの認証が正常に完了し、ログインしました。<br>
-            BrightTalkへようこそ！
-          </p>
+      <p class="mt-4 text-sm leading-7 text-slate-700">
+        メールアドレスの認証が正常に完了し、ログインしました。<br>
+        BrightTalkへようこそ！
+      </p>
 
-          <p class="card-text text-muted mb-4">
-            セキュリティをさらに向上させるため、パスキー認証の設定をお勧めします。
-          </p>
+      <p class="mt-4 text-sm leading-7 text-slate-500">
+        セキュリティをさらに向上させるため、パスキー認証の設定をお勧めします。
+      </p>
 
-          <div class="d-grid gap-2">
-            <%= link_to "パスキー認証を登録", new_passkey_registration_path,
-                        class: "btn btn-primary",
-                        data: { turbo: false } %>
-            <%= link_to "ホームに戻る", root_path,
-                        class: "btn btn-outline-secondary" %>
-          </div>
-        </div>
+      <div class="mt-6 grid gap-3">
+        <%= link_to "パスキー認証を登録", new_passkey_registration_path,
+                    class: "inline-flex h-11 w-full items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2",
+                    data: { turbo: false } %>
+        <%= link_to "ホームに戻る", root_path,
+                    class: "inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" %>
       </div>
     </div>
   </div>
-</div>
+</section>

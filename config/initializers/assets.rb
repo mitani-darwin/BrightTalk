@@ -11,7 +11,6 @@ Rails.application.config.assets.precompile = [
   # デフォルトのアプリケーションファイル
   "application.js",
   "application.css",
-  "application.scss",
   "tailwind.css",
 
   # ローカルのStimulusファイルのみ
