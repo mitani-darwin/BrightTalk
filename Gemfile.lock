@@ -188,7 +188,7 @@ GEM
       raabro (~> 1.4)
     globalid (1.4.0)
       activesupport (>= 6.1)
-    grover (1.2.9)
+    grover (1.2.10)
       nokogiri (~> 1)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
