@@ -59,5 +59,10 @@ module BrightTalk
     # esbuild用の設定
     config.assets.paths << Rails.root.join("app/assets/builds")
     config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
+
+    # コメント投稿元 IP の制限（日本国外・VPN を拒否）。本番のみ既定で有効
+    # 環境変数 COMMENT_IP_RESTRICTION=true/false で上書きできる
+    config.x.comment_ip_restriction_enabled =
+      ActiveModel::Type::Boolean.new.cast(ENV.fetch("COMMENT_IP_RESTRICTION", Rails.env.production?.to_s))
   end
 end

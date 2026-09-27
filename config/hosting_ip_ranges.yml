@@ -1,0 +1,35 @@
+# コメント投稿を拒否するクラウド・ホスティング事業者（VPN・プロキシの出口として使われる）の IP 範囲
+# IpRangeUpdater が各事業者の公開一覧を取得して storage/ip_ranges/hosting.txt を生成する
+#
+# format:
+#   aws / google_cloud / oracle: 各社の JSON 形式
+#   geofeed: RFC 8805 の CSV（1列目が CIDR）
+#   text: 1行に1つの CIDR
+sources:
+  - name: AWS
+    url: https://ip-ranges.amazonaws.com/ip-ranges.json
+    format: aws
+  - name: Google Cloud
+    url: https://www.gstatic.com/ipranges/cloud.json
+    format: google_cloud
+  - name: Oracle Cloud
+    url: https://docs.oracle.com/iaas/tools/public_ip_ranges.json
+    format: oracle
+  - name: DigitalOcean
+    url: https://digitalocean.com/geo/google.csv
+    format: geofeed
+  - name: Akamai (Linode)
+    url: https://geoip.linode.com/
+    format: geofeed
+  - name: Vultr
+    url: https://geofeed.constant.com/?text
+    format: text
+  - name: Cloudflare (IPv4)
+    url: https://www.cloudflare.com/ips-v4
+    format: text
+  - name: Cloudflare (IPv6)
+    url: https://www.cloudflare.com/ips-v6
+    format: text
+
+# 公開一覧が無い事業者などを手動で追加する CIDR（例: "192.0.2.0/24"）
+extra_cidrs: []

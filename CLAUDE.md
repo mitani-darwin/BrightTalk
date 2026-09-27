@@ -75,8 +75,16 @@ Devise が通常のセッション・登録処理を担当し、Passkey/WebAuthn
 - `after_commit` フック（テスト環境ではスキップ）は2つの異なる処理を行います。画像は **同期的に** リクエスト内で `ruby-vips` によって EXIF を削除し、削除済みファイルを S3 に再アップロードします（`process_images_for_exif_removal`）。動画は `VideoUploadJob`（Solid Queue）に渡され、非同期で S3 にアップロードされます（`process_videos_for_async_upload`）。どちらも blob のメタデータフラグ（`exif_removed`、`async_upload_completed`）を使って、以降の保存時に再処理されないようにしています。
 - `related_posts` / `previous_post_by_author` / `next_post_by_author` は、タグ → カテゴリー → 投稿タイプ → 新着順にフォールバックしながら「前後・関連記事」ナビゲーションを実装しています。
 
-### コメントは iOS アプリ専用
-コメントの作成・削除は、`X-Client-Platform: BrightTalk-iOS` リクエストヘッダーを持つ BrightTalk iOS アプリからのみ許可されており、`ApplicationController#ios_app_request?` / `#ios_app_only_access!` でチェックされています。コメントは `paid` フラグと `points` を持ち、表示順は単純な `created_at` ではなく `Comment.ordered_for_display`（有料・ポイント降順、その後に新着順）で制御されます。
+### コメント
+ログインユーザーであれば Web ブラウザ・iOS アプリのどちらからでもコメントの作成・自分のコメントの削除ができます（未ログイン時は `authenticate_user!` によりログイン画面へリダイレクト）。コメントの表示順は `Comment.ordered_for_display`（新しい順）です。
+
+コメントの作成は **日本の IP かつ VPN（クラウド／ホスティング事業者）以外** からのみ許可されます（`CommentsController#restrict_comment_ip!` → `CommentIpRestriction`）。削除は制限しません。
+- 判定は、サーバー内の IP 範囲リスト（`storage/ip_ranges/japan.txt`・`hosting.txt`、`IP_RANGES_DIR` で変更可）を二分探索する `IpRangeSet` で行い、リクエストごとに外部 API は呼びません。MaxMind などの商用・要登録の GeoIP データベースは使いません。
+- 日本の範囲は APNIC の割り当て統計（`delegated-apnic-latest` の `JP`）、クラウド・ホスティング事業者の範囲は `config/hosting_ip_ranges.yml` に列挙した各社の公開一覧（AWS・Google Cloud・Oracle・DigitalOcean・Akamai/Linode・Vultr・Cloudflare）から `IpRangeUpdater` が生成します。一覧の無い事業者は同ファイルの `extra_cidrs` に手動で追加します。
+- クラウド事業者の IP は米国等の登録でも国内リージョンで使われるため、国より先に判定します。
+- 判定できない場合（リストが無い、IP が不正など）は **拒否** します（fail-closed）。リストを置かずに本番へデプロイすると、誰もコメントできなくなります。
+- 既定で有効なのは production のみ。`COMMENT_IP_RESTRICTION=true/false` で上書きできます。テストでは `IpRangeDatabase.override` に `IpRangeSet.from_cidrs(...)` を差し込みます。
+- リストの取得・更新は `bin/rails ip_ranges:update`（登録・キー不要）。本番では `IpRangeUpdateJob` が `config/recurring.yml` により毎日 5:00 に自動更新します。初回は `kamal app exec "bin/rails ip_ranges:update"` で取得してください。
 
 ### バックグラウンドジョブ・インフラ
 Solid Queue、Solid Cache、Solid Cable はいずれもアプリの SQLite データベースを共有しています（Redis は不要）。現時点でのカスタムジョブは `VideoUploadJob` のみです。

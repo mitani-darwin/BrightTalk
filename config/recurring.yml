@@ -8,3 +8,10 @@
 #     command: "SoftDeletedRecord.due.delete_all"
 #     priority: 2
 #     schedule: at 5am every day
+
+production:
+  # コメント投稿元 IP の判定に使う IP 範囲リストの更新（APNIC の統計は毎日更新される）
+  ip_range_update:
+    class: IpRangeUpdateJob
+    queue: default
+    schedule: "0 5 * * *"
