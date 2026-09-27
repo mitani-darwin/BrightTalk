@@ -1410,7 +1410,7 @@
         }
 
         try {
-            await uploadFilesToS3();
+            // 画像はフォーム送信（multipart）で送られ投稿に添付される
             setTimeout(() => form.submit(), 100);
         } catch (error) {
             console.error('Error during upload or form submission:', error);
@@ -1586,89 +1586,6 @@
             window.selectedFiles.forEach(file => dt.items.add(file));
             imageInput.files = dt.files;
         }
-    }
-
-    // S3にファイルをアップロードする関数（修正版）
-    async function uploadFilesToS3() {
-        if (window.selectedFiles.length === 0) {
-            console.log('No files to upload');
-            return;
-        }
-
-        console.log('Starting file upload to S3...');
-
-        const uploadPromises = window.selectedFiles.map(async (file) => {
-            try {
-                // Active Storage Direct Uploadの正しいパラメータ
-                const uploadData = {
-                    blob: {
-                        filename: file.name,
-                        content_type: file.type,
-                        byte_size: file.size,
-                        checksum: await generateChecksum(file) // MD5チェックサムが必要
-                    }
-                };
-
-                // まず署名付きIDを取得
-                const response = await fetch('/rails/active_storage/direct_uploads', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': getCSRFToken(),
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(uploadData)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`Upload preparation failed for ${file.name}:`, errorText);
-                    throw new Error(`Upload preparation failed for ${file.name}: ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                // 実際のファイルアップロード（S3へ）
-                const uploadResponse = await fetch(result.direct_upload.url, {
-                    method: 'PUT',
-                    body: file,
-                    headers: result.direct_upload.headers || {}
-                });
-
-                if (!uploadResponse.ok) {
-                    throw new Error(`File upload to S3 failed for ${file.name}`);
-                }
-
-                console.log(`Upload completed for ${file.name}:`, result);
-                return result;
-
-            } catch (error) {
-                console.error(`Error uploading ${file.name}:`, error);
-                throw error;
-            }
-        });
-
-        try {
-            await Promise.all(uploadPromises);
-            console.log('All files uploaded successfully');
-        } catch (error) {
-            console.error('Error during file upload:', error);
-            throw error;
-        }
-    }
-
-    // MD5チェックサム生成関数
-    async function generateChecksum(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const wordArray = CryptoJS.lib.WordArray.create(e.target.result);
-                const hash = CryptoJS.MD5(wordArray);
-                const base64Hash = CryptoJS.enc.Base64.stringify(hash);
-                resolve(base64Hash);
-            };
-            reader.readAsArrayBuffer(file);
-        });
     }
 
     // 高さ測定のユーティリティ
