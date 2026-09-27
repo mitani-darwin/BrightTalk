@@ -1,5 +1,9 @@
 ARG RUBY_VERSION=3.4.4
 ARG TARGETPLATFORM=linux/arm64
+
+# vite 8 は Node.js 20.19 以上が必要。Debian bookworm の apt 版（18 系）では動かないため公式イメージから取得する
+FROM node:22-bookworm-slim AS node
+
 FROM ruby:3.4.4-slim AS base
 
 # Rails app lives here
@@ -13,11 +17,16 @@ RUN apt-get update -qq && \
     libvips \
     libvips-dev \
     sqlite3 \
-    nodejs \
     libvips \
-    ruby-vips \
-    npm && \
+    ruby-vips && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Install Node.js and npm
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
+    node --version && npm --version
 
 # Set production environment
 ENV RAILS_ENV="production" \
