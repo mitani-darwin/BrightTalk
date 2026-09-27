@@ -1,7 +1,6 @@
 class CommentsController < ApplicationController
   before_action :set_post
   before_action :set_comment, only: [ :destroy ]
-  before_action :ios_app_only_access!, only: [ :create, :destroy ]
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
 
@@ -42,9 +41,7 @@ class CommentsController < ApplicationController
   end
 
   def comment_params
-    # paidとpointsはサーバー側で受け入れる（将来的に課金連携時に厳密化）
-    # 緯度経度はiOSアプリから送信されることを想定
-    params.require(:comment).permit(:content, :paid, :points, :latitude, :longitude)
+    params.require(:comment).permit(:content)
   end
 
   def render_not_found

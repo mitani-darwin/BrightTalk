@@ -75,8 +75,8 @@ Devise が通常のセッション・登録処理を担当し、Passkey/WebAuthn
 - `after_commit` フック（テスト環境ではスキップ）は2つの異なる処理を行います。画像は **同期的に** リクエスト内で `ruby-vips` によって EXIF を削除し、削除済みファイルを S3 に再アップロードします（`process_images_for_exif_removal`）。動画は `VideoUploadJob`（Solid Queue）に渡され、非同期で S3 にアップロードされます（`process_videos_for_async_upload`）。どちらも blob のメタデータフラグ（`exif_removed`、`async_upload_completed`）を使って、以降の保存時に再処理されないようにしています。
 - `related_posts` / `previous_post_by_author` / `next_post_by_author` は、タグ → カテゴリー → 投稿タイプ → 新着順にフォールバックしながら「前後・関連記事」ナビゲーションを実装しています。
 
-### コメントは iOS アプリ専用
-コメントの作成・削除は、`X-Client-Platform: BrightTalk-iOS` リクエストヘッダーを持つ BrightTalk iOS アプリからのみ許可されており、`ApplicationController#ios_app_request?` / `#ios_app_only_access!` でチェックされています。コメントは `paid` フラグと `points` を持ち、表示順は単純な `created_at` ではなく `Comment.ordered_for_display`（有料・ポイント降順、その後に新着順）で制御されます。
+### コメント
+ログインユーザーであれば Web ブラウザ・iOS アプリのどちらからでもコメントの作成・自分のコメントの削除ができます（未ログイン時は `authenticate_user!` によりログイン画面へリダイレクト）。コメントの表示順は `Comment.ordered_for_display`（新しい順）です。
 
 ### バックグラウンドジョブ・インフラ
 Solid Queue、Solid Cache、Solid Cable はいずれもアプリの SQLite データベースを共有しています（Redis は不要）。現時点でのカスタムジョブは `VideoUploadJob` のみです。

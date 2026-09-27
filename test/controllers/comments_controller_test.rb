@@ -268,4 +268,47 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     delete "/posts/99999/comments/99999", headers: @ios_headers
     assert_response :not_found
   end
+  test "Webブラウザ（iOSヘッダーなし）からもコメントを作成できること" do
+    sign_in @user
+
+    assert_difference("Comment.count", 1) do
+      post post_comments_path(@post), params: {
+        comment: {
+          content: "Webからのコメント"
+        }
+      }
+    end
+
+    assert_redirected_to @post
+    follow_redirect!
+    assert_match "Webからのコメント", response.body
+  end
+
+  test "コメントが新しい順に表示されること" do
+    @comment.update!(created_at: 2.days.ago)
+    Comment.create!(content: "新しいほうのコメント", user: @another_user, post: @post)
+
+    get post_path(@post)
+    assert_response :success
+    assert_operator response.body.index("新しいほうのコメント"), :<, response.body.index("テストコメント")
+  end
+
+  test "Webブラウザからも自分のコメントを削除できること" do
+    sign_in @user
+
+    assert_difference("Comment.count", -1) do
+      delete post_comment_path(@post, @comment)
+    end
+
+    assert_redirected_to @post
+  end
+
+  test "Webブラウザの記事ページにコメントフォームが表示されること" do
+    sign_in @user
+
+    get post_path(@post)
+    assert_response :success
+    assert_select "textarea[name='comment[content]']"
+    assert_no_match "iOSアプリからのみ利用できます", response.body
+  end
 end
