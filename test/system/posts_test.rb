@@ -345,6 +345,22 @@ class PostsTest < ApplicationSystemTestCase
     assert_selector "img", wait: 10 # 画像が表示されることを確認
   end
 
+  test "画像を投稿してもストレージに使われない複製が残らないこと" do
+    # sign_in は ApplicationSystemTestCase#login_as の上書きと衝突するため、Warden で直接ログインする
+    Warden.on_next_request { |proxy| proxy.set_user(@user, scope: :user) }
+    visit new_post_path
+
+    fill_in_basic_post_fields("画像複製防止システムテスト", "画像が1回だけ保存されることの確認")
+    attach_file "post[images][]", Rails.root.join("test", "fixtures", "files", "test_image.jpg")
+
+    assert_difference -> { ActiveStorage::Blob.count } => 1, -> { ActiveStorage::Blob.unattached.count } => 0 do
+      click_button "投稿"
+      assert_text "画像複製防止システムテスト"
+    end
+
+    assert_equal 1, Post.find_by!(title: "画像複製防止システムテスト").images.count
+  end
+
   test "動画アップロード機能（Direct Upload）が正常に動作すること" do
     sign_in @user
     visit new_post_path
