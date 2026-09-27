@@ -78,11 +78,13 @@ Devise が通常のセッション・登録処理を担当し、Passkey/WebAuthn
 ### コメント
 ログインユーザーであれば Web ブラウザ・iOS アプリのどちらからでもコメントの作成・自分のコメントの削除ができます（未ログイン時は `authenticate_user!` によりログイン画面へリダイレクト）。コメントの表示順は `Comment.ordered_for_display`（新しい順）です。
 
-コメントの作成は **日本国内の IP かつ VPN（クラウド／ホスティング事業者）以外** からのみ許可されます（`CommentsController#restrict_comment_ip!` → `CommentIpRestriction`）。削除は制限しません。
-- 判定は MaxMind GeoLite2 の国・ASN データベース（`storage/geoip/*.mmdb`、`GEOIP_DB_DIR` で変更可）をサーバー内で参照するだけで、外部 API は呼びません。拒否する ASN と組織名キーワードは `config/hosting_asns.yml` で管理します。
-- 判定できない場合（mmdb が無い、IP が未登録など）は **拒否** します（fail-closed）。mmdb を置かずに本番へデプロイすると、誰もコメントできなくなります。
-- 既定で有効なのは production のみ。`COMMENT_IP_RESTRICTION=true/false` で上書きできます。テストでは `GeoipDatabase.override` に `FakeGeoipDatabase`（`test/support/`）を差し込みます。
-- mmdb の取得・更新は `bin/rails geoip:update`（`MAXMIND_ACCOUNT_ID`・`MAXMIND_LICENSE_KEY` が必要）。本番では `GeoipUpdateJob` が `config/recurring.yml` により水・土の 6:00 に自動更新します。初回は `kamal app exec "bin/rails geoip:update"` で取得してください。
+コメントの作成は **日本の IP かつ VPN（クラウド／ホスティング事業者）以外** からのみ許可されます（`CommentsController#restrict_comment_ip!` → `CommentIpRestriction`）。削除は制限しません。
+- 判定は、サーバー内の IP 範囲リスト（`storage/ip_ranges/japan.txt`・`hosting.txt`、`IP_RANGES_DIR` で変更可）を二分探索する `IpRangeSet` で行い、リクエストごとに外部 API は呼びません。MaxMind などの商用・要登録の GeoIP データベースは使いません。
+- 日本の範囲は APNIC の割り当て統計（`delegated-apnic-latest` の `JP`）、クラウド・ホスティング事業者の範囲は `config/hosting_ip_ranges.yml` に列挙した各社の公開一覧（AWS・Google Cloud・Oracle・DigitalOcean・Akamai/Linode・Vultr・Cloudflare）から `IpRangeUpdater` が生成します。一覧の無い事業者は同ファイルの `extra_cidrs` に手動で追加します。
+- クラウド事業者の IP は米国等の登録でも国内リージョンで使われるため、国より先に判定します。
+- 判定できない場合（リストが無い、IP が不正など）は **拒否** します（fail-closed）。リストを置かずに本番へデプロイすると、誰もコメントできなくなります。
+- 既定で有効なのは production のみ。`COMMENT_IP_RESTRICTION=true/false` で上書きできます。テストでは `IpRangeDatabase.override` に `IpRangeSet.from_cidrs(...)` を差し込みます。
+- リストの取得・更新は `bin/rails ip_ranges:update`（登録・キー不要）。本番では `IpRangeUpdateJob` が `config/recurring.yml` により毎日 5:00 に自動更新します。初回は `kamal app exec "bin/rails ip_ranges:update"` で取得してください。
 
 ### バックグラウンドジョブ・インフラ
 Solid Queue、Solid Cache、Solid Cable はいずれもアプリの SQLite データベースを共有しています（Redis は不要）。現時点でのカスタムジョブは `VideoUploadJob` のみです。

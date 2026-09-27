@@ -1,37 +1,35 @@
 require "test_helper"
 
 class CommentIpRestrictionTest < ActiveSupport::TestCase
-  def restriction(country_db: FakeGeoipDatabase::COUNTRY, asn_db: FakeGeoipDatabase::ASN)
-    CommentIpRestriction.new(country_db: country_db, asn_db: asn_db)
+  JAPAN = IpRangeSet.from_cidrs([ "203.0.113.0/25", "2001:db8::/32" ])
+  HOSTING = IpRangeSet.from_cidrs([ "203.0.113.64/26", "2001:db8:ffff::/48", "198.51.100.128/25" ])
+
+  def restriction(japan: JAPAN, hosting: HOSTING)
+    CommentIpRestriction.new(japan: japan, hosting: hosting)
   end
 
-  test "日本国内の一般回線からは許可されること" do
+  test "日本の一般回線からは許可されること" do
     assert_equal :allowed, restriction.check("203.0.113.1")
+    assert_equal :allowed, restriction.check("2001:db8::1")
   end
 
   test "日本国外からは拒否されること" do
-    assert_equal :foreign, restriction.check("203.0.113.2")
+    assert_equal :foreign, restriction.check("198.51.100.1")
+    assert_equal :foreign, restriction.check("2001:db9::1")
   end
 
-  test "日本国内でもクラウド事業者のASNからは拒否されること" do
-    assert_equal :hosting, restriction.check("203.0.113.3")
+  test "日本の範囲でもクラウド・ホスティング事業者の範囲からは拒否されること" do
+    assert_equal :hosting, restriction.check("203.0.113.100")
+    assert_equal :hosting, restriction.check("2001:db8:ffff::1")
   end
 
-  test "組織名にVPNを含むASNからは拒否されること" do
-    assert_equal :hosting, restriction.check("203.0.113.4")
+  test "日本国外に登録されたクラウド事業者の範囲はVPNとして拒否されること" do
+    assert_equal :hosting, restriction.check("198.51.100.200")
   end
 
-  test "ASNが登録されていないIPは判定不可として拒否されること" do
-    assert_equal :unavailable, restriction.check("203.0.113.5")
-  end
-
-  test "国が登録されていないIPは判定不可として拒否されること" do
-    assert_equal :unavailable, restriction.check("127.0.0.1")
-  end
-
-  test "データベースが無い場合は判定不可として拒否されること" do
-    assert_equal :unavailable, restriction(country_db: nil).check("203.0.113.1")
-    assert_equal :unavailable, restriction(asn_db: nil).check("203.0.113.1")
+  test "IP範囲リストが無い場合は判定不可として拒否されること" do
+    assert_equal :unavailable, restriction(japan: nil).check("203.0.113.1")
+    assert_equal :unavailable, restriction(hosting: nil).check("203.0.113.1")
   end
 
   test "不正なIPは判定不可として拒否されること" do

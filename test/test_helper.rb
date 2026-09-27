@@ -1,7 +1,6 @@
 ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
-require_relative "support/fake_geoip_database"
 
 class ActiveSupport::TestCase
   # 並列実行を完全に無効化（環境変数やCI環境に関係なく）

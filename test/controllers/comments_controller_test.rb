@@ -351,8 +351,8 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "IP制限が有効なとき、GeoIPデータベースが無ければコメントを作成できないこと" do
-    with_comment_ip_restriction(databases: { country: nil, asn: nil }) do
+  test "IP制限が有効なとき、IP範囲リストが無ければコメントを作成できないこと" do
+    with_comment_ip_restriction(databases: { japan: nil, hosting: nil }) do
       sign_in @user
 
       assert_no_difference("Comment.count") do
@@ -376,13 +376,17 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def with_comment_ip_restriction(databases: { country: FakeGeoipDatabase::COUNTRY, asn: FakeGeoipDatabase::ASN })
+  # 203.0.113.1: 国内の一般回線 / 203.0.113.2: 国外 / 203.0.113.3: 国内のクラウド事業者
+  def with_comment_ip_restriction(databases: {
+    japan: IpRangeSet.from_cidrs([ "203.0.113.0/31", "203.0.113.3/32" ]),
+    hosting: IpRangeSet.from_cidrs([ "203.0.113.3/32" ])
+  })
     original = Rails.configuration.x.comment_ip_restriction_enabled
     Rails.configuration.x.comment_ip_restriction_enabled = true
-    GeoipDatabase.override = databases
+    IpRangeDatabase.override = databases
     yield
   ensure
     Rails.configuration.x.comment_ip_restriction_enabled = original
-    GeoipDatabase.override = nil
+    IpRangeDatabase.override = nil
   end
 end
