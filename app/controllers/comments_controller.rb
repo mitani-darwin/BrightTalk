@@ -1,6 +1,7 @@
 class CommentsController < ApplicationController
   before_action :set_post
   before_action :set_comment, only: [ :destroy ]
+  before_action :restrict_comment_ip!, only: [ :create ]
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
 
@@ -27,6 +28,23 @@ class CommentsController < ApplicationController
   end
 
   private
+
+  COMMENT_IP_RESTRICTION_MESSAGES = {
+    foreign: "日本国外からはコメントを投稿できません。",
+    hosting: "VPN・プロキシ経由ではコメントを投稿できません。",
+    unavailable: "接続元を確認できなかったため、コメントを投稿できません。"
+  }.freeze
+
+  # 日本国外・VPN（クラウド／ホスティング事業者）からの投稿を拒否する
+  def restrict_comment_ip!
+    return unless CommentIpRestriction.enabled?
+
+    status = CommentIpRestriction.new.check(request.remote_ip)
+    return if status == :allowed
+
+    Rails.logger.info("[CommentIpRestriction] コメント投稿を拒否しました ip=#{request.remote_ip} reason=#{status}")
+    redirect_to @post, alert: COMMENT_IP_RESTRICTION_MESSAGES.fetch(status)
+  end
 
   def set_post
     @post = Post.find(params[:post_id])

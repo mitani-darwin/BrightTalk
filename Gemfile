@@ -82,3 +82,5 @@ end
 
 gem "vite_rails", github: "ElMassimo/vite_ruby", branch: "main"
 gem "tailwindcss-rails"
+
+gem "maxmind-db", "~> 1.5"

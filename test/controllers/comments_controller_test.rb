@@ -311,4 +311,78 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name='comment[content]']"
     assert_no_match "iOSアプリからのみ利用できます", response.body
   end
+
+  test "IP制限が有効なとき、日本国内の一般回線からはコメントを作成できること" do
+    with_comment_ip_restriction do
+      sign_in @user
+
+      assert_difference("Comment.count", 1) do
+        post post_comments_path(@post), params: { comment: { content: "国内からのコメント" } },
+                                         env: { "REMOTE_ADDR" => "203.0.113.1" }
+      end
+      assert_redirected_to @post
+    end
+  end
+
+  test "IP制限が有効なとき、日本国外からはコメントを作成できないこと" do
+    with_comment_ip_restriction do
+      sign_in @user
+
+      assert_no_difference("Comment.count") do
+        post post_comments_path(@post), params: { comment: { content: "国外からのコメント" } },
+                                         env: { "REMOTE_ADDR" => "203.0.113.2" }
+      end
+      assert_redirected_to @post
+      follow_redirect!
+      assert_match "日本国外からはコメントを投稿できません", response.body
+    end
+  end
+
+  test "IP制限が有効なとき、VPN（クラウド事業者）経由ではコメントを作成できないこと" do
+    with_comment_ip_restriction do
+      sign_in @user
+
+      assert_no_difference("Comment.count") do
+        post post_comments_path(@post), params: { comment: { content: "VPNからのコメント" } },
+                                         env: { "REMOTE_ADDR" => "203.0.113.3" }
+      end
+      follow_redirect!
+      assert_match "VPN・プロキシ経由ではコメントを投稿できません", response.body
+    end
+  end
+
+  test "IP制限が有効なとき、GeoIPデータベースが無ければコメントを作成できないこと" do
+    with_comment_ip_restriction(databases: { country: nil, asn: nil }) do
+      sign_in @user
+
+      assert_no_difference("Comment.count") do
+        post post_comments_path(@post), params: { comment: { content: "判定不可のコメント" } },
+                                         env: { "REMOTE_ADDR" => "203.0.113.1" }
+      end
+      follow_redirect!
+      assert_match "接続元を確認できなかったため", response.body
+    end
+  end
+
+  test "IP制限が有効でも、国外から自分のコメントは削除できること" do
+    with_comment_ip_restriction do
+      sign_in @user
+
+      assert_difference("Comment.count", -1) do
+        delete post_comment_path(@post, @comment), env: { "REMOTE_ADDR" => "203.0.113.2" }
+      end
+    end
+  end
+
+  private
+
+  def with_comment_ip_restriction(databases: { country: FakeGeoipDatabase::COUNTRY, asn: FakeGeoipDatabase::ASN })
+    original = Rails.configuration.x.comment_ip_restriction_enabled
+    Rails.configuration.x.comment_ip_restriction_enabled = true
+    GeoipDatabase.override = databases
+    yield
+  ensure
+    Rails.configuration.x.comment_ip_restriction_enabled = original
+    GeoipDatabase.override = nil
+  end
 end

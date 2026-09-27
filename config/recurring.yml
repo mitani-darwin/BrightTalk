@@ -8,3 +8,10 @@
 #     command: "SoftDeletedRecord.due.delete_all"
 #     priority: 2
 #     schedule: at 5am every day
+
+production:
+  # GeoLite2（国・ASN）データベースの更新。MaxMind は火曜・金曜に更新を公開する
+  geoip_update:
+    class: GeoipUpdateJob
+    queue: default
+    schedule: "0 6 * * 3,6"
