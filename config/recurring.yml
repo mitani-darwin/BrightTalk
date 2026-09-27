@@ -11,6 +11,12 @@
 
 production:
   # コメント投稿元 IP の判定に使う IP 範囲リストの更新（APNIC の統計は毎日更新される）
+  # どこにも添付されないまま2日以上経ったファイルの削除
+  purge_unattached_blobs:
+    class: PurgeUnattachedBlobsJob
+    queue: default
+    schedule: "0 4 * * *"
+
   ip_range_update:
     class: IpRangeUpdateJob
     queue: default
