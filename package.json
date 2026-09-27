@@ -39,9 +39,9 @@
     "video.js": "^8.17.2"
   },
   "devDependencies": {
-    "esbuild": "^0.25.10",
+    "esbuild": "^0.28.2",
     "playwright": "^1.55.1",
-    "vite": "^6.4.1",
-    "vite-plugin-ruby": "^5.1.1"
+    "vite": "^8.3.1",
+    "vite-plugin-ruby": "^5.2.4"
   }
 }
