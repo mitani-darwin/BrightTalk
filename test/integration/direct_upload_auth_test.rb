@@ -30,12 +30,12 @@ class DirectUploadAuthTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "上限を超えるサイズは直接アップロードできないこと" do
+  test "ファイルサイズは制限しないこと" do
     sign_in users(:test_user)
 
-    assert_no_difference("ActiveStorage::Blob.count") { direct_upload(byte_size: 2.gigabytes + 1) }
+    assert_difference("ActiveStorage::Blob.count", 1) { direct_upload(byte_size: 10.gigabytes) }
 
-    assert_response :unprocessable_entity
+    assert_response :success
   end
 
   test "CSRFトークンが無い場合は直接アップロードできないこと" do
