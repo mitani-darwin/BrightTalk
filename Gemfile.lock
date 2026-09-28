@@ -416,7 +416,7 @@ GEM
       websocket (~> 1.0)
     sitemap_generator (7.1.0)
       builder (~> 3.0)
-    solid_cable (4.0.0)
+    solid_cable (4.1.0)
       actioncable (>= 7.2)
       activejob (>= 7.2)
       activerecord (>= 7.2)
