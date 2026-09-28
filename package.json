@@ -8,7 +8,7 @@
     "watch": "esbuild app/javascript/application.js --bundle --sourcemap --outdir=app/assets/builds --public-path=/assets --format=esm --splitting --watch",
     "dev": "vite dev --port 3036 --strictPort",
     "build:vite": "vite build",
-    "test": "node test/test_application_js.js && node test/test_passkey_js.js && node test/test_code_editor_controller_js.js && node test/test_video_player_controller_js.js && node test/test_flatpickr_controller_js.js && node test/test_codeeditor_ci.js && node test/test_codeeditor_markdown_ci.js && node test/test_videoplayer_ci.js",
+    "test": "node test/test_application_js.js && node test/test_passkey_js.js && node test/test_code_editor_controller_js.js && node test/test_video_player_controller_js.js && node test/test_flatpickr_controller_js.js && node test/test_codeeditor_ci.js && node test/test_codeeditor_markdown_ci.js && node test/test_videoplayer_ci.js && node test/test_multipart_upload.mjs",
     "test:application": "node test/test_application_js.js",
     "test:passkey": "node test/test_passkey_js.js",
     "test:codeeditor-controller": "node test/test_code_editor_controller_js.js",
@@ -18,7 +18,8 @@
     "test:codeeditor-markdown": "node test/test_codeeditor_markdown_ci.js",
     "test:videoplayer": "node test/test_videoplayer_ci.js",
     "test:bookmarks": "node test/test_bookmarks_ci.js",
-    "test:all": "node test/test_application_js.js && node test/test_passkey_js.js && node test/test_code_editor_controller_js.js && node test/test_video_player_controller_js.js && node test/test_flatpickr_controller_js.js && node test/test_codeeditor_ci.js && node test/test_codeeditor_markdown_ci.js && node test/test_videoplayer_ci.js && node test/test_bookmarks_ci.js",
+    "test:multipart": "node test/test_multipart_upload.mjs",
+    "test:all": "node test/test_application_js.js && node test/test_passkey_js.js && node test/test_code_editor_controller_js.js && node test/test_video_player_controller_js.js && node test/test_flatpickr_controller_js.js && node test/test_codeeditor_ci.js && node test/test_codeeditor_markdown_ci.js && node test/test_videoplayer_ci.js && node test/test_bookmarks_ci.js && node test/test_multipart_upload.mjs",
     "postinstall": "node scripts/patch-videojs.js"
   },
   "repository": {
@@ -36,6 +37,7 @@
     "@rails/activestorage": "^8.0.300",
     "codemirror": "^6.0.2",
     "flatpickr": "^4.6.13",
+    "spark-md5": "^3.0.2",
     "video.js": "^8.17.2"
   },
   "devDependencies": {

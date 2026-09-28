@@ -1,5 +1,14 @@
 # 投稿関連のルーティング
 Rails.application.routes.draw do
+  # 大きな動画の S3 分割アップロード
+  resources :multipart_uploads, only: :create do
+    collection do
+      post :part_urls
+      post :complete
+      post :cancel
+    end
+  end
+
   # 投稿関連のルート
   resources :posts do
     # 下書き機能を追加

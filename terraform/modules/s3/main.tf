@@ -24,6 +24,24 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_production_cors" {
   }
 }
 
+# 本番環境用S3バケットのライフサイクル設定
+# 中断された分割アップロードのパートは一覧に出ないまま課金されるため、3日で自動削除する
+resource "aws_s3_bucket_lifecycle_configuration" "image_storage_production_lifecycle" {
+  count  = var.bucket_name_production != null ? 1 : 0
+  bucket = aws_s3_bucket.image_storage_production[0].id
+
+  rule {
+    id     = "abort-incomplete-multipart-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 3
+    }
+  }
+}
+
 resource "aws_iam_policy" "s3_access_policy_production" {
   count       = var.bucket_name_production != null ? 1 : 0
   name        = "${var.environment_production}-${var.bucket_name_production}-s3-access-policy"
@@ -38,7 +56,9 @@ resource "aws_iam_policy" "s3_access_policy_production" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          # 大きな動画の分割アップロードの中止（開始・パート送信・完了は s3:PutObject に含まれる）
+          "s3:AbortMultipartUpload"
         ]
         Resource = [
           aws_s3_bucket.image_storage_production[0].arn,
@@ -78,6 +98,24 @@ resource "aws_s3_bucket_cors_configuration" "image_storage_development_cors" {
   }
 }
 
+# 開発環境用S3バケットのライフサイクル設定
+# 中断された分割アップロードのパートは一覧に出ないまま課金されるため、3日で自動削除する
+resource "aws_s3_bucket_lifecycle_configuration" "image_storage_development_lifecycle" {
+  count  = var.bucket_name_development != null ? 1 : 0
+  bucket = aws_s3_bucket.image_storage_development[0].id
+
+  rule {
+    id     = "abort-incomplete-multipart-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 3
+    }
+  }
+}
+
 resource "aws_iam_policy" "s3_access_policy_development" {
   count       = var.bucket_name_development != null ? 1 : 0
   name        = "${var.environment_development}-${var.bucket_name_development}-s3-access-policy"
@@ -92,7 +130,9 @@ resource "aws_iam_policy" "s3_access_policy_development" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          # 大きな動画の分割アップロードの中止（開始・パート送信・完了は s3:PutObject に含まれる）
+          "s3:AbortMultipartUpload"
         ]
         Resource = [
           aws_s3_bucket.image_storage_development[0].arn,

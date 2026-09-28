@@ -73,6 +73,7 @@ Devise が通常のセッション・登録処理を担当し、Passkey/WebAuthn
 - FriendlyId によるスラッグ生成、`draft`/`published` の enum ステータス。バリデーションは `auto_saved_draft?` によって緩和されており、未完成な下書きの自動保存がバリデーションで失敗しないようになっています。
 - ActiveStorage/S3 経由の `has_many_attached :images` と `:videos`。
 - `after_commit` フック（テスト環境ではスキップ）は2つの異なる処理を行います。画像は **同期的に** リクエスト内で `ruby-vips` によって EXIF を削除し、削除済みファイルを S3 に再アップロードします（`process_images_for_exif_removal`）。動画は `VideoUploadJob`（Solid Queue）に渡され、非同期で S3 にアップロードされます（`process_videos_for_async_upload`）。どちらも blob のメタデータフラグ（`exif_removed`、`async_upload_completed`）を使って、以降の保存時に再処理されないようにしています。
+- 動画・画像のブラウザからの直接アップロードはログイン必須で、形式は `DirectUploadPolicy`（画像・動画のみ）で制限し、サイズは制限しない。100MB 未満の動画は Active Storage 標準の直接アップロード（1回の PUT）、100MB 以上は S3 の分割アップロード（`app/javascript/multipart_upload.js` → `MultipartUploadsController` → `S3MultipartUpload`）で送る。分割アップロードは 16MB 以上のパートを4本並行で署名付き URL へ PUT し、ファイル全体の MD5 をブラウザで計算して完了時に blob を作る。S3 のストレージでのみ動作し（テスト環境の Disk では 422）、中断されたパートは S3 の lifecycle ルールで3日後に削除される（`terraform/modules/s3`）。
 - `related_posts` / `previous_post_by_author` / `next_post_by_author` は、タグ → カテゴリー → 投稿タイプ → 新着順にフォールバックしながら「前後・関連記事」ナビゲーションを実装しています。
 
 ### コメント

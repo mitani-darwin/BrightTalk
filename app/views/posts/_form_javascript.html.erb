@@ -555,8 +555,16 @@
         }
     }
 
+    // この大きさ以上の動画は分割アップロードで送る（1回の PUT の上限 5GB を超える動画に対応するため）
+    const MULTIPART_UPLOAD_THRESHOLD = 100 * 1024 * 1024;
+
     // ActiveStorage Direct Uploadを即時実行し、signed_idをhiddenフィールドに追加する
     function startVideoDirectUpload(file, inputElement) {
+        if (file.size >= MULTIPART_UPLOAD_THRESHOLD && typeof window.MultipartUpload === 'function') {
+            startVideoMultipartUpload(file, inputElement);
+            return;
+        }
+
         if (!window.ActiveStorage || typeof window.ActiveStorage.DirectUpload !== 'function') {
             console.error('ActiveStorage.DirectUpload is unavailable, skipping direct upload for video');
             return;
@@ -614,6 +622,49 @@
             window._videoUploadPromise = null;
         });
         });
+    }
+
+    // 大きな動画を S3 へ分割アップロードし、signed_idをhiddenフィールドに追加する
+    function startVideoMultipartUpload(file, inputElement) {
+        const upload = new window.MultipartUpload(file, {
+            onProgress: (loaded, total) => {
+                const percent = Math.round((loaded / total) * 100);
+                updateUploadStatus('動画をアップロード中...', percent, `${file.name} (${formatFileSize(loaded)} / ${formatFileSize(total)})`);
+            }
+        });
+
+        console.log('Starting multipart upload for video:', file.name);
+        showUploadProgress('動画をアップロード中...', file.name);
+        window._videoDirectUploadInProgress = true;
+        toggleSubmitButton(true, '動画アップロード中...');
+
+        window._videoUploadPromise = upload.start()
+            .then((signedId) => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'post[video_signed_ids][]';
+                hiddenInput.value = signedId;
+                inputElement.form.appendChild(hiddenInput);
+
+                // フォーム送信時に大きなファイルが入らないようクリア
+                inputElement.value = '';
+                updateUploadStatus('動画のアップロード完了', 100, file.name);
+                setTimeout(hideUploadProgress, 1200);
+                return signedId;
+            })
+            .catch((error) => {
+                console.error('Multipart upload failed:', error);
+                updateUploadStatus('動画アップロードに失敗しました', 0, file.name);
+                const progressBar = document.getElementById('uploadProgressBar');
+                if (progressBar) progressBar.classList.add('bg-danger');
+                alert(`動画のアップロードに失敗しました。${error.message || ''}`);
+                throw error;
+            })
+            .finally(() => {
+                window._videoDirectUploadInProgress = false;
+                window._videoUploadPromise = null;
+                toggleSubmitButton(false);
+            });
     }
 
     function toggleSubmitButton(disable, text) {

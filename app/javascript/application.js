@@ -5,12 +5,16 @@ import * as ActiveStorage from "@rails/activestorage"
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import { startPasskeyAuthentication, startPasskeyRegistration } from './passkey.js';
+import { MultipartUpload } from './multipart_upload.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
 window.videojs = videojs;
 
 window.flatpickr = flatpickr;
+
+// 大きな動画の S3 分割アップロード（投稿フォームから利用）
+window.MultipartUpload = MultipartUpload;
 
 window.startPasskeyAuthentication = startPasskeyAuthentication;
 window.startPasskeyRegistration = startPasskeyRegistration;
