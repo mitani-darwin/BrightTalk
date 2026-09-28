@@ -10,13 +10,13 @@
     <div class="text-sm leading-6 text-slate-500">
       <p class="font-semibold text-slate-600">&copy; 2025 BrightTalk. All rights reserved.</p>
       <div class="mt-1 flex flex-wrap items-center gap-2 text-slate-400">
-        <span>Powered by Ruby on Rails</span>
         <% if terms_link %>
-          <span class="text-slate-300">|</span>
           <%= link_to "利用規約", terms_link, class: "text-slate-500 underline decoration-slate-200 underline-offset-4 transition hover:text-slate-900" %>
         <% end %>
         <% if privacy_link %>
-          <span class="text-slate-300">|</span>
+          <% if terms_link %>
+            <span class="text-slate-300">|</span>
+          <% end %>
           <%= link_to "プライバシーポリシー", privacy_link, class: "text-slate-500 underline decoration-slate-200 underline-offset-4 transition hover:text-slate-900" %>
         <% end %>
       </div>
