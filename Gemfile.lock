@@ -160,7 +160,7 @@ GEM
       railties (>= 7.0)
       responders
       warden (~> 1.2.3)
-    devise-i18n (1.16.0)
+    devise-i18n (1.16.1)
       devise (>= 5.0.0)
       rails-i18n
     dotenv (3.2.0)
@@ -369,7 +369,7 @@ GEM
     regexp_parser (2.11.3)
     reline (0.7.0)
       io-console (~> 0.5)
-    responders (3.2.0)
+    responders (3.2.1)
       actionpack (>= 7.0)
       railties (>= 7.0)
     rexml (3.4.4)
