@@ -79,19 +79,22 @@ class Post < ApplicationRecord
     
     # 同じタグを持つ投稿を優先して取得
     if tags.any?
-      tag_ids = tags.pluck(:id)
-      tagged_posts = scope.joins(:tags)
-                         .where(tags: { id: tag_ids })
-                         .group('posts.id')
-                         .order('COUNT(post_tags.id) DESC, posts.created_at DESC')
-                         .limit(limit)
-      
-      return tagged_posts if tagged_posts.count >= limit
-      
+      # 一致するタグの多い順に ID を取得（group 付きの count は Hash を返すため、ID の配列で扱う）
+      tagged_ids = Post.published.where.not(id: id)
+                       .joins(:post_tags)
+                       .where(post_tags: { tag_id: tags.pluck(:id) })
+                       .group("posts.id")
+                       .order(Arel.sql("COUNT(post_tags.id) DESC, posts.created_at DESC"))
+                       .limit(limit)
+                       .pluck(:id)
+      tagged_posts = scope.where(id: tagged_ids).index_by(&:id).values_at(*tagged_ids)
+
+      return tagged_posts if tagged_posts.size >= limit
+
       # タグで見つからない場合は残り分をカテゴリで補完
-      remaining_limit = limit - tagged_posts.count
+      remaining_limit = limit - tagged_posts.size
       category_posts = scope.where(category: category)
-                           .where.not(id: tagged_posts.pluck(:id))
+                           .where.not(id: tagged_ids)
                            .order(created_at: :desc)
                            .limit(remaining_limit)
       
@@ -158,29 +161,27 @@ class Post < ApplicationRecord
             return
           end
 
-          # ファイルの検証
+          # ファイルの検証（この画像だけスキップし、残りの画像の処理は続ける）
           unless File.exist?(original_tempfile.path) && File.size(original_tempfile.path) > 0
             Rails.logger.error "Downloaded file is empty or missing for #{attachment.filename}"
-            return
+            next
           end
 
           # ファイルの先頭バイトを確認してフォーマットを検証
-          File.open(original_tempfile.path, 'rb') do |file|
-            header = file.read(8)
-            if header.nil? || header.length < 4
-              Rails.logger.error "File header is too short or empty for #{attachment.filename}"
-              return
-            end
+          header = File.binread(original_tempfile.path, 12)
+          if header.nil? || header.length < 4
+            Rails.logger.error "File header is too short or empty for #{attachment.filename}"
+            next
+          end
 
-            # PNG, JPEG, WebP のマジックバイトを確認
-            is_png = header[0, 8] == "\x89PNG\r\n\x1A\n".b
-            is_jpeg = header[0, 3] == "\xFF\xD8\xFF".b
-            is_webp = header[0, 4] == "RIFF".b && header[8, 4] == "WEBP".b
+          # PNG, JPEG, WebP のマジックバイトを確認
+          is_png = header[0, 8] == "\x89PNG\r\n\x1A\n".b
+          is_jpeg = header[0, 3] == "\xFF\xD8\xFF".b
+          is_webp = header[0, 4] == "RIFF".b && header[8, 4] == "WEBP".b
 
-            unless is_png || is_jpeg || is_webp
-              Rails.logger.error "File format not supported or corrupted for #{attachment.filename}. Header: #{header.unpack('H*').first}"
-              return
-            end
+          unless is_png || is_jpeg || is_webp
+            Rails.logger.error "File format not supported or corrupted for #{attachment.filename}. Header: #{header.unpack('H*').first}"
+            next
           end
 
           begin
@@ -196,7 +197,7 @@ class Post < ApplicationRecord
               sample = file.read(32)
               Rails.logger.error "File sample (hex): #{sample.unpack('H*').first}"
             end
-            return
+            next
           end
 
           # EXIFを完全に削除して新しい画像を作成

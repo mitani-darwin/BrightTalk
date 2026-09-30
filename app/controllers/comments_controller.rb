@@ -47,7 +47,7 @@ class CommentsController < ApplicationController
   end
 
   def set_post
-    @post = Post.find(params[:post_id])
+    @post = Post.friendly.find(params[:post_id])
   rescue ActiveRecord::RecordNotFound
     render_not_found
   end
