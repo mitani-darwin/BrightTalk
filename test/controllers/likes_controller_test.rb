@@ -22,6 +22,17 @@ class LikesControllerTest < ActionDispatch::IntegrationTest
     assert Like.exists?(user: @user, post: @post)
   end
 
+  test "slug を持つ記事（URL が slug）にもいいねできること" do
+    @post.update_column(:slug, "slugged-post")
+    sign_in @user
+
+    assert_difference("Like.count", 1) do
+      post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }
+    end
+    assert_equal "/posts/slugged-post/likes", post_likes_path(@post)
+    assert_response :success
+  end
+
   test "未ログインユーザーはいいねできないこと" do
     assert_no_difference("Like.count") do
       post post_likes_path(@post), xhr: true, headers: { "Accept" => "application/json" }

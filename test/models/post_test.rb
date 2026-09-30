@@ -211,6 +211,40 @@ class PostTest < ActiveSupport::TestCase
     assert_includes related_posts, related_post, "同じカテゴリの投稿が関連投稿に含まれるべきです"
   end
 
+  test "タグ付きの投稿でも関連投稿を一致タグの多い順に取得できること" do
+    tag_a = Tag.create!(name: "関連タグA")
+    tag_b = Tag.create!(name: "関連タグB")
+    post = create_valid_post
+    post.save!
+    post.tags << [ tag_a, tag_b ]
+
+    one_tag = create_valid_post.tap { |p| p.title = "タグ1つ一致"; p.save! }
+    one_tag.tags << tag_a
+    two_tags = create_valid_post.tap { |p| p.title = "タグ2つ一致"; p.save! }
+    two_tags.tags << [ tag_a, tag_b ]
+
+    related_posts = post.related_posts(limit: 6)
+    assert_equal [ two_tags, one_tag ], related_posts.first(2)
+    assert_not_includes related_posts, post
+
+    assert_equal [ two_tags ], post.related_posts(limit: 1)
+  end
+
+  test "EXIF 削除は途中の画像が未対応形式でも残りの画像を処理すること" do
+    post = create_valid_post
+    post.images.attach(io: StringIO.new("GIF89a" + "\x00" * 32), filename: "anim.gif", content_type: "image/gif")
+    require "ruby-vips"
+    jpeg_data = Vips::Image.black(8, 8).write_to_buffer(".jpg")
+    post.images.attach(io: StringIO.new(jpeg_data), filename: "photo.jpg", content_type: "image/jpeg")
+    post.save!
+
+    post.send(:process_images_for_exif_removal)
+
+    gif, jpeg = post.images.map { |image| image.blob.reload }
+    assert_not gif.metadata["exif_removed"]
+    assert_equal true, jpeg.metadata["exif_removed"]
+  end
+
   test "content_as_htmlメソッドが正しくMarkdownを処理すること" do
     post = create_valid_post
     post.content = "# テストタイトル\n\nテスト内容です。"

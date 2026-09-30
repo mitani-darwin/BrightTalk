@@ -82,7 +82,7 @@ class LikesController < ApplicationController
   private
 
   def set_post
-    @post = Post.find(params[:post_id])
+    @post = Post.friendly.find(params[:post_id])
   rescue ActiveRecord::RecordNotFound
     Rails.logger.error "Post not found: #{params[:post_id]}"
     respond_to do |format|

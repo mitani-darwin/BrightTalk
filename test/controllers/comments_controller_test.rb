@@ -284,6 +284,22 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Webからのコメント", response.body
   end
 
+  test "slug を持つ記事（URL が slug）にもコメントを作成・削除できること" do
+    @post.update_column(:slug, "slugged-post")
+    sign_in @user
+
+    assert_difference("Comment.count", 1) do
+      post post_comments_path(@post), params: { comment: { content: "slug 記事へのコメント" } }
+    end
+    assert_equal "/posts/slugged-post/comments", post_comments_path(@post)
+    assert_redirected_to @post
+
+    assert_difference("Comment.count", -1) do
+      delete post_comment_path(@post, @comment)
+    end
+    assert_redirected_to @post
+  end
+
   test "コメントが新しい順に表示されること" do
     @comment.update!(created_at: 2.days.ago)
     Comment.create!(content: "新しいほうのコメント", user: @another_user, post: @post)
