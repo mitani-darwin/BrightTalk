@@ -390,6 +390,35 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "NG ワードを含むコメントは作成できないこと" do
+    sign_in @user
+
+    assert_no_difference("Comment.count") do
+      post post_comments_path(@post), params: { comment: { content: "こんな記事を書くやつは消えろ" } }
+    end
+    assert_redirected_to @post
+    follow_redirect!
+    assert_match "誹謗中傷にあたる可能性のある表現が含まれているため", response.body
+  end
+
+  test "表記を変えた NG ワードを含むコメントも作成できないこと" do
+    sign_in @user
+
+    assert_no_difference("Comment.count") do
+      post post_comments_path(@post), params: { comment: { content: "ｷﾓｲ記事" } }
+    end
+    follow_redirect!
+    assert_match "誹謗中傷にあたる可能性のある表現が含まれているため", response.body
+  end
+
+  test "記事内容への批判コメントは作成できること" do
+    sign_in @user
+
+    assert_difference("Comment.count", 1) do
+      post post_comments_path(@post), params: { comment: { content: "この手順は古いバージョンでは動かないと思います" } }
+    end
+  end
+
   private
 
   # 203.0.113.1: 国内の一般回線 / 203.0.113.2: 国外 / 203.0.113.3: 国内のクラウド事業者
