@@ -11,6 +11,11 @@ class CommentsController < ApplicationController
     # クライアントIP保存
     @comment.client_ip = request.remote_ip
 
+    if abusive_comment?
+      redirect_to @post, alert: "誹謗中傷にあたる可能性のある表現が含まれているため、コメントを投稿できません。"
+      return
+    end
+
     if @comment.save
       redirect_to @post, notice: "コメントが投稿されました。"
     else
@@ -44,6 +49,14 @@ class CommentsController < ApplicationController
 
     Rails.logger.info("[CommentIpRestriction] コメント投稿を拒否しました ip=#{request.remote_ip} reason=#{status}")
     redirect_to @post, alert: COMMENT_IP_RESTRICTION_MESSAGES.fetch(status)
+  end
+
+  # NG ワードを含む（誹謗中傷にあたる可能性がある）か
+  def abusive_comment?
+    return false unless CommentModeration.new.abusive?(@comment.content)
+
+    Rails.logger.info("[CommentModeration] NG ワードを含むコメント投稿を拒否しました user_id=#{current_user.id}")
+    true
   end
 
   def set_post

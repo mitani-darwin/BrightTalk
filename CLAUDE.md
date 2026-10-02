@@ -79,6 +79,8 @@ Devise が通常のセッション・登録処理を担当し、Passkey/WebAuthn
 ### コメント
 ログインユーザーであれば Web ブラウザ・iOS アプリのどちらからでもコメントの作成・自分のコメントの削除ができます（未ログイン時は `authenticate_user!` によりログイン画面へリダイレクト）。コメントの表示順は `Comment.ordered_for_display`（新しい順）です。
 
+誹謗中傷対策として、`config/comment_ng_words.yml` の NG ワードを含むコメントは作成時に拒否します（`CommentsController#abusive_comment?` → `CommentModeration`）。外部サービスや AI は使いません。照合前にコメント・NG ワードの両方を正規化（NFKC、小文字化、カタカナ→ひらがな、空白・記号の除去）するので、表記ゆれは1つ登録すれば足ります。部分一致のため、普通の文章にも現れる語（「カス」→「カスタム」など）は登録しないでください。
+
 コメントの作成は **日本の IP かつ VPN（クラウド／ホスティング事業者）以外** からのみ許可されます（`CommentsController#restrict_comment_ip!` → `CommentIpRestriction`）。削除は制限しません。
 - 判定は、サーバー内の IP 範囲リスト（`storage/ip_ranges/japan.txt`・`hosting.txt`、`IP_RANGES_DIR` で変更可）を二分探索する `IpRangeSet` で行い、リクエストごとに外部 API は呼びません。MaxMind などの商用・要登録の GeoIP データベースは使いません。
 - 日本の範囲は APNIC の割り当て統計（`delegated-apnic-latest` の `JP`）、クラウド・ホスティング事業者の範囲は `config/hosting_ip_ranges.yml` に列挙した各社の公開一覧（AWS・Google Cloud・Oracle・DigitalOcean・Akamai/Linode・Vultr・Cloudflare）から `IpRangeUpdater` が生成します。一覧の無い事業者は同ファイルの `extra_cidrs` に手動で追加します。
