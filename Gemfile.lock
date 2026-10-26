@@ -143,7 +143,7 @@ GEM
       rack-test (>= 0.6.3)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
-    cbor (0.5.10.1)
+    cbor (0.5.10.3)
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
     cose (1.3.1)
@@ -209,7 +209,7 @@ GEM
       activesupport (>= 7.0.0)
     jmespath (1.6.2)
     json (2.21.2)
-    jwt (3.1.2)
+    jwt (3.3.0)
       base64
     kamal (2.12.0)
       activesupport (>= 7.0)
@@ -286,7 +286,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.4-x86_64-linux-musl)
       racc (~> 1.4)
-    openssl (4.0.0)
+    openssl (4.0.2)
     openssl-signature_algorithm (1.3.0)
       openssl (> 2.0)
     orm_adapter (0.5.0)
@@ -464,7 +464,7 @@ GEM
     thruster (0.1.26-arm64-darwin)
     thruster (0.1.26-x86_64-linux)
     timeout (0.6.1)
-    tpm-key_attestation (0.14.1)
+    tpm-key_attestation (0.14.2)
       bindata (~> 2.4)
       openssl (> 2.0)
       openssl-signature_algorithm (~> 1.0)
@@ -487,7 +487,7 @@ GEM
       actionview (>= 8.0.0)
       bindex (>= 0.4.0)
       railties (>= 8.0.0)
-    webauthn (3.4.3)
+    webauthn (3.5.0)
       android_key_attestation (~> 0.3.0)
       bindata (~> 2.4)
       cbor (~> 0.5.9)
@@ -557,7 +557,7 @@ DEPENDENCIES
   uglifier
   vite_rails!
   web-console
-  webauthn (~> 3.4)
+  webauthn (~> 3.5)
 
 BUNDLED WITH
    2.7.1
